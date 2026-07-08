@@ -669,6 +669,8 @@ export type Database = {
       }
     }
     Functions: {
+      current_staff_branch: { Args: never; Returns: string }
+      current_staff_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -676,6 +678,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_staff: { Args: never; Returns: boolean }
     }
     Enums: {
       account_type: "asset" | "liability" | "equity" | "income" | "expense"
