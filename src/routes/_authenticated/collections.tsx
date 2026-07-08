@@ -25,12 +25,12 @@ function Collections() {
         <div className="h-2 rounded-full mt-4 overflow-hidden" style={{ background: "rgba(255,255,255,.12)" }}>
           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "#4ade80" }} />
         </div>
-        <button
-          onClick={() => modals.openRepay()}
-          className="mt-5 bg-primary-glow text-[#06131a] font-semibold text-sm px-4 py-2 rounded-md hover:brightness-95"
+        <Link
+          to="/collections/new"
+          className="inline-block mt-5 bg-primary-glow text-[#06131a] font-semibold text-sm px-4 py-2 rounded-md hover:brightness-95"
         >
           + Record repayment
-        </button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

@@ -16,7 +16,6 @@ function Client360() {
   const { id } = Route.useParams();
   const fn = useServerFn(getClient);
   const { data } = useQuery({ queryKey: ["client", id], queryFn: () => fn({ data: { id } }) });
-  const modals = useModals();
   if (!data) return <div className="text-sm text-muted-foreground">Loading…</div>;
   const { client, active, stats, repayments } = data;
 
@@ -35,7 +34,7 @@ function Client360() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => modals.openRepay({ loanId: active?.id })} className="border border-border-strong px-3.5 py-2 rounded-[9px] text-[12.5px] font-medium hover:border-input">Record repayment</button>
+          <Link to="/collections/new" search={{ loanId: active?.id }} className="border border-border-strong px-3.5 py-2 rounded-[9px] text-[12.5px] font-medium hover:border-input">Record repayment</Link>
           <Link to="/loans/new" className="bg-primary text-primary-foreground px-3.5 py-2 rounded-[9px] text-[12.5px] font-semibold hover:bg-primary-hover">New loan</Link>
         </div>
       </Card>

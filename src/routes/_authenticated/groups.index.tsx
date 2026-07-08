@@ -13,7 +13,6 @@ export const Route = createFileRoute("/_authenticated/groups/")({
 function Groups() {
   const fn = useServerFn(getGroups);
   const { data } = useQuery({ queryKey: ["groups"], queryFn: () => fn() });
-  const modals = useModals();
 
   return (
     <div className="grid grid-cols-2 gap-4 animate-fadein">
@@ -46,9 +45,9 @@ function Groups() {
           </div>
           <div className="flex items-center justify-between pt-3 border-t border-row-divider">
             <div className="text-[12px] text-muted-foreground">Chair: {g.leader?.full_name ?? "—"}</div>
-            <button onClick={() => modals.openRepay()} className="bg-primary text-primary-foreground text-[11.5px] font-semibold px-3 py-1.5 rounded-md hover:bg-primary-hover">
+            <Link to="/collections/new" className="bg-primary text-primary-foreground text-[11.5px] font-semibold px-3 py-1.5 rounded-md hover:bg-primary-hover">
               Record collection
-            </button>
+            </Link>
           </div>
         </Card>
       ))}
