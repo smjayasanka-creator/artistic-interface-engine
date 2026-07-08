@@ -366,15 +366,37 @@ export const getProducts = createServerFn({ method: "GET" })
 
 export const createClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { full_name: string; phone?: string; national_id?: string; group_id?: string | null }) =>
-    z
-      .object({
-        full_name: z.string().min(2),
-        phone: z.string().optional(),
-        national_id: z.string().optional(),
-        group_id: z.string().uuid().nullable().optional(),
-      })
-      .parse(i),
+  .inputValidator(
+    (i: {
+      full_name: string;
+      phone: string;
+      national_id: string;
+      date_of_birth: string;
+      gender: "male" | "female" | "other";
+      address: string;
+      occupation: string;
+      monthly_income: number;
+      next_of_kin_name: string;
+      next_of_kin_phone: string;
+      email?: string;
+      group_id?: string | null;
+    }) =>
+      z
+        .object({
+          full_name: z.string().trim().min(2, "Full name is required").max(120),
+          phone: z.string().trim().min(7, "Phone is required").max(20),
+          national_id: z.string().trim().min(4, "National ID is required").max(30),
+          date_of_birth: z.string().min(1, "Date of birth is required"),
+          gender: z.enum(["male", "female", "other"]),
+          address: z.string().trim().min(3, "Address is required").max(200),
+          occupation: z.string().trim().min(2, "Occupation is required").max(80),
+          monthly_income: z.number().nonnegative("Monthly income must be 0 or more"),
+          next_of_kin_name: z.string().trim().min(2, "Next of kin name is required").max(120),
+          next_of_kin_phone: z.string().trim().min(7, "Next of kin phone is required").max(20),
+          email: z.string().trim().email().max(255).optional().or(z.literal("")),
+          group_id: z.string().uuid().nullable().optional(),
+        })
+        .parse(i),
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
@@ -390,6 +412,14 @@ export const createClient = createServerFn({ method: "POST" })
         full_name: data.full_name,
         phone: data.phone,
         national_id: data.national_id,
+        email: data.email || null,
+        date_of_birth: data.date_of_birth,
+        gender: data.gender,
+        address: data.address,
+        occupation: data.occupation,
+        monthly_income: data.monthly_income,
+        next_of_kin_name: data.next_of_kin_name,
+        next_of_kin_phone: data.next_of_kin_phone,
         group_id: data.group_id ?? null,
         status: "pending_kyc",
         avatar_color: color,
