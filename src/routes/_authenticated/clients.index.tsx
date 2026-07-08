@@ -5,7 +5,7 @@ import { useState } from "react";
 import { getClients } from "@/lib/mzizi.functions";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { StatusBadge, RiskBadge } from "@/components/mzizi/Badge";
-import { useModals } from "@/components/mzizi/modal-context";
+
 import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,6 @@ function ClientsList() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("all");
   const fn = useServerFn(getClients);
   const { data } = useQuery({ queryKey: ["clients", filter], queryFn: () => fn({ data: { filter } }) });
-  const modals = useModals();
 
   return (
     <div className="animate-fadein">
@@ -42,12 +41,12 @@ function ClientsList() {
             </button>
           ))}
         </div>
-        <button
-          onClick={modals.openNewClient}
+        <Link
+          to="/clients/new"
           className="ml-auto bg-primary text-primary-foreground text-[12.5px] font-semibold px-3.5 py-2 rounded-[9px] hover:bg-primary-hover flex items-center gap-1.5"
         >
           <span className="text-[15px] leading-none">+</span> New client
-        </button>
+        </Link>
       </div>
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-b border-border bg-secondary/40"

@@ -5,7 +5,7 @@ import { getClient } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { StatusBadge } from "@/components/mzizi/Badge";
-import { useModals } from "@/components/mzizi/modal-context";
+
 import { money, shortDate, relTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/clients/$id")({

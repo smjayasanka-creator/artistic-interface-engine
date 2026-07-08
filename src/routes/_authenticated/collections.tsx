@@ -1,10 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCollections } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
-import { useModals } from "@/components/mzizi/modal-context";
 import { money, relTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/collections")({
@@ -14,7 +13,6 @@ export const Route = createFileRoute("/_authenticated/collections")({
 function Collections() {
   const fn = useServerFn(getCollections);
   const { data } = useQuery({ queryKey: ["collections"], queryFn: () => fn() });
-  const modals = useModals();
   if (!data) return <div className="text-sm text-muted-foreground">Loading…</div>;
   const pct = Math.min(100, (data.totalToday / data.target) * 100);
 

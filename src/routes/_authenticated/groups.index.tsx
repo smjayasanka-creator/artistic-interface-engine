@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getGroups } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
-import { useModals } from "@/components/mzizi/modal-context";
+import { Link } from "@tanstack/react-router";
 import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/groups/")({
