@@ -66,9 +66,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Mzizi Core — Microfinance Operations Console" },
       { name: "description", content: "Loan-officer operations console for microfinance: KYC, group lending, loan origination, collections, and a double-entry ledger." },
       { property: "og:title", content: "Mzizi Core — Microfinance Operations Console" },
-      { property: "og:description", content: "Loan-officer operations console for microfinance: KYC, group lending, collections, and ledger." },
+      { property: "og:description", content: "Loan-officer operations console for microfinance: KYC, group lending, loan origination, collections, and a double-entry ledger." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Mzizi Core — Microfinance Operations Console" },
+      { name: "twitter:description", content: "Loan-officer operations console for microfinance: KYC, group lending, loan origination, collections, and a double-entry ledger." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
