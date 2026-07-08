@@ -46,42 +46,66 @@ export type Database = {
       }
       client: {
         Row: {
+          address: string | null
           avatar_color: string | null
           branch_id: string
           created_at: string
+          date_of_birth: string | null
+          email: string | null
           full_name: string
+          gender: string | null
           group_id: string | null
           id: string
           joined_on: string | null
+          monthly_income: number | null
           national_id: string | null
+          next_of_kin_name: string | null
+          next_of_kin_phone: string | null
+          occupation: string | null
           officer_id: string | null
           phone: string | null
           risk_grade: Database["public"]["Enums"]["risk_grade"] | null
           status: Database["public"]["Enums"]["client_status"]
         }
         Insert: {
+          address?: string | null
           avatar_color?: string | null
           branch_id: string
           created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
           full_name: string
+          gender?: string | null
           group_id?: string | null
           id?: string
           joined_on?: string | null
+          monthly_income?: number | null
           national_id?: string | null
+          next_of_kin_name?: string | null
+          next_of_kin_phone?: string | null
+          occupation?: string | null
           officer_id?: string | null
           phone?: string | null
           risk_grade?: Database["public"]["Enums"]["risk_grade"] | null
           status?: Database["public"]["Enums"]["client_status"]
         }
         Update: {
+          address?: string | null
           avatar_color?: string | null
           branch_id?: string
           created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
           full_name?: string
+          gender?: string | null
           group_id?: string | null
           id?: string
           joined_on?: string | null
+          monthly_income?: number | null
           national_id?: string | null
+          next_of_kin_name?: string | null
+          next_of_kin_phone?: string | null
+          occupation?: string | null
           officer_id?: string | null
           phone?: string | null
           risk_grade?: Database["public"]["Enums"]["risk_grade"] | null
