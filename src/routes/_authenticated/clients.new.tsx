@@ -44,21 +44,23 @@ function NewClientPage() {
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const requiredFilled =
-    form.full_name.trim() &&
-    form.phone.trim() &&
-    form.national_id.trim() &&
-    form.date_of_birth &&
-    form.gender &&
-    form.address.trim() &&
-    form.occupation.trim() &&
-    form.monthly_income !== "" &&
-    form.next_of_kin_name.trim() &&
-    form.next_of_kin_phone.trim();
-
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.gender) return;
+    const missing: string[] = [];
+    if (!form.full_name.trim()) missing.push("Full name");
+    if (!form.phone.trim()) missing.push("Phone");
+    if (!form.national_id.trim()) missing.push("National ID");
+    if (!form.date_of_birth) missing.push("Date of birth");
+    if (!form.gender) missing.push("Gender");
+    if (!form.address.trim()) missing.push("Residential address");
+    if (!form.occupation.trim()) missing.push("Occupation");
+    if (form.monthly_income === "") missing.push("Monthly income");
+    if (!form.next_of_kin_name.trim()) missing.push("Next of kin name");
+    if (!form.next_of_kin_phone.trim()) missing.push("Next of kin phone");
+    if (missing.length) {
+      toast.error(`Missing required: ${missing.join(", ")}`);
+      return;
+    }
     post.mutate({
       data: {
         full_name: form.full_name,
@@ -75,6 +77,7 @@ function NewClientPage() {
       },
     });
   }
+
 
   return (
     <div className="animate-fadein max-w-4xl mx-auto flex flex-col gap-4">
