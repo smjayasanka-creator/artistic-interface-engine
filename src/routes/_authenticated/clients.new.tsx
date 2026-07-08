@@ -155,7 +155,7 @@ function NewClientPage() {
           <Link to="/clients" className="text-sm px-4 py-2 border border-input rounded-md hover:bg-muted">Cancel</Link>
           <button
             type="submit"
-            disabled={!requiredFilled || post.isPending}
+            disabled={post.isPending}
             className="text-sm px-5 py-2 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary-hover disabled:opacity-50"
           >
             {post.isPending ? "Saving…" : "Register client"}
