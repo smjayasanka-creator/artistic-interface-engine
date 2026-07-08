@@ -1,0 +1,152 @@
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
+import { z } from "zod";
+import { getActiveLoansForClient, recordRepayment } from "@/lib/mzizi.functions";
+import { Card } from "@/components/mzizi/Card";
+import { money } from "@/lib/format";
+import { cn } from "@/lib/utils";
+
+const searchSchema = z.object({ loanId: z.string().optional() });
+
+export const Route = createFileRoute("/_authenticated/collections/new")({
+  validateSearch: (s) => searchSchema.parse(s),
+  component: RecordRepaymentPage,
+});
+
+function RecordRepaymentPage() {
+  const { loanId: presetLoanId } = useSearch({ from: "/_authenticated/collections/new" });
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [loanId, setLoanId] = useState<string>(presetLoanId ?? "");
+  const [amount, setAmount] = useState<string>("");
+  const [channel, setChannel] = useState<"cash" | "mpesa" | "bank">("mpesa");
+  const [reference, setReference] = useState<string>("");
+  const [receivedAt, setReceivedAt] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [notes, setNotes] = useState<string>("");
+
+  const listFn = useServerFn(getActiveLoansForClient);
+  const { data: loans } = useQuery({ queryKey: ["active-loans"], queryFn: () => listFn() });
+
+  const recordFn = useServerFn(recordRepayment);
+  const post = useMutation({
+    mutationFn: recordFn,
+    onSuccess: (r: any) => {
+      toast.success(`Repayment posted · ${r.reference ?? "ok"}`);
+      qc.invalidateQueries();
+      navigate({ to: "/collections" });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const valid = loanId && amount && Number(amount) > 0;
+
+  return (
+    <div className="animate-fadein max-w-3xl mx-auto flex flex-col gap-4">
+      <Link to="/collections" className="text-xs text-primary hover:underline">← Back to collections</Link>
+      <div>
+        <h1 className="text-xl font-semibold">Record repayment</h1>
+        <p className="text-sm text-muted-foreground mt-1">All fields marked with <span className="text-destructive">*</span> are required.</p>
+      </div>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!valid) return;
+          post.mutate({
+            data: {
+              loan_id: loanId,
+              amount: Number(amount),
+              channel,
+              // extra optional fields ignored by server if not accepted; kept for UX
+              ...(reference ? { reference } : {}),
+            } as any,
+          });
+        }}
+        className="flex flex-col gap-4"
+      >
+        <Card className="p-6 flex flex-col gap-4">
+          <Field label="Loan" required>
+            <select value={loanId} onChange={(e) => setLoanId(e.target.value)} className={inputCls}>
+              <option value="">Select loan…</option>
+              {(loans ?? []).map((l: any) => (
+                <option key={l.id} value={l.id}>
+                  {l.client?.full_name} — {money(l.principal)}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Amount (KES)" required>
+              <input
+                inputMode="numeric"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
+                placeholder="0"
+                className={`${inputCls} font-mono text-base font-semibold`}
+              />
+            </Field>
+            <Field label="Received on" required>
+              <input type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} className={inputCls} />
+            </Field>
+          </div>
+
+          <Field label="Method" required>
+            <div className="grid grid-cols-3 gap-2 mt-1">
+              {(["cash", "mpesa", "bank"] as const).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setChannel(c)}
+                  className={cn(
+                    "text-sm py-2 rounded-md border font-medium capitalize",
+                    channel === c
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background border-input text-secondary-foreground hover:border-border-strong",
+                  )}
+                >
+                  {c === "mpesa" ? "M-Pesa" : c}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          <Field label={channel === "mpesa" ? "M-Pesa reference" : channel === "bank" ? "Bank reference" : "Receipt no."}>
+            <input value={reference} onChange={(e) => setReference(e.target.value)} className={`${inputCls} font-mono`} maxLength={40} />
+          </Field>
+
+          <Field label="Notes">
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={300} className={inputCls} />
+          </Field>
+        </Card>
+
+        <div className="flex justify-end gap-2">
+          <Link to="/collections" className="text-sm px-4 py-2 border border-input rounded-md hover:bg-muted">Cancel</Link>
+          <button
+            type="submit"
+            disabled={!valid || post.isPending}
+            className="text-sm px-5 py-2 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary-hover disabled:opacity-50"
+          >
+            {post.isPending ? "Posting…" : "Post repayment"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+const inputCls = "mt-1 w-full border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30";
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-muted-foreground">
+        {label} {required && <span className="text-destructive">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}

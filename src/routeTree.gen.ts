@@ -21,6 +21,8 @@ import { Route as AuthenticatedLoansIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenticated/groups.index'
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients.index'
 import { Route as AuthenticatedLoansNewRouteImport } from './routes/_authenticated/loans.new'
+import { Route as AuthenticatedCollectionsNewRouteImport } from './routes/_authenticated/collections.new'
+import { Route as AuthenticatedClientsNewRouteImport } from './routes/_authenticated/clients.new'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -85,6 +87,17 @@ const AuthenticatedLoansNewRoute = AuthenticatedLoansNewRouteImport.update({
   path: '/loans/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCollectionsNewRoute =
+  AuthenticatedCollectionsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedCollectionsRoute,
+  } as any)
+const AuthenticatedClientsNewRoute = AuthenticatedClientsNewRouteImport.update({
+  id: '/clients/new',
+  path: '/clients/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedClientsIdRoute = AuthenticatedClientsIdRouteImport.update({
   id: '/clients/$id',
   path: '/clients/$id',
@@ -95,11 +108,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/collections': typeof AuthenticatedCollectionsRoute
+  '/collections': typeof AuthenticatedCollectionsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ledger': typeof AuthenticatedLedgerRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/clients/new': typeof AuthenticatedClientsNewRoute
+  '/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
   '/groups/': typeof AuthenticatedGroupsIndexRoute
@@ -109,11 +124,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/collections': typeof AuthenticatedCollectionsRoute
+  '/collections': typeof AuthenticatedCollectionsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ledger': typeof AuthenticatedLedgerRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/clients/new': typeof AuthenticatedClientsNewRoute
+  '/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/groups': typeof AuthenticatedGroupsIndexRoute
@@ -125,11 +142,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/collections': typeof AuthenticatedCollectionsRoute
+  '/_authenticated/collections': typeof AuthenticatedCollectionsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/ledger': typeof AuthenticatedLedgerRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/_authenticated/clients/new': typeof AuthenticatedClientsNewRoute
+  '/_authenticated/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/_authenticated/loans/new': typeof AuthenticatedLoansNewRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/groups/': typeof AuthenticatedGroupsIndexRoute
@@ -146,6 +165,8 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/reports'
     | '/clients/$id'
+    | '/clients/new'
+    | '/collections/new'
     | '/loans/new'
     | '/clients/'
     | '/groups/'
@@ -160,6 +181,8 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/reports'
     | '/clients/$id'
+    | '/clients/new'
+    | '/collections/new'
     | '/loans/new'
     | '/clients'
     | '/groups'
@@ -175,6 +198,8 @@ export interface FileRouteTypes {
     | '/_authenticated/ledger'
     | '/_authenticated/reports'
     | '/_authenticated/clients/$id'
+    | '/_authenticated/clients/new'
+    | '/_authenticated/collections/new'
     | '/_authenticated/loans/new'
     | '/_authenticated/clients/'
     | '/_authenticated/groups/'
@@ -273,6 +298,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLoansNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/collections/new': {
+      id: '/_authenticated/collections/new'
+      path: '/new'
+      fullPath: '/collections/new'
+      preLoaderRoute: typeof AuthenticatedCollectionsNewRouteImport
+      parentRoute: typeof AuthenticatedCollectionsRoute
+    }
+    '/_authenticated/clients/new': {
+      id: '/_authenticated/clients/new'
+      path: '/clients/new'
+      fullPath: '/clients/new'
+      preLoaderRoute: typeof AuthenticatedClientsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/clients/$id': {
       id: '/_authenticated/clients/$id'
       path: '/clients/$id'
@@ -283,13 +322,28 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedCollectionsRouteChildren {
+  AuthenticatedCollectionsNewRoute: typeof AuthenticatedCollectionsNewRoute
+}
+
+const AuthenticatedCollectionsRouteChildren: AuthenticatedCollectionsRouteChildren =
+  {
+    AuthenticatedCollectionsNewRoute: AuthenticatedCollectionsNewRoute,
+  }
+
+const AuthenticatedCollectionsRouteWithChildren =
+  AuthenticatedCollectionsRoute._addFileChildren(
+    AuthenticatedCollectionsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRoute
+  AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLedgerRoute: typeof AuthenticatedLedgerRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
+  AuthenticatedClientsNewRoute: typeof AuthenticatedClientsNewRoute
   AuthenticatedLoansNewRoute: typeof AuthenticatedLoansNewRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedGroupsIndexRoute: typeof AuthenticatedGroupsIndexRoute
@@ -298,11 +352,12 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedCollectionsRoute: AuthenticatedCollectionsRoute,
+  AuthenticatedCollectionsRoute: AuthenticatedCollectionsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLedgerRoute: AuthenticatedLedgerRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedClientsIdRoute: AuthenticatedClientsIdRoute,
+  AuthenticatedClientsNewRoute: AuthenticatedClientsNewRoute,
   AuthenticatedLoansNewRoute: AuthenticatedLoansNewRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedGroupsIndexRoute: AuthenticatedGroupsIndexRoute,

@@ -4,9 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { LayoutDashboard, Users, Wallet, HandCoins, Users2, LineChart, BookOpen, Settings, Search, Circle, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard } from "@/lib/mzizi.functions";
-import { ModalProvider, useModals } from "./modal-context";
-import { RecordRepaymentModal } from "./RecordRepaymentModal";
-import { NewClientModal } from "./NewClientModal";
 import { cn } from "@/lib/utils";
 
 const NAV: { to: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
@@ -36,7 +33,6 @@ function TITLE(pathname: string): { title: string; sub: string } {
 function ShellInner() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { title, sub } = TITLE(pathname);
-  const modals = useModals();
   const router = useRouter();
   const qc = useQueryClient();
   const sessionFn = useServerFn(getSession);
@@ -120,12 +116,12 @@ function ShellInner() {
             <Search size={15} /> Search clients, loans, groups…
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <button
-              onClick={() => modals.openRepay()}
+            <Link
+              to="/collections/new"
               className="border border-border-strong bg-card text-secondary-foreground text-[12.5px] font-medium px-3.5 py-2 rounded-[9px] hover:border-input hover:bg-row-hover"
             >
               Record repayment
-            </button>
+            </Link>
             <Link
               to="/loans/new"
               className="bg-primary text-primary-foreground text-[12.5px] font-semibold px-3.5 py-2 rounded-[9px] hover:bg-primary-hover flex items-center gap-1.5"
@@ -142,17 +138,10 @@ function ShellInner() {
           <Outlet />
         </main>
       </div>
-
-      <RecordRepaymentModal open={modals.repay.open} onClose={modals.close} presetLoanId={modals.repay.loanId} />
-      <NewClientModal open={modals.newClient.open} onClose={modals.close} />
     </div>
   );
 }
 
 export function AppShell() {
-  return (
-    <ModalProvider>
-      <ShellInner />
-    </ModalProvider>
-  );
+  return <ShellInner />;
 }
