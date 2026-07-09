@@ -73,30 +73,45 @@ function ShellInner() {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">
-          {NAV.map((n) => {
-            const active = pathname === n.to || (n.to !== "/dashboard" && pathname.startsWith(n.to));
-            const Icon = n.icon;
-            return (
-              <Link
-                key={n.to}
-                to={n.to}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13px]",
-                  active ? "text-white font-semibold" : "text-rail-foreground/85 font-medium hover:bg-white/5",
-                )}
-                style={active ? { background: "var(--rail-active)" } : undefined}
-              >
-                <Icon size={18} className="flex-none" />
-                <span className="flex-1">{n.label}</span>
-                {n.to === "/loans" && approvalsCount > 0 && (
-                  <span className="text-[10.5px] font-semibold font-mono px-1.5 py-0.5 rounded-full" style={{ background: "#f59e0b", color: "#3a2606" }}>
-                    {approvalsCount}
-                  </span>
-                )}
-              </Link>
-            );
+          {NAV.map((entry, idx) => {
+            if ("section" in entry) {
+              return (
+                <div key={entry.section} className="mt-3 mb-1">
+                  <div className="px-3 text-[10px] font-semibold tracking-wider uppercase text-rail-muted mb-1">{entry.section}</div>
+                  {entry.items.map((n) => renderNav(n))}
+                </div>
+              );
+            }
+            return renderNav(entry);
           })}
         </nav>
+      </aside>
+    </>
+  );
+
+  function renderNav(n: NavItem) {
+    const active = pathname === n.to || (n.to !== "/dashboard" && pathname.startsWith(n.to));
+    const Icon = n.icon;
+    return (
+      <Link
+        key={n.to}
+        to={n.to}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13px]",
+          active ? "text-white font-semibold" : "text-rail-foreground/85 font-medium hover:bg-white/5",
+        )}
+        style={active ? { background: "var(--rail-active)" } : undefined}
+      >
+        <Icon size={18} className="flex-none" />
+        <span className="flex-1">{n.label}</span>
+        {n.to === "/loans" && approvalsCount > 0 && (
+          <span className="text-[10.5px] font-semibold font-mono px-1.5 py-0.5 rounded-full" style={{ background: "#f59e0b", color: "#3a2606" }}>
+            {approvalsCount}
+          </span>
+        )}
+      </Link>
+    );
+  }
         <div className="border-t border-white/5 p-3.5 flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-white text-[13px] bg-primary flex-none">
             {(session?.staff?.full_name ?? "?")
