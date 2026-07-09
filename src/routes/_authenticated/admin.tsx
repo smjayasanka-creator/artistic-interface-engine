@@ -17,6 +17,7 @@ import {
 } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
+import { FormGrid, FormField, FormActions, inputCls, selectCls } from "@/components/mzizi/FormGrid";
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
@@ -162,18 +163,18 @@ function BranchesTab() {
     return (
       <Card>
         <FormHeader title="New branch" onBack={() => setMode("list")} />
-        <form onSubmit={submit} className="flex flex-col gap-3 mt-3 max-w-2xl">
-          <div className="grid grid-cols-[0.5fr_1fr] gap-3">
-            <Field label="Code">
+        <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
+          <FormGrid>
+            <FormField label="Code" required span={2}>
               <input
                 value={form.code}
                 onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
                 placeholder="NRB"
-                className={inputCls}
+                className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-            <Field label="Name">
+            </FormField>
+            <FormField label="Name" required span={6}>
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -181,41 +182,47 @@ function BranchesTab() {
                 className={inputCls}
                 required
               />
-            </Field>
-          </div>
-          <Field label="Region">
-            <input
-              value={form.region}
-              onChange={(e) => setForm({ ...form, region: e.target.value })}
-              placeholder="optional"
-              className={inputCls}
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Currency">
+            </FormField>
+            <FormField label="Currency" span={2}>
               <input
                 value={form.currency}
                 onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
                 maxLength={3}
                 className={inputCls + " font-mono"}
               />
-            </Field>
-            <Field label="Opened on">
+            </FormField>
+            <FormField label="Opened on" span={2}>
               <input
                 type="date"
                 value={form.opened_on}
                 onChange={(e) => setForm({ ...form, opened_on: e.target.value })}
                 className={inputCls + " font-mono"}
               />
-            </Field>
-          </div>
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-2 w-fit"
-          >
-            {create.isPending ? "Creating…" : "Create branch"}
-          </button>
+            </FormField>
+            <FormField label="Region" span={12} hint="Optional">
+              <input
+                value={form.region}
+                onChange={(e) => setForm({ ...form, region: e.target.value })}
+                className={inputCls}
+              />
+            </FormField>
+          </FormGrid>
+          <FormActions>
+            <button
+              type="button"
+              onClick={() => setMode("list")}
+              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+            >
+              {create.isPending ? "Creating…" : "Create branch"}
+            </button>
+          </FormActions>
         </form>
       </Card>
     );
@@ -323,49 +330,32 @@ function StaffTab() {
     return (
       <Card>
         <FormHeader title="New staff" onBack={() => setMode("list")} />
-        <form onSubmit={submit} className="flex flex-col gap-3 mt-3 max-w-2xl">
-          <Field label="Full name">
-            <input
-              value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              className={inputCls}
-              required
-            />
-          </Field>
-          <Field label="Branch">
-            <select
-              value={form.branch_id}
-              onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
-              className={inputCls}
-              required
-            >
-              <option value="">Select branch…</option>
-              {data.branches.map((b: any) => (
-                <option key={b.id} value={b.id}>
-                  {b.code} — {b.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Role">
-            <div className="flex flex-wrap gap-1.5">
-              {STAFF_ROLES.map((r) => (
-                <button
-                  type="button"
-                  key={r}
-                  onClick={() => setForm({ ...form, role: r })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                    form.role === r ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
-                  )}
-                >
-                  {r.replace("_", " ")}
-                </button>
-              ))}
-            </div>
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Email">
+        <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
+          <FormGrid>
+            <FormField label="Full name" required span={6}>
+              <input
+                value={form.full_name}
+                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                className={inputCls}
+                required
+              />
+            </FormField>
+            <FormField label="Branch" required span={6}>
+              <select
+                value={form.branch_id}
+                onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
+                className={selectCls}
+                required
+              >
+                <option value="">Select branch…</option>
+                {data.branches.map((b: any) => (
+                  <option key={b.id} value={b.id}>
+                    {b.code} — {b.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Email" span={4}>
               <input
                 type="email"
                 value={form.email}
@@ -373,27 +363,53 @@ function StaffTab() {
                 className={inputCls}
                 placeholder="optional"
               />
-            </Field>
-            <Field label="Phone">
+            </FormField>
+            <FormField label="Phone" span={3}>
               <input
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className={inputCls + " font-mono"}
                 placeholder="optional"
               />
-            </Field>
-          </div>
+            </FormField>
+            <FormField label="Role" span={12}>
+              <div className="flex flex-wrap gap-1.5">
+                {STAFF_ROLES.map((r) => (
+                  <button
+                    type="button"
+                    key={r}
+                    onClick={() => setForm({ ...form, role: r })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
+                      form.role === r ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
+                    )}
+                  >
+                    {r.replace("_", " ")}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+          </FormGrid>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             Creates a staff profile. To let this person sign in, they still need to register with the same email — their
             login will then link to this profile.
           </p>
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-1 w-fit"
-          >
-            {create.isPending ? "Adding…" : "Add staff"}
-          </button>
+          <FormActions>
+            <button
+              type="button"
+              onClick={() => setMode("list")}
+              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+            >
+              {create.isPending ? "Adding…" : "Add staff"}
+            </button>
+          </FormActions>
         </form>
       </Card>
     );
@@ -530,24 +546,31 @@ function ProductsTab() {
     });
   }
 
-  const selectCls = inputCls + " appearance-none bg-card";
-
   if (mode === "create") {
     return (
       <Card>
         <FormHeader title="New loan product" onBack={() => setMode("list")} />
-        <form onSubmit={submit} className="flex flex-col gap-3 mt-3 text-[12.5px] max-w-3xl">
-          <Field label="Product name">
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Kilimo Boost"
-              className={inputCls}
-              required
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Min rate (%/yr)">
+        <form onSubmit={submit} className="flex flex-col gap-4 mt-4 text-[12.5px]">
+          <FormGrid>
+            <FormField label="Product name" required span={6}>
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. Kilimo Boost"
+                className={inputCls}
+                required
+              />
+            </FormField>
+            <FormField label="Processing fee (%)" span={2}>
+              <input
+                type="number"
+                step="0.01"
+                value={form.processingFee}
+                onChange={(e) => setForm({ ...form, processingFee: e.target.value })}
+                className={inputCls + " font-mono"}
+              />
+            </FormField>
+            <FormField label="Min rate (%/yr)" required span={2}>
               <input
                 type="number"
                 step="0.01"
@@ -556,8 +579,8 @@ function ProductsTab() {
                 className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-            <Field label="Max rate (%/yr)">
+            </FormField>
+            <FormField label="Max rate (%/yr)" span={2}>
               <input
                 type="number"
                 step="0.01"
@@ -566,10 +589,8 @@ function ProductsTab() {
                 placeholder="optional"
                 className={inputCls + " font-mono"}
               />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Min term (months)">
+            </FormField>
+            <FormField label="Min term (months)" required span={3}>
               <input
                 type="number"
                 min={1}
@@ -578,8 +599,8 @@ function ProductsTab() {
                 className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-            <Field label="Max term (months)">
+            </FormField>
+            <FormField label="Max term (months)" required span={3}>
               <input
                 type="number"
                 min={1}
@@ -588,10 +609,8 @@ function ProductsTab() {
                 className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Min principal (KES)">
+            </FormField>
+            <FormField label="Min principal (KES)" required span={3}>
               <input
                 type="number"
                 value={form.minPrincipal}
@@ -599,8 +618,8 @@ function ProductsTab() {
                 className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-            <Field label="Max principal (KES)">
+            </FormField>
+            <FormField label="Max principal (KES)" span={3}>
               <input
                 type="number"
                 value={form.maxPrincipal}
@@ -608,61 +627,53 @@ function ProductsTab() {
                 placeholder="optional"
                 className={inputCls + " font-mono"}
               />
-            </Field>
-          </div>
-          <Field label="Repayment frequency">
-            <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
-                <button
-                  type="button"
-                  key={f}
-                  onClick={() => setForm({ ...form, frequency: f })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                    form.frequency === f
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card border-border",
-                  )}
-                >
-                  {FREQ_META[f].label}
-                </button>
-              ))}
-            </div>
-          </Field>
-          <Field label="Interest method">
-            <div className="flex gap-1.5">
-              {(["flat", "declining_balance"] as InterestMethod[]).map((m) => (
-                <button
-                  type="button"
-                  key={m}
-                  onClick={() => setForm({ ...form, method: m })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                    form.method === m
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card border-border",
-                  )}
-                >
-                  {m.replace("_", " ")}
-                </button>
-              ))}
-            </div>
-          </Field>
-          <Field label="Processing fee (%)">
-            <input
-              type="number"
-              step="0.01"
-              value={form.processingFee}
-              onChange={(e) => setForm({ ...form, processingFee: e.target.value })}
-              className={inputCls + " font-mono"}
-            />
-          </Field>
-          <div className="mt-2 pt-3 border-t border-border">
-            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">
+            </FormField>
+            <FormField label="Repayment frequency" span={7}>
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
+                  <button
+                    type="button"
+                    key={f}
+                    onClick={() => setForm({ ...form, frequency: f })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
+                      form.frequency === f
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border",
+                    )}
+                  >
+                    {FREQ_META[f].label}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+            <FormField label="Interest method" span={5}>
+              <div className="flex gap-1.5">
+                {(["flat", "declining_balance"] as InterestMethod[]).map((m) => (
+                  <button
+                    type="button"
+                    key={m}
+                    onClick={() => setForm({ ...form, method: m })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
+                      form.method === m
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border",
+                    )}
+                  >
+                    {m.replace("_", " ")}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+          </FormGrid>
+
+          <div className="pt-3 border-t border-border">
+            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">
               Ledger accounts (auto-posting)
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Loans receivable (DR on disburse)">
+            <FormGrid>
+              <FormField label="Loans receivable (DR on disburse)" span={6}>
                 <select
                   value={form.principalAcct}
                   onChange={(e) => setForm({ ...form, principalAcct: e.target.value })}
@@ -675,8 +686,8 @@ function ProductsTab() {
                     </option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Cash / bank (CR on disburse)">
+              </FormField>
+              <FormField label="Cash / bank (CR on disburse)" span={6}>
                 <select
                   value={form.cashAcct}
                   onChange={(e) => setForm({ ...form, cashAcct: e.target.value })}
@@ -689,8 +700,8 @@ function ProductsTab() {
                     </option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Interest income (CR on repayment)">
+              </FormField>
+              <FormField label="Interest income (CR on repayment)" span={6}>
                 <select
                   value={form.interestAcct}
                   onChange={(e) => setForm({ ...form, interestAcct: e.target.value })}
@@ -703,8 +714,8 @@ function ProductsTab() {
                     </option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Fee income (optional)">
+              </FormField>
+              <FormField label="Fee income (optional)" span={6}>
                 <select
                   value={form.feeAcct}
                   onChange={(e) => setForm({ ...form, feeAcct: e.target.value })}
@@ -717,17 +728,26 @@ function ProductsTab() {
                     </option>
                   ))}
                 </select>
-              </Field>
-            </div>
+              </FormField>
+            </FormGrid>
           </div>
 
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-2 w-fit"
-          >
-            {create.isPending ? "Creating…" : "Create product"}
-          </button>
+          <FormActions>
+            <button
+              type="button"
+              onClick={() => setMode("list")}
+              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+            >
+              {create.isPending ? "Creating…" : "Create product"}
+            </button>
+          </FormActions>
         </form>
       </Card>
     );
@@ -849,9 +869,9 @@ function AccountsTab() {
     return (
       <Card>
         <FormHeader title="New account" onBack={() => setMode("list")} />
-        <form onSubmit={submit} className="flex flex-col gap-3 mt-3 max-w-2xl">
-          <div className="grid grid-cols-[0.5fr_1fr] gap-3">
-            <Field label="Code">
+        <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
+          <FormGrid>
+            <FormField label="Code" required span={2}>
               <input
                 value={form.code}
                 onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
@@ -859,8 +879,8 @@ function AccountsTab() {
                 className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-            <Field label="Name">
+            </FormField>
+            <FormField label="Name" required span={7}>
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -868,55 +888,64 @@ function AccountsTab() {
                 className={inputCls}
                 required
               />
-            </Field>
-          </div>
-          <Field label="Type">
-            <div className="flex flex-wrap gap-1.5">
-              {ACCOUNT_TYPES.map((t) => (
-                <button
-                  type="button"
-                  key={t}
-                  onClick={() => setForm({ ...form, type: t, normal_balance: DEFAULT_NORMAL_BALANCE[t] })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                    form.type === t ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </Field>
-          <Field label="Normal balance">
-            <div className="flex gap-1.5">
-              {([1, -1] as const).map((v) => (
-                <button
-                  type="button"
-                  key={v}
-                  onClick={() => setForm({ ...form, normal_balance: v })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                    form.normal_balance === v
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card border-border",
-                  )}
-                >
-                  {v === 1 ? "Debit" : "Credit"}
-                </button>
-              ))}
-            </div>
-          </Field>
+            </FormField>
+            <FormField label="Normal balance" span={3}>
+              <div className="flex gap-1.5">
+                {([1, -1] as const).map((v) => (
+                  <button
+                    type="button"
+                    key={v}
+                    onClick={() => setForm({ ...form, normal_balance: v })}
+                    className={cn(
+                      "flex-1 px-3 py-1.5 rounded-md border text-[11.5px] font-medium",
+                      form.normal_balance === v
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border",
+                    )}
+                  >
+                    {v === 1 ? "Debit" : "Credit"}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+            <FormField label="Type" span={12}>
+              <div className="flex flex-wrap gap-1.5">
+                {ACCOUNT_TYPES.map((t) => (
+                  <button
+                    type="button"
+                    key={t}
+                    onClick={() => setForm({ ...form, type: t, normal_balance: DEFAULT_NORMAL_BALANCE[t] })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
+                      form.type === t ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+          </FormGrid>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             Assets & expenses are normally debit; liabilities, equity & income are normally credit. The default is set
             when you pick a type.
           </p>
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-1 w-fit"
-          >
-            {create.isPending ? "Creating…" : "Create account"}
-          </button>
+          <FormActions>
+            <button
+              type="button"
+              onClick={() => setMode("list")}
+              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+            >
+              {create.isPending ? "Creating…" : "Create account"}
+            </button>
+          </FormActions>
         </form>
       </Card>
     );
@@ -992,13 +1021,3 @@ function AccountsTab() {
   );
 }
 
-const inputCls = "border border-input rounded-md px-2.5 py-1.5 text-sm bg-background";
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-[11px] uppercase tracking-wider text-faint font-semibold">{label}</span>
-      {children}
-    </label>
-  );
-}
