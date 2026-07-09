@@ -45,7 +45,7 @@ function RecordRepaymentPage() {
   const valid = loanId && amount && Number(amount) > 0;
 
   return (
-    <div className="animate-fadein max-w-3xl mx-auto flex flex-col gap-4">
+    <div className="animate-fadein flex flex-col gap-4">
       <Link to="/collections" className="text-xs text-primary hover:underline">← Back to collections</Link>
       <div>
         <h1 className="text-xl font-semibold">Record repayment</h1>
@@ -61,70 +61,65 @@ function RecordRepaymentPage() {
               loan_id: loanId,
               amount: Number(amount),
               channel,
-              // extra optional fields ignored by server if not accepted; kept for UX
               ...(reference ? { reference } : {}),
             } as any,
           });
         }}
         className="flex flex-col gap-4"
       >
-        <Card className="p-6 flex flex-col gap-4">
-          <Field label="Loan" required>
-            <select value={loanId} onChange={(e) => setLoanId(e.target.value)} className={inputCls}>
-              <option value="">Select loan…</option>
-              {(loans ?? []).map((l: any) => (
-                <option key={l.id} value={l.id}>
-                  {l.client?.full_name} — {money(l.principal)}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Amount (KES)" required>
+        <Card className="p-6">
+          <FormGrid>
+            <FormField label="Loan" required span={8}>
+              <select value={loanId} onChange={(e) => setLoanId(e.target.value)} className={selectCls}>
+                <option value="">Select loan…</option>
+                {(loans ?? []).map((l: any) => (
+                  <option key={l.id} value={l.id}>
+                    {l.client?.full_name} — {money(l.principal)}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Received on" required span={2}>
+              <input type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} className={inputCls + " font-mono"} />
+            </FormField>
+            <FormField label="Amount (KES)" required span={2}>
               <input
                 inputMode="numeric"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
                 placeholder="0"
-                className={`${inputCls} font-mono text-base font-semibold`}
+                className={`${inputCls} font-mono font-semibold`}
               />
-            </Field>
-            <Field label="Received on" required>
-              <input type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} className={inputCls} />
-            </Field>
-          </div>
-
-          <Field label="Method" required>
-            <div className="grid grid-cols-3 gap-2 mt-1">
-              {(["cash", "mpesa", "bank"] as const).map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setChannel(c)}
-                  className={cn(
-                    "text-sm py-2 rounded-md border font-medium capitalize",
-                    channel === c
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background border-input text-secondary-foreground hover:border-border-strong",
-                  )}
-                >
-                  {c === "mpesa" ? "M-Pesa" : c}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field label={channel === "mpesa" ? "M-Pesa reference" : channel === "bank" ? "Bank reference" : "Receipt no."}>
-            <input value={reference} onChange={(e) => setReference(e.target.value)} className={`${inputCls} font-mono`} maxLength={40} />
-          </Field>
-
-          <Field label="Notes">
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={300} className={inputCls} />
-          </Field>
+            </FormField>
+            <FormField label="Method" required span={5}>
+              <div className="grid grid-cols-3 gap-2">
+                {(["cash", "mpesa", "bank"] as const).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setChannel(c)}
+                    className={cn(
+                      "text-sm py-1.5 rounded-md border font-medium capitalize",
+                      channel === c
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background border-input text-secondary-foreground hover:border-border-strong",
+                    )}
+                  >
+                    {c === "mpesa" ? "M-Pesa" : c}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+            <FormField label={channel === "mpesa" ? "M-Pesa reference" : channel === "bank" ? "Bank reference" : "Receipt no."} span={7}>
+              <input value={reference} onChange={(e) => setReference(e.target.value)} className={`${inputCls} font-mono`} maxLength={40} />
+            </FormField>
+            <FormField label="Notes" span={12}>
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={300} className={inputCls} />
+            </FormField>
+          </FormGrid>
         </Card>
 
-        <div className="flex justify-end gap-2">
+        <FormActions className="border-t-0 pt-0 mt-0">
           <Link to="/collections" className="text-sm px-4 py-2 border border-input rounded-md hover:bg-muted">Cancel</Link>
           <button
             type="submit"
@@ -133,21 +128,9 @@ function RecordRepaymentPage() {
           >
             {post.isPending ? "Posting…" : "Post repayment"}
           </button>
-        </div>
+        </FormActions>
       </form>
     </div>
   );
 }
 
-const inputCls = "mt-1 w-full border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30";
-
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="text-xs font-medium text-muted-foreground">
-        {label} {required && <span className="text-destructive">*</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
