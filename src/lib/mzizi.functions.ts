@@ -1113,16 +1113,32 @@ export const toggleGlAccount = createServerFn({ method: "POST" })
 
 export const getJournalEntries = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i: { from?: string; to?: string; search?: string }) =>
+    z
+      .object({
+        from: z.string().optional(),
+        to: z.string().optional(),
+        search: z.string().optional(),
+      })
+      .parse(i ?? {}),
+  )
+  .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: entries } = await supabase
+    let q = supabase
       .from("journal_entry")
       .select("id, reference, entry_date, description, created_at, loan_id, branch:branch_id(code,name)")
       .order("entry_date", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(200);
+    if (data.from) q = q.gte("entry_date", data.from);
+    if (data.to) q = q.lte("entry_date", data.to);
+    if (data.search && data.search.trim()) {
+      const s = data.search.trim().replace(/[%,]/g, "");
+      q = q.or(`reference.ilike.%${s}%,description.ilike.%${s}%`);
+    }
+    const { data: entries } = await q;
     const ids = (entries ?? []).map((e) => e.id);
-    let postingsByEntry: Record<string, { debit: number; credit: number; lines: number }> = {};
+    const postingsByEntry: Record<string, { debit: number; credit: number; lines: number }> = {};
     if (ids.length) {
       const { data: postings } = await supabase
         .from("posting")
