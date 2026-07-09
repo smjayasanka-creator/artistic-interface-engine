@@ -434,7 +434,15 @@ export const createClient = createServerFn({ method: "POST" })
 export const submitApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (i: { client_id: string; product_id: string; principal: number; term_months: number; purpose?: string }) =>
+    (i: {
+      client_id: string;
+      product_id: string;
+      principal: number;
+      term_months: number;
+      purpose?: string;
+      annual_rate_pct?: number;
+      frequency?: "daily" | "weekly" | "biweekly" | "monthly";
+    }) =>
       z
         .object({
           client_id: z.string().uuid(),
@@ -442,6 +450,8 @@ export const submitApplication = createServerFn({ method: "POST" })
           principal: z.number().positive(),
           term_months: z.number().int().positive(),
           purpose: z.string().optional(),
+          annual_rate_pct: z.number().positive().max(200).optional(),
+          frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]).optional(),
         })
         .parse(i),
   )
@@ -465,8 +475,8 @@ export const submitApplication = createServerFn({ method: "POST" })
         officer_id: staff.id,
         principal: data.principal,
         term_months: data.term_months,
-        annual_rate_pct: product.annual_rate_pct,
-        frequency: product.frequency,
+        annual_rate_pct: data.annual_rate_pct ?? product.annual_rate_pct,
+        frequency: data.frequency ?? product.frequency,
         purpose: data.purpose,
         status: "submitted",
         submitted_at: new Date().toISOString(),
