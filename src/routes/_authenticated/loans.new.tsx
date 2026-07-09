@@ -5,14 +5,32 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getClients, getProducts, submitApplication } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
-import { FormGrid, FormField, FormActions, inputCls, selectCls, readOnlyCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
+import {
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  selectCls,
+  readOnlyCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
+} from "@/components/mzizi/FormGrid";
 import { money, shortDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 import { generateSchedule, FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
 
 export const Route = createFileRoute("/_authenticated/loans/new")({
   component: NewLoan,
 });
+
+type TabKey = "customer" | "application" | "documents" | "evaluations";
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "customer", label: "Customer" },
+  { key: "application", label: "Application" },
+  { key: "documents", label: "Documents" },
+  { key: "evaluations", label: "Evaluations" },
+];
 
 function FormHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
@@ -29,8 +47,34 @@ function FormHeader({ title, onBack }: { title: string; onBack: () => void }) {
   );
 }
 
+function TabHeader({ tab, setTab }: { tab: TabKey; setTab: (t: TabKey) => void }) {
+  return (
+    <div className="flex items-center gap-1 border-b border-border mt-4 -mx-1 px-1 overflow-x-auto">
+      {TABS.map((t) => {
+        const active = tab === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={cn(
+              "px-4 py-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
+              active
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function NewLoan() {
   const nav = useNavigate();
+  const [tab, setTab] = useState<TabKey>("customer");
   const [clientId, setClientId] = useState("");
   const [productId, setProductId] = useState("");
   const [principal, setPrincipal] = useState("");
@@ -42,7 +86,10 @@ function NewLoan() {
 
   const clientsFn = useServerFn(getClients);
   const productsFn = useServerFn(getProducts);
-  const { data: clients } = useQuery({ queryKey: ["clients", "all"], queryFn: () => clientsFn({ data: { filter: "all" } }) });
+  const { data: clients } = useQuery({
+    queryKey: ["clients", "all"],
+    queryFn: () => clientsFn({ data: { filter: "all" } }),
+  });
   const { data: products } = useQuery({ queryKey: ["products"], queryFn: () => productsFn() });
   const qc = useQueryClient();
   const submitFn = useServerFn(submitApplication);
@@ -82,13 +129,11 @@ function NewLoan() {
   }, [principalNum, rateNum, term, frequency, method]);
 
   const termOptions = useMemo(() => {
-    if (!product) return [3, 6, 12];
-    const lo = product.min_term_months ?? 1;
-    const hi = product.max_term_months ?? 12;
-    const opts = new Set<number>();
-    for (let t = lo; t <= hi; t = t < 12 ? t + Math.max(1, Math.floor((hi - lo) / 4)) : t + 6) opts.add(t);
-    opts.add(hi);
-    return Array.from(opts).slice(0, 6);
+    const lo = product?.min_term_months ?? 1;
+    const hi = product?.max_term_months ?? 24;
+    const opts: number[] = [];
+    for (let t = lo; t <= hi; t++) opts.push(t);
+    return opts;
   }, [product]);
 
   const outOfRange =
@@ -104,207 +149,243 @@ function NewLoan() {
     <div className="animate-fadein">
       <Card>
         <FormHeader title="New loan application" onBack={() => nav({ to: "/loans" })} />
+        <TabHeader tab={tab} setTab={setTab} />
 
         <div className="flex flex-col gap-4 text-[12.5px] mt-5">
-          <FormGrid>
-            <FormField label="Select client" span={6} required>
-              <select value={clientId} onChange={(e) => setClientId(e.target.value)} className={selectCls}>
-                <option value="">— pick a client —</option>
-                {(clients ?? []).map((c: any) => (
-                  <option key={c.id} value={c.id}>
-                    {c.full_name} {c.group?.name ? `· ${c.group.name}` : ""}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <FormField label="Purpose" span={6} hint="Optional">
-              <input
-                value={purpose}
-                onChange={(e) => setPurpose(e.target.value)}
-                placeholder="Working capital, school fees, …"
-                className={inputCls}
-              />
-            </FormField>
-
-            {selectedClient && (
-              <>
-                <div className="sm:col-span-12 text-[11px] uppercase tracking-wider text-faint font-semibold pb-1 border-b border-border -mt-1">
-                  Customer details
-                </div>
-                <FormField label="Phone" span={3}>
-                  <input value={selectedClient.phone ?? "—"} readOnly className={readOnlyCls} />
-                </FormField>
-                <FormField label="National ID" span={3}>
-                  <input value={selectedClient.national_id ?? "—"} readOnly className={readOnlyCls} />
-                </FormField>
-                <FormField label="Email" span={3}>
-                  <input value={selectedClient.email ?? "—"} readOnly className={readOnlyCls} />
-                </FormField>
-                <FormField label="Gender" span={3}>
-                  <input value={selectedClient.gender ?? "—"} readOnly className={readOnlyCls} />
-                </FormField>
-                <FormField label="Date of birth" span={3}>
-                  <input value={selectedClient.date_of_birth ? shortDate(selectedClient.date_of_birth) : "—"} readOnly className={readOnlyCls} />
-                </FormField>
-                <FormField label="Joined" span={3}>
-                  <input value={selectedClient.joined_on ? shortDate(selectedClient.joined_on) : "—"} readOnly className={readOnlyCls} />
-                </FormField>
-                <FormField label="Status" span={2}>
-                  <input value={selectedClient.status ?? "—"} readOnly className={readOnlyCls} />
-                </FormField>
-                <FormField label="Risk grade" span={2}>
-                  <input value={selectedClient.risk_grade ?? "—"} readOnly className={readOnlyCls} />
-                </FormField>
-                <FormField label="Group" span={2}>
-                  <input value={selectedClient.group?.name ?? "Individual"} readOnly className={readOnlyCls} />
-                </FormField>
-                <FormField label="Occupation" span={4}>
-                  <input value={selectedClient.occupation ?? "—"} readOnly className={readOnlyCls} />
-                </FormField>
-                <FormField label="Monthly income" span={4}>
-                  <input value={selectedClient.monthly_income ? money(Number(selectedClient.monthly_income), true) : "—"} readOnly className={readOnlyCls + " font-mono"} />
-                </FormField>
-                <FormField label="Address" span={8}>
-                  <input value={selectedClient.address ?? "—"} readOnly className={readOnlyCls} />
-                </FormField>
-              </>
-            )}
-
-            <FormField label="Product" span={6} required>
-              <select
-                value={productId}
-                onChange={(e) => {
-                  const p = (products ?? []).find((x: any) => x.id === e.target.value);
-                  if (p) selectProduct(p);
-                  else setProductId("");
-                }}
-                className={selectCls}
-              >
-                <option value="">— pick a product —</option>
-                {(products ?? []).map((p: any) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-
-            {product && (
-              <div className="sm:col-span-12 text-[11.5px] text-muted-foreground font-mono -mt-1">
-                Range: {money(product.min_principal)} – {product.max_principal ? money(product.max_principal) : "∞"} ·{" "}
-                {product.min_term_months}–{product.max_term_months} months · {FREQ_META[product.frequency as Frequency]?.label} ·{" "}
-                default {product.annual_rate_pct}%/yr
-              </div>
-            )}
-
-            <FormField label="Principal (KES)" span={4} required>
-              <input
-                value={principal}
-                onChange={(e) => setPrincipal(e.target.value.replace(/[^\d]/g, ""))}
-                placeholder="0"
-                className={inputCls + " font-mono"}
-              />
-            </FormField>
-            <FormField label="Annual rate (%)" span={3} required>
-              <input
-                type="number"
-                step="0.01"
-                value={rate}
-                onChange={(e) => setRate(e.target.value === "" ? "" : Number(e.target.value))}
-                placeholder={product ? String(product.annual_rate_pct) : "15"}
-                className={inputCls + " font-mono"}
-              />
-            </FormField>
-            <FormField label="Term (months)" span={5} required>
-              <div className="flex gap-1.5 items-center">
-                <select
-                  value={termOptions.includes(term) ? String(term) : ""}
-                  onChange={(e) => e.target.value && setTerm(Number(e.target.value))}
-                  className={selectCls}
-                >
-                  <option value="">— select term —</option>
-                  {termOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {t} months
+          {tab === "customer" && (
+            <FormGrid>
+              <FormField label="Select client" span={12} required>
+                <select value={clientId} onChange={(e) => setClientId(e.target.value)} className={selectCls}>
+                  <option value="">— pick a client —</option>
+                  {(clients ?? []).map((c: any) => (
+                    <option key={c.id} value={c.id}>
+                      {c.full_name} {c.group?.name ? `· ${c.group.name}` : ""}
                     </option>
                   ))}
                 </select>
-                <input
-                  type="number"
-                  min={1}
-                  value={term}
-                  onChange={(e) => setTerm(Math.max(1, Number(e.target.value) || 1))}
-                  className="w-20 border border-input rounded-md px-2 py-1.5 text-sm font-mono bg-background"
-                />
-              </div>
-            </FormField>
+              </FormField>
 
-            <FormField label="Repayment frequency" span={7}>
-              <select
-                value={frequency}
-                onChange={(e) => setFrequency(e.target.value as Frequency)}
-                className={selectCls}
-              >
-                {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
-                  <option key={f} value={f}>
-                    {FREQ_META[f].label}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <FormField label="Interest method" span={5}>
-              <select
-                value={method}
-                onChange={(e) => setMethod(e.target.value as InterestMethod)}
-                className={selectCls}
-              >
-                <option value="flat">Flat</option>
-                <option value="declining_balance">Declining balance</option>
-              </select>
-            </FormField>
-
-
-            {outOfRange && (
-              <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2">
-                Values are outside the product's configured range.
-              </div>
-            )}
-
-            {schedule && (
-              <div className="sm:col-span-12 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px] mt-1">
-                <SummaryStat label="Installments" value={String(schedule.installmentCount)} />
-                <SummaryStat label="Per payment" value={money(schedule.perPayment, true)} />
-                <SummaryStat label="Total interest" value={money(schedule.totalInterest, true)} />
-                <SummaryStat label="Total payable" value={money(schedule.totalPayment, true)} />
-              </div>
-            )}
-          </FormGrid>
-
-          {schedule && (
-            <div className="mt-2">
-              <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">Repayment schedule</div>
-              <div className="border border-border rounded-lg overflow-hidden max-h-96 overflow-y-auto">
-                <div
-                  className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-2 px-3 border-b border-border bg-secondary/40 sticky top-0"
-                  style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1fr 1fr" }}
-                >
-                  <div>#</div><div>Due</div><div>Principal</div><div>Interest</div><div>Payment</div><div>Balance</div>
-                </div>
-                {schedule.rows.map((r) => (
-                  <div
-                    key={r.seq}
-                    className="grid items-center text-[12px] py-1.5 px-3 border-b border-row-divider last:border-b-0"
-                    style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1fr 1fr" }}
-                  >
-                    <div className="font-mono text-muted-foreground">{r.seq}</div>
-                    <div>{shortDate(r.dueDate)}</div>
-                    <div className="font-mono">{money(r.principal, true)}</div>
-                    <div className="font-mono">{money(r.interest, true)}</div>
-                    <div className="font-mono font-semibold">{money(r.payment, true)}</div>
-                    <div className="font-mono text-muted-foreground">{money(r.balance, true)}</div>
+              {selectedClient ? (
+                <>
+                  <div className="sm:col-span-12 text-[11px] uppercase tracking-wider text-faint font-semibold pb-1 border-b border-border -mt-1">
+                    Customer details
                   </div>
-                ))}
-              </div>
+                  <FormField label="Phone" span={3}>
+                    <input value={selectedClient.phone ?? "—"} readOnly className={readOnlyCls} />
+                  </FormField>
+                  <FormField label="National ID" span={3}>
+                    <input value={selectedClient.national_id ?? "—"} readOnly className={readOnlyCls} />
+                  </FormField>
+                  <FormField label="Email" span={3}>
+                    <input value={selectedClient.email ?? "—"} readOnly className={readOnlyCls} />
+                  </FormField>
+                  <FormField label="Gender" span={3}>
+                    <input value={selectedClient.gender ?? "—"} readOnly className={readOnlyCls} />
+                  </FormField>
+                  <FormField label="Date of birth" span={3}>
+                    <input
+                      value={selectedClient.date_of_birth ? shortDate(selectedClient.date_of_birth) : "—"}
+                      readOnly
+                      className={readOnlyCls}
+                    />
+                  </FormField>
+                  <FormField label="Joined" span={3}>
+                    <input
+                      value={selectedClient.joined_on ? shortDate(selectedClient.joined_on) : "—"}
+                      readOnly
+                      className={readOnlyCls}
+                    />
+                  </FormField>
+                  <FormField label="Status" span={2}>
+                    <input value={selectedClient.status ?? "—"} readOnly className={readOnlyCls} />
+                  </FormField>
+                  <FormField label="Risk grade" span={2}>
+                    <input value={selectedClient.risk_grade ?? "—"} readOnly className={readOnlyCls} />
+                  </FormField>
+                  <FormField label="Group" span={2}>
+                    <input value={selectedClient.group?.name ?? "Individual"} readOnly className={readOnlyCls} />
+                  </FormField>
+                  <FormField label="Occupation" span={4}>
+                    <input value={selectedClient.occupation ?? "—"} readOnly className={readOnlyCls} />
+                  </FormField>
+                  <FormField label="Monthly income" span={4}>
+                    <input
+                      value={
+                        selectedClient.monthly_income ? money(Number(selectedClient.monthly_income), true) : "—"
+                      }
+                      readOnly
+                      className={readOnlyCls + " font-mono"}
+                    />
+                  </FormField>
+                  <FormField label="Address" span={8}>
+                    <input value={selectedClient.address ?? "—"} readOnly className={readOnlyCls} />
+                  </FormField>
+                </>
+              ) : (
+                <div className="sm:col-span-12 text-[12px] text-muted-foreground py-6 text-center border border-dashed border-border rounded-md">
+                  Select a client to view their details.
+                </div>
+              )}
+            </FormGrid>
+          )}
+
+          {tab === "application" && (
+            <>
+              <FormGrid>
+                <FormField label="Product" span={6} required>
+                  <select
+                    value={productId}
+                    onChange={(e) => {
+                      const p = (products ?? []).find((x: any) => x.id === e.target.value);
+                      if (p) selectProduct(p);
+                      else setProductId("");
+                    }}
+                    className={selectCls}
+                  >
+                    <option value="">— pick a product —</option>
+                    {(products ?? []).map((p: any) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label="Purpose" span={6} hint="Optional">
+                  <input
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    placeholder="Working capital, school fees, …"
+                    className={inputCls}
+                  />
+                </FormField>
+
+                {product && (
+                  <div className="sm:col-span-12 text-[11.5px] text-muted-foreground font-mono -mt-1">
+                    Range: {money(product.min_principal)} –{" "}
+                    {product.max_principal ? money(product.max_principal) : "∞"} · {product.min_term_months}–
+                    {product.max_term_months} months · {FREQ_META[product.frequency as Frequency]?.label} · default{" "}
+                    {product.annual_rate_pct}%/yr
+                  </div>
+                )}
+
+                <FormField label="Principal (KES)" span={4} required>
+                  <input
+                    value={principal}
+                    onChange={(e) => setPrincipal(e.target.value.replace(/[^\d]/g, ""))}
+                    placeholder="0"
+                    className={inputCls + " font-mono"}
+                  />
+                </FormField>
+                <FormField label="Annual rate (%)" span={4} required>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={rate}
+                    onChange={(e) => setRate(e.target.value === "" ? "" : Number(e.target.value))}
+                    placeholder={product ? String(product.annual_rate_pct) : "15"}
+                    className={inputCls + " font-mono"}
+                  />
+                </FormField>
+                <FormField label="Term (months)" span={4} required>
+                  <select
+                    value={String(term)}
+                    onChange={(e) => setTerm(Number(e.target.value))}
+                    className={selectCls}
+                  >
+                    {termOptions.map((t) => (
+                      <option key={t} value={t}>
+                        {t} {t === 1 ? "month" : "months"}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+
+                <FormField label="Repayment frequency" span={6}>
+                  <select
+                    value={frequency}
+                    onChange={(e) => setFrequency(e.target.value as Frequency)}
+                    className={selectCls}
+                  >
+                    {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
+                      <option key={f} value={f}>
+                        {FREQ_META[f].label}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label="Interest method" span={6}>
+                  <select
+                    value={method}
+                    onChange={(e) => setMethod(e.target.value as InterestMethod)}
+                    className={selectCls}
+                  >
+                    <option value="flat">Flat</option>
+                    <option value="declining_balance">Declining balance</option>
+                  </select>
+                </FormField>
+
+                {outOfRange && (
+                  <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2">
+                    Values are outside the product's configured range.
+                  </div>
+                )}
+
+                {schedule && (
+                  <div className="sm:col-span-12 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px] mt-1">
+                    <SummaryStat label="Installments" value={String(schedule.installmentCount)} />
+                    <SummaryStat label="Per payment" value={money(schedule.perPayment, true)} />
+                    <SummaryStat label="Total interest" value={money(schedule.totalInterest, true)} />
+                    <SummaryStat label="Total payable" value={money(schedule.totalPayment, true)} />
+                  </div>
+                )}
+              </FormGrid>
+
+              {schedule && (
+                <div className="mt-2">
+                  <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">
+                    Repayment schedule
+                  </div>
+                  <div className="border border-border rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+                    <div
+                      className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-2 px-3 border-b border-border bg-secondary/40 sticky top-0"
+                      style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1fr 1fr" }}
+                    >
+                      <div>#</div>
+                      <div>Due</div>
+                      <div>Principal</div>
+                      <div>Interest</div>
+                      <div>Payment</div>
+                      <div>Balance</div>
+                    </div>
+                    {schedule.rows.map((r) => (
+                      <div
+                        key={r.seq}
+                        className="grid items-center text-[12px] py-1.5 px-3 border-b border-row-divider last:border-b-0"
+                        style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1fr 1fr" }}
+                      >
+                        <div className="font-mono text-muted-foreground">{r.seq}</div>
+                        <div>{shortDate(r.dueDate)}</div>
+                        <div className="font-mono">{money(r.principal, true)}</div>
+                        <div className="font-mono">{money(r.interest, true)}</div>
+                        <div className="font-mono font-semibold">{money(r.payment, true)}</div>
+                        <div className="font-mono text-muted-foreground">{money(r.balance, true)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {tab === "documents" && (
+            <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
+              Document uploads (ID, payslip, collateral photos) will appear here.
+            </div>
+          )}
+
+          {tab === "evaluations" && (
+            <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
+              Credit scoring and evaluation checks will appear here.
             </div>
           )}
 
@@ -312,26 +393,53 @@ function NewLoan() {
             <button type="button" onClick={() => nav({ to: "/loans" })} className={btnSecondaryCls}>
               Cancel
             </button>
-            <button
-              type="button"
-              disabled={!canSubmit}
-              onClick={() =>
-                submit.mutate({
-                  data: {
-                    client_id: clientId,
-                    product_id: productId,
-                    principal: principalNum,
-                    term_months: term,
-                    purpose: purpose || undefined,
-                    annual_rate_pct: rateNum,
-                    frequency,
-                  },
-                })
-              }
-              className={btnPrimaryCls}
-            >
-              {submit.isPending ? "Submitting…" : "Submit application"}
-            </button>
+            <div className="flex items-center gap-2">
+              {tab !== "customer" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const i = TABS.findIndex((t) => t.key === tab);
+                    setTab(TABS[i - 1].key);
+                  }}
+                  className={btnSecondaryCls}
+                >
+                  ← Back
+                </button>
+              )}
+              {tab !== "evaluations" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const i = TABS.findIndex((t) => t.key === tab);
+                    setTab(TABS[i + 1].key);
+                  }}
+                  className={btnPrimaryCls}
+                >
+                  Next →
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!canSubmit}
+                  onClick={() =>
+                    submit.mutate({
+                      data: {
+                        client_id: clientId,
+                        product_id: productId,
+                        principal: principalNum,
+                        term_months: term,
+                        purpose: purpose || undefined,
+                        annual_rate_pct: rateNum,
+                        frequency,
+                      },
+                    })
+                  }
+                  className={btnPrimaryCls}
+                >
+                  {submit.isPending ? "Submitting…" : "Submit application"}
+                </button>
+              )}
+            </div>
           </FormActions>
         </div>
       </Card>
