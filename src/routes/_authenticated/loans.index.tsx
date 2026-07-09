@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Plus } from "lucide-react";
 import { getLoans } from "@/lib/mzizi.functions";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { money, shortDate } from "@/lib/format";
