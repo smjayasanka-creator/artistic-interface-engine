@@ -107,8 +107,10 @@ function NewClientPage() {
     });
   }
 
+  const cls = (k: FieldKey) => (showError(k) ? errorInputCls : inputCls);
+
   return (
-    <div className="animate-fadein max-w-4xl mx-auto flex flex-col gap-4">
+    <div className="animate-fadein flex flex-col gap-4">
       <Link to="/clients" className="text-xs text-primary hover:underline">← Back to clients</Link>
       <div>
         <h1 className="text-xl font-semibold">New client · KYC</h1>
@@ -117,72 +119,72 @@ function NewClientPage() {
         </p>
       </div>
 
-      <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <form onSubmit={submit} noValidate className="flex flex-col gap-5">
         <Card className="p-6">
           <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Personal details</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Full name" required error={showError("full_name") ? errors.full_name : undefined}>
-              <input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} onBlur={() => blur("full_name")} className={inputCls(!!showError("full_name"))} maxLength={120} />
-            </Field>
-            <Field label="National ID" required error={showError("national_id") ? errors.national_id : undefined}>
-              <input value={form.national_id} onChange={(e) => set("national_id", e.target.value)} onBlur={() => blur("national_id")} className={`${inputCls(!!showError("national_id"))} font-mono`} maxLength={30} />
-            </Field>
-            <Field label="Phone" required error={showError("phone") ? errors.phone : undefined}>
-              <input value={form.phone} onChange={(e) => set("phone", e.target.value)} onBlur={() => blur("phone")} placeholder="+254…" className={inputCls(!!showError("phone"))} maxLength={20} />
-            </Field>
-            <Field label="Email" error={showError("email") ? errors.email : undefined}>
-              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} onBlur={() => blur("email")} className={inputCls(!!showError("email"))} maxLength={255} />
-            </Field>
-            <Field label="Date of birth" required error={showError("date_of_birth") ? errors.date_of_birth : undefined}>
-              <input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} onBlur={() => blur("date_of_birth")} className={inputCls(!!showError("date_of_birth"))} />
-            </Field>
-            <Field label="Gender" required error={showError("gender") ? errors.gender : undefined}>
-              <select value={form.gender} onChange={(e) => set("gender", e.target.value as "" | Gender)} onBlur={() => blur("gender")} className={inputCls(!!showError("gender"))}>
+          <FormGrid>
+            <FormField label="Full name" required span={5} error={showError("full_name") ? errors.full_name : undefined}>
+              <input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} onBlur={() => blur("full_name")} className={cls("full_name")} maxLength={120} />
+            </FormField>
+            <FormField label="National ID" required span={3} error={showError("national_id") ? errors.national_id : undefined}>
+              <input value={form.national_id} onChange={(e) => set("national_id", e.target.value)} onBlur={() => blur("national_id")} className={`${cls("national_id")} font-mono`} maxLength={30} />
+            </FormField>
+            <FormField label="Date of birth" required span={2} error={showError("date_of_birth") ? errors.date_of_birth : undefined}>
+              <input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} onBlur={() => blur("date_of_birth")} className={cls("date_of_birth")} />
+            </FormField>
+            <FormField label="Gender" required span={2} error={showError("gender") ? errors.gender : undefined}>
+              <select value={form.gender} onChange={(e) => set("gender", e.target.value as "" | Gender)} onBlur={() => blur("gender")} className={cls("gender")}>
                 <option value="">Select…</option>
                 <option value="female">Female</option>
                 <option value="male">Male</option>
                 <option value="other">Other</option>
               </select>
-            </Field>
-            <Field label="Residential address" required error={showError("address") ? errors.address : undefined} className="col-span-2">
-              <textarea value={form.address} onChange={(e) => set("address", e.target.value)} onBlur={() => blur("address")} rows={2} maxLength={200} className={inputCls(!!showError("address"))} />
-            </Field>
-          </div>
+            </FormField>
+            <FormField label="Phone" required span={3} error={showError("phone") ? errors.phone : undefined}>
+              <input value={form.phone} onChange={(e) => set("phone", e.target.value)} onBlur={() => blur("phone")} placeholder="+254…" className={`${cls("phone")} font-mono`} maxLength={20} />
+            </FormField>
+            <FormField label="Email" span={5} error={showError("email") ? errors.email : undefined}>
+              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} onBlur={() => blur("email")} className={cls("email")} maxLength={255} />
+            </FormField>
+            <FormField label="Residential address" required span={12} error={showError("address") ? errors.address : undefined}>
+              <textarea value={form.address} onChange={(e) => set("address", e.target.value)} onBlur={() => blur("address")} rows={2} maxLength={200} className={cls("address")} />
+            </FormField>
+          </FormGrid>
         </Card>
 
         <Card className="p-6">
           <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Livelihood</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Occupation / business" required error={showError("occupation") ? errors.occupation : undefined}>
-              <input value={form.occupation} onChange={(e) => set("occupation", e.target.value)} onBlur={() => blur("occupation")} className={inputCls(!!showError("occupation"))} maxLength={80} />
-            </Field>
-            <Field label="Monthly income (KES)" required error={showError("monthly_income") ? errors.monthly_income : undefined}>
+          <FormGrid>
+            <FormField label="Occupation / business" required span={8} error={showError("occupation") ? errors.occupation : undefined}>
+              <input value={form.occupation} onChange={(e) => set("occupation", e.target.value)} onBlur={() => blur("occupation")} className={cls("occupation")} maxLength={80} />
+            </FormField>
+            <FormField label="Monthly income (KES)" required span={4} error={showError("monthly_income") ? errors.monthly_income : undefined}>
               <input
                 inputMode="numeric"
                 value={form.monthly_income}
                 onChange={(e) => set("monthly_income", e.target.value.replace(/[^\d.]/g, ""))}
                 onBlur={() => blur("monthly_income")}
-                className={`${inputCls(!!showError("monthly_income"))} font-mono`}
+                className={`${cls("monthly_income")} font-mono`}
               />
-            </Field>
-          </div>
+            </FormField>
+          </FormGrid>
         </Card>
 
         <Card className="p-6">
           <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Next of kin</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Full name" required error={showError("next_of_kin_name") ? errors.next_of_kin_name : undefined}>
-              <input value={form.next_of_kin_name} onChange={(e) => set("next_of_kin_name", e.target.value)} onBlur={() => blur("next_of_kin_name")} className={inputCls(!!showError("next_of_kin_name"))} maxLength={120} />
-            </Field>
-            <Field label="Phone" required error={showError("next_of_kin_phone") ? errors.next_of_kin_phone : undefined}>
-              <input value={form.next_of_kin_phone} onChange={(e) => set("next_of_kin_phone", e.target.value)} onBlur={() => blur("next_of_kin_phone")} placeholder="+254…" className={inputCls(!!showError("next_of_kin_phone"))} maxLength={20} />
-            </Field>
-          </div>
+          <FormGrid>
+            <FormField label="Full name" required span={8} error={showError("next_of_kin_name") ? errors.next_of_kin_name : undefined}>
+              <input value={form.next_of_kin_name} onChange={(e) => set("next_of_kin_name", e.target.value)} onBlur={() => blur("next_of_kin_name")} className={cls("next_of_kin_name")} maxLength={120} />
+            </FormField>
+            <FormField label="Phone" required span={4} error={showError("next_of_kin_phone") ? errors.next_of_kin_phone : undefined}>
+              <input value={form.next_of_kin_phone} onChange={(e) => set("next_of_kin_phone", e.target.value)} onBlur={() => blur("next_of_kin_phone")} placeholder="+254…" className={`${cls("next_of_kin_phone")} font-mono`} maxLength={20} />
+            </FormField>
+          </FormGrid>
         </Card>
 
-        <div className="flex items-center justify-end gap-3">
+        <FormActions className="border-t-0 pt-0 mt-0">
           {submitted && !isValid && (
-            <span className="text-xs text-destructive">Fix {Object.keys(errors).length} field(s) above</span>
+            <span className="text-xs text-destructive mr-auto">Fix {Object.keys(errors).length} field(s) above</span>
           )}
           <Link to="/clients" className="text-sm px-4 py-2 border border-input rounded-md hover:bg-muted">Cancel</Link>
           <button
@@ -192,37 +194,9 @@ function NewClientPage() {
           >
             {post.isPending ? "Saving…" : "Register client"}
           </button>
-        </div>
+        </FormActions>
       </form>
     </div>
   );
 }
 
-const inputCls = (hasError: boolean) =>
-  `mt-1 w-full border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 ${
-    hasError ? "border-destructive focus:ring-destructive/30" : "border-input focus:ring-primary/30"
-  }`;
-
-function Field({
-  label,
-  required,
-  error,
-  children,
-  className,
-}: {
-  label: string;
-  required?: boolean;
-  error?: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <label className="text-xs font-medium text-muted-foreground">
-        {label} {required && <span className="text-destructive">*</span>}
-      </label>
-      {children}
-      {error && <p className="text-[11px] text-destructive mt-1">{error}</p>}
-    </div>
-  );
-}
