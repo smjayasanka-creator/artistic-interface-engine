@@ -330,7 +330,7 @@ function NewLoan() {
           ) : (
             <button
               disabled={submit.isPending}
-              onClick={() => submit.mutate({ data: { client_id: clientId, product_id: productId, principal: principalNum, term_months: term, purpose: purpose || undefined } })}
+              onClick={() => submit.mutate({ data: { client_id: clientId, product_id: productId, principal: principalNum, term_months: term, purpose: purpose || undefined, annual_rate_pct: rateNum, frequency } })}
               className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
             >
               {submit.isPending ? "Submitting…" : "Submit application"}
