@@ -163,18 +163,18 @@ function BranchesTab() {
     return (
       <Card>
         <FormHeader title="New branch" onBack={() => setMode("list")} />
-        <form onSubmit={submit} className="flex flex-col gap-3 mt-3 max-w-2xl">
-          <div className="grid grid-cols-[0.5fr_1fr] gap-3">
-            <Field label="Code">
+        <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
+          <FormGrid>
+            <FormField label="Code" required span={2}>
               <input
                 value={form.code}
                 onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
                 placeholder="NRB"
-                className={inputCls}
+                className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-            <Field label="Name">
+            </FormField>
+            <FormField label="Name" required span={6}>
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -182,41 +182,47 @@ function BranchesTab() {
                 className={inputCls}
                 required
               />
-            </Field>
-          </div>
-          <Field label="Region">
-            <input
-              value={form.region}
-              onChange={(e) => setForm({ ...form, region: e.target.value })}
-              placeholder="optional"
-              className={inputCls}
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Currency">
+            </FormField>
+            <FormField label="Currency" span={2}>
               <input
                 value={form.currency}
                 onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
                 maxLength={3}
                 className={inputCls + " font-mono"}
               />
-            </Field>
-            <Field label="Opened on">
+            </FormField>
+            <FormField label="Opened on" span={2}>
               <input
                 type="date"
                 value={form.opened_on}
                 onChange={(e) => setForm({ ...form, opened_on: e.target.value })}
                 className={inputCls + " font-mono"}
               />
-            </Field>
-          </div>
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-2 w-fit"
-          >
-            {create.isPending ? "Creating…" : "Create branch"}
-          </button>
+            </FormField>
+            <FormField label="Region" span={12} hint="Optional">
+              <input
+                value={form.region}
+                onChange={(e) => setForm({ ...form, region: e.target.value })}
+                className={inputCls}
+              />
+            </FormField>
+          </FormGrid>
+          <FormActions>
+            <button
+              type="button"
+              onClick={() => setMode("list")}
+              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+            >
+              {create.isPending ? "Creating…" : "Create branch"}
+            </button>
+          </FormActions>
         </form>
       </Card>
     );
