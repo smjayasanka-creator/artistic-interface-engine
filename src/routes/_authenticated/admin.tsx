@@ -330,49 +330,32 @@ function StaffTab() {
     return (
       <Card>
         <FormHeader title="New staff" onBack={() => setMode("list")} />
-        <form onSubmit={submit} className="flex flex-col gap-3 mt-3 max-w-2xl">
-          <Field label="Full name">
-            <input
-              value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              className={inputCls}
-              required
-            />
-          </Field>
-          <Field label="Branch">
-            <select
-              value={form.branch_id}
-              onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
-              className={inputCls}
-              required
-            >
-              <option value="">Select branch…</option>
-              {data.branches.map((b: any) => (
-                <option key={b.id} value={b.id}>
-                  {b.code} — {b.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Role">
-            <div className="flex flex-wrap gap-1.5">
-              {STAFF_ROLES.map((r) => (
-                <button
-                  type="button"
-                  key={r}
-                  onClick={() => setForm({ ...form, role: r })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                    form.role === r ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
-                  )}
-                >
-                  {r.replace("_", " ")}
-                </button>
-              ))}
-            </div>
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Email">
+        <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
+          <FormGrid>
+            <FormField label="Full name" required span={6}>
+              <input
+                value={form.full_name}
+                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                className={inputCls}
+                required
+              />
+            </FormField>
+            <FormField label="Branch" required span={6}>
+              <select
+                value={form.branch_id}
+                onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
+                className={selectCls}
+                required
+              >
+                <option value="">Select branch…</option>
+                {data.branches.map((b: any) => (
+                  <option key={b.id} value={b.id}>
+                    {b.code} — {b.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Email" span={4}>
               <input
                 type="email"
                 value={form.email}
@@ -380,27 +363,53 @@ function StaffTab() {
                 className={inputCls}
                 placeholder="optional"
               />
-            </Field>
-            <Field label="Phone">
+            </FormField>
+            <FormField label="Phone" span={3}>
               <input
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className={inputCls + " font-mono"}
                 placeholder="optional"
               />
-            </Field>
-          </div>
+            </FormField>
+            <FormField label="Role" span={12}>
+              <div className="flex flex-wrap gap-1.5">
+                {STAFF_ROLES.map((r) => (
+                  <button
+                    type="button"
+                    key={r}
+                    onClick={() => setForm({ ...form, role: r })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
+                      form.role === r ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
+                    )}
+                  >
+                    {r.replace("_", " ")}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+          </FormGrid>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             Creates a staff profile. To let this person sign in, they still need to register with the same email — their
             login will then link to this profile.
           </p>
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-1 w-fit"
-          >
-            {create.isPending ? "Adding…" : "Add staff"}
-          </button>
+          <FormActions>
+            <button
+              type="button"
+              onClick={() => setMode("list")}
+              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+            >
+              {create.isPending ? "Adding…" : "Add staff"}
+            </button>
+          </FormActions>
         </form>
       </Card>
     );
