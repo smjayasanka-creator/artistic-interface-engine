@@ -125,25 +125,25 @@ function NewLoan() {
               />
             </FormField>
 
-            <FormField label="Product" span={12} required>
-              <div className="flex flex-wrap gap-1.5">
+            <FormField label="Product" span={6} required>
+              <select
+                value={productId}
+                onChange={(e) => {
+                  const p = (products ?? []).find((x: any) => x.id === e.target.value);
+                  if (p) selectProduct(p);
+                  else setProductId("");
+                }}
+                className={selectCls}
+              >
+                <option value="">— pick a product —</option>
                 {(products ?? []).map((p: any) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => selectProduct(p)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                      productId === p.id
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card border-border hover:border-border-strong",
-                    )}
-                  >
+                  <option key={p.id} value={p.id}>
                     {p.name}
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
             </FormField>
+
             {product && (
               <div className="sm:col-span-12 text-[11.5px] text-muted-foreground font-mono -mt-1">
                 Range: {money(product.min_principal)} – {product.max_principal ? money(product.max_principal) : "∞"} ·{" "}
