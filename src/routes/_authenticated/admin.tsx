@@ -242,7 +242,7 @@ function ProductsTab() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="e.g. Kilimo Boost"
-              className="input"
+              className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background"
               required
             />
           </Field>
@@ -253,7 +253,7 @@ function ProductsTab() {
                 step="0.01"
                 value={form.minRate}
                 onChange={(e) => setForm({ ...form, minRate: e.target.value })}
-                className="input font-mono"
+                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
                 required
               />
             </Field>
@@ -264,7 +264,7 @@ function ProductsTab() {
                 value={form.maxRate}
                 onChange={(e) => setForm({ ...form, maxRate: e.target.value })}
                 placeholder="optional"
-                className="input font-mono"
+                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
               />
             </Field>
           </div>
@@ -275,7 +275,7 @@ function ProductsTab() {
                 min={1}
                 value={form.minTerm}
                 onChange={(e) => setForm({ ...form, minTerm: e.target.value })}
-                className="input font-mono"
+                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
                 required
               />
             </Field>
@@ -285,7 +285,7 @@ function ProductsTab() {
                 min={1}
                 value={form.maxTerm}
                 onChange={(e) => setForm({ ...form, maxTerm: e.target.value })}
-                className="input font-mono"
+                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
                 required
               />
             </Field>
@@ -296,7 +296,7 @@ function ProductsTab() {
                 type="number"
                 value={form.minPrincipal}
                 onChange={(e) => setForm({ ...form, minPrincipal: e.target.value })}
-                className="input font-mono"
+                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
                 required
               />
             </Field>
@@ -306,7 +306,7 @@ function ProductsTab() {
                 value={form.maxPrincipal}
                 onChange={(e) => setForm({ ...form, maxPrincipal: e.target.value })}
                 placeholder="optional"
-                className="input font-mono"
+                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
               />
             </Field>
           </div>
@@ -354,7 +354,7 @@ function ProductsTab() {
               step="0.01"
               value={form.processingFee}
               onChange={(e) => setForm({ ...form, processingFee: e.target.value })}
-              className="input font-mono"
+              className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
             />
           </Field>
           <button
