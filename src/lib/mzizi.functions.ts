@@ -87,7 +87,9 @@ export const getClients = createServerFn({ method: "GET" })
     const { supabase } = context;
     let q = supabase
       .from("client")
-      .select("id, full_name, phone, status, risk_grade, avatar_color, group:group_id(id, name)")
+      .select(
+        "id, full_name, phone, email, national_id, status, risk_grade, avatar_color, joined_on, date_of_birth, gender, occupation, monthly_income, address, group:group_id(id, name)",
+      )
       .order("full_name");
     if (data.filter === "active") q = q.eq("status", "active");
     if (data.filter === "pending_kyc") q = q.eq("status", "pending_kyc");

@@ -94,6 +94,7 @@ export const inputCls =
 export const selectCls = inputCls + " appearance-none bg-card";
 export const errorInputCls =
   "border border-destructive rounded-md px-2.5 py-1.5 text-sm bg-background w-full focus:outline-none focus:ring-2 focus:ring-destructive/30";
+export const readOnlyCls = inputCls + " bg-muted/50 text-muted-foreground cursor-default focus:ring-0";
 
 /* Shared toolbar button classNames — use these instead of ad-hoc styles */
 export const btnPrimaryCls =

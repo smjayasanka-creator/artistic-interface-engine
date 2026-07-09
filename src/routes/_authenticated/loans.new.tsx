@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getClients, getProducts, submitApplication } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
-import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
+import { FormGrid, FormField, FormActions, inputCls, selectCls, readOnlyCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
 import { money, shortDate } from "@/lib/format";
 
 import { generateSchedule, FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
@@ -57,6 +57,7 @@ function NewLoan() {
   });
 
   const product = products?.find((p: any) => p.id === productId);
+  const selectedClient = (clients ?? []).find((c: any) => c.id === clientId);
 
   function selectProduct(p: any) {
     setProductId(p.id);
@@ -124,6 +125,50 @@ function NewLoan() {
                 className={inputCls}
               />
             </FormField>
+
+            {selectedClient && (
+              <>
+                <div className="sm:col-span-12 text-[11px] uppercase tracking-wider text-faint font-semibold pb-1 border-b border-border -mt-1">
+                  Customer details
+                </div>
+                <FormField label="Phone" span={3}>
+                  <input value={selectedClient.phone ?? "—"} readOnly className={readOnlyCls} />
+                </FormField>
+                <FormField label="National ID" span={3}>
+                  <input value={selectedClient.national_id ?? "—"} readOnly className={readOnlyCls} />
+                </FormField>
+                <FormField label="Email" span={3}>
+                  <input value={selectedClient.email ?? "—"} readOnly className={readOnlyCls} />
+                </FormField>
+                <FormField label="Gender" span={3}>
+                  <input value={selectedClient.gender ?? "—"} readOnly className={readOnlyCls} />
+                </FormField>
+                <FormField label="Date of birth" span={3}>
+                  <input value={selectedClient.date_of_birth ? shortDate(selectedClient.date_of_birth) : "—"} readOnly className={readOnlyCls} />
+                </FormField>
+                <FormField label="Joined" span={3}>
+                  <input value={selectedClient.joined_on ? shortDate(selectedClient.joined_on) : "—"} readOnly className={readOnlyCls} />
+                </FormField>
+                <FormField label="Status" span={2}>
+                  <input value={selectedClient.status ?? "—"} readOnly className={readOnlyCls} />
+                </FormField>
+                <FormField label="Risk grade" span={2}>
+                  <input value={selectedClient.risk_grade ?? "—"} readOnly className={readOnlyCls} />
+                </FormField>
+                <FormField label="Group" span={2}>
+                  <input value={selectedClient.group?.name ?? "Individual"} readOnly className={readOnlyCls} />
+                </FormField>
+                <FormField label="Occupation" span={4}>
+                  <input value={selectedClient.occupation ?? "—"} readOnly className={readOnlyCls} />
+                </FormField>
+                <FormField label="Monthly income" span={4}>
+                  <input value={selectedClient.monthly_income ? money(Number(selectedClient.monthly_income), true) : "—"} readOnly className={readOnlyCls + " font-mono"} />
+                </FormField>
+                <FormField label="Address" span={8}>
+                  <input value={selectedClient.address ?? "—"} readOnly className={readOnlyCls} />
+                </FormField>
+              </>
+            )}
 
             <FormField label="Product" span={6} required>
               <select
