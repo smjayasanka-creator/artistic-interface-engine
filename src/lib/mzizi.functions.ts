@@ -1113,30 +1113,38 @@ export const toggleGlAccount = createServerFn({ method: "POST" })
 
 export const getJournalEntries = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { from?: string; to?: string; search?: string }) =>
-    z
-      .object({
-        from: z.string().optional(),
-        to: z.string().optional(),
-        search: z.string().optional(),
-      })
-      .parse(i ?? {}),
+  .inputValidator(
+    (i: { from?: string; to?: string; search?: string; page?: number; pageSize?: number }) =>
+      z
+        .object({
+          from: z.string().optional(),
+          to: z.string().optional(),
+          search: z.string().optional(),
+          page: z.number().int().min(1).optional(),
+          pageSize: z.number().int().min(1).max(200).optional(),
+        })
+        .parse(i ?? {}),
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
+    const page = data.page ?? 1;
+    const pageSize = data.pageSize ?? 25;
+    const fromIdx = (page - 1) * pageSize;
+    const toIdx = fromIdx + pageSize - 1;
+
     let q = supabase
       .from("journal_entry")
-      .select("id, reference, entry_date, description, created_at, loan_id, branch:branch_id(code,name)")
+      .select("id, reference, entry_date, description, created_at, loan_id, branch:branch_id(code,name)", { count: "exact" })
       .order("entry_date", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(200);
+      .range(fromIdx, toIdx);
     if (data.from) q = q.gte("entry_date", data.from);
     if (data.to) q = q.lte("entry_date", data.to);
     if (data.search && data.search.trim()) {
       const s = data.search.trim().replace(/[%,]/g, "");
       q = q.or(`reference.ilike.%${s}%,description.ilike.%${s}%`);
     }
-    const { data: entries } = await q;
+    const { data: entries, count } = await q;
     const ids = (entries ?? []).map((e) => e.id);
     const postingsByEntry: Record<string, { debit: number; credit: number; lines: number }> = {};
     if (ids.length) {
@@ -1153,7 +1161,12 @@ export const getJournalEntries = createServerFn({ method: "GET" })
         postingsByEntry[k] = cur;
       }
     }
-    return { entries: (entries ?? []).map((e) => ({ ...e, totals: postingsByEntry[e.id] ?? { debit: 0, credit: 0, lines: 0 } })) };
+    return {
+      entries: (entries ?? []).map((e) => ({ ...e, totals: postingsByEntry[e.id] ?? { debit: 0, credit: 0, lines: 0 } })),
+      total: count ?? 0,
+      page,
+      pageSize,
+    };
   });
 
 export const getPayments = createServerFn({ method: "GET" })
