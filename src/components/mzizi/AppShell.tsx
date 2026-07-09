@@ -59,36 +59,6 @@ function ShellInner() {
     router.navigate({ to: "/auth", replace: true });
   }
 
-  return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Rail */}
-      <aside className="w-[232px] flex-none bg-rail text-rail-foreground flex flex-col">
-        <div className="flex items-center gap-3 px-5 pt-5 pb-4">
-          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center font-bold text-white text-[17px]" style={{ background: "linear-gradient(140deg,#14b8a6,#0f766e)" }}>
-            M
-          </div>
-          <div>
-            <div className="font-bold text-white text-base tracking-tight">Mzizi</div>
-            <div className="text-[10.5px] text-rail-muted tracking-wider uppercase">Core Banking</div>
-          </div>
-        </div>
-        <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">
-          {NAV.map((entry, idx) => {
-            if ("section" in entry) {
-              return (
-                <div key={entry.section} className="mt-3 mb-1">
-                  <div className="px-3 text-[10px] font-semibold tracking-wider uppercase text-rail-muted mb-1">{entry.section}</div>
-                  {entry.items.map((n) => renderNav(n))}
-                </div>
-              );
-            }
-            return renderNav(entry);
-          })}
-        </nav>
-      </aside>
-    </>
-  );
-
   function renderNav(n: NavItem) {
     const active = pathname === n.to || (n.to !== "/dashboard" && pathname.startsWith(n.to));
     const Icon = n.icon;
@@ -112,6 +82,33 @@ function ShellInner() {
       </Link>
     );
   }
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      {/* Rail */}
+      <aside className="w-[232px] flex-none bg-rail text-rail-foreground flex flex-col">
+        <div className="flex items-center gap-3 px-5 pt-5 pb-4">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center font-bold text-white text-[17px]" style={{ background: "linear-gradient(140deg,#14b8a6,#0f766e)" }}>
+            M
+          </div>
+          <div>
+            <div className="font-bold text-white text-base tracking-tight">Mzizi</div>
+            <div className="text-[10.5px] text-rail-muted tracking-wider uppercase">Core Banking</div>
+          </div>
+        </div>
+        <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">
+          {NAV.map((entry) => {
+            if ("section" in entry) {
+              return (
+                <div key={entry.section} className="mt-3 mb-1">
+                  <div className="px-3 text-[10px] font-semibold tracking-wider uppercase text-rail-muted mb-1">{entry.section}</div>
+                  {entry.items.map((n) => renderNav(n))}
+                </div>
+              );
+            }
+            return renderNav(entry);
+          })}
+        </nav>
         <div className="border-t border-white/5 p-3.5 flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-white text-[13px] bg-primary flex-none">
             {(session?.staff?.full_name ?? "?")
