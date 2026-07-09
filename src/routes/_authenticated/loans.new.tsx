@@ -29,10 +29,8 @@ function FormHeader({ title, onBack }: { title: string; onBack: () => void }) {
   );
 }
 
-
 function NewLoan() {
   const nav = useNavigate();
-  const [step, setStep] = useState(1);
   const [clientId, setClientId] = useState("");
   const [productId, setProductId] = useState("");
   const [principal, setPrincipal] = useState("");
@@ -59,7 +57,6 @@ function NewLoan() {
   });
 
   const product = products?.find((p: any) => p.id === productId);
-  const client = clients?.find((c: any) => c.id === clientId);
 
   function selectProduct(p: any) {
     setProductId(p.id);
@@ -100,284 +97,213 @@ function NewLoan() {
       term < Number(product.min_term_months) ||
       term > Number(product.max_term_months));
 
+  const canSubmit = !!clientId && !!productId && !!principal && !!rateNum && !submit.isPending;
+
   return (
     <div className="animate-fadein">
       <Card>
         <FormHeader title="New loan application" onBack={() => nav({ to: "/loans" })} />
 
-        <div className="flex items-center gap-0 my-5">
-          {["Client", "Product & terms", "Review"].map((label, i) => {
-            const n = i + 1;
-            const done = step > n;
-            const active = step === n;
-            return (
-              <div key={n} className="flex items-center gap-2.5 flex-1">
-                <div
-                  className={cn(
-                    "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-none",
-                    done || active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {done ? "✓" : n}
-                </div>
-                <div className={cn("text-[12.5px] font-medium", active || done ? "text-foreground" : "text-muted-foreground")}>
-                  {label}
-                </div>
-                {n < 3 && <div className="flex-1 h-px bg-border ml-2" />}
+        <div className="flex flex-col gap-4 text-[12.5px] mt-5">
+          <FormGrid>
+            <FormField label="Select client" span={6} required>
+              <select value={clientId} onChange={(e) => setClientId(e.target.value)} className={selectCls}>
+                <option value="">— pick a client —</option>
+                {(clients ?? []).map((c: any) => (
+                  <option key={c.id} value={c.id}>
+                    {c.full_name} {c.group?.name ? `· ${c.group.name}` : ""}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Purpose" span={6} hint="Optional">
+              <input
+                value={purpose}
+                onChange={(e) => setPurpose(e.target.value)}
+                placeholder="Working capital, school fees, …"
+                className={inputCls}
+              />
+            </FormField>
+
+            <FormField label="Product" span={12} required>
+              <div className="flex flex-wrap gap-1.5">
+                {(products ?? []).map((p: any) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => selectProduct(p)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
+                      productId === p.id
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border hover:border-border-strong",
+                    )}
+                  >
+                    {p.name}
+                  </button>
+                ))}
               </div>
-            );
-          })}
-        </div>
+            </FormField>
+            {product && (
+              <div className="sm:col-span-12 text-[11.5px] text-muted-foreground font-mono -mt-1">
+                Range: {money(product.min_principal)} – {product.max_principal ? money(product.max_principal) : "∞"} ·{" "}
+                {product.min_term_months}–{product.max_term_months} months · {FREQ_META[product.frequency as Frequency]?.label} ·{" "}
+                default {product.annual_rate_pct}%/yr
+              </div>
+            )}
 
-        <div className="flex flex-col gap-4 text-[12.5px]">
-          {step === 1 && (
-            <FormGrid>
-              <FormField label="Select client" span={6} required>
-                <select value={clientId} onChange={(e) => setClientId(e.target.value)} className={selectCls}>
-                  <option value="">— pick a client —</option>
-                  {(clients ?? []).map((c: any) => (
-                    <option key={c.id} value={c.id}>
-                      {c.full_name} {c.group?.name ? `· ${c.group.name}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-              <FormField label="Purpose" span={6} hint="Optional">
-                <input
-                  value={purpose}
-                  onChange={(e) => setPurpose(e.target.value)}
-                  placeholder="Working capital, school fees, …"
-                  className={inputCls}
-                />
-              </FormField>
-            </FormGrid>
-          )}
-
-          {step === 2 && (
-            <FormGrid>
-              <FormField label="Product" span={12} required>
-                <div className="flex flex-wrap gap-1.5">
-                  {(products ?? []).map((p: any) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => selectProduct(p)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                        productId === p.id
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card border-border hover:border-border-strong",
-                      )}
-                    >
-                      {p.name}
-                    </button>
-                  ))}
-                </div>
-              </FormField>
-              {product && (
-                <div className="sm:col-span-12 text-[11.5px] text-muted-foreground font-mono -mt-1">
-                  Range: {money(product.min_principal)} – {product.max_principal ? money(product.max_principal) : "∞"} ·{" "}
-                  {product.min_term_months}–{product.max_term_months} months · {FREQ_META[product.frequency as Frequency]?.label} ·{" "}
-                  default {product.annual_rate_pct}%/yr
-                </div>
-              )}
-
-              <FormField label="Principal (KES)" span={4} required>
-                <input
-                  value={principal}
-                  onChange={(e) => setPrincipal(e.target.value.replace(/[^\d]/g, ""))}
-                  placeholder="0"
-                  className={inputCls + " font-mono"}
-                />
-              </FormField>
-              <FormField label="Annual rate (%)" span={3} required>
+            <FormField label="Principal (KES)" span={4} required>
+              <input
+                value={principal}
+                onChange={(e) => setPrincipal(e.target.value.replace(/[^\d]/g, ""))}
+                placeholder="0"
+                className={inputCls + " font-mono"}
+              />
+            </FormField>
+            <FormField label="Annual rate (%)" span={3} required>
+              <input
+                type="number"
+                step="0.01"
+                value={rate}
+                onChange={(e) => setRate(e.target.value === "" ? "" : Number(e.target.value))}
+                placeholder={product ? String(product.annual_rate_pct) : "15"}
+                className={inputCls + " font-mono"}
+              />
+            </FormField>
+            <FormField label="Term (months)" span={5} required>
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {termOptions.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTerm(t)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
+                      term === t
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border hover:border-border-strong",
+                    )}
+                  >
+                    {t} mo
+                  </button>
+                ))}
                 <input
                   type="number"
-                  step="0.01"
-                  value={rate}
-                  onChange={(e) => setRate(e.target.value === "" ? "" : Number(e.target.value))}
-                  placeholder={product ? String(product.annual_rate_pct) : "15"}
-                  className={inputCls + " font-mono"}
+                  min={1}
+                  value={term}
+                  onChange={(e) => setTerm(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-20 border border-input rounded-md px-2 py-1.5 text-sm font-mono bg-background"
                 />
-              </FormField>
-              <FormField label="Term (months)" span={5} required>
-                <div className="flex flex-wrap gap-1.5 items-center">
-                  {termOptions.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setTerm(t)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                        term === t
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card border-border hover:border-border-strong",
-                      )}
-                    >
-                      {t} mo
-                    </button>
-                  ))}
-                  <input
-                    type="number"
-                    min={1}
-                    value={term}
-                    onChange={(e) => setTerm(Math.max(1, Number(e.target.value) || 1))}
-                    className="w-20 border border-input rounded-md px-2 py-1.5 text-sm font-mono bg-background"
-                  />
-                </div>
-              </FormField>
+              </div>
+            </FormField>
 
-              <FormField label="Repayment frequency" span={7}>
-                <div className="flex flex-wrap gap-1.5">
-                  {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setFrequency(f)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                        frequency === f
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card border-border",
-                      )}
-                    >
-                      {FREQ_META[f].label}
-                    </button>
-                  ))}
-                </div>
-              </FormField>
-              <FormField label="Interest method" span={5}>
-                <div className="flex gap-1.5">
-                  {(["flat", "declining_balance"] as InterestMethod[]).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setMethod(m)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                        method === m
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card border-border",
-                      )}
-                    >
-                      {m.replace("_", " ")}
-                    </button>
-                  ))}
-                </div>
-              </FormField>
+            <FormField label="Repayment frequency" span={7}>
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFrequency(f)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
+                      frequency === f
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border",
+                    )}
+                  >
+                    {FREQ_META[f].label}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+            <FormField label="Interest method" span={5}>
+              <div className="flex gap-1.5">
+                {(["flat", "declining_balance"] as InterestMethod[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMethod(m)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
+                      method === m
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border",
+                    )}
+                  >
+                    {m.replace("_", " ")}
+                  </button>
+                ))}
+              </div>
+            </FormField>
 
-              {outOfRange && (
-                <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2">
-                  Values are outside the product's configured range.
+            {outOfRange && (
+              <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2">
+                Values are outside the product's configured range.
+              </div>
+            )}
+
+            {schedule && (
+              <div className="sm:col-span-12 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px] mt-1">
+                <SummaryStat label="Installments" value={String(schedule.installmentCount)} />
+                <SummaryStat label="Per payment" value={money(schedule.perPayment, true)} />
+                <SummaryStat label="Total interest" value={money(schedule.totalInterest, true)} />
+                <SummaryStat label="Total payable" value={money(schedule.totalPayment, true)} />
+              </div>
+            )}
+          </FormGrid>
+
+          {schedule && (
+            <div className="mt-2">
+              <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">Repayment schedule</div>
+              <div className="border border-border rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+                <div
+                  className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-2 px-3 border-b border-border bg-secondary/40 sticky top-0"
+                  style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1fr 1fr" }}
+                >
+                  <div>#</div><div>Due</div><div>Principal</div><div>Interest</div><div>Payment</div><div>Balance</div>
                 </div>
-              )}
-
-              {schedule && (
-                <div className="sm:col-span-12 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px] mt-1">
-                  <SummaryStat label="Installments" value={String(schedule.installmentCount)} />
-                  <SummaryStat label="Per payment" value={money(schedule.perPayment, true)} />
-                  <SummaryStat label="Total interest" value={money(schedule.totalInterest, true)} />
-                  <SummaryStat label="Total payable" value={money(schedule.totalPayment, true)} />
-                </div>
-              )}
-            </FormGrid>
-          )}
-
-
-          {step === 3 && (
-            <>
-              <div className="grid gap-2 text-[13px]">
-                {[
-                  ["Borrower", client?.full_name ?? "—"],
-                  ["Group", client?.group?.name ?? "Individual"],
-                  ["Product", product?.name ?? "—"],
-                  ["Principal", money(principalNum)],
-                  ["Annual rate", `${rateNum}%`],
-                  ["Term", `${term} months`],
-                  ["Frequency", FREQ_META[frequency].label],
-                  ["Interest method", method.replace("_", " ")],
-                  ["Installments", schedule ? String(schedule.installmentCount) : "—"],
-                  ["Per payment", schedule ? money(schedule.perPayment, true) : "—"],
-                  ["Total interest", schedule ? money(schedule.totalInterest, true) : "—"],
-                  ["Total payable", schedule ? money(schedule.totalPayment, true) : "—"],
-                ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between border-b border-row-divider py-2">
-                    <span className="text-muted-foreground capitalize">{k}</span>
-                    <span className="font-mono font-semibold">{v}</span>
+                {schedule.rows.map((r) => (
+                  <div
+                    key={r.seq}
+                    className="grid items-center text-[12px] py-1.5 px-3 border-b border-row-divider last:border-b-0"
+                    style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1fr 1fr" }}
+                  >
+                    <div className="font-mono text-muted-foreground">{r.seq}</div>
+                    <div>{shortDate(r.dueDate)}</div>
+                    <div className="font-mono">{money(r.principal, true)}</div>
+                    <div className="font-mono">{money(r.interest, true)}</div>
+                    <div className="font-mono font-semibold">{money(r.payment, true)}</div>
+                    <div className="font-mono text-muted-foreground">{money(r.balance, true)}</div>
                   </div>
                 ))}
               </div>
-
-              {schedule && (
-                <div className="mt-4">
-                  <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">Repayment schedule</div>
-                  <div className="border border-border rounded-lg overflow-hidden max-h-96 overflow-y-auto">
-                    <div
-                      className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-2 px-3 border-b border-border bg-secondary/40 sticky top-0"
-                      style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1fr 1fr" }}
-                    >
-                      <div>#</div><div>Due</div><div>Principal</div><div>Interest</div><div>Payment</div><div>Balance</div>
-                    </div>
-                    {schedule.rows.map((r) => (
-                      <div
-                        key={r.seq}
-                        className="grid items-center text-[12px] py-1.5 px-3 border-b border-row-divider last:border-b-0"
-                        style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1fr 1fr" }}
-                      >
-                        <div className="font-mono text-muted-foreground">{r.seq}</div>
-                        <div>{shortDate(r.dueDate)}</div>
-                        <div className="font-mono">{money(r.principal, true)}</div>
-                        <div className="font-mono">{money(r.interest, true)}</div>
-                        <div className="font-mono font-semibold">{money(r.payment, true)}</div>
-                        <div className="font-mono text-muted-foreground">{money(r.balance, true)}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
+            </div>
           )}
 
           <FormActions align="between">
+            <button type="button" onClick={() => nav({ to: "/loans" })} className={btnSecondaryCls}>
+              Cancel
+            </button>
             <button
               type="button"
-              onClick={() => setStep((s) => Math.max(1, s - 1))}
-              disabled={step === 1}
-              className={btnSecondaryCls}
+              disabled={!canSubmit}
+              onClick={() =>
+                submit.mutate({
+                  data: {
+                    client_id: clientId,
+                    product_id: productId,
+                    principal: principalNum,
+                    term_months: term,
+                    purpose: purpose || undefined,
+                    annual_rate_pct: rateNum,
+                    frequency,
+                  },
+                })
+              }
+              className={btnPrimaryCls}
             >
-              ← Back
+              {submit.isPending ? "Submitting…" : "Submit application"}
             </button>
-            {step < 3 ? (
-              <button
-                type="button"
-                onClick={() => setStep((s) => s + 1)}
-                disabled={(step === 1 && !clientId) || (step === 2 && (!productId || !principal || !rateNum))}
-                className={btnPrimaryCls}
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={submit.isPending}
-                onClick={() =>
-                  submit.mutate({
-                    data: {
-                      client_id: clientId,
-                      product_id: productId,
-                      principal: principalNum,
-                      term_months: term,
-                      purpose: purpose || undefined,
-                      annual_rate_pct: rateNum,
-                      frequency,
-                    },
-                  })
-                }
-                className={btnPrimaryCls}
-              >
-                {submit.isPending ? "Submitting…" : "Submit application"}
-              </button>
-            )}
           </FormActions>
         </div>
       </Card>
