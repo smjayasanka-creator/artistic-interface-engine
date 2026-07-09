@@ -5,8 +5,12 @@ import { AppShell } from "@/components/mzizi/AppShell";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ location }) => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth", search: { redirect: location.href } });
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) {
+      // Stale/invalid token cached in the browser — clear it so /auth doesn't loop back here.
+      await supabase.auth.signOut().catch(() => {});
+      throw redirect({ to: "/auth", search: { redirect: location.href } });
+    }
     return { user: data.user };
   },
   component: AppShell,
