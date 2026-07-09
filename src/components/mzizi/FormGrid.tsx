@@ -95,9 +95,31 @@ export const selectCls = inputCls + " appearance-none bg-card";
 export const errorInputCls =
   "border border-destructive rounded-md px-2.5 py-1.5 text-sm bg-background w-full focus:outline-none focus:ring-2 focus:ring-destructive/30";
 
-export function FormActions({ children, className }: { children: ReactNode; className?: string }) {
+/* Shared toolbar button classNames — use these instead of ad-hoc styles */
+export const btnPrimaryCls =
+  "inline-flex items-center justify-center h-9 px-5 rounded-md text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary-hover disabled:opacity-50 disabled:pointer-events-none transition-colors";
+export const btnSecondaryCls =
+  "inline-flex items-center justify-center h-9 px-4 rounded-md text-sm font-medium border border-input bg-background text-secondary-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors";
+export const btnGhostCls =
+  "inline-flex items-center justify-center h-9 px-3 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors";
+
+export function FormActions({
+  children,
+  className,
+  align = "end",
+}: {
+  children: ReactNode;
+  className?: string;
+  align?: "end" | "between";
+}) {
   return (
-    <div className={cn("flex items-center justify-end gap-2 pt-4 mt-2 border-t border-border", className)}>
+    <div
+      className={cn(
+        "flex items-center gap-2 pt-4 mt-2 border-t border-border",
+        align === "between" ? "justify-between" : "justify-end",
+        className,
+      )}
+    >
       {children}
     </div>
   );
