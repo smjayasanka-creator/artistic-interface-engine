@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { getActiveLoansForClient, recordRepayment } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
-import { FormGrid, FormField, FormActions, inputCls, selectCls } from "@/components/mzizi/FormGrid";
+import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
 import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
