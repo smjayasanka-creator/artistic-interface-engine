@@ -15,7 +15,20 @@ function LoansList() {
   const { data } = useQuery({ queryKey: ["loans"], queryFn: () => fn() });
 
   return (
-    <div className="animate-fadein">
+    <div className="animate-fadein space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Loan portfolio</h2>
+          <p className="text-[12.5px] text-faint mt-0.5">Disbursed loans and repayment status</p>
+        </div>
+        <Link
+          to="/loans/new"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-[9px] bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary/90 transition-colors"
+        >
+          <Plus size={16} />
+          New application
+        </Link>
+      </div>
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="grid gap-4 text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-b border-border bg-secondary/40"
              style={{ gridTemplateColumns: "1.7fr 1.4fr 1fr 1fr 1.4fr 1fr" }}>
