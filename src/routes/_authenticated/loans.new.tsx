@@ -29,20 +29,6 @@ function FormHeader({ title, onBack }: { title: string; onBack: () => void }) {
   );
 }
 
-function FormHeader({ title, onBack }: { title: string; onBack: () => void }) {
-  return (
-    <div className="flex items-center justify-between">
-      <CardTitle>{title}</CardTitle>
-      <button
-        type="button"
-        onClick={onBack}
-        className="text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-1.5"
-      >
-        ← Back to list
-      </button>
-    </div>
-  );
-}
 
 function NewLoan() {
   const nav = useNavigate();
