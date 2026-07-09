@@ -37,6 +37,8 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/groups")) return { title: "Groups", sub: "Group-lending management" };
   if (pathname.startsWith("/reports")) return { title: "Reports & analytics", sub: "Portfolio performance" };
   if (pathname.startsWith("/ledger")) return { title: "General ledger", sub: "Journal entries & postings" };
+  if (pathname.startsWith("/accounts/journal")) return { title: "Journal Entries", sub: "Accounting entries & postings" };
+  if (pathname.startsWith("/accounts/payments")) return { title: "Payments", sub: "Received repayments" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };
   return { title: "Mzizi Core", sub: "" };
 }
