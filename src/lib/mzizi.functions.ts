@@ -675,3 +675,93 @@ export const getActiveLoansForClient = createServerFn({ method: "GET" })
       .limit(50);
     return data ?? [];
   });
+
+export const createLoanProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      name: string;
+      annual_rate_pct: number;
+      max_annual_rate_pct?: number;
+      min_term_months: number;
+      max_term_months: number;
+      min_principal: number;
+      max_principal?: number | null;
+      frequency: "daily" | "weekly" | "biweekly" | "monthly";
+      interest_method?: "flat" | "declining_balance";
+      processing_fee_pct?: number;
+      color?: string;
+    }) =>
+      z
+        .object({
+          name: z.string().trim().min(2).max(80),
+          annual_rate_pct: z.number().positive().max(200),
+          max_annual_rate_pct: z.number().positive().max(200).optional(),
+          min_term_months: z.number().int().positive().max(120),
+          max_term_months: z.number().int().positive().max(120),
+          min_principal: z.number().nonnegative(),
+          max_principal: z.number().positive().nullable().optional(),
+          frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]),
+          interest_method: z.enum(["flat", "declining_balance"]).optional(),
+          processing_fee_pct: z.number().nonnegative().max(50).optional(),
+          color: z.string().max(20).optional(),
+        })
+        .refine((v) => v.max_term_months >= v.min_term_months, {
+          message: "Max term must be >= min term",
+          path: ["max_term_months"],
+        })
+        .refine((v) => !v.max_principal || v.max_principal >= v.min_principal, {
+          message: "Max principal must be >= min principal",
+          path: ["max_principal"],
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can create loan products");
+    const { data: created, error } = await supabase
+      .from("loan_product")
+      .insert({
+        name: data.name,
+        annual_rate_pct: data.annual_rate_pct,
+        min_term_months: data.min_term_months,
+        max_term_months: data.max_term_months,
+        min_principal: data.min_principal,
+        max_principal: data.max_principal ?? null,
+        frequency: data.frequency,
+        interest_method: data.interest_method ?? "flat",
+        processing_fee_pct: data.processing_fee_pct ?? 0,
+        color: data.color ?? "#0f766e",
+        is_active: true,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  });
+
+export const toggleLoanProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; is_active: boolean }) =>
+    z.object({ id: z.string().uuid(), is_active: z.boolean() }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can modify loan products");
+    const { error } = await supabase.from("loan_product").update({ is_active: data.is_active }).eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+export const getAllLoanProducts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("loan_product")
+      .select("*")
+      .order("is_active", { ascending: false })
+      .order("name");
+    return data ?? [];
+  });
