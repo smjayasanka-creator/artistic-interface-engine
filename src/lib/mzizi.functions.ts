@@ -512,23 +512,18 @@ export const approveLoan = createServerFn({ method: "POST" })
       })
       .eq("id", loan.id);
 
-    // Build simple flat schedule: N weekly installments if weekly else monthly
-    const stepDays = loan.frequency === "weekly" ? 7 : loan.frequency === "biweekly" ? 14 : 30;
-    const count =
-      loan.frequency === "weekly"
-        ? loan.term_months * 4
-        : loan.frequency === "biweekly"
-          ? loan.term_months * 2
-          : loan.term_months;
-    const principalPer = Number(loan.principal) / count;
-    const totalInterest = (Number(loan.principal) * Number(loan.annual_rate_pct)) / 100 * (loan.term_months / 12);
-    const interestPer = totalInterest / count;
-    const rows = Array.from({ length: count }, (_, i) => ({
+    const schedule = generateSchedule({
+      principal: Number(loan.principal),
+      annualRatePct: Number(loan.annual_rate_pct),
+      termMonths: loan.term_months,
+      frequency: loan.frequency as Frequency,
+    });
+    const rows = schedule.rows.map((r) => ({
       loan_id: loan.id,
-      seq: i + 1,
-      due_date: new Date(Date.now() + (i + 1) * stepDays * 864e5).toISOString().slice(0, 10),
-      principal_due: Number(principalPer.toFixed(2)),
-      interest_due: Number(interestPer.toFixed(2)),
+      seq: r.seq,
+      due_date: r.dueDate,
+      principal_due: r.principal,
+      interest_due: r.interest,
       state: "upcoming" as const,
     }));
     if (rows.length) await supabase.from("loan_installment").insert(rows);
