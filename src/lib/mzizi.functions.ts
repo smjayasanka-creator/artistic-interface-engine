@@ -1110,3 +1110,45 @@ export const toggleGlAccount = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+export const getJournalEntries = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data: entries } = await supabase
+      .from("journal_entry")
+      .select("id, reference, entry_date, description, created_at, loan_id, branch:branch_id(code,name)")
+      .order("entry_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(100);
+    const ids = (entries ?? []).map((e) => e.id);
+    let postingsByEntry: Record<string, { debit: number; credit: number; lines: number }> = {};
+    if (ids.length) {
+      const { data: postings } = await supabase
+        .from("posting")
+        .select("entry_id, debit, credit")
+        .in("entry_id", ids);
+      for (const p of postings ?? []) {
+        const k = p.entry_id as string;
+        const cur = postingsByEntry[k] ?? { debit: 0, credit: 0, lines: 0 };
+        cur.debit += Number(p.debit ?? 0);
+        cur.credit += Number(p.credit ?? 0);
+        cur.lines += 1;
+        postingsByEntry[k] = cur;
+      }
+    }
+    return { entries: (entries ?? []).map((e) => ({ ...e, totals: postingsByEntry[e.id] ?? { debit: 0, credit: 0, lines: 0 } })) };
+  });
+
+export const getPayments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data: payments } = await supabase
+      .from("repayment")
+      .select("id, amount, channel, received_at, entry_id, loan:loan_id(id, client:client_id(id, full_name)), received_by_staff:received_by(full_name)")
+      .order("received_at", { ascending: false })
+      .limit(100);
+    const total = (payments ?? []).reduce((s, r) => s + Number(r.amount ?? 0), 0);
+    return { payments: payments ?? [], total };
+  });

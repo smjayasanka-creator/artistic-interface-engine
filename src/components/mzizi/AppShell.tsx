@@ -6,7 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard } from "@/lib/mzizi.functions";
 import { cn } from "@/lib/utils";
 
-const NAV: { to: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+type NavItem = { to: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> };
+type NavSection = { section: string; items: NavItem[] };
+type NavEntry = NavItem | NavSection;
+
+const NAV: NavEntry[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/loans", label: "Loans", icon: Wallet },
@@ -14,6 +18,13 @@ const NAV: { to: string; label: string; icon: React.ComponentType<{ size?: numbe
   { to: "/groups", label: "Groups", icon: Users2 },
   { to: "/reports", label: "Reports", icon: LineChart },
   { to: "/ledger", label: "Ledger", icon: BookOpen },
+  {
+    section: "Accounts",
+    items: [
+      { to: "/accounts/journal", label: "Journal Entries", icon: BookOpen },
+      { to: "/accounts/payments", label: "Payments", icon: HandCoins },
+    ],
+  },
   { to: "/admin", label: "Administration", icon: Settings },
 ];
 
@@ -26,6 +37,8 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/groups")) return { title: "Groups", sub: "Group-lending management" };
   if (pathname.startsWith("/reports")) return { title: "Reports & analytics", sub: "Portfolio performance" };
   if (pathname.startsWith("/ledger")) return { title: "General ledger", sub: "Journal entries & postings" };
+  if (pathname.startsWith("/accounts/journal")) return { title: "Journal Entries", sub: "Accounting entries & postings" };
+  if (pathname.startsWith("/accounts/payments")) return { title: "Payments", sub: "Received repayments" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };
   return { title: "Mzizi Core", sub: "" };
 }
@@ -48,6 +61,30 @@ function ShellInner() {
     router.navigate({ to: "/auth", replace: true });
   }
 
+  function renderNav(n: NavItem) {
+    const active = pathname === n.to || (n.to !== "/dashboard" && pathname.startsWith(n.to));
+    const Icon = n.icon;
+    return (
+      <Link
+        key={n.to}
+        to={n.to}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13px]",
+          active ? "text-white font-semibold" : "text-rail-foreground/85 font-medium hover:bg-white/5",
+        )}
+        style={active ? { background: "var(--rail-active)" } : undefined}
+      >
+        <Icon size={18} className="flex-none" />
+        <span className="flex-1">{n.label}</span>
+        {n.to === "/loans" && approvalsCount > 0 && (
+          <span className="text-[10.5px] font-semibold font-mono px-1.5 py-0.5 rounded-full" style={{ background: "#f59e0b", color: "#3a2606" }}>
+            {approvalsCount}
+          </span>
+        )}
+      </Link>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Rail */}
@@ -62,28 +99,16 @@ function ShellInner() {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">
-          {NAV.map((n) => {
-            const active = pathname === n.to || (n.to !== "/dashboard" && pathname.startsWith(n.to));
-            const Icon = n.icon;
-            return (
-              <Link
-                key={n.to}
-                to={n.to}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13px]",
-                  active ? "text-white font-semibold" : "text-rail-foreground/85 font-medium hover:bg-white/5",
-                )}
-                style={active ? { background: "var(--rail-active)" } : undefined}
-              >
-                <Icon size={18} className="flex-none" />
-                <span className="flex-1">{n.label}</span>
-                {n.to === "/loans" && approvalsCount > 0 && (
-                  <span className="text-[10.5px] font-semibold font-mono px-1.5 py-0.5 rounded-full" style={{ background: "#f59e0b", color: "#3a2606" }}>
-                    {approvalsCount}
-                  </span>
-                )}
-              </Link>
-            );
+          {NAV.map((entry) => {
+            if ("section" in entry) {
+              return (
+                <div key={entry.section} className="mt-3 mb-1">
+                  <div className="px-3 text-[10px] font-semibold tracking-wider uppercase text-rail-muted mb-1">{entry.section}</div>
+                  {entry.items.map((n) => renderNav(n))}
+                </div>
+              );
+            }
+            return renderNav(entry);
           })}
         </nav>
         <div className="border-t border-white/5 p-3.5 flex items-center gap-2.5">
