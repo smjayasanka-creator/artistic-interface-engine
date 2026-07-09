@@ -600,7 +600,7 @@ export const approveLoan = createServerFn({ method: "POST" })
     if (!staff) throw new Error("No staff profile");
     const { data: loan } = await supabase
       .from("loan")
-      .select("id, principal, term_months, annual_rate_pct, frequency, branch_id, status")
+      .select("id, principal, term_months, annual_rate_pct, frequency, branch_id, status, product_id")
       .eq("id", data.loan_id)
       .maybeSingle();
     if (!loan) throw new Error("Loan not found");
@@ -633,11 +633,20 @@ export const approveLoan = createServerFn({ method: "POST" })
     }));
     if (rows.length) await supabase.from("loan_installment").insert(rows);
 
-    // Journal entry: DR Loans receivable / CR Cash
-    const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1100", "1000"]);
-    const arId = accts?.find((a) => a.code === "1100")?.id;
-    const cashId = accts?.find((a) => a.code === "1000")?.id;
-    if (!arId || !cashId) throw new Error("Chart of accounts missing");
+    // Journal entry: DR Loans receivable / CR Cash — use product-configured accounts if present
+    const { data: product } = await supabase
+      .from("loan_product")
+      .select("principal_account_id, cash_account_id")
+      .eq("id", loan.product_id)
+      .maybeSingle<{ principal_account_id: string | null; cash_account_id: string | null }>();
+    let arId = product?.principal_account_id ?? null;
+    let cashId = product?.cash_account_id ?? null;
+    if (!arId || !cashId) {
+      const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1100", "1000"]);
+      arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
+      cashId = cashId ?? accts?.find((a) => a.code === "1000")?.id ?? null;
+    }
+    if (!arId || !cashId) throw new Error("Chart of accounts missing — configure product accounts");
     const ref = "DSB-" + Math.floor(1000 + Math.random() * 9000);
     const { data: entry, error: entryErr } = await supabase
       .from("journal_entry")
@@ -656,6 +665,7 @@ export const approveLoan = createServerFn({ method: "POST" })
       { entry_id: entry.id, account_id: cashId, debit: 0, credit: loan.principal },
     ]);
     if (postErr) throw postErr;
+
 
     return { ok: true, reference: ref };
   });
@@ -678,7 +688,7 @@ export const recordRepayment = createServerFn({ method: "POST" })
     if (!staff) throw new Error("No staff profile");
     const { data: loan } = await supabase
       .from("loan")
-      .select("id, principal, branch_id, annual_rate_pct, term_months")
+      .select("id, principal, branch_id, annual_rate_pct, term_months, product_id")
       .eq("id", data.loan_id)
       .maybeSingle();
     if (!loan) throw new Error("Loan not found");
@@ -710,12 +720,28 @@ export const recordRepayment = createServerFn({ method: "POST" })
         .eq("id", inst.id);
     }
 
-    const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1000", "1100", "4000"]);
-    const cashId = accts?.find((a) => a.code === "1000")?.id;
-    const arId = accts?.find((a) => a.code === "1100")?.id;
-    const incomeId = accts?.find((a) => a.code === "4000")?.id;
-    if (!cashId || !arId || !incomeId) throw new Error("Chart of accounts missing");
+    // Use product-configured accounts if present
+    const { data: product } = await supabase
+      .from("loan_product")
+      .select("principal_account_id, cash_account_id, interest_income_account_id")
+      .eq("id", loan.product_id)
+      .maybeSingle<{
+        principal_account_id: string | null;
+        cash_account_id: string | null;
+        interest_income_account_id: string | null;
+      }>();
+    let cashId = product?.cash_account_id ?? null;
+    let arId = product?.principal_account_id ?? null;
+    let incomeId = product?.interest_income_account_id ?? null;
+    if (!cashId || !arId || !incomeId) {
+      const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1000", "1100", "4000"]);
+      cashId = cashId ?? accts?.find((a) => a.code === "1000")?.id ?? null;
+      arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
+      incomeId = incomeId ?? accts?.find((a) => a.code === "4000")?.id ?? null;
+    }
+    if (!cashId || !arId || !incomeId) throw new Error("Chart of accounts missing — configure product accounts");
     const ref = "RC-" + Math.floor(1000 + Math.random() * 9000);
+
     const { data: entry, error: eErr } = await supabase
       .from("journal_entry")
       .insert({
@@ -796,6 +822,10 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       interest_method?: "flat" | "declining_balance";
       processing_fee_pct?: number;
       color?: string;
+      principal_account_id?: string | null;
+      cash_account_id?: string | null;
+      interest_income_account_id?: string | null;
+      fee_income_account_id?: string | null;
     }) =>
       z
         .object({
@@ -810,6 +840,10 @@ export const createLoanProduct = createServerFn({ method: "POST" })
           interest_method: z.enum(["flat", "declining_balance"]).optional(),
           processing_fee_pct: z.number().nonnegative().max(50).optional(),
           color: z.string().max(20).optional(),
+          principal_account_id: z.string().uuid().nullable().optional(),
+          cash_account_id: z.string().uuid().nullable().optional(),
+          interest_income_account_id: z.string().uuid().nullable().optional(),
+          fee_income_account_id: z.string().uuid().nullable().optional(),
         })
         .refine((v) => v.max_term_months >= v.min_term_months, {
           message: "Max term must be >= min term",
@@ -839,12 +873,17 @@ export const createLoanProduct = createServerFn({ method: "POST" })
         processing_fee_pct: data.processing_fee_pct ?? 0,
         color: data.color ?? "#0f766e",
         is_active: true,
-      })
+        principal_account_id: data.principal_account_id ?? null,
+        cash_account_id: data.cash_account_id ?? null,
+        interest_income_account_id: data.interest_income_account_id ?? null,
+        fee_income_account_id: data.fee_income_account_id ?? null,
+      } as never)
       .select()
       .single();
     if (error) throw error;
     return created;
   });
+
 
 export const toggleLoanProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

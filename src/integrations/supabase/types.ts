@@ -444,9 +444,12 @@ export type Database = {
       loan_product: {
         Row: {
           annual_rate_pct: number
+          cash_account_id: string | null
           color: string | null
+          fee_income_account_id: string | null
           frequency: Database["public"]["Enums"]["repayment_frequency"]
           id: string
+          interest_income_account_id: string | null
           interest_method: Database["public"]["Enums"]["interest_method"]
           is_active: boolean
           max_principal: number | null
@@ -454,13 +457,17 @@ export type Database = {
           min_principal: number
           min_term_months: number
           name: string
+          principal_account_id: string | null
           processing_fee_pct: number
         }
         Insert: {
           annual_rate_pct: number
+          cash_account_id?: string | null
           color?: string | null
+          fee_income_account_id?: string | null
           frequency?: Database["public"]["Enums"]["repayment_frequency"]
           id?: string
+          interest_income_account_id?: string | null
           interest_method?: Database["public"]["Enums"]["interest_method"]
           is_active?: boolean
           max_principal?: number | null
@@ -468,13 +475,17 @@ export type Database = {
           min_principal?: number
           min_term_months?: number
           name: string
+          principal_account_id?: string | null
           processing_fee_pct?: number
         }
         Update: {
           annual_rate_pct?: number
+          cash_account_id?: string | null
           color?: string | null
+          fee_income_account_id?: string | null
           frequency?: Database["public"]["Enums"]["repayment_frequency"]
           id?: string
+          interest_income_account_id?: string | null
           interest_method?: Database["public"]["Enums"]["interest_method"]
           is_active?: boolean
           max_principal?: number | null
@@ -482,9 +493,39 @@ export type Database = {
           min_principal?: number
           min_term_months?: number
           name?: string
+          principal_account_id?: string | null
           processing_fee_pct?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "loan_product_cash_account_id_fkey"
+            columns: ["cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_product_fee_income_account_id_fkey"
+            columns: ["fee_income_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_product_interest_income_account_id_fkey"
+            columns: ["interest_income_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_product_principal_account_id_fkey"
+            columns: ["principal_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       posting: {
         Row: {

@@ -403,6 +403,8 @@ function StaffTab() {
 function ProductsTab() {
   const listFn = useServerFn(getAllLoanProducts);
   const { data: products } = useQuery({ queryKey: ["loan_products", "all"], queryFn: () => listFn() });
+  const acctFn = useServerFn(getGlAccounts);
+  const { data: accounts } = useQuery({ queryKey: ["gl_accounts"], queryFn: () => acctFn() });
   const qc = useQueryClient();
   const createFn = useServerFn(createLoanProduct);
   const toggleFn = useServerFn(toggleLoanProduct);
@@ -418,7 +420,16 @@ function ProductsTab() {
     frequency: "monthly" as Frequency,
     method: "flat" as InterestMethod,
     processingFee: "0",
+    principalAcct: "",
+    cashAcct: "",
+    interestAcct: "",
+    feeAcct: "",
   });
+
+  const activeAccts = (accounts ?? []).filter((a: any) => a.is_active);
+  const assetAccts = activeAccts.filter((a: any) => a.type === "asset");
+  const incomeAccts = activeAccts.filter((a: any) => a.type === "income");
+
 
   const create = useMutation({
     mutationFn: createFn,
@@ -460,9 +471,16 @@ function ProductsTab() {
         frequency: form.frequency,
         interest_method: form.method,
         processing_fee_pct: Number(form.processingFee || 0),
+        principal_account_id: form.principalAcct || null,
+        cash_account_id: form.cashAcct || null,
+        interest_income_account_id: form.interestAcct || null,
+        fee_income_account_id: form.feeAcct || null,
       },
     });
   }
+
+  const selectCls = inputCls + " appearance-none bg-card";
+
 
   return (
     <div className="grid grid-cols-[1.4fr_1fr] gap-5">
@@ -646,6 +664,44 @@ function ProductsTab() {
               className={inputCls + " font-mono"}
             />
           </Field>
+          <div className="mt-2 pt-3 border-t border-border">
+            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">Ledger accounts (auto-posting)</div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Loans receivable (DR on disburse)">
+                <select value={form.principalAcct} onChange={(e) => setForm({ ...form, principalAcct: e.target.value })} className={selectCls}>
+                  <option value="">— default 1100 —</option>
+                  {assetAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Cash / bank (CR on disburse)">
+                <select value={form.cashAcct} onChange={(e) => setForm({ ...form, cashAcct: e.target.value })} className={selectCls}>
+                  <option value="">— default 1000 —</option>
+                  {assetAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Interest income (CR on repayment)">
+                <select value={form.interestAcct} onChange={(e) => setForm({ ...form, interestAcct: e.target.value })} className={selectCls}>
+                  <option value="">— default 4000 —</option>
+                  {incomeAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Fee income (optional)">
+                <select value={form.feeAcct} onChange={(e) => setForm({ ...form, feeAcct: e.target.value })} className={selectCls}>
+                  <option value="">— none —</option>
+                  {incomeAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={create.isPending}
