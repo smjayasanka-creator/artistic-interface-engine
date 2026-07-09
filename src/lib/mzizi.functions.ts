@@ -870,3 +870,64 @@ export const getAllLoanProducts = createServerFn({ method: "GET" })
       .order("name");
     return data ?? [];
   });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHART OF ACCOUNTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const getGlAccounts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase.from("gl_account").select("*").order("code");
+    return data ?? [];
+  });
+
+export const createGlAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      code: string;
+      name: string;
+      type: "asset" | "liability" | "equity" | "income" | "expense";
+      normal_balance: 1 | -1;
+    }) =>
+      z
+        .object({
+          code: z.string().trim().min(1).max(20),
+          name: z.string().trim().min(2).max(120),
+          type: z.enum(["asset", "liability", "equity", "income", "expense"]),
+          normal_balance: z.union([z.literal(1), z.literal(-1)]),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can create GL accounts");
+    const { data: created, error } = await supabase
+      .from("gl_account")
+      .insert({
+        code: data.code,
+        name: data.name,
+        type: data.type,
+        normal_balance: data.normal_balance,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  });
+
+export const toggleGlAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; is_active: boolean }) =>
+    z.object({ id: z.string().uuid(), is_active: z.boolean() }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can modify GL accounts");
+    const { error } = await supabase.from("gl_account").update({ is_active: data.is_active }).eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
