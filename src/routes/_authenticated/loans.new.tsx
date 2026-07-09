@@ -57,6 +57,7 @@ function NewLoan() {
   });
 
   const product = products?.find((p: any) => p.id === productId);
+  const selectedClient = (clients ?? []).find((c: any) => c.id === clientId);
 
   function selectProduct(p: any) {
     setProductId(p.id);
