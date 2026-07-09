@@ -211,14 +211,14 @@ function BranchesTab() {
             <button
               type="button"
               onClick={() => setMode("list")}
-              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+              className={btnSecondaryCls}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={create.isPending}
-              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+              className={btnPrimaryCls}
             >
               {create.isPending ? "Creating…" : "Create branch"}
             </button>
@@ -398,14 +398,14 @@ function StaffTab() {
             <button
               type="button"
               onClick={() => setMode("list")}
-              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+              className={btnSecondaryCls}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={create.isPending}
-              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+              className={btnPrimaryCls}
             >
               {create.isPending ? "Adding…" : "Add staff"}
             </button>
@@ -736,14 +736,14 @@ function ProductsTab() {
             <button
               type="button"
               onClick={() => setMode("list")}
-              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+              className={btnSecondaryCls}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={create.isPending}
-              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+              className={btnPrimaryCls}
             >
               {create.isPending ? "Creating…" : "Create product"}
             </button>
@@ -934,14 +934,14 @@ function AccountsTab() {
             <button
               type="button"
               onClick={() => setMode("list")}
-              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+              className={btnSecondaryCls}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={create.isPending}
-              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+              className={btnPrimaryCls}
             >
               {create.isPending ? "Creating…" : "Create account"}
             </button>
