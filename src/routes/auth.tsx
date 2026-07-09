@@ -26,8 +26,10 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) nav({ to: redirect ?? "/dashboard", replace: true });
+    // Revalidate with the server so a stale cached token doesn't loop us back into a protected route.
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!error && data.user) nav({ to: redirect ?? "/dashboard", replace: true });
+      else supabase.auth.signOut().catch(() => {});
     });
   }, [nav, redirect]);
 
