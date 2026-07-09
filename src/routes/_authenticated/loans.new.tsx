@@ -171,22 +171,19 @@ function NewLoan() {
               />
             </FormField>
             <FormField label="Term (months)" span={5} required>
-              <div className="flex flex-wrap gap-1.5 items-center">
-                {termOptions.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setTerm(t)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                      term === t
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card border-border hover:border-border-strong",
-                    )}
-                  >
-                    {t} mo
-                  </button>
-                ))}
+              <div className="flex gap-1.5 items-center">
+                <select
+                  value={termOptions.includes(term) ? String(term) : ""}
+                  onChange={(e) => e.target.value && setTerm(Number(e.target.value))}
+                  className={selectCls}
+                >
+                  <option value="">— select term —</option>
+                  {termOptions.map((t) => (
+                    <option key={t} value={t}>
+                      {t} months
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="number"
                   min={1}
@@ -198,43 +195,29 @@ function NewLoan() {
             </FormField>
 
             <FormField label="Repayment frequency" span={7}>
-              <div className="flex flex-wrap gap-1.5">
+              <select
+                value={frequency}
+                onChange={(e) => setFrequency(e.target.value as Frequency)}
+                className={selectCls}
+              >
                 {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={() => setFrequency(f)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                      frequency === f
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card border-border",
-                    )}
-                  >
+                  <option key={f} value={f}>
                     {FREQ_META[f].label}
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
             </FormField>
             <FormField label="Interest method" span={5}>
-              <div className="flex gap-1.5">
-                {(["flat", "declining_balance"] as InterestMethod[]).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setMethod(m)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                      method === m
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card border-border",
-                    )}
-                  >
-                    {m.replace("_", " ")}
-                  </button>
-                ))}
-              </div>
+              <select
+                value={method}
+                onChange={(e) => setMethod(e.target.value as InterestMethod)}
+                className={selectCls}
+              >
+                <option value="flat">Flat</option>
+                <option value="declining_balance">Declining balance</option>
+              </select>
             </FormField>
+
 
             {outOfRange && (
               <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2">
