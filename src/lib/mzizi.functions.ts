@@ -688,7 +688,7 @@ export const recordRepayment = createServerFn({ method: "POST" })
     if (!staff) throw new Error("No staff profile");
     const { data: loan } = await supabase
       .from("loan")
-      .select("id, principal, branch_id, annual_rate_pct, term_months")
+      .select("id, principal, branch_id, annual_rate_pct, term_months, product_id")
       .eq("id", data.loan_id)
       .maybeSingle();
     if (!loan) throw new Error("Loan not found");
@@ -720,12 +720,28 @@ export const recordRepayment = createServerFn({ method: "POST" })
         .eq("id", inst.id);
     }
 
-    const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1000", "1100", "4000"]);
-    const cashId = accts?.find((a) => a.code === "1000")?.id;
-    const arId = accts?.find((a) => a.code === "1100")?.id;
-    const incomeId = accts?.find((a) => a.code === "4000")?.id;
-    if (!cashId || !arId || !incomeId) throw new Error("Chart of accounts missing");
+    // Use product-configured accounts if present
+    const { data: product } = await supabase
+      .from("loan_product")
+      .select("principal_account_id, cash_account_id, interest_income_account_id")
+      .eq("id", loan.product_id)
+      .maybeSingle<{
+        principal_account_id: string | null;
+        cash_account_id: string | null;
+        interest_income_account_id: string | null;
+      }>();
+    let cashId = product?.cash_account_id ?? null;
+    let arId = product?.principal_account_id ?? null;
+    let incomeId = product?.interest_income_account_id ?? null;
+    if (!cashId || !arId || !incomeId) {
+      const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1000", "1100", "4000"]);
+      cashId = cashId ?? accts?.find((a) => a.code === "1000")?.id ?? null;
+      arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
+      incomeId = incomeId ?? accts?.find((a) => a.code === "4000")?.id ?? null;
+    }
+    if (!cashId || !arId || !incomeId) throw new Error("Chart of accounts missing — configure product accounts");
     const ref = "RC-" + Math.floor(1000 + Math.random() * 9000);
+
     const { data: entry, error: eErr } = await supabase
       .from("journal_entry")
       .insert({
