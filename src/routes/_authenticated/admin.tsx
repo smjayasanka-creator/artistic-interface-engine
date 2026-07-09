@@ -546,24 +546,31 @@ function ProductsTab() {
     });
   }
 
-  const selectCls = inputCls + " appearance-none bg-card";
-
   if (mode === "create") {
     return (
       <Card>
         <FormHeader title="New loan product" onBack={() => setMode("list")} />
-        <form onSubmit={submit} className="flex flex-col gap-3 mt-3 text-[12.5px] max-w-3xl">
-          <Field label="Product name">
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Kilimo Boost"
-              className={inputCls}
-              required
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Min rate (%/yr)">
+        <form onSubmit={submit} className="flex flex-col gap-4 mt-4 text-[12.5px]">
+          <FormGrid>
+            <FormField label="Product name" required span={6}>
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. Kilimo Boost"
+                className={inputCls}
+                required
+              />
+            </FormField>
+            <FormField label="Processing fee (%)" span={2}>
+              <input
+                type="number"
+                step="0.01"
+                value={form.processingFee}
+                onChange={(e) => setForm({ ...form, processingFee: e.target.value })}
+                className={inputCls + " font-mono"}
+              />
+            </FormField>
+            <FormField label="Min rate (%/yr)" required span={2}>
               <input
                 type="number"
                 step="0.01"
@@ -572,8 +579,8 @@ function ProductsTab() {
                 className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-            <Field label="Max rate (%/yr)">
+            </FormField>
+            <FormField label="Max rate (%/yr)" span={2}>
               <input
                 type="number"
                 step="0.01"
@@ -582,10 +589,8 @@ function ProductsTab() {
                 placeholder="optional"
                 className={inputCls + " font-mono"}
               />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Min term (months)">
+            </FormField>
+            <FormField label="Min term (months)" required span={3}>
               <input
                 type="number"
                 min={1}
@@ -594,8 +599,8 @@ function ProductsTab() {
                 className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-            <Field label="Max term (months)">
+            </FormField>
+            <FormField label="Max term (months)" required span={3}>
               <input
                 type="number"
                 min={1}
@@ -604,10 +609,8 @@ function ProductsTab() {
                 className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Min principal (KES)">
+            </FormField>
+            <FormField label="Min principal (KES)" required span={3}>
               <input
                 type="number"
                 value={form.minPrincipal}
@@ -615,8 +618,8 @@ function ProductsTab() {
                 className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-            <Field label="Max principal (KES)">
+            </FormField>
+            <FormField label="Max principal (KES)" span={3}>
               <input
                 type="number"
                 value={form.maxPrincipal}
@@ -624,61 +627,53 @@ function ProductsTab() {
                 placeholder="optional"
                 className={inputCls + " font-mono"}
               />
-            </Field>
-          </div>
-          <Field label="Repayment frequency">
-            <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
-                <button
-                  type="button"
-                  key={f}
-                  onClick={() => setForm({ ...form, frequency: f })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                    form.frequency === f
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card border-border",
-                  )}
-                >
-                  {FREQ_META[f].label}
-                </button>
-              ))}
-            </div>
-          </Field>
-          <Field label="Interest method">
-            <div className="flex gap-1.5">
-              {(["flat", "declining_balance"] as InterestMethod[]).map((m) => (
-                <button
-                  type="button"
-                  key={m}
-                  onClick={() => setForm({ ...form, method: m })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                    form.method === m
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card border-border",
-                  )}
-                >
-                  {m.replace("_", " ")}
-                </button>
-              ))}
-            </div>
-          </Field>
-          <Field label="Processing fee (%)">
-            <input
-              type="number"
-              step="0.01"
-              value={form.processingFee}
-              onChange={(e) => setForm({ ...form, processingFee: e.target.value })}
-              className={inputCls + " font-mono"}
-            />
-          </Field>
-          <div className="mt-2 pt-3 border-t border-border">
-            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">
+            </FormField>
+            <FormField label="Repayment frequency" span={7}>
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
+                  <button
+                    type="button"
+                    key={f}
+                    onClick={() => setForm({ ...form, frequency: f })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
+                      form.frequency === f
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border",
+                    )}
+                  >
+                    {FREQ_META[f].label}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+            <FormField label="Interest method" span={5}>
+              <div className="flex gap-1.5">
+                {(["flat", "declining_balance"] as InterestMethod[]).map((m) => (
+                  <button
+                    type="button"
+                    key={m}
+                    onClick={() => setForm({ ...form, method: m })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
+                      form.method === m
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border",
+                    )}
+                  >
+                    {m.replace("_", " ")}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+          </FormGrid>
+
+          <div className="pt-3 border-t border-border">
+            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">
               Ledger accounts (auto-posting)
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Loans receivable (DR on disburse)">
+            <FormGrid>
+              <FormField label="Loans receivable (DR on disburse)" span={6}>
                 <select
                   value={form.principalAcct}
                   onChange={(e) => setForm({ ...form, principalAcct: e.target.value })}
@@ -691,8 +686,8 @@ function ProductsTab() {
                     </option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Cash / bank (CR on disburse)">
+              </FormField>
+              <FormField label="Cash / bank (CR on disburse)" span={6}>
                 <select
                   value={form.cashAcct}
                   onChange={(e) => setForm({ ...form, cashAcct: e.target.value })}
@@ -705,8 +700,8 @@ function ProductsTab() {
                     </option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Interest income (CR on repayment)">
+              </FormField>
+              <FormField label="Interest income (CR on repayment)" span={6}>
                 <select
                   value={form.interestAcct}
                   onChange={(e) => setForm({ ...form, interestAcct: e.target.value })}
@@ -719,8 +714,8 @@ function ProductsTab() {
                     </option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Fee income (optional)">
+              </FormField>
+              <FormField label="Fee income (optional)" span={6}>
                 <select
                   value={form.feeAcct}
                   onChange={(e) => setForm({ ...form, feeAcct: e.target.value })}
@@ -733,16 +728,24 @@ function ProductsTab() {
                     </option>
                   ))}
                 </select>
-              </Field>
-            </div>
+              </FormField>
+            </FormGrid>
           </div>
 
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-2 w-fit"
-          >
-            {create.isPending ? "Creating…" : "Create product"}
+          <FormActions>
+            <button
+              type="button"
+              onClick={() => setMode("list")}
+              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+            >
+              {create.isPending ? "Creating…" : "Create product"}
           </button>
         </form>
       </Card>
