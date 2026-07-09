@@ -116,18 +116,6 @@ function ShellInner() {
             <Search size={15} /> Search clients, loans, groups…
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <Link
-              to="/collections/new"
-              className="border border-border-strong bg-card text-secondary-foreground text-[12.5px] font-medium px-3.5 py-2 rounded-[9px] hover:border-input hover:bg-row-hover"
-            >
-              Record repayment
-            </Link>
-            <Link
-              to="/loans/new"
-              className="bg-primary text-primary-foreground text-[12.5px] font-semibold px-3.5 py-2 rounded-[9px] hover:bg-primary-hover flex items-center gap-1.5"
-            >
-              <span className="text-[15px] leading-none">+</span> New application
-            </Link>
             <div className="flex items-center gap-2 px-2.5 py-2 border border-border-strong rounded-[9px] text-[12px] text-secondary-foreground">
               <Circle size={7} className="fill-primary-glow text-primary-glow" />
               {session?.staff?.branch?.name?.replace(" Branch", "") ?? "Branch"}
