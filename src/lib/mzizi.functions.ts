@@ -1171,13 +1171,61 @@ export const getJournalEntries = createServerFn({ method: "GET" })
 
 export const getPayments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator(
+    (i: { from?: string; to?: string; channel?: string; search?: string; page?: number; pageSize?: number }) =>
+      z
+        .object({
+          from: z.string().optional(),
+          to: z.string().optional(),
+          channel: z.string().optional(),
+          search: z.string().optional(),
+          page: z.number().int().min(1).optional(),
+          pageSize: z.number().int().min(1).max(200).optional(),
+        })
+        .parse(i ?? {}),
+  )
+  .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: payments } = await supabase
+    const page = data.page ?? 1;
+    const pageSize = data.pageSize ?? 25;
+    const fromIdx = (page - 1) * pageSize;
+    const toIdx = fromIdx + pageSize - 1;
+    const search = data.search?.trim().replace(/[%,]/g, "") ?? "";
+    const useInner = !!search;
+
+    // Data page (with count)
+    let q = supabase
       .from("repayment")
-      .select("id, amount, channel, received_at, entry_id, loan:loan_id(id, client:client_id(id, full_name)), received_by_staff:received_by(full_name)")
+      .select(
+        `id, amount, channel, received_at, entry_id,
+         loan:loan_id(id, client:client_id${useInner ? "!inner" : ""}(id, full_name)),
+         received_by_staff:received_by(full_name)`,
+        { count: "exact" },
+      )
       .order("received_at", { ascending: false })
-      .limit(100);
-    const total = (payments ?? []).reduce((s, r) => s + Number(r.amount ?? 0), 0);
-    return { payments: payments ?? [], total };
+      .range(fromIdx, toIdx);
+    if (data.from) q = q.gte("received_at", data.from);
+    if (data.to) q = q.lte("received_at", data.to + "T23:59:59");
+    if (data.channel) q = q.eq("channel", data.channel as any);
+    if (search) q = q.ilike("loan.client.full_name", `%${search}%`);
+    const { data: payments, count } = await q;
+
+    // Filtered sum across all pages
+    let sumQ = supabase
+      .from("repayment")
+      .select(`amount, loan:loan_id(client:client_id${useInner ? "!inner" : ""}(id))`);
+    if (data.from) sumQ = sumQ.gte("received_at", data.from);
+    if (data.to) sumQ = sumQ.lte("received_at", data.to + "T23:59:59");
+    if (data.channel) sumQ = sumQ.eq("channel", data.channel as any);
+    if (search) sumQ = sumQ.ilike("loan.client.full_name", `%${search}%`);
+    const { data: sumRows } = await sumQ;
+    const totalAmount = (sumRows ?? []).reduce((s, r: any) => s + Number(r.amount ?? 0), 0);
+
+    return {
+      payments: payments ?? [],
+      totalCount: count ?? 0,
+      totalAmount,
+      page,
+      pageSize,
+    };
   });
