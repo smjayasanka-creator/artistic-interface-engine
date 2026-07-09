@@ -119,12 +119,12 @@ function RecordRepaymentPage() {
           </FormGrid>
         </Card>
 
-        <FormActions className="border-t-0 pt-0 mt-0">
-          <Link to="/collections" className="text-sm px-4 py-2 border border-input rounded-md hover:bg-muted">Cancel</Link>
+        <FormActions>
+          <Link to="/collections" className={btnSecondaryCls}>Cancel</Link>
           <button
             type="submit"
             disabled={!valid || post.isPending}
-            className="text-sm px-5 py-2 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary-hover disabled:opacity-50"
+            className={btnPrimaryCls}
           >
             {post.isPending ? "Posting…" : "Post repayment"}
           </button>
