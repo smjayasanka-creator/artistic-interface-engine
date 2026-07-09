@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getClients, getProducts, submitApplication } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
-import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
+import { FormGrid, FormField, FormActions, inputCls, selectCls, readOnlyCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
 import { money, shortDate } from "@/lib/format";
 
 import { generateSchedule, FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
