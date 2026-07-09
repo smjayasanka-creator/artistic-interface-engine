@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { generateSchedule, type Frequency } from "@/lib/loan-schedule";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // READS
