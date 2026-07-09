@@ -707,7 +707,7 @@ export type Database = {
         | "closed"
         | "written_off"
       payment_channel: "cash" | "mpesa" | "bank" | "internal"
-      repayment_frequency: "weekly" | "biweekly" | "monthly"
+      repayment_frequency: "weekly" | "biweekly" | "monthly" | "daily"
       risk_grade: "low" | "medium" | "high"
       staff_role:
         | "loan_officer"
@@ -871,7 +871,7 @@ export const Constants = {
         "written_off",
       ],
       payment_channel: ["cash", "mpesa", "bank", "internal"],
-      repayment_frequency: ["weekly", "biweekly", "monthly"],
+      repayment_frequency: ["weekly", "biweekly", "monthly", "daily"],
       risk_grade: ["low", "medium", "high"],
       staff_role: [
         "loan_officer",
