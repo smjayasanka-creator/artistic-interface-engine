@@ -6,7 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard } from "@/lib/mzizi.functions";
 import { cn } from "@/lib/utils";
 
-const NAV: { to: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+type NavItem = { to: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> };
+type NavSection = { section: string; items: NavItem[] };
+type NavEntry = NavItem | NavSection;
+
+const NAV: NavEntry[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/loans", label: "Loans", icon: Wallet },
@@ -14,6 +18,13 @@ const NAV: { to: string; label: string; icon: React.ComponentType<{ size?: numbe
   { to: "/groups", label: "Groups", icon: Users2 },
   { to: "/reports", label: "Reports", icon: LineChart },
   { to: "/ledger", label: "Ledger", icon: BookOpen },
+  {
+    section: "Accounts",
+    items: [
+      { to: "/accounts/journal", label: "Journal Entries", icon: BookOpen },
+      { to: "/accounts/payments", label: "Payments", icon: HandCoins },
+    ],
+  },
   { to: "/admin", label: "Administration", icon: Settings },
 ];
 
