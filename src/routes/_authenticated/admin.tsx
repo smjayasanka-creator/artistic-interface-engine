@@ -26,10 +26,27 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "branches" | "staff" | "products";
+type Tab = "branches" | "staff" | "products" | "accounts";
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
 type StaffRole = (typeof STAFF_ROLES)[number];
+
+const ACCOUNT_TYPES = ["asset", "liability", "equity", "income", "expense"] as const;
+type AccountType = (typeof ACCOUNT_TYPES)[number];
+const DEFAULT_NORMAL_BALANCE: Record<AccountType, 1 | -1> = {
+  asset: 1,
+  expense: 1,
+  liability: -1,
+  equity: -1,
+  income: -1,
+};
+const TYPE_TONE: Record<AccountType, string> = {
+  asset: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30",
+  liability: "bg-amber-500/10 text-amber-700 border-amber-500/30",
+  equity: "bg-violet-500/10 text-violet-700 border-violet-500/30",
+  income: "bg-sky-500/10 text-sky-700 border-sky-500/30",
+  expense: "bg-rose-500/10 text-rose-700 border-rose-500/30",
+};
 
 function Admin() {
   const [tab, setTab] = useState<Tab>("branches");
@@ -41,6 +58,7 @@ function Admin() {
             ["branches", "Branches"],
             ["staff", "Staff"],
             ["products", "Loan products"],
+            ["accounts", "Chart of accounts"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -60,6 +78,7 @@ function Admin() {
       {tab === "branches" && <BranchesTab />}
       {tab === "staff" && <StaffTab />}
       {tab === "products" && <ProductsTab />}
+      {tab === "accounts" && <AccountsTab />}
     </div>
   );
 }
