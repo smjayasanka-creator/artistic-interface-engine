@@ -30,7 +30,7 @@ const clientSchema = z.object({
   next_of_kin_phone: z.string().trim().min(7, "Next of kin phone must be at least 7 digits").max(20),
 });
 
-type FormState = z.input<typeof clientSchema> & { gender: "" | Gender };
+type FormState = Omit<z.input<typeof clientSchema>, "gender"> & { gender: "" | Gender };
 type FieldKey = keyof FormState;
 
 function NewClientPage() {
