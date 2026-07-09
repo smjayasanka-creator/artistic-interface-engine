@@ -659,6 +659,194 @@ function ProductsTab() {
   );
 }
 
+function AccountsTab() {
+  const listFn = useServerFn(getGlAccounts);
+  const { data: accounts } = useQuery({ queryKey: ["gl_accounts"], queryFn: () => listFn() });
+  const qc = useQueryClient();
+  const createFn = useServerFn(createGlAccount);
+  const toggleFn = useServerFn(toggleGlAccount);
+
+  const [form, setForm] = useState<{ code: string; name: string; type: AccountType; normal_balance: 1 | -1 }>({
+    code: "",
+    name: "",
+    type: "asset",
+    normal_balance: 1,
+  });
+
+  const create = useMutation({
+    mutationFn: createFn,
+    onSuccess: () => {
+      toast.success("Account created");
+      qc.invalidateQueries({ queryKey: ["gl_accounts"] });
+      setForm({ code: "", name: "", type: form.type, normal_balance: form.normal_balance });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggle = useMutation({
+    mutationFn: toggleFn,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["gl_accounts"] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.code.trim() || !form.name.trim()) {
+      toast.error("Code and name required");
+      return;
+    }
+    create.mutate({ data: form });
+  }
+
+  // Group by type for readability
+  const grouped = ACCOUNT_TYPES.map((t) => ({
+    type: t,
+    rows: (accounts ?? []).filter((a: any) => a.type === t),
+  }));
+
+  return (
+    <div className="grid grid-cols-[1.6fr_1fr] gap-5">
+      <Card padded={false}>
+        <div className="px-5 pt-4 pb-3 text-sm font-semibold flex items-center justify-between">
+          <span>Chart of accounts</span>
+          <span className="text-[11px] text-muted-foreground font-normal">{accounts?.length ?? 0} accounts</span>
+        </div>
+        <div
+          className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
+          style={{ gridTemplateColumns: "0.6fr 1.8fr 0.8fr 0.7fr 0.5fr" }}
+        >
+          <div>Code</div>
+          <div>Name</div>
+          <div>Type</div>
+          <div>Normal</div>
+          <div className="text-right">Status</div>
+        </div>
+        {grouped.map((g) =>
+          g.rows.length === 0 ? null : (
+            <div key={g.type}>
+              <div className="px-5 py-2 text-[10.5px] uppercase tracking-wider text-muted-foreground bg-secondary/20 font-semibold border-b border-border">
+                {g.type}
+              </div>
+              {g.rows.map((a: any) => (
+                <div
+                  key={a.id}
+                  className="grid items-center text-[12.5px] py-3 px-5 border-b border-row-divider last:border-b-0"
+                  style={{ gridTemplateColumns: "0.6fr 1.8fr 0.8fr 0.7fr 0.5fr" }}
+                >
+                  <div className="font-mono font-semibold">{a.code}</div>
+                  <div>{a.name}</div>
+                  <div>
+                    <span
+                      className={cn(
+                        "text-[10.5px] px-2 py-0.5 rounded-full border capitalize",
+                        TYPE_TONE[a.type as AccountType],
+                      )}
+                    >
+                      {a.type}
+                    </span>
+                  </div>
+                  <div className="font-mono text-secondary-foreground">
+                    {a.normal_balance === 1 ? "Debit" : "Credit"}
+                  </div>
+                  <div className="text-right">
+                    <button
+                      onClick={() => toggle.mutate({ data: { id: a.id, is_active: !a.is_active } })}
+                      className={cn(
+                        "text-[11px] px-2 py-0.5 rounded-full border",
+                        a.is_active
+                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                          : "border-muted bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {a.is_active ? "Active" : "Off"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ),
+        )}
+        {(accounts ?? []).length === 0 && (
+          <div className="text-center text-faint text-sm py-8">No accounts yet.</div>
+        )}
+      </Card>
+
+      <Card>
+        <CardTitle>New account</CardTitle>
+        <form onSubmit={submit} className="flex flex-col gap-3">
+          <div className="grid grid-cols-[0.5fr_1fr] gap-3">
+            <Field label="Code">
+              <input
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                placeholder="1000"
+                className={inputCls + " font-mono"}
+                required
+              />
+            </Field>
+            <Field label="Name">
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Cash on hand"
+                className={inputCls}
+                required
+              />
+            </Field>
+          </div>
+          <Field label="Type">
+            <div className="flex flex-wrap gap-1.5">
+              {ACCOUNT_TYPES.map((t) => (
+                <button
+                  type="button"
+                  key={t}
+                  onClick={() => setForm({ ...form, type: t, normal_balance: DEFAULT_NORMAL_BALANCE[t] })}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
+                    form.type === t ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
+                  )}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </Field>
+          <Field label="Normal balance">
+            <div className="flex gap-1.5">
+              {([1, -1] as const).map((v) => (
+                <button
+                  type="button"
+                  key={v}
+                  onClick={() => setForm({ ...form, normal_balance: v })}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
+                    form.normal_balance === v
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card border-border",
+                  )}
+                >
+                  {v === 1 ? "Debit" : "Credit"}
+                </button>
+              ))}
+            </div>
+          </Field>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Assets & expenses are normally debit; liabilities, equity & income are normally credit. The default is set
+            when you pick a type.
+          </p>
+          <button
+            type="submit"
+            disabled={create.isPending}
+            className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-1"
+          >
+            {create.isPending ? "Creating…" : "Create account"}
+          </button>
+        </form>
+      </Card>
+    </div>
+  );
+}
+
 const inputCls = "border border-input rounded-md px-2.5 py-1.5 text-sm bg-background";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
