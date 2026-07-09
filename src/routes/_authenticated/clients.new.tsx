@@ -182,15 +182,15 @@ function NewClientPage() {
           </FormGrid>
         </Card>
 
-        <FormActions className="border-t-0 pt-0 mt-0">
+        <FormActions>
           {submitted && !isValid && (
             <span className="text-xs text-destructive mr-auto">Fix {Object.keys(errors).length} field(s) above</span>
           )}
-          <Link to="/clients" className="text-sm px-4 py-2 border border-input rounded-md hover:bg-muted">Cancel</Link>
+          <Link to="/clients" className={btnSecondaryCls}>Cancel</Link>
           <button
             type="submit"
             disabled={post.isPending || (submitted && !isValid)}
-            className="text-sm px-5 py-2 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary-hover disabled:opacity-50"
+            className={btnPrimaryCls}
           >
             {post.isPending ? "Saving…" : "Register client"}
           </button>
