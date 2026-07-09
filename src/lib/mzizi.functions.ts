@@ -1206,7 +1206,7 @@ export const getPayments = createServerFn({ method: "GET" })
       .range(fromIdx, toIdx);
     if (data.from) q = q.gte("received_at", data.from);
     if (data.to) q = q.lte("received_at", data.to + "T23:59:59");
-    if (data.channel) q = q.eq("channel", data.channel);
+    if (data.channel) q = q.eq("channel", data.channel as any);
     if (search) q = q.ilike("loan.client.full_name", `%${search}%`);
     const { data: payments, count } = await q;
 
@@ -1216,7 +1216,7 @@ export const getPayments = createServerFn({ method: "GET" })
       .select(`amount, loan:loan_id(client:client_id${useInner ? "!inner" : ""}(id))`);
     if (data.from) sumQ = sumQ.gte("received_at", data.from);
     if (data.to) sumQ = sumQ.lte("received_at", data.to + "T23:59:59");
-    if (data.channel) sumQ = sumQ.eq("channel", data.channel);
+    if (data.channel) sumQ = sumQ.eq("channel", data.channel as any);
     if (search) sumQ = sumQ.ilike("loan.client.full_name", `%${search}%`);
     const { data: sumRows } = await sumQ;
     const totalAmount = (sumRows ?? []).reduce((s, r: any) => s + Number(r.amount ?? 0), 0);
