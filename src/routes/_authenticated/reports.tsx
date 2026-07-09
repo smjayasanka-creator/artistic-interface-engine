@@ -1,13 +1,49 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { getReports } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { money } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   component: Reports,
 });
+
+type TabKey = "overview" | "income" | "balance" | "ledger";
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "overview", label: "Overview" },
+  { key: "income", label: "Income Statement" },
+  { key: "balance", label: "Balance Sheet" },
+  { key: "ledger", label: "Ledger" },
+];
+
+function TabHeader({ tab, setTab }: { tab: TabKey; setTab: (t: TabKey) => void }) {
+  return (
+    <div className="flex items-center gap-1 border-b border-border -mx-1 px-1 overflow-x-auto">
+      {TABS.map((t) => {
+        const active = tab === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={cn(
+              "px-4 py-2.5 text-[12.5px] font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
+              active
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 
 function Reports() {
   const fn = useServerFn(getReports);
