@@ -14,15 +14,18 @@ export const Route = createFileRoute("/_authenticated/loans/new")({
   component: NewLoan,
 });
 
-const inputCls = "border border-input rounded-md px-2.5 py-1.5 text-sm bg-background w-full";
-const selectCls = inputCls + " appearance-none bg-card";
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function FormHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-[11px] uppercase tracking-wider text-faint font-semibold">{label}</span>
-      {children}
-    </label>
+    <div className="flex items-center justify-between">
+      <CardTitle>{title}</CardTitle>
+      <button
+        type="button"
+        onClick={onBack}
+        className="text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-1.5"
+      >
+        ← Back to list
+      </button>
+    </div>
   );
 }
 
