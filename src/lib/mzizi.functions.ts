@@ -796,6 +796,10 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       interest_method?: "flat" | "declining_balance";
       processing_fee_pct?: number;
       color?: string;
+      principal_account_id?: string | null;
+      cash_account_id?: string | null;
+      interest_income_account_id?: string | null;
+      fee_income_account_id?: string | null;
     }) =>
       z
         .object({
@@ -810,6 +814,10 @@ export const createLoanProduct = createServerFn({ method: "POST" })
           interest_method: z.enum(["flat", "declining_balance"]).optional(),
           processing_fee_pct: z.number().nonnegative().max(50).optional(),
           color: z.string().max(20).optional(),
+          principal_account_id: z.string().uuid().nullable().optional(),
+          cash_account_id: z.string().uuid().nullable().optional(),
+          interest_income_account_id: z.string().uuid().nullable().optional(),
+          fee_income_account_id: z.string().uuid().nullable().optional(),
         })
         .refine((v) => v.max_term_months >= v.min_term_months, {
           message: "Max term must be >= min term",
@@ -839,12 +847,17 @@ export const createLoanProduct = createServerFn({ method: "POST" })
         processing_fee_pct: data.processing_fee_pct ?? 0,
         color: data.color ?? "#0f766e",
         is_active: true,
-      })
+        principal_account_id: data.principal_account_id ?? null,
+        cash_account_id: data.cash_account_id ?? null,
+        interest_income_account_id: data.interest_income_account_id ?? null,
+        fee_income_account_id: data.fee_income_account_id ?? null,
+      } as never)
       .select()
       .single();
     if (error) throw error;
     return created;
   });
+
 
 export const toggleLoanProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
