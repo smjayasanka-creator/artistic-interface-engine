@@ -17,7 +17,7 @@ import {
 } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
-import { FormGrid, FormField, FormActions, inputCls, selectCls } from "@/components/mzizi/FormGrid";
+import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
