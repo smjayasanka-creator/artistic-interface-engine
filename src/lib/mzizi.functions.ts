@@ -1146,7 +1146,7 @@ export const getPayments = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: payments } = await supabase
       .from("repayment")
-      .select("id, amount, channel, received_at, entry_id, loan:loan_id(id, reference, client:client_id(id, full_name)), received_by_staff:received_by(full_name)")
+      .select("id, amount, channel, received_at, entry_id, loan:loan_id(id, client:client_id(id, full_name)), received_by_staff:received_by(full_name)")
       .order("received_at", { ascending: false })
       .limit(100);
     const total = (payments ?? []).reduce((s, r) => s + Number(r.amount ?? 0), 0);
