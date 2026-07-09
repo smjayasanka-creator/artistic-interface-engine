@@ -869,9 +869,9 @@ function AccountsTab() {
     return (
       <Card>
         <FormHeader title="New account" onBack={() => setMode("list")} />
-        <form onSubmit={submit} className="flex flex-col gap-3 mt-3 max-w-2xl">
-          <div className="grid grid-cols-[0.5fr_1fr] gap-3">
-            <Field label="Code">
+        <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
+          <FormGrid>
+            <FormField label="Code" required span={2}>
               <input
                 value={form.code}
                 onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
@@ -879,8 +879,8 @@ function AccountsTab() {
                 className={inputCls + " font-mono"}
                 required
               />
-            </Field>
-            <Field label="Name">
+            </FormField>
+            <FormField label="Name" required span={7}>
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -888,55 +888,64 @@ function AccountsTab() {
                 className={inputCls}
                 required
               />
-            </Field>
-          </div>
-          <Field label="Type">
-            <div className="flex flex-wrap gap-1.5">
-              {ACCOUNT_TYPES.map((t) => (
-                <button
-                  type="button"
-                  key={t}
-                  onClick={() => setForm({ ...form, type: t, normal_balance: DEFAULT_NORMAL_BALANCE[t] })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                    form.type === t ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </Field>
-          <Field label="Normal balance">
-            <div className="flex gap-1.5">
-              {([1, -1] as const).map((v) => (
-                <button
-                  type="button"
-                  key={v}
-                  onClick={() => setForm({ ...form, normal_balance: v })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                    form.normal_balance === v
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card border-border",
-                  )}
-                >
-                  {v === 1 ? "Debit" : "Credit"}
-                </button>
-              ))}
-            </div>
-          </Field>
+            </FormField>
+            <FormField label="Normal balance" span={3}>
+              <div className="flex gap-1.5">
+                {([1, -1] as const).map((v) => (
+                  <button
+                    type="button"
+                    key={v}
+                    onClick={() => setForm({ ...form, normal_balance: v })}
+                    className={cn(
+                      "flex-1 px-3 py-1.5 rounded-md border text-[11.5px] font-medium",
+                      form.normal_balance === v
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border",
+                    )}
+                  >
+                    {v === 1 ? "Debit" : "Credit"}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+            <FormField label="Type" span={12}>
+              <div className="flex flex-wrap gap-1.5">
+                {ACCOUNT_TYPES.map((t) => (
+                  <button
+                    type="button"
+                    key={t}
+                    onClick={() => setForm({ ...form, type: t, normal_balance: DEFAULT_NORMAL_BALANCE[t] })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
+                      form.type === t ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+          </FormGrid>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             Assets & expenses are normally debit; liabilities, equity & income are normally credit. The default is set
             when you pick a type.
           </p>
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-1 w-fit"
-          >
-            {create.isPending ? "Creating…" : "Create account"}
-          </button>
+          <FormActions>
+            <button
+              type="button"
+              onClick={() => setMode("list")}
+              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+            >
+              {create.isPending ? "Creating…" : "Create account"}
+            </button>
+          </FormActions>
         </form>
       </Card>
     );
