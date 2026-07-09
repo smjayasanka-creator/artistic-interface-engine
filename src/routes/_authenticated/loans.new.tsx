@@ -7,7 +7,7 @@ import { getClients, getProducts, submitApplication } from "@/lib/mzizi.function
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
 import { money, shortDate } from "@/lib/format";
-import { cn } from "@/lib/utils";
+
 import { generateSchedule, FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
 
 export const Route = createFileRoute("/_authenticated/loans/new")({
