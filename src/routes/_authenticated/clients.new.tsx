@@ -136,7 +136,7 @@ function NewClientPage() {
               <input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} onBlur={() => blur("date_of_birth")} className={inputCls(!!showError("date_of_birth"))} />
             </Field>
             <Field label="Gender" required error={showError("gender") ? errors.gender : undefined}>
-              <select value={form.gender} onChange={(e) => set("gender", e.target.value as Gender | "")} onBlur={() => blur("gender")} className={inputCls(!!showError("gender"))}>
+              <select value={form.gender} onChange={(e) => set("gender", e.target.value as "" | Gender)} onBlur={() => blur("gender")} className={inputCls(!!showError("gender"))}>
                 <option value="">Select…</option>
                 <option value="female">Female</option>
                 <option value="male">Male</option>
