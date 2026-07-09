@@ -8,6 +8,9 @@ import {
   getAllLoanProducts,
   createLoanProduct,
   toggleLoanProduct,
+  createBranch,
+  createStaff,
+  toggleStaff,
 } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
@@ -20,16 +23,20 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "branch" | "products";
+type Tab = "branches" | "staff" | "products";
+
+const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
+type StaffRole = (typeof STAFF_ROLES)[number];
 
 function Admin() {
-  const [tab, setTab] = useState<Tab>("branch");
+  const [tab, setTab] = useState<Tab>("branches");
   return (
     <div className="animate-fadein flex flex-col gap-5">
       <div className="flex gap-1 border-b border-border">
         {(
           [
-            ["branch", "Branch & staff"],
+            ["branches", "Branches"],
+            ["staff", "Staff"],
             ["products", "Loan products"],
           ] as const
         ).map(([id, label]) => (
@@ -47,28 +54,52 @@ function Admin() {
           </button>
         ))}
       </div>
-      {tab === "branch" ? <BranchTab /> : <ProductsTab />}
+      {tab === "branches" && <BranchesTab />}
+      {tab === "staff" && <StaffTab />}
+      {tab === "products" && <ProductsTab />}
     </div>
   );
 }
 
-function BranchTab() {
+function BranchesTab() {
   const fn = useServerFn(getAdmin);
   const { data } = useQuery({ queryKey: ["admin"], queryFn: () => fn() });
+  const qc = useQueryClient();
+  const createFn = useServerFn(createBranch);
+
+  const [form, setForm] = useState({ code: "", name: "", region: "", currency: "KES", opened_on: "" });
+
+  const create = useMutation({
+    mutationFn: createFn,
+    onSuccess: () => {
+      toast.success("Branch created");
+      qc.invalidateQueries({ queryKey: ["admin"] });
+      setForm({ code: "", name: "", region: "", currency: "KES", opened_on: "" });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (!data) return <div className="text-sm text-muted-foreground">Loading…</div>;
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.code.trim() || !form.name.trim()) {
+      toast.error("Code and name required");
+      return;
+    }
+    create.mutate({ data: form });
+  }
 
   return (
     <div className="flex flex-col gap-5">
       <Card>
-        <CardTitle>Branch summary</CardTitle>
-        <div className="grid grid-cols-6 gap-4 text-[13px]">
+        <CardTitle>Overview</CardTitle>
+        <div className="grid grid-cols-4 gap-4 text-[13px]">
           {[
-            ["Code", data.branch?.code ?? "—"],
-            ["Region", data.branch?.region ?? "—"],
+            ["Branches", String(data.branches.length)],
             ["Staff", String(data.staff.length)],
             ["Active clients", String(data.activeClients)],
             ["Portfolio", money(data.portfolio)],
-            ["Opened", shortDate(data.branch?.opened_on)],
           ].map(([k, v]) => (
             <div key={k}>
               <div className="text-[11px] text-muted-foreground uppercase tracking-wider">{k}</div>
@@ -78,34 +109,270 @@ function BranchTab() {
         </div>
       </Card>
 
+      <div className="grid grid-cols-[1.4fr_1fr] gap-5">
+        <Card padded={false}>
+          <div className="px-5 pt-4 pb-3 text-sm font-semibold flex items-center justify-between">
+            <span>Branches</span>
+            <span className="text-[11px] text-muted-foreground font-normal">{data.branches.length} total</span>
+          </div>
+          <div
+            className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
+            style={{ gridTemplateColumns: "0.6fr 1.4fr 1fr 0.6fr 0.8fr" }}
+          >
+            <div>Code</div>
+            <div>Name</div>
+            <div>Region</div>
+            <div>Currency</div>
+            <div>Opened</div>
+          </div>
+          {data.branches.map((b: any) => (
+            <div
+              key={b.id}
+              className="grid items-center text-[13px] py-3 px-5 border-b border-row-divider last:border-b-0"
+              style={{ gridTemplateColumns: "0.6fr 1.4fr 1fr 0.6fr 0.8fr" }}
+            >
+              <div className="font-mono font-semibold">{b.code}</div>
+              <div className="font-semibold">{b.name}</div>
+              <div className="text-secondary-foreground">{b.region ?? "—"}</div>
+              <div className="font-mono">{b.currency}</div>
+              <div className="text-secondary-foreground">{shortDate(b.opened_on)}</div>
+            </div>
+          ))}
+          {data.branches.length === 0 && (
+            <div className="text-center text-faint text-sm py-8">No branches yet.</div>
+          )}
+        </Card>
+
+        <Card>
+          <CardTitle>New branch</CardTitle>
+          <form onSubmit={submit} className="flex flex-col gap-3">
+            <div className="grid grid-cols-[0.5fr_1fr] gap-3">
+              <Field label="Code">
+                <input
+                  value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                  placeholder="NRB"
+                  className={inputCls}
+                  required
+                />
+              </Field>
+              <Field label="Name">
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Nairobi Branch"
+                  className={inputCls}
+                  required
+                />
+              </Field>
+            </div>
+            <Field label="Region">
+              <input
+                value={form.region}
+                onChange={(e) => setForm({ ...form, region: e.target.value })}
+                placeholder="optional"
+                className={inputCls}
+              />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Currency">
+                <input
+                  value={form.currency}
+                  onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
+                  maxLength={3}
+                  className={inputCls + " font-mono"}
+                />
+              </Field>
+              <Field label="Opened on">
+                <input
+                  type="date"
+                  value={form.opened_on}
+                  onChange={(e) => setForm({ ...form, opened_on: e.target.value })}
+                  className={inputCls + " font-mono"}
+                />
+              </Field>
+            </div>
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-2"
+            >
+              {create.isPending ? "Creating…" : "Create branch"}
+            </button>
+          </form>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function StaffTab() {
+  const fn = useServerFn(getAdmin);
+  const { data } = useQuery({ queryKey: ["admin"], queryFn: () => fn() });
+  const qc = useQueryClient();
+  const createFn = useServerFn(createStaff);
+  const toggleFn = useServerFn(toggleStaff);
+
+  const [form, setForm] = useState<{
+    full_name: string;
+    role: StaffRole;
+    branch_id: string;
+    email: string;
+    phone: string;
+  }>({ full_name: "", role: "loan_officer", branch_id: "", email: "", phone: "" });
+
+  const create = useMutation({
+    mutationFn: createFn,
+    onSuccess: () => {
+      toast.success("Staff added");
+      qc.invalidateQueries({ queryKey: ["admin"] });
+      setForm({ full_name: "", role: "loan_officer", branch_id: form.branch_id, email: "", phone: "" });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggle = useMutation({
+    mutationFn: toggleFn,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin"] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (!data) return <div className="text-sm text-muted-foreground">Loading…</div>;
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.full_name.trim() || !form.branch_id) {
+      toast.error("Name and branch required");
+      return;
+    }
+    create.mutate({ data: form });
+  }
+
+  return (
+    <div className="grid grid-cols-[1.6fr_1fr] gap-5">
       <Card padded={false}>
-        <div className="px-5 pt-4 pb-3 text-sm font-semibold">Staff</div>
+        <div className="px-5 pt-4 pb-3 text-sm font-semibold flex items-center justify-between">
+          <span>Staff</span>
+          <span className="text-[11px] text-muted-foreground font-normal">{data.staff.length} total</span>
+        </div>
         <div
           className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
-          style={{ gridTemplateColumns: "2fr 1.2fr 1.5fr .8fr" }}
+          style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr 0.6fr" }}
         >
           <div>Name</div>
           <div>Role</div>
-          <div>Email</div>
-          <div>Status</div>
+          <div>Branch</div>
+          <div>Contact</div>
+          <div className="text-right">Status</div>
         </div>
         {data.staff.map((s: any) => (
           <div
             key={s.id}
             className="grid items-center text-[13px] py-3 px-5 border-b border-row-divider last:border-b-0"
-            style={{ gridTemplateColumns: "2fr 1.2fr 1.5fr .8fr" }}
+            style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr 0.6fr" }}
           >
             <div className="flex items-center gap-2.5 font-semibold">
               <Avatar name={s.full_name} />
               {s.full_name}
             </div>
             <div className="capitalize text-secondary-foreground">{(s.role ?? "").replace("_", " ")}</div>
-            <div className="text-muted-foreground truncate">{s.email ?? "—"}</div>
-            <div>
-              <Badge tone={s.is_active ? "active" : "neutral"}>{s.is_active ? "Active" : "Inactive"}</Badge>
+            <div className="text-secondary-foreground">{s.branch?.name ?? "—"}</div>
+            <div className="text-muted-foreground text-[12px] truncate">
+              <div className="truncate">{s.email ?? "—"}</div>
+              {s.phone && <div className="font-mono text-[11px]">{s.phone}</div>}
+            </div>
+            <div className="text-right">
+              <button
+                onClick={() => toggle.mutate({ data: { id: s.id, is_active: !s.is_active } })}
+                className={cn(
+                  "text-[11px] px-2 py-0.5 rounded-full border",
+                  s.is_active
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                    : "border-muted bg-muted text-muted-foreground",
+                )}
+              >
+                {s.is_active ? "Active" : "Off"}
+              </button>
             </div>
           </div>
         ))}
+        {data.staff.length === 0 && <div className="text-center text-faint text-sm py-8">No staff yet.</div>}
+      </Card>
+
+      <Card>
+        <CardTitle>New staff</CardTitle>
+        <form onSubmit={submit} className="flex flex-col gap-3">
+          <Field label="Full name">
+            <input
+              value={form.full_name}
+              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              className={inputCls}
+              required
+            />
+          </Field>
+          <Field label="Branch">
+            <select
+              value={form.branch_id}
+              onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
+              className={inputCls}
+              required
+            >
+              <option value="">Select branch…</option>
+              {data.branches.map((b: any) => (
+                <option key={b.id} value={b.id}>
+                  {b.code} — {b.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Role">
+            <div className="flex flex-wrap gap-1.5">
+              {STAFF_ROLES.map((r) => (
+                <button
+                  type="button"
+                  key={r}
+                  onClick={() => setForm({ ...form, role: r })}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
+                    form.role === r ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
+                  )}
+                >
+                  {r.replace("_", " ")}
+                </button>
+              ))}
+            </div>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Email">
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className={inputCls}
+                placeholder="optional"
+              />
+            </Field>
+            <Field label="Phone">
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className={inputCls + " font-mono"}
+                placeholder="optional"
+              />
+            </Field>
+          </div>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Creates a staff profile. To let this person sign in, they still need to register with the same email — their
+            login will then link to this profile.
+          </p>
+          <button
+            type="submit"
+            disabled={create.isPending}
+            className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 mt-1"
+          >
+            {create.isPending ? "Adding…" : "Add staff"}
+          </button>
+        </form>
       </Card>
     </div>
   );
@@ -242,7 +509,7 @@ function ProductsTab() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="e.g. Kilimo Boost"
-              className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background"
+              className={inputCls}
               required
             />
           </Field>
@@ -253,7 +520,7 @@ function ProductsTab() {
                 step="0.01"
                 value={form.minRate}
                 onChange={(e) => setForm({ ...form, minRate: e.target.value })}
-                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
+                className={inputCls + " font-mono"}
                 required
               />
             </Field>
@@ -264,7 +531,7 @@ function ProductsTab() {
                 value={form.maxRate}
                 onChange={(e) => setForm({ ...form, maxRate: e.target.value })}
                 placeholder="optional"
-                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
+                className={inputCls + " font-mono"}
               />
             </Field>
           </div>
@@ -275,7 +542,7 @@ function ProductsTab() {
                 min={1}
                 value={form.minTerm}
                 onChange={(e) => setForm({ ...form, minTerm: e.target.value })}
-                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
+                className={inputCls + " font-mono"}
                 required
               />
             </Field>
@@ -285,7 +552,7 @@ function ProductsTab() {
                 min={1}
                 value={form.maxTerm}
                 onChange={(e) => setForm({ ...form, maxTerm: e.target.value })}
-                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
+                className={inputCls + " font-mono"}
                 required
               />
             </Field>
@@ -296,7 +563,7 @@ function ProductsTab() {
                 type="number"
                 value={form.minPrincipal}
                 onChange={(e) => setForm({ ...form, minPrincipal: e.target.value })}
-                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
+                className={inputCls + " font-mono"}
                 required
               />
             </Field>
@@ -306,7 +573,7 @@ function ProductsTab() {
                 value={form.maxPrincipal}
                 onChange={(e) => setForm({ ...form, maxPrincipal: e.target.value })}
                 placeholder="optional"
-                className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
+                className={inputCls + " font-mono"}
               />
             </Field>
           </div>
@@ -354,7 +621,7 @@ function ProductsTab() {
               step="0.01"
               value={form.processingFee}
               onChange={(e) => setForm({ ...form, processingFee: e.target.value })}
-              className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-background font-mono"
+              className={inputCls + " font-mono"}
             />
           </Field>
           <button
@@ -369,6 +636,8 @@ function ProductsTab() {
     </div>
   );
 }
+
+const inputCls = "border border-input rounded-md px-2.5 py-1.5 text-sm bg-background";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
