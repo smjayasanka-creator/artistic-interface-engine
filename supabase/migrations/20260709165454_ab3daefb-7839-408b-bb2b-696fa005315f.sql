@@ -1,0 +1,1 @@
+ALTER TYPE public.repayment_frequency ADD VALUE IF NOT EXISTS 'daily';
