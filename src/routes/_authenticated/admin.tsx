@@ -993,13 +993,3 @@ function AccountsTab() {
   );
 }
 
-const inputCls = "border border-input rounded-md px-2.5 py-1.5 text-sm bg-background";
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-[11px] uppercase tracking-wider text-faint font-semibold">{label}</span>
-      {children}
-    </label>
-  );
-}
