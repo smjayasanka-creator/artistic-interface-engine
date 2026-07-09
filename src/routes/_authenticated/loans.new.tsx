@@ -338,23 +338,23 @@ function NewLoan() {
             </>
           )}
 
-          <div className="flex justify-between mt-4 pt-3 border-t border-border">
+          <FormActions align="between">
             <button
               type="button"
               onClick={() => setStep((s) => Math.max(1, s - 1))}
               disabled={step === 1}
-              className="border border-input px-4 py-2 rounded-md text-sm hover:bg-muted disabled:opacity-40"
+              className={btnSecondaryCls}
             >
-              Back
+              ← Back
             </button>
             {step < 3 ? (
               <button
                 type="button"
                 onClick={() => setStep((s) => s + 1)}
                 disabled={(step === 1 && !clientId) || (step === 2 && (!productId || !principal || !rateNum))}
-                className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+                className={btnPrimaryCls}
               >
-                Continue
+                Next
               </button>
             ) : (
               <button
@@ -373,12 +373,12 @@ function NewLoan() {
                     },
                   })
                 }
-                className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm font-semibold hover:bg-primary-hover disabled:opacity-50"
+                className={btnPrimaryCls}
               >
                 {submit.isPending ? "Submitting…" : "Submit application"}
               </button>
             )}
-          </div>
+          </FormActions>
         </div>
       </Card>
     </div>
