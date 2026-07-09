@@ -600,7 +600,7 @@ export const approveLoan = createServerFn({ method: "POST" })
     if (!staff) throw new Error("No staff profile");
     const { data: loan } = await supabase
       .from("loan")
-      .select("id, principal, term_months, annual_rate_pct, frequency, branch_id, status")
+      .select("id, principal, term_months, annual_rate_pct, frequency, branch_id, status, product_id")
       .eq("id", data.loan_id)
       .maybeSingle();
     if (!loan) throw new Error("Loan not found");
@@ -633,11 +633,20 @@ export const approveLoan = createServerFn({ method: "POST" })
     }));
     if (rows.length) await supabase.from("loan_installment").insert(rows);
 
-    // Journal entry: DR Loans receivable / CR Cash
-    const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1100", "1000"]);
-    const arId = accts?.find((a) => a.code === "1100")?.id;
-    const cashId = accts?.find((a) => a.code === "1000")?.id;
-    if (!arId || !cashId) throw new Error("Chart of accounts missing");
+    // Journal entry: DR Loans receivable / CR Cash — use product-configured accounts if present
+    const { data: product } = await supabase
+      .from("loan_product")
+      .select("principal_account_id, cash_account_id")
+      .eq("id", loan.product_id)
+      .maybeSingle<{ principal_account_id: string | null; cash_account_id: string | null }>();
+    let arId = product?.principal_account_id ?? null;
+    let cashId = product?.cash_account_id ?? null;
+    if (!arId || !cashId) {
+      const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1100", "1000"]);
+      arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
+      cashId = cashId ?? accts?.find((a) => a.code === "1000")?.id ?? null;
+    }
+    if (!arId || !cashId) throw new Error("Chart of accounts missing — configure product accounts");
     const ref = "DSB-" + Math.floor(1000 + Math.random() * 9000);
     const { data: entry, error: entryErr } = await supabase
       .from("journal_entry")
@@ -656,6 +665,7 @@ export const approveLoan = createServerFn({ method: "POST" })
       { entry_id: entry.id, account_id: cashId, debit: 0, credit: loan.principal },
     ]);
     if (postErr) throw postErr;
+
 
     return { ok: true, reference: ref };
   });
