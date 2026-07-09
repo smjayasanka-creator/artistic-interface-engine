@@ -332,6 +332,144 @@ export const getReports = createServerFn({ method: "GET" })
     };
   });
 
+export const getFinancials = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+
+    // Chart of accounts + postings for trial balance / IS / BS
+    const { data: accounts } = await supabase
+      .from("gl_account")
+      .select("id, code, name, type, normal_balance")
+      .order("code");
+
+    const { data: postings } = await supabase
+      .from("posting")
+      .select("account_id, debit, credit");
+
+    const totals = new Map<string, { debit: number; credit: number }>();
+    for (const p of postings ?? []) {
+      const cur = totals.get(p.account_id) ?? { debit: 0, credit: 0 };
+      cur.debit += Number(p.debit ?? 0);
+      cur.credit += Number(p.credit ?? 0);
+      totals.set(p.account_id, cur);
+    }
+
+    type AcctRow = {
+      id: string;
+      code: string;
+      name: string;
+      type: string;
+      debit: number;
+      credit: number;
+      balance: number; // signed by normal_balance (positive = normal side)
+    };
+
+    const accountRows: AcctRow[] = (accounts ?? []).map((a) => {
+      const t = totals.get(a.id) ?? { debit: 0, credit: 0 };
+      const net = t.debit - t.credit; // debit-positive
+      const balance = Number(a.normal_balance) === 1 ? net : -net;
+      return {
+        id: a.id,
+        code: a.code,
+        name: a.name,
+        type: a.type as string,
+        debit: t.debit,
+        credit: t.credit,
+        balance,
+      };
+    });
+
+    const sumByType = (t: string) =>
+      accountRows.filter((r) => r.type === t).reduce((s, r) => s + r.balance, 0);
+
+    const income = accountRows
+      .filter((r) => r.type === "income")
+      .map((r) => ({ code: r.code, name: r.name, amount: r.balance }));
+    const expense = accountRows
+      .filter((r) => r.type === "expense")
+      .map((r) => ({ code: r.code, name: r.name, amount: r.balance }));
+    const assets = accountRows
+      .filter((r) => r.type === "asset")
+      .map((r) => ({ code: r.code, name: r.name, amount: r.balance }));
+    const liabilities = accountRows
+      .filter((r) => r.type === "liability")
+      .map((r) => ({ code: r.code, name: r.name, amount: r.balance }));
+    const equity = accountRows
+      .filter((r) => r.type === "equity")
+      .map((r) => ({ code: r.code, name: r.name, amount: r.balance }));
+
+    const totalIncome = sumByType("income");
+    const totalExpense = sumByType("expense");
+    const netIncome = totalIncome - totalExpense;
+    const totalAssets = sumByType("asset");
+    const totalLiab = sumByType("liability");
+    const totalEquity = sumByType("equity");
+
+    // Portfolio by product (outstanding + count)
+    const { data: loans } = await supabase
+      .from("loan")
+      .select("id, principal, status, disbursed_at, product:product_id(id, name, color), client:client_id(id, full_name)")
+      .not("disbursed_at", "is", null);
+
+    const { data: outs } = await supabase
+      .from("v_loan_outstanding")
+      .select("loan_id, outstanding_principal, principal_repaid");
+    const outMap = new Map<string, { out: number; repaid: number }>();
+    for (const o of outs ?? []) {
+      outMap.set(o.loan_id as string, {
+        out: Number(o.outstanding_principal ?? 0),
+        repaid: Number(o.principal_repaid ?? 0),
+      });
+    }
+
+    const byProduct = new Map<string, { name: string; color: string; count: number; principal: number; outstanding: number }>();
+    const byClient = new Map<string, { name: string; loans: number; principal: number; outstanding: number }>();
+    for (const l of loans ?? []) {
+      const p = (l.product as any) ?? { id: "unknown", name: "Other", color: "#64748b" };
+      const cp = byProduct.get(p.id) ?? { name: p.name, color: p.color ?? "#64748b", count: 0, principal: 0, outstanding: 0 };
+      const o = outMap.get(l.id as string) ?? { out: Number(l.principal), repaid: 0 };
+      cp.count += 1;
+      cp.principal += Number(l.principal);
+      cp.outstanding += o.out;
+      byProduct.set(p.id, cp);
+
+      const c = (l.client as any) ?? { id: "unknown", full_name: "Unknown" };
+      const cc = byClient.get(c.id) ?? { name: c.full_name, loans: 0, principal: 0, outstanding: 0 };
+      cc.loans += 1;
+      cc.principal += Number(l.principal);
+      cc.outstanding += o.out;
+      byClient.set(c.id, cc);
+    }
+
+    return {
+      trialBalance: {
+        rows: accountRows,
+        totalDebit: accountRows.reduce((s, r) => s + r.debit, 0),
+        totalCredit: accountRows.reduce((s, r) => s + r.credit, 0),
+      },
+      incomeStatement: {
+        income,
+        expense,
+        totalIncome,
+        totalExpense,
+        netIncome,
+      },
+      balanceSheet: {
+        assets,
+        liabilities,
+        equity,
+        totalAssets,
+        totalLiab,
+        totalEquity,
+        netIncome,
+        totalLiabAndEquity: totalLiab + totalEquity + netIncome,
+      },
+      portfolio: Array.from(byProduct.values()).sort((a, b) => b.outstanding - a.outstanding),
+      customers: Array.from(byClient.values()).sort((a, b) => b.outstanding - a.outstanding),
+    };
+  });
+
 export const getAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
