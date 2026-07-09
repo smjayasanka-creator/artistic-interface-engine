@@ -403,6 +403,8 @@ function StaffTab() {
 function ProductsTab() {
   const listFn = useServerFn(getAllLoanProducts);
   const { data: products } = useQuery({ queryKey: ["loan_products", "all"], queryFn: () => listFn() });
+  const acctFn = useServerFn(getGlAccounts);
+  const { data: accounts } = useQuery({ queryKey: ["gl_accounts"], queryFn: () => acctFn() });
   const qc = useQueryClient();
   const createFn = useServerFn(createLoanProduct);
   const toggleFn = useServerFn(toggleLoanProduct);
@@ -418,7 +420,16 @@ function ProductsTab() {
     frequency: "monthly" as Frequency,
     method: "flat" as InterestMethod,
     processingFee: "0",
+    principalAcct: "",
+    cashAcct: "",
+    interestAcct: "",
+    feeAcct: "",
   });
+
+  const activeAccts = (accounts ?? []).filter((a: any) => a.is_active);
+  const assetAccts = activeAccts.filter((a: any) => a.type === "asset");
+  const incomeAccts = activeAccts.filter((a: any) => a.type === "income");
+
 
   const create = useMutation({
     mutationFn: createFn,
