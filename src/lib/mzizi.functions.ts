@@ -334,8 +334,12 @@ export const getAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const { data: branch } = await supabase.from("branch").select("*").order("created_at").limit(1).maybeSingle();
-    const { data: staff } = await supabase.from("staff").select("id, full_name, role, email, is_active").order("full_name");
+    const { data: branches } = await supabase.from("branch").select("*").order("created_at");
+    const branch = branches?.[0] ?? null;
+    const { data: staff } = await supabase
+      .from("staff")
+      .select("id, full_name, role, email, phone, is_active, branch_id, branch:branch_id(id,name,code)")
+      .order("full_name");
     const { count: activeClients } = await supabase
       .from("client")
       .select("id", { count: "exact", head: true })
@@ -344,10 +348,96 @@ export const getAdmin = createServerFn({ method: "GET" })
     const portfolio = (outs ?? []).reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0);
     return {
       branch,
+      branches: branches ?? [],
       staff: staff ?? [],
       activeClients: activeClients ?? 0,
       portfolio,
     };
+  });
+
+export const createBranch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { code: string; name: string; region?: string; currency?: string; opened_on?: string }) =>
+    z
+      .object({
+        code: z.string().trim().min(1).max(20),
+        name: z.string().trim().min(2).max(80),
+        region: z.string().trim().max(80).optional().or(z.literal("")),
+        currency: z.string().trim().length(3).optional(),
+        opened_on: z.string().optional().or(z.literal("")),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can create branches");
+    const { data: created, error } = await supabase
+      .from("branch")
+      .insert({
+        code: data.code,
+        name: data.name,
+        region: data.region || null,
+        currency: (data.currency || "KES").toUpperCase(),
+        opened_on: data.opened_on || null,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  });
+
+export const createStaff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      full_name: string;
+      role: "loan_officer" | "branch_manager" | "teller" | "operations" | "admin";
+      branch_id: string;
+      email?: string;
+      phone?: string;
+    }) =>
+      z
+        .object({
+          full_name: z.string().trim().min(2).max(80),
+          role: z.enum(["loan_officer", "branch_manager", "teller", "operations", "admin"]),
+          branch_id: z.string().uuid(),
+          email: z.string().trim().email().optional().or(z.literal("")),
+          phone: z.string().trim().max(30).optional().or(z.literal("")),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can create staff");
+    const { data: created, error } = await supabase
+      .from("staff")
+      .insert({
+        full_name: data.full_name,
+        role: data.role,
+        branch_id: data.branch_id,
+        email: data.email || null,
+        phone: data.phone || null,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  });
+
+export const toggleStaff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; is_active: boolean }) =>
+    z.object({ id: z.string().uuid(), is_active: z.boolean() }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can modify staff");
+    const { error } = await supabase.from("staff").update({ is_active: data.is_active }).eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
   });
 
 export const getProducts = createServerFn({ method: "GET" })
