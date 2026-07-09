@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { createClient } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
+import { FormGrid, FormField, FormActions, inputCls, errorInputCls } from "@/components/mzizi/FormGrid";
 
 export const Route = createFileRoute("/_authenticated/clients/new")({
   component: NewClientPage,
