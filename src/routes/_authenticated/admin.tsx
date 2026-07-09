@@ -664,6 +664,44 @@ function ProductsTab() {
               className={inputCls + " font-mono"}
             />
           </Field>
+          <div className="mt-2 pt-3 border-t border-border">
+            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">Ledger accounts (auto-posting)</div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Loans receivable (DR on disburse)">
+                <select value={form.principalAcct} onChange={(e) => setForm({ ...form, principalAcct: e.target.value })} className={selectCls}>
+                  <option value="">— default 1100 —</option>
+                  {assetAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Cash / bank (CR on disburse)">
+                <select value={form.cashAcct} onChange={(e) => setForm({ ...form, cashAcct: e.target.value })} className={selectCls}>
+                  <option value="">— default 1000 —</option>
+                  {assetAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Interest income (CR on repayment)">
+                <select value={form.interestAcct} onChange={(e) => setForm({ ...form, interestAcct: e.target.value })} className={selectCls}>
+                  <option value="">— default 4000 —</option>
+                  {incomeAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Fee income (optional)">
+                <select value={form.feeAcct} onChange={(e) => setForm({ ...form, feeAcct: e.target.value })} className={selectCls}>
+                  <option value="">— none —</option>
+                  {incomeAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={create.isPending}
