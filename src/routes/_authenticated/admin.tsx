@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "team" | "branches" | "staff" | "products" | "accounts";
+type Tab = "settings" | "branches" | "staff" | "products" | "accounts";
 type Mode = "list" | "create";
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
@@ -62,7 +62,6 @@ function Admin() {
         {(
           [
             ["settings", "Company settings"],
-            ["team", "Team"],
             ["branches", "Branches"],
             ["staff", "Staff"],
             ["products", "Loan products"],
@@ -84,7 +83,6 @@ function Admin() {
         ))}
       </div>
       {tab === "settings" && <SettingsTab />}
-      {tab === "team" && <TeamTab />}
       {tab === "branches" && <BranchesTab />}
       {tab === "staff" && <StaffTab />}
       {tab === "products" && <ProductsTab />}
@@ -185,11 +183,11 @@ function SettingsTab() {
   );
 }
 
-/* ---------------- Team (members + invites) ---------------- */
+/* ---------------- Staff invites (email invites + pending list) ---------------- */
 
 const INVITE_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
 
-function TeamTab() {
+function InviteSection() {
   const qc = useQueryClient();
   const listFn = useServerFn(listTeam);
   const inviteFn = useServerFn(inviteMember);
@@ -218,14 +216,14 @@ function TeamTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (isLoading || !data) return <div className="text-sm text-muted-foreground">Loading…</div>;
+  if (isLoading || !data) return null;
 
   return (
     <div className="flex flex-col gap-5">
       <Card>
-        <CardTitle>Invite a teammate</CardTitle>
+        <CardTitle>Invite staff by email</CardTitle>
         <p className="text-[12px] text-muted-foreground -mt-1 mb-3">
-          They join your workspace automatically when they sign up with this email.
+          They join automatically when they sign up with this email.
         </p>
         <form
           onSubmit={(e) => {
@@ -251,28 +249,6 @@ function TeamTab() {
             </FormField>
           </FormGrid>
         </form>
-      </Card>
-
-      <Card>
-        <div className="px-5 pt-4 pb-2 text-sm font-semibold">
-          Members <span className="text-[11px] text-muted-foreground font-normal ml-1">{data.members.length} total</span>
-        </div>
-        <div className="divide-y divide-border">
-          {data.members.map((m: any) => (
-            <div key={m.id} className="px-5 py-3 flex items-center gap-3">
-              <Avatar name={m.full_name} />
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-semibold text-foreground truncate">{m.full_name}</div>
-                <div className="text-[11.5px] text-muted-foreground truncate">{m.email ?? "—"} · {m.branch?.name ?? "—"}</div>
-              </div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{String(m.role).replace("_", " ")}</div>
-              <span className={cn("text-[10.5px] px-1.5 py-0.5 rounded-full border", m.is_active ? "border-emerald-500/40 text-emerald-700 bg-emerald-500/10" : "border-border text-muted-foreground")}>
-                {m.is_active ? "active" : "disabled"}
-              </span>
-            </div>
-          ))}
-          {data.members.length === 0 && <div className="px-5 py-4 text-[12px] text-muted-foreground">No members yet.</div>}
-        </div>
       </Card>
 
       <Card>
@@ -634,51 +610,54 @@ function StaffTab() {
   }
 
   return (
-    <Card padded={false}>
-      <ListHeader title="Staff" count={data.staff.length} onNew={() => setMode("create")} newLabel="New staff" />
-      <div
-        className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
-        style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr 0.6fr" }}
-      >
-        <div>Name</div>
-        <div>Role</div>
-        <div>Branch</div>
-        <div>Contact</div>
-        <div className="text-right">Status</div>
-      </div>
-      {data.staff.map((s: any) => (
+    <div className="flex flex-col gap-5">
+      <Card padded={false}>
+        <ListHeader title="Staff" count={data.staff.length} onNew={() => setMode("create")} newLabel="New staff" />
         <div
-          key={s.id}
-          className="grid items-center text-[13px] py-3 px-5 border-b border-row-divider last:border-b-0"
+          className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
           style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr 0.6fr" }}
         >
-          <div className="flex items-center gap-2.5 font-semibold">
-            <Avatar name={s.full_name} />
-            {s.full_name}
-          </div>
-          <div className="capitalize text-secondary-foreground">{(s.role ?? "").replace("_", " ")}</div>
-          <div className="text-secondary-foreground">{s.branch?.name ?? "—"}</div>
-          <div className="text-muted-foreground text-[12px] truncate">
-            <div className="truncate">{s.email ?? "—"}</div>
-            {s.phone && <div className="font-mono text-[11px]">{s.phone}</div>}
-          </div>
-          <div className="text-right">
-            <button
-              onClick={() => toggle.mutate({ data: { id: s.id, is_active: !s.is_active } })}
-              className={cn(
-                "text-[11px] px-2 py-0.5 rounded-full border",
-                s.is_active
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
-                  : "border-muted bg-muted text-muted-foreground",
-              )}
-            >
-              {s.is_active ? "Active" : "Off"}
-            </button>
-          </div>
+          <div>Name</div>
+          <div>Role</div>
+          <div>Branch</div>
+          <div>Contact</div>
+          <div className="text-right">Status</div>
         </div>
-      ))}
-      {data.staff.length === 0 && <div className="text-center text-faint text-sm py-8">No staff yet.</div>}
-    </Card>
+        {data.staff.map((s: any) => (
+          <div
+            key={s.id}
+            className="grid items-center text-[13px] py-3 px-5 border-b border-row-divider last:border-b-0"
+            style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr 0.6fr" }}
+          >
+            <div className="flex items-center gap-2.5 font-semibold">
+              <Avatar name={s.full_name} />
+              {s.full_name}
+            </div>
+            <div className="capitalize text-secondary-foreground">{(s.role ?? "").replace("_", " ")}</div>
+            <div className="text-secondary-foreground">{s.branch?.name ?? "—"}</div>
+            <div className="text-muted-foreground text-[12px] truncate">
+              <div className="truncate">{s.email ?? "—"}</div>
+              {s.phone && <div className="font-mono text-[11px]">{s.phone}</div>}
+            </div>
+            <div className="text-right">
+              <button
+                onClick={() => toggle.mutate({ data: { id: s.id, is_active: !s.is_active } })}
+                className={cn(
+                  "text-[11px] px-2 py-0.5 rounded-full border",
+                  s.is_active
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                    : "border-muted bg-muted text-muted-foreground",
+                )}
+              >
+                {s.is_active ? "Active" : "Off"}
+              </button>
+            </div>
+          </div>
+        ))}
+        {data.staff.length === 0 && <div className="text-center text-faint text-sm py-8">No staff yet.</div>}
+      </Card>
+      <InviteSection />
+    </div>
   );
 }
 
