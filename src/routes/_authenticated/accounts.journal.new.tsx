@@ -25,8 +25,9 @@ import { cn } from "@/lib/utils";
 
 type Line = { key: string; account_id: string; debit: string; credit: string };
 
+let lineSeq = 0;
 const blank = (): Line => ({
-  key: Math.random().toString(36).slice(2),
+  key: `l${++lineSeq}`,
   account_id: "",
   debit: "",
   credit: "",
