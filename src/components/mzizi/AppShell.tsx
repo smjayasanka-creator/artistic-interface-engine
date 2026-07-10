@@ -95,9 +95,9 @@ function ShellInner() {
           <div className="w-9 h-9 rounded-[10px] flex items-center justify-center font-bold text-white text-[17px]" style={{ background: "linear-gradient(140deg,#14b8a6,#0f766e)" }}>
             M
           </div>
-          <div>
-            <div className="font-bold text-white text-base tracking-tight">Mzizi</div>
-            <div className="text-[10.5px] text-rail-muted tracking-wider uppercase">Core Banking</div>
+          <div className="min-w-0">
+            <div className="font-bold text-white text-base tracking-tight truncate">{company?.name ?? "Mzizi"}</div>
+            <div className="text-[10.5px] text-rail-muted tracking-wider uppercase">Workspace</div>
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">
