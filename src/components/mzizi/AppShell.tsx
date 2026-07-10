@@ -19,15 +19,6 @@ const NAV: NavEntry[] = [
   { to: "/reports", label: "Reports", icon: LineChart },
   { to: "/ledger", label: "Ledger", icon: BookOpen },
   {
-    section: "Transactions",
-    items: [
-      { to: "/transactions", label: "Overview", icon: ArrowLeftRight },
-      { to: "/transactions/repayment", label: "Loan Repayment", icon: HandCoins },
-      { to: "/transactions/payments", label: "Payments", icon: Banknote },
-      { to: "/transactions/disbursement", label: "Disbursement", icon: Send },
-    ],
-  },
-  {
     section: "Accounts",
     items: [
       { to: "/accounts/journal", label: "Journal Entries", icon: BookOpen },
