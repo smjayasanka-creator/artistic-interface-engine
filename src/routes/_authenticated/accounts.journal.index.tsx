@@ -9,7 +9,7 @@ import { Card } from "@/components/mzizi/Card";
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/accounts/journal")({
+export const Route = createFileRoute("/_authenticated/accounts/journal/")({
   component: JournalEntriesPage,
 });
 

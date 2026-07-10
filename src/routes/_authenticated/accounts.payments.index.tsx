@@ -8,7 +8,7 @@ import { Card } from "@/components/mzizi/Card";
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/accounts/payments")({
+export const Route = createFileRoute("/_authenticated/accounts/payments/")({
   component: PaymentsPage,
 });
 
