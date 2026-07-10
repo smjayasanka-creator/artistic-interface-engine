@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "branches" | "staff" | "products" | "accounts";
+type Tab = "settings" | "branches" | "staff" | "products" | "accounts";
 type Mode = "list" | "create";
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
@@ -50,12 +50,13 @@ const TYPE_TONE: Record<AccountType, string> = {
 };
 
 function Admin() {
-  const [tab, setTab] = useState<Tab>("branches");
+  const [tab, setTab] = useState<Tab>("settings");
   return (
     <div className="animate-fadein flex flex-col gap-5">
       <div className="flex gap-1 border-b border-border">
         {(
           [
+            ["settings", "General settings"],
             ["branches", "Branches"],
             ["staff", "Staff"],
             ["products", "Loan products"],
@@ -76,11 +77,119 @@ function Admin() {
           </button>
         ))}
       </div>
+      {tab === "settings" && <SettingsTab />}
       {tab === "branches" && <BranchesTab />}
       {tab === "staff" && <StaffTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "accounts" && <AccountsTab />}
     </div>
+  );
+}
+
+/* ---------------- General settings ---------------- */
+
+const SETTINGS_KEY = "mzizi.general_settings";
+const CURRENCIES = ["KES", "UGX", "TZS", "RWF", "USD", "EUR", "GBP"] as const;
+const COUNTRIES = ["Kenya", "Uganda", "Tanzania", "Rwanda", "Burundi", "South Sudan", "Ethiopia", "United States", "United Kingdom"] as const;
+const FY_MONTHS = [
+  ["01", "January"], ["02", "February"], ["03", "March"], ["04", "April"],
+  ["05", "May"], ["06", "June"], ["07", "July"], ["08", "August"],
+  ["09", "September"], ["10", "October"], ["11", "November"], ["12", "December"],
+] as const;
+
+type GeneralSettings = { currency: string; fyEndMonth: string; fyEndDay: string; country: string };
+const DEFAULT_SETTINGS: GeneralSettings = { currency: "KES", fyEndMonth: "12", fyEndDay: "31", country: "Kenya" };
+
+function loadSettings(): GeneralSettings {
+  if (typeof window === "undefined") return DEFAULT_SETTINGS;
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
+function SettingsTab() {
+  const [form, setForm] = useState<GeneralSettings>(DEFAULT_SETTINGS);
+  const [loaded, setLoaded] = useState(false);
+
+  if (!loaded && typeof window !== "undefined") {
+    // hydrate on first client render
+    const s = loadSettings();
+    if (s.currency !== form.currency || s.fyEndMonth !== form.fyEndMonth || s.fyEndDay !== form.fyEndDay || s.country !== form.country) {
+      setForm(s);
+    }
+    setLoaded(true);
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const day = Math.max(1, Math.min(31, Number(form.fyEndDay) || 31));
+    const next = { ...form, fyEndDay: String(day).padStart(2, "0") };
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+    setForm(next);
+    toast.success("Settings saved");
+  }
+
+  return (
+    <Card>
+      <CardTitle>General settings</CardTitle>
+      <p className="text-[12px] text-muted-foreground -mt-1 mb-3">
+        Organisation-wide defaults used across reports and formatting.
+      </p>
+      <form onSubmit={submit} className="flex flex-col gap-3">
+        <FormGrid>
+          <FormField label="Currency" required span={4} hint="Default reporting currency">
+            <select
+              value={form.currency}
+              onChange={(e) => setForm({ ...form, currency: e.target.value })}
+              className={selectCls + " font-mono"}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Country" required span={4}>
+            <select
+              value={form.country}
+              onChange={(e) => setForm({ ...form, country: e.target.value })}
+              className={selectCls}
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Financial year end" required span={4} hint="Month and day the fiscal year closes">
+            <div className="flex gap-2">
+              <select
+                value={form.fyEndMonth}
+                onChange={(e) => setForm({ ...form, fyEndMonth: e.target.value })}
+                className={selectCls + " flex-1"}
+              >
+                {FY_MONTHS.map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min={1}
+                max={31}
+                value={form.fyEndDay}
+                onChange={(e) => setForm({ ...form, fyEndDay: e.target.value })}
+                className={inputCls + " w-20 font-mono"}
+              />
+            </div>
+          </FormField>
+        </FormGrid>
+        <FormActions>
+          <button type="submit" className={btnPrimaryCls}>Save settings</button>
+        </FormActions>
+      </form>
+    </Card>
   );
 }
 
