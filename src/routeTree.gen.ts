@@ -17,9 +17,13 @@ import { Route as AuthenticatedLedgerRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCollectionsRouteImport } from './routes/_authenticated/collections'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedTransactionsIndexRouteImport } from './routes/_authenticated/transactions.index'
 import { Route as AuthenticatedLoansIndexRouteImport } from './routes/_authenticated/loans.index'
 import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenticated/groups.index'
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients.index'
+import { Route as AuthenticatedTransactionsRepaymentRouteImport } from './routes/_authenticated/transactions.repayment'
+import { Route as AuthenticatedTransactionsPaymentsRouteImport } from './routes/_authenticated/transactions.payments'
+import { Route as AuthenticatedTransactionsDisbursementRouteImport } from './routes/_authenticated/transactions.disbursement'
 import { Route as AuthenticatedLoansNewRouteImport } from './routes/_authenticated/loans.new'
 import { Route as AuthenticatedCollectionsNewRouteImport } from './routes/_authenticated/collections.new'
 import { Route as AuthenticatedClientsNewRouteImport } from './routes/_authenticated/clients.new'
@@ -69,6 +73,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTransactionsIndexRoute =
+  AuthenticatedTransactionsIndexRouteImport.update({
+    id: '/transactions/',
+    path: '/transactions/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLoansIndexRoute = AuthenticatedLoansIndexRouteImport.update({
   id: '/loans/',
   path: '/loans/',
@@ -84,6 +94,24 @@ const AuthenticatedClientsIndexRoute =
   AuthenticatedClientsIndexRouteImport.update({
     id: '/clients/',
     path: '/clients/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTransactionsRepaymentRoute =
+  AuthenticatedTransactionsRepaymentRouteImport.update({
+    id: '/transactions/repayment',
+    path: '/transactions/repayment',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTransactionsPaymentsRoute =
+  AuthenticatedTransactionsPaymentsRouteImport.update({
+    id: '/transactions/payments',
+    path: '/transactions/payments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTransactionsDisbursementRoute =
+  AuthenticatedTransactionsDisbursementRouteImport.update({
+    id: '/transactions/disbursement',
+    path: '/transactions/disbursement',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedLoansNewRoute = AuthenticatedLoansNewRouteImport.update({
@@ -146,9 +174,13 @@ export interface FileRoutesByFullPath {
   '/clients/new': typeof AuthenticatedClientsNewRoute
   '/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
+  '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
+  '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
+  '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
   '/groups/': typeof AuthenticatedGroupsIndexRoute
   '/loans/': typeof AuthenticatedLoansIndexRoute
+  '/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
 }
@@ -166,9 +198,13 @@ export interface FileRoutesByTo {
   '/clients/new': typeof AuthenticatedClientsNewRoute
   '/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
+  '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
+  '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
+  '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/groups': typeof AuthenticatedGroupsIndexRoute
   '/loans': typeof AuthenticatedLoansIndexRoute
+  '/transactions': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
 }
@@ -188,9 +224,13 @@ export interface FileRoutesById {
   '/_authenticated/clients/new': typeof AuthenticatedClientsNewRoute
   '/_authenticated/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/_authenticated/loans/new': typeof AuthenticatedLoansNewRoute
+  '/_authenticated/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
+  '/_authenticated/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
+  '/_authenticated/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/groups/': typeof AuthenticatedGroupsIndexRoute
   '/_authenticated/loans/': typeof AuthenticatedLoansIndexRoute
+  '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/_authenticated/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/_authenticated/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
 }
@@ -210,9 +250,13 @@ export interface FileRouteTypes {
     | '/clients/new'
     | '/collections/new'
     | '/loans/new'
+    | '/transactions/disbursement'
+    | '/transactions/payments'
+    | '/transactions/repayment'
     | '/clients/'
     | '/groups/'
     | '/loans/'
+    | '/transactions/'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
   fileRoutesByTo: FileRoutesByTo
@@ -230,9 +274,13 @@ export interface FileRouteTypes {
     | '/clients/new'
     | '/collections/new'
     | '/loans/new'
+    | '/transactions/disbursement'
+    | '/transactions/payments'
+    | '/transactions/repayment'
     | '/clients'
     | '/groups'
     | '/loans'
+    | '/transactions'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
   id:
@@ -251,9 +299,13 @@ export interface FileRouteTypes {
     | '/_authenticated/clients/new'
     | '/_authenticated/collections/new'
     | '/_authenticated/loans/new'
+    | '/_authenticated/transactions/disbursement'
+    | '/_authenticated/transactions/payments'
+    | '/_authenticated/transactions/repayment'
     | '/_authenticated/clients/'
     | '/_authenticated/groups/'
     | '/_authenticated/loans/'
+    | '/_authenticated/transactions/'
     | '/_authenticated/accounts/journal/new'
     | '/_authenticated/accounts/payments/new'
   fileRoutesById: FileRoutesById
@@ -322,6 +374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/transactions/': {
+      id: '/_authenticated/transactions/'
+      path: '/transactions'
+      fullPath: '/transactions/'
+      preLoaderRoute: typeof AuthenticatedTransactionsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/loans/': {
       id: '/_authenticated/loans/'
       path: '/loans'
@@ -341,6 +400,27 @@ declare module '@tanstack/react-router' {
       path: '/clients'
       fullPath: '/clients/'
       preLoaderRoute: typeof AuthenticatedClientsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/transactions/repayment': {
+      id: '/_authenticated/transactions/repayment'
+      path: '/transactions/repayment'
+      fullPath: '/transactions/repayment'
+      preLoaderRoute: typeof AuthenticatedTransactionsRepaymentRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/transactions/payments': {
+      id: '/_authenticated/transactions/payments'
+      path: '/transactions/payments'
+      fullPath: '/transactions/payments'
+      preLoaderRoute: typeof AuthenticatedTransactionsPaymentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/transactions/disbursement': {
+      id: '/_authenticated/transactions/disbursement'
+      path: '/transactions/disbursement'
+      fullPath: '/transactions/disbursement'
+      preLoaderRoute: typeof AuthenticatedTransactionsDisbursementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/loans/new': {
@@ -456,9 +536,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
   AuthenticatedClientsNewRoute: typeof AuthenticatedClientsNewRoute
   AuthenticatedLoansNewRoute: typeof AuthenticatedLoansNewRoute
+  AuthenticatedTransactionsDisbursementRoute: typeof AuthenticatedTransactionsDisbursementRoute
+  AuthenticatedTransactionsPaymentsRoute: typeof AuthenticatedTransactionsPaymentsRoute
+  AuthenticatedTransactionsRepaymentRoute: typeof AuthenticatedTransactionsRepaymentRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedGroupsIndexRoute: typeof AuthenticatedGroupsIndexRoute
   AuthenticatedLoansIndexRoute: typeof AuthenticatedLoansIndexRoute
+  AuthenticatedTransactionsIndexRoute: typeof AuthenticatedTransactionsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -474,9 +558,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientsIdRoute: AuthenticatedClientsIdRoute,
   AuthenticatedClientsNewRoute: AuthenticatedClientsNewRoute,
   AuthenticatedLoansNewRoute: AuthenticatedLoansNewRoute,
+  AuthenticatedTransactionsDisbursementRoute:
+    AuthenticatedTransactionsDisbursementRoute,
+  AuthenticatedTransactionsPaymentsRoute:
+    AuthenticatedTransactionsPaymentsRoute,
+  AuthenticatedTransactionsRepaymentRoute:
+    AuthenticatedTransactionsRepaymentRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedGroupsIndexRoute: AuthenticatedGroupsIndexRoute,
   AuthenticatedLoansIndexRoute: AuthenticatedLoansIndexRoute,
+  AuthenticatedTransactionsIndexRoute: AuthenticatedTransactionsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
