@@ -512,9 +512,12 @@ export const createBranch = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) throw new Error("Only admins can create branches");
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
     const { data: created, error } = await supabase
       .from("branch")
       .insert({
+        company_id: cid,
         code: data.code,
         name: data.name,
         region: data.region || null,
