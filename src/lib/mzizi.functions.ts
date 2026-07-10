@@ -1086,9 +1086,12 @@ export const createGlAccount = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) throw new Error("Only admins can create GL accounts");
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
     const { data: created, error } = await supabase
       .from("gl_account")
       .insert({
+        company_id: cid,
         code: data.code,
         name: data.name,
         type: data.type,
