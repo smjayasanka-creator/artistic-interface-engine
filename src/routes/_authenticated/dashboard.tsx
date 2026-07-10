@@ -43,7 +43,17 @@ const PAR_TONES: Record<string, string> = {
 
 function Dashboard() {
   const fn = useServerFn(getDashboard);
-  const { data } = useQuery({ queryKey: ["dashboard"], queryFn: () => fn() });
+  const { data } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => fn(),
+    retry: (count, err: any) => {
+      // Retry transient network failures a few times; don't hammer on 4xx.
+      const msg = String(err?.message ?? "");
+      if (/Failed to fetch|NetworkError|fetch failed/i.test(msg)) return count < 3;
+      return count < 1;
+    },
+    retryDelay: (attempt) => Math.min(400 * 2 ** attempt, 2000),
+  });
   const qc = useQueryClient();
   const approveFn = useServerFn(approveLoan);
   const declineFn = useServerFn(declineLoan);
