@@ -30,6 +30,8 @@ import { Route as AuthenticatedClientsNewRouteImport } from './routes/_authentic
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as AuthenticatedAccountsPaymentsRouteImport } from './routes/_authenticated/accounts.payments'
 import { Route as AuthenticatedAccountsJournalRouteImport } from './routes/_authenticated/accounts.journal'
+import { Route as AuthenticatedAccountsPaymentsIndexRouteImport } from './routes/_authenticated/accounts.payments.index'
+import { Route as AuthenticatedAccountsJournalIndexRouteImport } from './routes/_authenticated/accounts.journal.index'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
 
@@ -147,6 +149,18 @@ const AuthenticatedAccountsJournalRoute =
     path: '/accounts/journal',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAccountsPaymentsIndexRoute =
+  AuthenticatedAccountsPaymentsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAccountsPaymentsRoute,
+  } as any)
+const AuthenticatedAccountsJournalIndexRoute =
+  AuthenticatedAccountsJournalIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAccountsJournalRoute,
+  } as any)
 const AuthenticatedAccountsPaymentsNewRoute =
   AuthenticatedAccountsPaymentsNewRouteImport.update({
     id: '/new',
@@ -183,6 +197,8 @@ export interface FileRoutesByFullPath {
   '/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
+  '/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -192,8 +208,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ledger': typeof AuthenticatedLedgerRoute
   '/reports': typeof AuthenticatedReportsRoute
-  '/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
-  '/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/clients/new': typeof AuthenticatedClientsNewRoute
   '/collections/new': typeof AuthenticatedCollectionsNewRoute
@@ -207,6 +221,8 @@ export interface FileRoutesByTo {
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/accounts/journal': typeof AuthenticatedAccountsJournalIndexRoute
+  '/accounts/payments': typeof AuthenticatedAccountsPaymentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -233,6 +249,8 @@ export interface FileRoutesById {
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/_authenticated/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/_authenticated/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/_authenticated/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
+  '/_authenticated/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -259,6 +277,8 @@ export interface FileRouteTypes {
     | '/transactions/'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
+    | '/accounts/journal/'
+    | '/accounts/payments/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -268,8 +288,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/ledger'
     | '/reports'
-    | '/accounts/journal'
-    | '/accounts/payments'
     | '/clients/$id'
     | '/clients/new'
     | '/collections/new'
@@ -283,6 +301,8 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
+    | '/accounts/journal'
+    | '/accounts/payments'
   id:
     | '__root__'
     | '/'
@@ -308,6 +328,8 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions/'
     | '/_authenticated/accounts/journal/new'
     | '/_authenticated/accounts/payments/new'
+    | '/_authenticated/accounts/journal/'
+    | '/_authenticated/accounts/payments/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -465,6 +487,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsJournalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/accounts/payments/': {
+      id: '/_authenticated/accounts/payments/'
+      path: '/'
+      fullPath: '/accounts/payments/'
+      preLoaderRoute: typeof AuthenticatedAccountsPaymentsIndexRouteImport
+      parentRoute: typeof AuthenticatedAccountsPaymentsRoute
+    }
+    '/_authenticated/accounts/journal/': {
+      id: '/_authenticated/accounts/journal/'
+      path: '/'
+      fullPath: '/accounts/journal/'
+      preLoaderRoute: typeof AuthenticatedAccountsJournalIndexRouteImport
+      parentRoute: typeof AuthenticatedAccountsJournalRoute
+    }
     '/_authenticated/accounts/payments/new': {
       id: '/_authenticated/accounts/payments/new'
       path: '/new'
@@ -498,11 +534,14 @@ const AuthenticatedCollectionsRouteWithChildren =
 
 interface AuthenticatedAccountsJournalRouteChildren {
   AuthenticatedAccountsJournalNewRoute: typeof AuthenticatedAccountsJournalNewRoute
+  AuthenticatedAccountsJournalIndexRoute: typeof AuthenticatedAccountsJournalIndexRoute
 }
 
 const AuthenticatedAccountsJournalRouteChildren: AuthenticatedAccountsJournalRouteChildren =
   {
     AuthenticatedAccountsJournalNewRoute: AuthenticatedAccountsJournalNewRoute,
+    AuthenticatedAccountsJournalIndexRoute:
+      AuthenticatedAccountsJournalIndexRoute,
   }
 
 const AuthenticatedAccountsJournalRouteWithChildren =
@@ -512,12 +551,15 @@ const AuthenticatedAccountsJournalRouteWithChildren =
 
 interface AuthenticatedAccountsPaymentsRouteChildren {
   AuthenticatedAccountsPaymentsNewRoute: typeof AuthenticatedAccountsPaymentsNewRoute
+  AuthenticatedAccountsPaymentsIndexRoute: typeof AuthenticatedAccountsPaymentsIndexRoute
 }
 
 const AuthenticatedAccountsPaymentsRouteChildren: AuthenticatedAccountsPaymentsRouteChildren =
   {
     AuthenticatedAccountsPaymentsNewRoute:
       AuthenticatedAccountsPaymentsNewRoute,
+    AuthenticatedAccountsPaymentsIndexRoute:
+      AuthenticatedAccountsPaymentsIndexRoute,
   }
 
 const AuthenticatedAccountsPaymentsRouteWithChildren =
@@ -581,13 +623,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
