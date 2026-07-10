@@ -1235,3 +1235,119 @@ export const getPayments = createServerFn({ method: "GET" })
       pageSize,
     };
   });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPANY (workspace) & TEAM
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const getCompany = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) return null;
+    const { data, error } = await supabase
+      .from("company")
+      .select("id,name,slug,currency,country,fy_end_month,fy_end_day,timezone,owner_user_id,created_at")
+      .eq("id", cid)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  });
+
+export const updateCompany = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { name?: string; currency?: string; country?: string; fy_end_month?: number; fy_end_day?: number; timezone?: string }) =>
+    z
+      .object({
+        name: z.string().trim().min(2).max(120).optional(),
+        currency: z.string().trim().length(3).optional(),
+        country: z.string().trim().min(2).max(80).optional(),
+        fy_end_month: z.number().int().min(1).max(12).optional(),
+        fy_end_day: z.number().int().min(1).max(31).optional(),
+        timezone: z.string().trim().min(2).max(60).optional(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
+    const patch: Record<string, unknown> = {};
+    if (data.name !== undefined) patch.name = data.name;
+    if (data.currency !== undefined) patch.currency = data.currency.toUpperCase();
+    if (data.country !== undefined) patch.country = data.country;
+    if (data.fy_end_month !== undefined) patch.fy_end_month = data.fy_end_month;
+    if (data.fy_end_day !== undefined) patch.fy_end_day = data.fy_end_day;
+    if (data.timezone !== undefined) patch.timezone = data.timezone;
+    const { data: updated, error } = await supabase
+      .from("company")
+      .update(patch)
+      .eq("id", cid)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated;
+  });
+
+export const listTeam = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) return { members: [], invites: [] };
+    const { data: branches } = await supabase.from("branch").select("id,name").eq("company_id", cid);
+    const branchIds = (branches ?? []).map((b) => b.id);
+    const { data: members } = await supabase
+      .from("staff")
+      .select("id,full_name,email,role,is_active,user_id,branch_id,created_at,branch:branch_id(id,name)")
+      .in("branch_id", branchIds.length ? branchIds : ["00000000-0000-0000-0000-000000000000"]);
+    const { data: invites } = await supabase
+      .from("company_invite")
+      .select("id,email,role,branch_id,accepted_at,expires_at,created_at,branch:branch_id(id,name)")
+      .eq("company_id", cid)
+      .order("created_at", { ascending: false });
+    return { members: members ?? [], invites: invites ?? [] };
+  });
+
+export const inviteMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { email: string; role: "loan_officer" | "branch_manager" | "teller" | "operations" | "admin"; branch_id?: string }) =>
+    z
+      .object({
+        email: z.string().trim().email().max(255),
+        role: z.enum(["loan_officer", "branch_manager", "teller", "operations", "admin"]),
+        branch_id: z.string().uuid().optional(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
+    const { data: isAdmin } = await supabase.rpc("is_company_admin", { _company_id: cid });
+    if (!isAdmin) throw new Error("Only company admins can invite teammates");
+    const { data: created, error } = await supabase
+      .from("company_invite")
+      .insert({
+        company_id: cid,
+        email: data.email.toLowerCase(),
+        role: data.role,
+        branch_id: data.branch_id ?? null,
+        invited_by: userId,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  });
+
+export const revokeInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string }) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { error } = await supabase.from("company_invite").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
