@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { LayoutDashboard, Users, Wallet, HandCoins, Users2, LineChart, BookOpen, Settings, Search, Circle, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, HandCoins, Users2, LineChart, BookOpen, Settings, Search, Circle, LogOut, ArrowLeftRight, Banknote, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,15 @@ const NAV: NavEntry[] = [
   { to: "/groups", label: "Groups", icon: Users2 },
   { to: "/reports", label: "Reports", icon: LineChart },
   { to: "/ledger", label: "Ledger", icon: BookOpen },
+  {
+    section: "Transactions",
+    items: [
+      { to: "/transactions", label: "Overview", icon: ArrowLeftRight },
+      { to: "/transactions/repayment", label: "Loan Repayment", icon: HandCoins },
+      { to: "/transactions/payments", label: "Payments", icon: Banknote },
+      { to: "/transactions/disbursement", label: "Disbursement", icon: Send },
+    ],
+  },
   {
     section: "Accounts",
     items: [
@@ -39,6 +48,10 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/ledger")) return { title: "General ledger", sub: "Journal entries & postings" };
   if (pathname.startsWith("/accounts/journal")) return { title: "Journal Entries", sub: "Accounting entries & postings" };
   if (pathname.startsWith("/accounts/payments")) return { title: "Payments", sub: "Received repayments" };
+  if (pathname.startsWith("/transactions/repayment")) return { title: "Loan Repayment", sub: "Record customer repayments" };
+  if (pathname.startsWith("/transactions/payments")) return { title: "Payments", sub: "Post incoming payments" };
+  if (pathname.startsWith("/transactions/disbursement")) return { title: "Disbursement", sub: "Release approved loans" };
+  if (pathname.startsWith("/transactions")) return { title: "Transactions", sub: "Money movement across the workspace" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };
   return { title: "Mzizi Core", sub: "" };
 }

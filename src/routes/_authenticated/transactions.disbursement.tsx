@@ -1,0 +1,101 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Loader2, Send } from "lucide-react";
+import { approveLoan, getPendingDisbursements } from "@/lib/mzizi.functions";
+import { Card } from "@/components/mzizi/Card";
+import { money, shortDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/_authenticated/transactions/disbursement")({
+  component: DisbursementPage,
+});
+
+function DisbursementPage() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(getPendingDisbursements);
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["pending-disbursements"],
+    queryFn: () => listFn(),
+  });
+
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const disburseFn = useServerFn(approveLoan);
+  const disburse = useMutation({
+    mutationFn: disburseFn,
+    onMutate: (v: any) => setBusyId(v.data.loan_id),
+    onSuccess: (r: any) => {
+      toast.success(`Disbursed · ${r.reference}`);
+      qc.invalidateQueries();
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSettled: () => setBusyId(null),
+  });
+
+  const loans = data ?? [];
+
+  return (
+    <div className="animate-fadein flex flex-col gap-4">
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">Disbursement</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Approved loans ready to release. Disbursing posts the schedule and journal entry.
+          </p>
+        </div>
+        <div className="text-[11.5px] text-faint flex items-center gap-2">
+          {isFetching && <Loader2 size={13} className="animate-spin" />}
+          {loans.length} pending
+        </div>
+      </div>
+
+      <Card padded={false}>
+        <div
+          className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-b border-border bg-secondary/40"
+          style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 140px" }}
+        >
+          <div>Submitted</div>
+          <div>Client</div>
+          <div>Product</div>
+          <div>Branch</div>
+          <div className="text-right">Principal</div>
+          <div className="text-right">Action</div>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center text-faint text-sm py-10">Loading…</div>
+        ) : loans.length === 0 ? (
+          <div className="text-center text-faint text-sm py-10">No loans awaiting disbursement.</div>
+        ) : (
+          loans.map((l: any) => (
+            <div
+              key={l.id}
+              className="grid items-center text-[12.5px] py-2.5 px-5 border-b border-row-divider hover:bg-secondary/30"
+              style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 140px" }}
+            >
+              <div className="text-muted-foreground">{l.submitted_at ? shortDate(l.submitted_at) : "—"}</div>
+              <div className="truncate">{l.client?.full_name ?? "—"}</div>
+              <div className="text-muted-foreground truncate">{l.product?.name ?? "—"}</div>
+              <div className="text-muted-foreground truncate">{l.branch?.code ?? l.branch?.name ?? "—"}</div>
+              <div className="text-right font-mono text-primary">{money(Number(l.principal))}</div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => disburse.mutate({ data: { loan_id: l.id } })}
+                  disabled={busyId === l.id}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary-hover disabled:opacity-60",
+                  )}
+                >
+                  {busyId === l.id ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                  Disburse
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </Card>
+    </div>
+  );
+}
