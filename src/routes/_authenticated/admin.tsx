@@ -62,7 +62,6 @@ function Admin() {
         {(
           [
             ["settings", "Company settings"],
-            ["team", "Team"],
             ["branches", "Branches"],
             ["staff", "Staff"],
             ["products", "Loan products"],
@@ -84,7 +83,6 @@ function Admin() {
         ))}
       </div>
       {tab === "settings" && <SettingsTab />}
-      {tab === "team" && <TeamTab />}
       {tab === "branches" && <BranchesTab />}
       {tab === "staff" && <StaffTab />}
       {tab === "products" && <ProductsTab />}
