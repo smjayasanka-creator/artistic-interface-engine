@@ -1594,3 +1594,15 @@ export const createJournalEntry = createServerFn({ method: "POST" })
 
     return { ok: true, reference: ref, entry_id: entry.id };
   });
+
+export const getPendingDisbursements = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("loan")
+      .select("id, principal, term_months, annual_rate_pct, frequency, submitted_at, approved_at, status, client:client_id(id, full_name, avatar_color), product:product_id(name), branch:branch_id(id, name, code)")
+      .in("status", ["submitted", "approved"])
+      .order("submitted_at", { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  });
