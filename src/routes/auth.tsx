@@ -42,10 +42,13 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin, data: { full_name: name } },
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: { full_name: name, company_name: companyName.trim() },
+          },
         });
         if (error) throw error;
-        toast.success("Account created · signing you in");
+        toast.success("Workspace created · signing you in");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
