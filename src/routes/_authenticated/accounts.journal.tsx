@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Loader2, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Plus, Search, X } from "lucide-react";
 import { getJournalEntries } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
 import { money, shortDate } from "@/lib/format";
@@ -103,13 +104,19 @@ function JournalEntriesPage() {
             Reset dates
           </button>
         )}
-        <div className="ml-auto flex items-center gap-2 text-[11.5px] text-faint">
+        <div className="ml-auto flex items-center gap-3 text-[11.5px] text-faint">
           {isFetching && <Loader2 size={13} className="animate-spin" />}
           <span>
             {total === 0
               ? "0 entries"
               : `${rangeFrom.toLocaleString()}–${rangeTo.toLocaleString()} of ${total.toLocaleString()}`}
           </span>
+          <Link
+            to="/accounts/journal/new"
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-primary-foreground text-[12.5px] font-semibold hover:bg-primary-hover"
+          >
+            <Plus size={13} /> New entry
+          </Link>
         </div>
       </div>
 

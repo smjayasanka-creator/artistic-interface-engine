@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Loader2, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Plus, Search, X } from "lucide-react";
 import { getPayments } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
 import { money, shortDate } from "@/lib/format";
@@ -123,6 +123,12 @@ function PaymentsPage() {
               ? "0 payments"
               : `${rangeFrom.toLocaleString()}–${rangeTo.toLocaleString()} of ${totalCount.toLocaleString()}`}
           </span>
+          <Link
+            to="/accounts/payments/new"
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-primary-foreground text-[12.5px] font-semibold hover:bg-primary-hover"
+          >
+            <Plus size={13} /> New payment
+          </Link>
         </div>
       </div>
 
