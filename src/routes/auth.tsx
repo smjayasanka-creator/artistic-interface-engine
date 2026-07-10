@@ -87,14 +87,21 @@ function AuthPage() {
             {mode === "in" ? "Sign in" : "Create an account"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {mode === "in" ? "Access the Mzizi operations console." : "First signup becomes the branch admin."}
+            {mode === "in" ? "Access your Mzizi workspace." : "Create your workspace — you'll be the owner."}
           </p>
           <form onSubmit={submit} className="mt-5 flex flex-col gap-3">
             {mode === "up" && (
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">Full name</label>
-                <input value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 w-full border border-input rounded-md px-3 py-2 text-sm bg-background" />
-              </div>
+              <>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Full name</label>
+                  <input value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 w-full border border-input rounded-md px-3 py-2 text-sm bg-background" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Company / workspace name</label>
+                  <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Acme Microfinance" className="mt-1 w-full border border-input rounded-md px-3 py-2 text-sm bg-background" />
+                  <p className="text-[10.5px] text-muted-foreground mt-1">If you were invited by email, leave your invited email address and this becomes your existing workspace.</p>
+                </div>
+              </>
             )}
             <div>
               <label className="text-xs font-medium text-muted-foreground">Email</label>
