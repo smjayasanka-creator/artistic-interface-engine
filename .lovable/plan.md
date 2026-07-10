@@ -1,114 +1,67 @@
 
-# Mzizi Core — Full Build Plan
+# Multi-Tenant SaaS Conversion
 
-A microfinance core banking app for loan officers: 10 screens + modals, backed by Lovable Cloud (Postgres + auth), with a double-entry ledger at the heart of it. Design faithfully recreated from the `.dc.html` prototype (teal `#0f766e`, IBM Plex Sans/Mono, dense operations-console layout).
+Turn Mzizi Core from a single-org app into a SaaS where each signup creates their own **Company (workspace)** and all data (clients, loans, branches, staff, ledger, etc.) is scoped to that company. Users can invite teammates and manage their company's settings.
 
-## Phase 1 — Backend (Lovable Cloud)
+## What changes for the user
 
-Enable Cloud, then ship the schema adapted from `schema.sql` (Postgres-friendly, RLS-safe).
+1. **Signup flow** — new users provide a Company name (+ currency/country). They become that company's **Owner**.
+2. **Company switcher** — top-right of the header shows the current company; users belonging to multiple companies can switch.
+3. **Team management** — new Admin → Team tab: invite users by email, assign role (owner / admin / loan_officer / accountant / viewer), remove members.
+4. **Company Settings** — the existing General Settings (currency, FY end, country) become **per-company**, stored in DB (not localStorage). Add: company name, timezone, logo (optional later).
+5. **All data isolated per company** — every list (clients, loans, groups, journal, payments, reports) automatically filtered to the active company. No cross-tenant leaks.
 
-**Tables (public schema, RLS on, GRANTs to authenticated/service_role):**
-- `branch`, `staff` (staff linked to `auth.users`)
-- `app_role` enum + `user_roles` table + `has_role()` security-definer fn (roles: `loan_officer`, `branch_manager`, `admin`)
-- `client` (KYC + status), `group` (`grp`), `group_member`
-- `loan_product`, `loan`, `loan_transition`, `installment`
-- `savings_account`, `savings_txn`
-- `gl_account` (chart of accounts, seeded), `journal_entry`, `posting` (deferred trigger enforces DR=CR)
-- `payment` (repayments)
-- `audit_log`
-- Views: `v_account_balance`, `v_loan_outstanding`, `v_savings_balance`, `v_par_aging`
+## Technical Section
 
-**RLS model:** all reads/writes gated to authenticated staff. Admin-only for `branch`/`staff` writes and `gl_account`. Officers can post repayments and create draft/submitted loans; branch managers can approve.
+### New tables
 
-**Seed data (migration):** one branch (Kawangware), one demo staff (Amina Okoth linked to first admin signup via trigger), a handful of clients/groups/loans/installments, and the standard chart of accounts. Also seed a few pending approvals so the dashboard has content.
+- `company` — `id, name, slug, currency, country, fy_end_month, fy_end_day, timezone, created_at, owner_user_id`
+- `company_member` — `id, company_id, user_id, role (owner|admin|loan_officer|accountant|viewer), created_at`, unique `(company_id, user_id)`
+- `company_invite` — `id, company_id, email, role, token, invited_by, expires_at, accepted_at`
 
-## Phase 2 — Auth
+### Schema migration (existing tables)
 
-- Cloud Auth: email/password + Google.
-- `/auth` route (sign in + sign up).
-- Integration-managed `_authenticated` gate protects all app routes.
-- Trigger on `auth.users` insert → create `staff` row + assign default `loan_officer` role (first signup gets `admin`).
-- Top-bar user chip + sign-out.
+Add `company_id uuid not null references company(id) on delete cascade` to: `branch`, `client`, `loan`, `loan_product`, `lending_group`, `staff`, `journal_entry`, `posting`, `repayment`, `loan_installment`, `gl_account`. Backfill: create a default "Default Company" and assign all existing rows + all existing users as members (owner = first admin).
 
-## Phase 3 — Design system
+### RLS
 
-- Install `@fontsource/ibm-plex-sans` and `@fontsource/ibm-plex-mono`.
-- Update `src/styles.css` with tokens from the README (teal primary, rail dark `#0c1f24`, semantic status/risk/debit/credit colors, radii, shadows). All semantic — no hardcoded hex in components.
-- Shared primitives: `Card`, `Kpi`, `Badge` (status/risk), `Money` (mono), `Avatar` (initials + color), `ProgressBar`, `Toast`, `Modal`.
+Replace/augment every policy with `company_id in (select company_id from company_member where user_id = auth.uid())`. Add a `current_company_id()` SECURITY DEFINER helper that reads the user's active company from a session claim OR from a `user_active_company (user_id, company_id)` table (simpler — use table). Update `has_role` to `has_role(_user_id, _company_id, _role)`.
 
-## Phase 4 — Shell & routes
+### Auth / signup
 
-Persistent shell: 232px dark rail + 60px top bar + scroll area. All routes under `_authenticated`.
+- New `handle_new_user` trigger: DO NOT auto-create staff/company. Signup UI collects company name → RPC `create_company_and_join(name, currency, country)` runs after auth, inserts company + company_member(owner) + default branch + seeds GL accounts + sets active company.
+- Google OAuth users land on `/onboarding` if they have no company memberships.
 
-```text
-_authenticated/route.tsx        (managed gate)
-_authenticated/layout.tsx       (rail + topbar + Outlet)
-  index.tsx                     → /dashboard redirect
-  dashboard.tsx                 → screen 1
-  clients.index.tsx             → screen 2
-  clients.$id.tsx               → screen 3 (Client 360)
-  loans.index.tsx               → screen 4
-  loans.new.tsx                 → screen 5 (wizard)
-  collections.tsx               → screen 6
-  groups.index.tsx              → screen 7
-  groups.$id.tsx                → group detail
-  reports.tsx                   → screen 8
-  ledger.tsx                    → screen 9
-  admin.tsx                     → screen 10 (branch_manager+ only)
-auth.tsx                        (public)
-```
+### Server functions
 
-## Phase 5 — Screens (server functions + TanStack Query)
+- New `getCurrentCompany`, `listMyCompanies`, `switchCompany(companyId)`, `updateCompanySettings`, `inviteMember`, `acceptInvite(token)`, `listMembers`, `updateMemberRole`, `removeMember`.
+- Every existing server fn in `src/lib/mzizi.functions.ts` gets a `.company_id` filter derived from `current_company_id()` (either via RLS automatically, or explicit `.eq("company_id", ctx.companyId)`).
 
-All data access through `createServerFn` + `requireSupabaseAuth`. Loader pattern: `ensureQueryData` → `useSuspenseQuery`. Money as strings from Postgres numeric, formatted with `Intl.NumberFormat('en-KE', { style:'currency', currency:'KES' })`.
+### UI
 
-Screen-by-screen (matches README composition exactly — same KPI counts, column layouts, card structures, badge colors, progress bars):
+- `/onboarding` route (create first company).
+- `/auth` signup form: add Company name field.
+- `AppShell`: company switcher dropdown replacing the static "Branch" pill (branch becomes a sub-selector).
+- `admin.tsx`: new **Team** tab (invite + members list) and **Company** tab (name, currency, country, FY end, timezone) — replaces localStorage settings.
+- `/invite/:token` route to accept invites.
 
-1. **Dashboard** — 5 KPI cards, PAR aging bars + today's meetings row, pending approvals table with Approve/Decline. Approve triggers `approved → disbursed` transition + disbursement journal entry via a server fn.
-2. **Clients** — filter chips + table + `New client` KYC modal (creates `pending_kyc` client).
-3. **Client 360** — header, 4 stats, active loan card w/ progress + installment schedule, activity timeline.
-4. **Loans** — full portfolio table with inline progress bars, overdue highlighting.
-5. **New application wizard** — 3-step (Client / Product+amount / Review) → creates `draft`→`submitted` loan and enqueues approval.
-6. **Collections** — dark gradient hero (today's total + target progress), 2-col groups-due / recorded-today feed, Record repayment modal that posts a balanced journal entry.
-7. **Groups** — 2-col group cards with PAR badge and mini-stats.
-8. **Reports & analytics** — 2 bar charts (disbursement, PAR trend) + portfolio-by-product table.
-9. **General ledger** — account filter chips + journal table (debit red / credit teal, mono) with totals row.
-10. **Administration** — branch summary card + staff table (gated to `branch_manager`/`admin`).
+### Route architecture
 
-Global modals: **Record repayment**, **New client/KYC**, bottom-center **toast**.
+Add pathless layout `_authenticated/_company/` that ensures the user has an active company; else redirects to `/onboarding`. All existing authenticated pages move under it (or we resolve company in the shell and redirect there).
 
-## Phase 6 — Ledger correctness
+### Migration order
 
-Business events are wrapped in server-side RPCs that write balanced journal entries:
-- `post_disbursement(loan_id)` — DR Loans receivable / CR Cash
-- `post_repayment(loan_id, amount, channel)` — DR Cash / CR Loans receivable + CR Interest income
-- `post_savings_deposit(account_id, amount, channel)` — DR Bank float / CR Member savings
+1. Create `company`, `company_member`, `user_active_company`, `company_invite` + grants + RLS.
+2. Add `company_id` (nullable) to all domain tables + backfill Default Company + set NOT NULL.
+3. Rewrite RLS policies for all domain tables to use company membership.
+4. Update `handle_new_user`, add `create_company_and_join` RPC, add `current_company_id()`.
+5. Server functions + UI (onboarding, switcher, team tab, company settings tab).
+6. Remove localStorage general_settings; migrate to DB.
 
-The `posting`-balance trigger from `schema.sql` guarantees each entry is balanced before commit. Balances always read from the `v_*` views.
+## Scope note
 
-## Phase 7 — SEO / metadata
+This is a substantial migration touching ~12 tables, ~all RLS policies, auth flow, and most UI pages. I'll do it in one coordinated change but wanted your sign-off first — especially on:
 
-Real `head()` on `__root.tsx`: title "Mzizi Core — Microfinance Operations", description, og/twitter. Each authenticated screen keeps a route-specific title.
-
-## Technical Notes
-
-- **Stack:** TanStack Start (existing), TanStack Query, Lovable Cloud (Supabase under the hood).
-- **Money:** Postgres `NUMERIC(18,2)`; strings on the wire; formatted at the edge with `Intl.NumberFormat`. Never `number`.
-- **Approvals badge** in nav rail derived from live pending-loan count (Query).
-- **Toast** via a simple context + portal (no shadcn Sonner dependency needed but fine to use).
-- **Charts** in Reports built with plain divs (matches prototype's explicit-pixel bar style — no Recharts needed).
-- **Icons:** Lucide, stroke-matched to the prototype's SVGs.
-- **Not in scope for v1:** offline PWA, mobile field app, M-Pesa live integration (channel captured but not connected), CSV export, multi-branch switcher (single branch), i18n.
-
-## Deliverable order
-
-1. Enable Cloud → run schema migration + seed
-2. Auth (`/auth` + role trigger) + `_authenticated` gate
-3. Design tokens + fonts + shared primitives
-4. Shell (rail + topbar) with nav
-5. Dashboard end-to-end (proves the data pattern)
-6. Remaining screens
-7. Modals + toast + ledger RPCs wired to Approve/Repayment
-8. Metadata + polish pass
-
-I'll implement this straight through once you approve. This is a large plan; expect multiple turns.
+- **Roles** — keep the 5 roles listed above (owner/admin/loan_officer/accountant/viewer)?
+- **Existing data** — OK to migrate all current data into one "Default Company" owned by the first existing admin user?
+- **Company switcher** — one user can belong to multiple companies (recommended), or hard 1:1 user↔company?

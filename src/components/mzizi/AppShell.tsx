@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { LayoutDashboard, Users, Wallet, HandCoins, Users2, LineChart, BookOpen, Settings, Search, Circle, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSession, getDashboard } from "@/lib/mzizi.functions";
+import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> };
@@ -52,6 +52,8 @@ function ShellInner() {
   const { data: session } = useQuery({ queryKey: ["session"], queryFn: () => sessionFn() });
   const dashFn = useServerFn(getDashboard);
   const { data: dash } = useQuery({ queryKey: ["dashboard"], queryFn: () => dashFn() });
+  const companyFn = useServerFn(getCompany);
+  const { data: company } = useQuery({ queryKey: ["company"], queryFn: () => companyFn() });
   const approvalsCount = dash?.approvals.length ?? 0;
 
   async function signOut() {
@@ -93,9 +95,9 @@ function ShellInner() {
           <div className="w-9 h-9 rounded-[10px] flex items-center justify-center font-bold text-white text-[17px]" style={{ background: "linear-gradient(140deg,#14b8a6,#0f766e)" }}>
             M
           </div>
-          <div>
-            <div className="font-bold text-white text-base tracking-tight">Mzizi</div>
-            <div className="text-[10.5px] text-rail-muted tracking-wider uppercase">Core Banking</div>
+          <div className="min-w-0">
+            <div className="font-bold text-white text-base tracking-tight truncate">{company?.name ?? "Mzizi"}</div>
+            <div className="text-[10.5px] text-rail-muted tracking-wider uppercase">Workspace</div>
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">

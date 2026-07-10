@@ -14,6 +14,11 @@ import {
   getGlAccounts,
   createGlAccount,
   toggleGlAccount,
+  getCompany,
+  updateCompany,
+  listTeam,
+  inviteMember,
+  revokeInvite,
 } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
@@ -26,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "products" | "accounts";
+type Tab = "settings" | "team" | "branches" | "staff" | "products" | "accounts";
 type Mode = "list" | "create";
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
@@ -56,7 +61,8 @@ function Admin() {
       <div className="flex gap-1 border-b border-border">
         {(
           [
-            ["settings", "General settings"],
+            ["settings", "Company settings"],
+            ["team", "Team"],
             ["branches", "Branches"],
             ["staff", "Staff"],
             ["products", "Loan products"],
@@ -78,6 +84,7 @@ function Admin() {
         ))}
       </div>
       {tab === "settings" && <SettingsTab />}
+      {tab === "team" && <TeamTab />}
       {tab === "branches" && <BranchesTab />}
       {tab === "staff" && <StaffTab />}
       {tab === "products" && <ProductsTab />}
@@ -86,110 +93,212 @@ function Admin() {
   );
 }
 
-/* ---------------- General settings ---------------- */
+/* ---------------- Company settings (workspace) ---------------- */
 
-const SETTINGS_KEY = "mzizi.general_settings";
 const CURRENCIES = ["KES", "UGX", "TZS", "RWF", "USD", "EUR", "GBP"] as const;
 const COUNTRIES = ["Kenya", "Uganda", "Tanzania", "Rwanda", "Burundi", "South Sudan", "Ethiopia", "United States", "United Kingdom"] as const;
+const TIMEZONES = ["Africa/Nairobi", "Africa/Kampala", "Africa/Dar_es_Salaam", "Africa/Kigali", "Africa/Addis_Ababa", "UTC", "Europe/London", "America/New_York"] as const;
 const FY_MONTHS = [
-  ["01", "January"], ["02", "February"], ["03", "March"], ["04", "April"],
-  ["05", "May"], ["06", "June"], ["07", "July"], ["08", "August"],
-  ["09", "September"], ["10", "October"], ["11", "November"], ["12", "December"],
+  [1, "January"], [2, "February"], [3, "March"], [4, "April"],
+  [5, "May"], [6, "June"], [7, "July"], [8, "August"],
+  [9, "September"], [10, "October"], [11, "November"], [12, "December"],
 ] as const;
 
-type GeneralSettings = { currency: string; fyEndMonth: string; fyEndDay: string; country: string };
-const DEFAULT_SETTINGS: GeneralSettings = { currency: "KES", fyEndMonth: "12", fyEndDay: "31", country: "Kenya" };
-
-function loadSettings(): GeneralSettings {
-  if (typeof window === "undefined") return DEFAULT_SETTINGS;
-  try {
-    const raw = window.localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
-}
-
 function SettingsTab() {
-  const [form, setForm] = useState<GeneralSettings>(DEFAULT_SETTINGS);
-  const [loaded, setLoaded] = useState(false);
+  const qc = useQueryClient();
+  const getFn = useServerFn(getCompany);
+  const updFn = useServerFn(updateCompany);
+  const { data: company, isLoading } = useQuery({ queryKey: ["company"], queryFn: () => getFn() });
 
-  if (!loaded && typeof window !== "undefined") {
-    // hydrate on first client render
-    const s = loadSettings();
-    if (s.currency !== form.currency || s.fyEndMonth !== form.fyEndMonth || s.fyEndDay !== form.fyEndDay || s.country !== form.country) {
-      setForm(s);
-    }
-    setLoaded(true);
+  const [form, setForm] = useState<{ name: string; currency: string; country: string; fy_end_month: number; fy_end_day: number; timezone: string } | null>(null);
+
+  if (!form && company) {
+    setForm({
+      name: company.name,
+      currency: company.currency,
+      country: company.country,
+      fy_end_month: company.fy_end_month,
+      fy_end_day: company.fy_end_day,
+      timezone: company.timezone,
+    });
   }
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const day = Math.max(1, Math.min(31, Number(form.fyEndDay) || 31));
-    const next = { ...form, fyEndDay: String(day).padStart(2, "0") };
-    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
-    setForm(next);
-    toast.success("Settings saved");
-  }
+  const save = useMutation({
+    mutationFn: (v: NonNullable<typeof form>) => updFn({ data: v }),
+    onSuccess: () => {
+      toast.success("Company settings saved");
+      qc.invalidateQueries({ queryKey: ["company"] });
+      qc.invalidateQueries({ queryKey: ["session"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (isLoading || !form) return <div className="text-sm text-muted-foreground">Loading…</div>;
 
   return (
     <Card>
-      <CardTitle>General settings</CardTitle>
+      <CardTitle>Company settings</CardTitle>
       <p className="text-[12px] text-muted-foreground -mt-1 mb-3">
-        Organisation-wide defaults used across reports and formatting.
+        Workspace-wide defaults used across reports, formatting, and the ledger.
       </p>
-      <form onSubmit={submit} className="flex flex-col gap-3">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const day = Math.max(1, Math.min(31, Number(form.fy_end_day) || 31));
+          save.mutate({ ...form, fy_end_day: day });
+        }}
+        className="flex flex-col gap-3"
+      >
         <FormGrid>
+          <FormField label="Company name" required span={6}>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} required minLength={2} />
+          </FormField>
+          <FormField label="Timezone" required span={6}>
+            <select value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })} className={selectCls}>
+              {TIMEZONES.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </FormField>
           <FormField label="Currency" required span={4} hint="Default reporting currency">
-            <select
-              value={form.currency}
-              onChange={(e) => setForm({ ...form, currency: e.target.value })}
-              className={selectCls + " font-mono"}
-            >
-              {CURRENCIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
+            <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className={selectCls + " font-mono"}>
+              {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </FormField>
           <FormField label="Country" required span={4}>
-            <select
-              value={form.country}
-              onChange={(e) => setForm({ ...form, country: e.target.value })}
-              className={selectCls}
-            >
-              {COUNTRIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
+            <select value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className={selectCls}>
+              {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </FormField>
           <FormField label="Financial year end" required span={4} hint="Month and day the fiscal year closes">
             <div className="flex gap-2">
-              <select
-                value={form.fyEndMonth}
-                onChange={(e) => setForm({ ...form, fyEndMonth: e.target.value })}
-                className={selectCls + " flex-1"}
-              >
-                {FY_MONTHS.map(([v, l]) => (
-                  <option key={v} value={v}>{l}</option>
-                ))}
+              <select value={form.fy_end_month} onChange={(e) => setForm({ ...form, fy_end_month: Number(e.target.value) })} className={selectCls + " flex-1"}>
+                {FY_MONTHS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
-              <input
-                type="number"
-                min={1}
-                max={31}
-                value={form.fyEndDay}
-                onChange={(e) => setForm({ ...form, fyEndDay: e.target.value })}
-                className={inputCls + " w-20 font-mono"}
-              />
+              <input type="number" min={1} max={31} value={form.fy_end_day} onChange={(e) => setForm({ ...form, fy_end_day: Number(e.target.value) })} className={inputCls + " w-20 font-mono"} />
             </div>
           </FormField>
         </FormGrid>
         <FormActions>
-          <button type="submit" className={btnPrimaryCls}>Save settings</button>
+          <button type="submit" disabled={save.isPending} className={btnPrimaryCls}>{save.isPending ? "Saving…" : "Save settings"}</button>
         </FormActions>
       </form>
     </Card>
+  );
+}
+
+/* ---------------- Team (members + invites) ---------------- */
+
+const INVITE_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
+
+function TeamTab() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listTeam);
+  const inviteFn = useServerFn(inviteMember);
+  const revokeFn = useServerFn(revokeInvite);
+  const { data, isLoading } = useQuery({ queryKey: ["team"], queryFn: () => listFn() });
+
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<(typeof INVITE_ROLES)[number]>("loan_officer");
+
+  const invite = useMutation({
+    mutationFn: (v: { email: string; role: (typeof INVITE_ROLES)[number] }) => inviteFn({ data: v }),
+    onSuccess: () => {
+      toast.success("Invite created");
+      setEmail("");
+      qc.invalidateQueries({ queryKey: ["team"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const revoke = useMutation({
+    mutationFn: (id: string) => revokeFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Invite revoked");
+      qc.invalidateQueries({ queryKey: ["team"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (isLoading || !data) return <div className="text-sm text-muted-foreground">Loading…</div>;
+
+  return (
+    <div className="flex flex-col gap-5">
+      <Card>
+        <CardTitle>Invite a teammate</CardTitle>
+        <p className="text-[12px] text-muted-foreground -mt-1 mb-3">
+          They join your workspace automatically when they sign up with this email.
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!email.trim()) return;
+            invite.mutate({ email: email.trim(), role });
+          }}
+          className="flex flex-col gap-3"
+        >
+          <FormGrid>
+            <FormField label="Email" required span={7}>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputCls} placeholder="teammate@company.com" />
+            </FormField>
+            <FormField label="Role" required span={3}>
+              <select value={role} onChange={(e) => setRole(e.target.value as (typeof INVITE_ROLES)[number])} className={selectCls}>
+                {INVITE_ROLES.map((r) => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
+              </select>
+            </FormField>
+            <FormField label="" span={2}>
+              <button type="submit" disabled={invite.isPending} className={btnPrimaryCls + " w-full"}>
+                {invite.isPending ? "…" : "Send invite"}
+              </button>
+            </FormField>
+          </FormGrid>
+        </form>
+      </Card>
+
+      <Card>
+        <div className="px-5 pt-4 pb-2 text-sm font-semibold">
+          Members <span className="text-[11px] text-muted-foreground font-normal ml-1">{data.members.length} total</span>
+        </div>
+        <div className="divide-y divide-border">
+          {data.members.map((m: any) => (
+            <div key={m.id} className="px-5 py-3 flex items-center gap-3">
+              <Avatar name={m.full_name} />
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-semibold text-foreground truncate">{m.full_name}</div>
+                <div className="text-[11.5px] text-muted-foreground truncate">{m.email ?? "—"} · {m.branch?.name ?? "—"}</div>
+              </div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{String(m.role).replace("_", " ")}</div>
+              <span className={cn("text-[10.5px] px-1.5 py-0.5 rounded-full border", m.is_active ? "border-emerald-500/40 text-emerald-700 bg-emerald-500/10" : "border-border text-muted-foreground")}>
+                {m.is_active ? "active" : "disabled"}
+              </span>
+            </div>
+          ))}
+          {data.members.length === 0 && <div className="px-5 py-4 text-[12px] text-muted-foreground">No members yet.</div>}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="px-5 pt-4 pb-2 text-sm font-semibold">
+          Pending invites <span className="text-[11px] text-muted-foreground font-normal ml-1">{data.invites.filter((i: any) => !i.accepted_at).length} pending</span>
+        </div>
+        <div className="divide-y divide-border">
+          {data.invites.map((i: any) => (
+            <div key={i.id} className="px-5 py-3 flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-semibold text-foreground truncate">{i.email}</div>
+                <div className="text-[11.5px] text-muted-foreground truncate">
+                  role: {String(i.role).replace("_", " ")} · invited {shortDate(i.created_at)} · {i.accepted_at ? `accepted ${shortDate(i.accepted_at)}` : `expires ${shortDate(i.expires_at)}`}
+                </div>
+              </div>
+              {!i.accepted_at && (
+                <button onClick={() => revoke.mutate(i.id)} className="text-[11.5px] text-rose-600 hover:underline">
+                  Revoke
+                </button>
+              )}
+            </div>
+          ))}
+          {data.invites.length === 0 && <div className="px-5 py-4 text-[12px] text-muted-foreground">No invites yet.</div>}
+        </div>
+      </Card>
+    </div>
   );
 }
 

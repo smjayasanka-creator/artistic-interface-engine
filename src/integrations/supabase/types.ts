@@ -17,6 +17,7 @@ export type Database = {
       branch: {
         Row: {
           code: string
+          company_id: string
           created_at: string
           currency: string
           id: string
@@ -26,6 +27,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          company_id: string
           created_at?: string
           currency?: string
           id?: string
@@ -35,6 +37,7 @@ export type Database = {
         }
         Update: {
           code?: string
+          company_id?: string
           created_at?: string
           currency?: string
           id?: string
@@ -42,7 +45,15 @@ export type Database = {
           opened_on?: string | null
           region?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "branch_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client: {
         Row: {
@@ -135,9 +146,109 @@ export type Database = {
           },
         ]
       }
+      company: {
+        Row: {
+          country: string
+          created_at: string
+          currency: string
+          fy_end_day: number
+          fy_end_month: number
+          id: string
+          is_active: boolean
+          name: string
+          owner_user_id: string | null
+          slug: string | null
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          currency?: string
+          fy_end_day?: number
+          fy_end_month?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          owner_user_id?: string | null
+          slug?: string | null
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          currency?: string
+          fy_end_day?: number
+          fy_end_month?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          owner_user_id?: string | null
+          slug?: string | null
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_invite: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          branch_id: string | null
+          company_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["staff_role"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          branch_id?: string | null
+          company_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          branch_id?: string | null
+          company_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_invite_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_invite_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gl_account: {
         Row: {
           code: string
+          company_id: string
           id: string
           is_active: boolean
           name: string
@@ -146,6 +257,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          company_id: string
           id?: string
           is_active?: boolean
           name: string
@@ -154,13 +266,22 @@ export type Database = {
         }
         Update: {
           code?: string
+          company_id?: string
           id?: string
           is_active?: boolean
           name?: string
           normal_balance?: number
           type?: Database["public"]["Enums"]["account_type"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "gl_account_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       journal_entry: {
         Row: {
@@ -446,6 +567,7 @@ export type Database = {
           annual_rate_pct: number
           cash_account_id: string | null
           color: string | null
+          company_id: string
           fee_income_account_id: string | null
           frequency: Database["public"]["Enums"]["repayment_frequency"]
           id: string
@@ -464,6 +586,7 @@ export type Database = {
           annual_rate_pct: number
           cash_account_id?: string | null
           color?: string | null
+          company_id: string
           fee_income_account_id?: string | null
           frequency?: Database["public"]["Enums"]["repayment_frequency"]
           id?: string
@@ -482,6 +605,7 @@ export type Database = {
           annual_rate_pct?: number
           cash_account_id?: string | null
           color?: string | null
+          company_id?: string
           fee_income_account_id?: string | null
           frequency?: Database["public"]["Enums"]["repayment_frequency"]
           id?: string
@@ -502,6 +626,13 @@ export type Database = {
             columns: ["cash_account_id"]
             isOneToOne: false
             referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_product_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
             referencedColumns: ["id"]
           },
           {
@@ -710,6 +841,7 @@ export type Database = {
       }
     }
     Functions: {
+      current_company_id: { Args: never; Returns: string }
       current_staff_branch: { Args: never; Returns: string }
       current_staff_id: { Args: never; Returns: string }
       has_role: {
@@ -719,6 +851,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_company_admin: { Args: { _company_id: string }; Returns: boolean }
+      is_company_member: { Args: { _company_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
     }
     Enums: {
