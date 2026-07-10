@@ -1273,7 +1273,14 @@ export const updateCompany = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { data: cid } = await supabase.rpc("current_company_id");
     if (!cid) throw new Error("No active company");
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      name?: string;
+      currency?: string;
+      country?: string;
+      fy_end_month?: number;
+      fy_end_day?: number;
+      timezone?: string;
+    } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.currency !== undefined) patch.currency = data.currency.toUpperCase();
     if (data.country !== undefined) patch.country = data.country;
