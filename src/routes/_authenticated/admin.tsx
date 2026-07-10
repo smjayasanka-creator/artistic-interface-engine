@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "branches" | "staff" | "products" | "accounts";
+type Tab = "settings" | "branches" | "staff" | "products" | "accounts";
 type Mode = "list" | "create";
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
