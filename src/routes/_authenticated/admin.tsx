@@ -610,51 +610,54 @@ function StaffTab() {
   }
 
   return (
-    <Card padded={false}>
-      <ListHeader title="Staff" count={data.staff.length} onNew={() => setMode("create")} newLabel="New staff" />
-      <div
-        className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
-        style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr 0.6fr" }}
-      >
-        <div>Name</div>
-        <div>Role</div>
-        <div>Branch</div>
-        <div>Contact</div>
-        <div className="text-right">Status</div>
-      </div>
-      {data.staff.map((s: any) => (
+    <div className="flex flex-col gap-5">
+      <Card padded={false}>
+        <ListHeader title="Staff" count={data.staff.length} onNew={() => setMode("create")} newLabel="New staff" />
         <div
-          key={s.id}
-          className="grid items-center text-[13px] py-3 px-5 border-b border-row-divider last:border-b-0"
+          className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
           style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr 0.6fr" }}
         >
-          <div className="flex items-center gap-2.5 font-semibold">
-            <Avatar name={s.full_name} />
-            {s.full_name}
-          </div>
-          <div className="capitalize text-secondary-foreground">{(s.role ?? "").replace("_", " ")}</div>
-          <div className="text-secondary-foreground">{s.branch?.name ?? "—"}</div>
-          <div className="text-muted-foreground text-[12px] truncate">
-            <div className="truncate">{s.email ?? "—"}</div>
-            {s.phone && <div className="font-mono text-[11px]">{s.phone}</div>}
-          </div>
-          <div className="text-right">
-            <button
-              onClick={() => toggle.mutate({ data: { id: s.id, is_active: !s.is_active } })}
-              className={cn(
-                "text-[11px] px-2 py-0.5 rounded-full border",
-                s.is_active
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
-                  : "border-muted bg-muted text-muted-foreground",
-              )}
-            >
-              {s.is_active ? "Active" : "Off"}
-            </button>
-          </div>
+          <div>Name</div>
+          <div>Role</div>
+          <div>Branch</div>
+          <div>Contact</div>
+          <div className="text-right">Status</div>
         </div>
-      ))}
-      {data.staff.length === 0 && <div className="text-center text-faint text-sm py-8">No staff yet.</div>}
-    </Card>
+        {data.staff.map((s: any) => (
+          <div
+            key={s.id}
+            className="grid items-center text-[13px] py-3 px-5 border-b border-row-divider last:border-b-0"
+            style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr 0.6fr" }}
+          >
+            <div className="flex items-center gap-2.5 font-semibold">
+              <Avatar name={s.full_name} />
+              {s.full_name}
+            </div>
+            <div className="capitalize text-secondary-foreground">{(s.role ?? "").replace("_", " ")}</div>
+            <div className="text-secondary-foreground">{s.branch?.name ?? "—"}</div>
+            <div className="text-muted-foreground text-[12px] truncate">
+              <div className="truncate">{s.email ?? "—"}</div>
+              {s.phone && <div className="font-mono text-[11px]">{s.phone}</div>}
+            </div>
+            <div className="text-right">
+              <button
+                onClick={() => toggle.mutate({ data: { id: s.id, is_active: !s.is_active } })}
+                className={cn(
+                  "text-[11px] px-2 py-0.5 rounded-full border",
+                  s.is_active
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                    : "border-muted bg-muted text-muted-foreground",
+                )}
+              >
+                {s.is_active ? "Active" : "Off"}
+              </button>
+            </div>
+          </div>
+        ))}
+        {data.staff.length === 0 && <div className="text-center text-faint text-sm py-8">No staff yet.</div>}
+      </Card>
+      <InviteSection />
+    </div>
   );
 }
 
