@@ -183,11 +183,11 @@ function SettingsTab() {
   );
 }
 
-/* ---------------- Team (members + invites) ---------------- */
+/* ---------------- Staff invites (email invites + pending list) ---------------- */
 
 const INVITE_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
 
-function TeamTab() {
+function InviteSection() {
   const qc = useQueryClient();
   const listFn = useServerFn(listTeam);
   const inviteFn = useServerFn(inviteMember);
@@ -216,14 +216,14 @@ function TeamTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (isLoading || !data) return <div className="text-sm text-muted-foreground">Loading…</div>;
+  if (isLoading || !data) return null;
 
   return (
     <div className="flex flex-col gap-5">
       <Card>
-        <CardTitle>Invite a teammate</CardTitle>
+        <CardTitle>Invite staff by email</CardTitle>
         <p className="text-[12px] text-muted-foreground -mt-1 mb-3">
-          They join your workspace automatically when they sign up with this email.
+          They join automatically when they sign up with this email.
         </p>
         <form
           onSubmit={(e) => {
@@ -249,28 +249,6 @@ function TeamTab() {
             </FormField>
           </FormGrid>
         </form>
-      </Card>
-
-      <Card>
-        <div className="px-5 pt-4 pb-2 text-sm font-semibold">
-          Members <span className="text-[11px] text-muted-foreground font-normal ml-1">{data.members.length} total</span>
-        </div>
-        <div className="divide-y divide-border">
-          {data.members.map((m: any) => (
-            <div key={m.id} className="px-5 py-3 flex items-center gap-3">
-              <Avatar name={m.full_name} />
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-semibold text-foreground truncate">{m.full_name}</div>
-                <div className="text-[11.5px] text-muted-foreground truncate">{m.email ?? "—"} · {m.branch?.name ?? "—"}</div>
-              </div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{String(m.role).replace("_", " ")}</div>
-              <span className={cn("text-[10.5px] px-1.5 py-0.5 rounded-full border", m.is_active ? "border-emerald-500/40 text-emerald-700 bg-emerald-500/10" : "border-border text-muted-foreground")}>
-                {m.is_active ? "active" : "disabled"}
-              </span>
-            </div>
-          ))}
-          {data.members.length === 0 && <div className="px-5 py-4 text-[12px] text-muted-foreground">No members yet.</div>}
-        </div>
       </Card>
 
       <Card>
