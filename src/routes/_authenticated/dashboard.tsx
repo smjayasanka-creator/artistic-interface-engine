@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -11,7 +11,27 @@ import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
+  errorComponent: DashboardError,
 });
+
+function DashboardError({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+  return (
+    <div className="animate-fadein flex items-center justify-center min-h-[60vh] p-6">
+      <div className="max-w-md w-full bg-card border border-border rounded-2xl p-6 text-center">
+        <div className="w-9 h-9 rounded-full mx-auto mb-3 flex items-center justify-center bg-destructive/10 text-destructive font-semibold">!</div>
+        <h2 className="text-sm font-semibold text-foreground">Couldn't load dashboard</h2>
+        <p className="text-xs text-muted-foreground mt-1">{error.message || "Something went wrong."}</p>
+        <button
+          onClick={() => { reset(); router.invalidate(); }}
+          className="mt-4 bg-primary text-primary-foreground text-xs font-semibold px-3 py-2 rounded-md hover:bg-primary-hover"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const PAR_TONES: Record<string, string> = {
   current: "var(--teal-bright)",
