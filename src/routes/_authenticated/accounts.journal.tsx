@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2, Search, X } from "lucide-react";
