@@ -123,6 +123,12 @@ function PaymentsPage() {
               ? "0 payments"
               : `${rangeFrom.toLocaleString()}–${rangeTo.toLocaleString()} of ${totalCount.toLocaleString()}`}
           </span>
+          <Link
+            to="/accounts/payments/new"
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-primary-foreground text-[12.5px] font-semibold hover:bg-primary-hover"
+          >
+            <Plus size={13} /> New payment
+          </Link>
         </div>
       </div>
 
