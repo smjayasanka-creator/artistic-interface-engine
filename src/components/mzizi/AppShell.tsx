@@ -52,6 +52,8 @@ function ShellInner() {
   const { data: session } = useQuery({ queryKey: ["session"], queryFn: () => sessionFn() });
   const dashFn = useServerFn(getDashboard);
   const { data: dash } = useQuery({ queryKey: ["dashboard"], queryFn: () => dashFn() });
+  const companyFn = useServerFn(getCompany);
+  const { data: company } = useQuery({ queryKey: ["company"], queryFn: () => companyFn() });
   const approvalsCount = dash?.approvals.length ?? 0;
 
   async function signOut() {
