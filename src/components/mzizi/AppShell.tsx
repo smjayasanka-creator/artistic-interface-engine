@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { LayoutDashboard, Users, Wallet, HandCoins, Users2, LineChart, BookOpen, Settings, Search, Circle, LogOut, ArrowLeftRight, Banknote, Send } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, HandCoins, Users2, LineChart, BookOpen, Settings, Search, Circle, LogOut, ArrowLeftRight, Banknote, Send, PiggyBank, CalendarClock, FilePlus2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,14 @@ const NAV: NavEntry[] = [
       { to: "/accounts/payments", label: "Payments", icon: HandCoins },
     ],
   },
+  {
+    section: "Fixed Deposits",
+    items: [
+      { to: "/fd", label: "Register", icon: PiggyBank },
+      { to: "/fd/new", label: "New Deposit", icon: FilePlus2 },
+      { to: "/fd/maturity", label: "Maturity Due", icon: CalendarClock },
+    ],
+  },
   { to: "/admin", label: "Administration", icon: Settings },
 ];
 
@@ -43,6 +51,9 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/transactions/payments")) return { title: "Payments", sub: "Post incoming payments" };
   if (pathname.startsWith("/transactions/disbursement")) return { title: "Disbursement", sub: "Release approved loans" };
   if (pathname.startsWith("/transactions")) return { title: "Transactions", sub: "Money movement across the workspace" };
+  if (pathname.startsWith("/fd/new")) return { title: "New fixed deposit", sub: "Deposit acceptance" };
+  if (pathname.startsWith("/fd/maturity")) return { title: "Maturity due", sub: "Deposits maturing soon" };
+  if (pathname.startsWith("/fd")) return { title: "Fixed deposits", sub: "Portfolio & register" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };
   return { title: "Mzizi Core", sub: "" };
 }

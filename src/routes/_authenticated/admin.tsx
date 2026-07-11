@@ -26,12 +26,13 @@ import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, b
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
+import { FdProductsTab } from "@/components/mzizi/FdProductsTab";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "products" | "accounts";
+type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "accounts";
 type Mode = "list" | "create";
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
@@ -65,6 +66,7 @@ function Admin() {
             ["branches", "Branches"],
             ["staff", "Staff"],
             ["products", "Loan products"],
+            ["fd_products", "FD products"],
             ["accounts", "Chart of accounts"],
           ] as const
         ).map(([id, label]) => (
@@ -86,6 +88,7 @@ function Admin() {
       {tab === "branches" && <BranchesTab />}
       {tab === "staff" && <StaffTab />}
       {tab === "products" && <ProductsTab />}
+      {tab === "fd_products" && <FdProductsTab />}
       {tab === "accounts" && <AccountsTab />}
     </div>
   );
