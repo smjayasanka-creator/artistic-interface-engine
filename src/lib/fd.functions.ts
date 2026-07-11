@@ -180,7 +180,7 @@ export const listFixedDeposits = createServerFn({ method: "GET" })
         "id,certificate_no,status,principal,rate_at_booking,tenure_months,payout_option,value_date,maturity_date,client:client_id(id,full_name),product:product_id(id,code,name)",
       )
       .order("created_at", { ascending: false });
-    if (data.status) q = q.eq("status", data.status);
+    if (data.status) q = q.eq("status", data.status as "pending" | "active" | "matured" | "prematurely_closed" | "renewed");
     if (data.product_id) q = q.eq("product_id", data.product_id);
     if (data.from) q = q.gte("maturity_date", data.from);
     if (data.to) q = q.lte("maturity_date", data.to);
