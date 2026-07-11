@@ -94,7 +94,7 @@ function FdRegister() {
         <Kpi label="Active deposits" value={String(summary?.active_count ?? 0)} />
         <Kpi label="Weighted avg rate" value={`${(summary?.weighted_avg_rate ?? 0).toFixed(3)}%`} />
         <Kpi label="Interest paid MTD" value={`LKR ${(summary?.interest_paid_mtd ?? 0).toLocaleString()}`} />
-        <Kpi label="Maturing this month" value={`${summary?.maturing_count ?? 0}`} sub={`LKR ${(summary?.maturing_this_month ?? 0).toLocaleString()}`} />
+        <Kpi label="Maturing this month" value={`${summary?.maturing_count ?? 0}`} delta={`LKR ${(summary?.maturing_this_month ?? 0).toLocaleString()}`} />
       </div>
 
       <Card>
