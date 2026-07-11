@@ -634,7 +634,7 @@ export const createClient = createServerFn({ method: "POST" })
           divisional_secretariat: z.string().trim().min(1, "Divisional Secretariat is required").max(80),
           district: z.string().trim().min(1, "District is required").max(80),
           province: z.string().trim().min(1, "Province is required").max(80),
-          photo_url: z.string().url().max(500).nullable().optional(),
+          photo_url: z.string().trim().max(500).nullable().optional(),
           geo_lat: z.number().min(-90).max(90).nullable().optional(),
           geo_lng: z.number().min(-180).max(180).nullable().optional(),
           email: z.string().trim().email().max(255).optional().or(z.literal("")),
