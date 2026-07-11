@@ -51,6 +51,9 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/transactions/payments")) return { title: "Payments", sub: "Post incoming payments" };
   if (pathname.startsWith("/transactions/disbursement")) return { title: "Disbursement", sub: "Release approved loans" };
   if (pathname.startsWith("/transactions")) return { title: "Transactions", sub: "Money movement across the workspace" };
+  if (pathname.startsWith("/fd/new")) return { title: "New fixed deposit", sub: "Deposit acceptance" };
+  if (pathname.startsWith("/fd/maturity")) return { title: "Maturity due", sub: "Deposits maturing soon" };
+  if (pathname.startsWith("/fd")) return { title: "Fixed deposits", sub: "Portfolio & register" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };
   return { title: "Mzizi Core", sub: "" };
 }
