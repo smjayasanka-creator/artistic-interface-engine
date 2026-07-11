@@ -1,12 +1,22 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { createClient } from "@/lib/mzizi.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/mzizi/Card";
-import { FormGrid, FormField, FormActions, inputCls, errorInputCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
+import {
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  errorInputCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
+  btnGhostCls,
+} from "@/components/mzizi/FormGrid";
 
 export const Route = createFileRoute("/_authenticated/clients/new")({
   component: NewClientPage,
@@ -14,21 +24,39 @@ export const Route = createFileRoute("/_authenticated/clients/new")({
 
 type Gender = "male" | "female" | "other";
 
+const COUNTRY_CODES: { code: string; label: string }[] = [
+  { code: "+94", label: "🇱🇰 +94 Sri Lanka" },
+  { code: "+91", label: "🇮🇳 +91 India" },
+  { code: "+254", label: "🇰🇪 +254 Kenya" },
+  { code: "+256", label: "🇺🇬 +256 Uganda" },
+  { code: "+255", label: "🇹🇿 +255 Tanzania" },
+  { code: "+250", label: "🇷🇼 +250 Rwanda" },
+  { code: "+27", label: "🇿🇦 +27 South Africa" },
+  { code: "+234", label: "🇳🇬 +234 Nigeria" },
+  { code: "+971", label: "🇦🇪 +971 UAE" },
+  { code: "+44", label: "🇬🇧 +44 UK" },
+  { code: "+1", label: "🇺🇸 +1 USA" },
+];
+
 const clientSchema = z.object({
-  full_name: z.string().trim().min(2, "Full name is required (min 2 chars)").max(120),
-  phone: z.string().trim().min(7, "Phone must be at least 7 digits").max(20),
+  first_name: z.string().trim().min(1, "First name is required").max(60),
+  last_name: z.string().trim().min(1, "Last name is required").max(60),
+  phone_country_code: z.string().min(1, "Select a country code"),
+  phone: z
+    .string()
+    .trim()
+    .min(6, "Phone must be at least 6 digits")
+    .max(20)
+    .regex(/^[0-9]+$/, "Digits only"),
   national_id: z.string().trim().min(4, "National ID must be at least 4 chars").max(30),
   email: z.union([z.literal(""), z.string().trim().email("Invalid email").max(255)]),
   date_of_birth: z.string().min(1, "Date of birth is required"),
   gender: z.enum(["male", "female", "other"], { message: "Select a gender" }),
   address: z.string().trim().min(3, "Address must be at least 3 chars").max(200),
-  occupation: z.string().trim().min(2, "Occupation is required").max(80),
-  monthly_income: z
-    .string()
-    .min(1, "Monthly income is required")
-    .refine((v) => !isNaN(Number(v)) && Number(v) >= 0, "Must be 0 or more"),
-  next_of_kin_name: z.string().trim().min(1, "Next of kin name is required").max(120),
-  next_of_kin_phone: z.string().trim().min(7, "Next of kin phone must be at least 7 digits").max(20),
+  gn_division: z.string().trim().min(1, "GN Division is required").max(80),
+  divisional_secretariat: z.string().trim().min(1, "Divisional Secretariat is required").max(80),
+  district: z.string().trim().min(1, "District is required").max(80),
+  province: z.string().trim().min(1, "Province is required").max(80),
 });
 
 type FormState = Omit<z.input<typeof clientSchema>, "gender"> & { gender: "" | Gender };
@@ -38,22 +66,33 @@ function NewClientPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const createFn = useServerFn(createClient);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState<FormState>({
-    full_name: "",
+    first_name: "",
+    last_name: "",
+    phone_country_code: "+94",
     phone: "",
     national_id: "",
     email: "",
     date_of_birth: "",
     gender: "",
     address: "",
-    occupation: "",
-    monthly_income: "",
-    next_of_kin_name: "",
-    next_of_kin_phone: "",
+    gn_division: "",
+    divisional_secretariat: "",
+    district: "",
+    province: "",
   });
   const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
+
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoBusy, setGeoBusy] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
 
   const errors = useMemo(() => {
     const r = clientSchema.safeParse(form);
@@ -83,26 +122,96 @@ function NewClientPage() {
     setForm((f) => ({ ...f, [k]: v }));
   const blur = (k: FieldKey) => setTouched((t) => ({ ...t, [k]: true }));
 
-  function submit(e: React.FormEvent) {
+  function onPickPhoto(f: File | null) {
+    if (!f) {
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      return;
+    }
+    if (!f.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setPhotoFile(f);
+    setPhotoPreview(URL.createObjectURL(f));
+  }
+
+  function captureGeo() {
+    if (!("geolocation" in navigator)) {
+      setGeoError("Geolocation not supported in this browser");
+      return;
+    }
+    setGeoBusy(true);
+    setGeoError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeo({
+          lat: Number(pos.coords.latitude.toFixed(6)),
+          lng: Number(pos.coords.longitude.toFixed(6)),
+        });
+        setGeoBusy(false);
+      },
+      (err) => {
+        setGeoError(err.message || "Could not fetch location");
+        setGeoBusy(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  async function uploadPhoto(): Promise<string | null> {
+    if (!photoFile) return null;
+    setUploading(true);
+    try {
+      const ext = photoFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("client-photos")
+        .upload(path, photoFile, { upsert: false, contentType: photoFile.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("client-photos").getPublicUrl(path);
+      return data.publicUrl;
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitted(true);
     if (!isValid) {
       toast.error("Please fix the highlighted fields");
       return;
     }
+    let photo_url: string | null = null;
+    try {
+      photo_url = await uploadPhoto();
+    } catch (err: any) {
+      toast.error(`Photo upload failed: ${err.message}`);
+      return;
+    }
     post.mutate({
       data: {
-        full_name: form.full_name,
+        first_name: form.first_name,
+        last_name: form.last_name,
+        phone_country_code: form.phone_country_code,
         phone: form.phone,
         national_id: form.national_id,
         email: form.email || undefined,
         date_of_birth: form.date_of_birth,
         gender: form.gender as Gender,
         address: form.address,
-        occupation: form.occupation,
-        monthly_income: Number(form.monthly_income),
-        next_of_kin_name: form.next_of_kin_name,
-        next_of_kin_phone: form.next_of_kin_phone,
+        gn_division: form.gn_division,
+        divisional_secretariat: form.divisional_secretariat,
+        district: form.district,
+        province: form.province,
+        photo_url,
+        geo_lat: geo?.lat ?? null,
+        geo_lng: geo?.lng ?? null,
       },
     });
   }
@@ -123,13 +232,17 @@ function NewClientPage() {
         <Card className="p-6">
           <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Personal details</h2>
           <FormGrid>
-            <FormField label="Full name" required span={5} error={showError("full_name") ? errors.full_name : undefined}>
-              <input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} onBlur={() => blur("full_name")} className={cls("full_name")} maxLength={120} />
+            <FormField label="First name" required span={4} error={showError("first_name") ? errors.first_name : undefined}>
+              <input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} onBlur={() => blur("first_name")} className={cls("first_name")} maxLength={60} />
             </FormField>
-            <FormField label="National ID" required span={3} error={showError("national_id") ? errors.national_id : undefined}>
+            <FormField label="Last name" required span={4} error={showError("last_name") ? errors.last_name : undefined}>
+              <input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} onBlur={() => blur("last_name")} className={cls("last_name")} maxLength={60} />
+            </FormField>
+            <FormField label="National ID" required span={4} error={showError("national_id") ? errors.national_id : undefined}>
               <input value={form.national_id} onChange={(e) => set("national_id", e.target.value)} onBlur={() => blur("national_id")} className={`${cls("national_id")} font-mono`} maxLength={30} />
             </FormField>
-            <FormField label="Date of birth" required span={2} error={showError("date_of_birth") ? errors.date_of_birth : undefined}>
+
+            <FormField label="Date of birth" required span={3} error={showError("date_of_birth") ? errors.date_of_birth : undefined}>
               <input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} onBlur={() => blur("date_of_birth")} className={cls("date_of_birth")} />
             </FormField>
             <FormField label="Gender" required span={2} error={showError("gender") ? errors.gender : undefined}>
@@ -140,46 +253,107 @@ function NewClientPage() {
                 <option value="other">Other</option>
               </select>
             </FormField>
-            <FormField label="Phone" required span={3} error={showError("phone") ? errors.phone : undefined}>
-              <input value={form.phone} onChange={(e) => set("phone", e.target.value)} onBlur={() => blur("phone")} placeholder="+254…" className={`${cls("phone")} font-mono`} maxLength={20} />
+
+            <FormField label="Country code" required span={3} error={showError("phone_country_code") ? errors.phone_country_code : undefined}>
+              <select
+                value={form.phone_country_code}
+                onChange={(e) => set("phone_country_code", e.target.value)}
+                onBlur={() => blur("phone_country_code")}
+                className={cls("phone_country_code")}
+              >
+                {COUNTRY_CODES.map((c) => (
+                  <option key={c.code} value={c.code}>{c.label}</option>
+                ))}
+              </select>
             </FormField>
-            <FormField label="Email" span={5} error={showError("email") ? errors.email : undefined}>
+            <FormField label="Phone" required span={4} error={showError("phone") ? errors.phone : undefined}>
+              <input
+                value={form.phone}
+                onChange={(e) => set("phone", e.target.value.replace(/[^\d]/g, ""))}
+                onBlur={() => blur("phone")}
+                placeholder="7XXXXXXXX"
+                className={`${cls("phone")} font-mono`}
+                maxLength={15}
+              />
+            </FormField>
+
+            <FormField label="Email" span={12} error={showError("email") ? errors.email : undefined}>
               <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} onBlur={() => blur("email")} className={cls("email")} maxLength={255} />
             </FormField>
+          </FormGrid>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Address</h2>
+          <FormGrid>
             <FormField label="Residential address" required span={12} error={showError("address") ? errors.address : undefined}>
               <textarea value={form.address} onChange={(e) => set("address", e.target.value)} onBlur={() => blur("address")} rows={2} maxLength={200} className={cls("address")} />
             </FormField>
+            <FormField label="GN Division" required span={6} error={showError("gn_division") ? errors.gn_division : undefined}>
+              <input value={form.gn_division} onChange={(e) => set("gn_division", e.target.value)} onBlur={() => blur("gn_division")} className={cls("gn_division")} maxLength={80} />
+            </FormField>
+            <FormField label="Divisional Secretariat" required span={6} error={showError("divisional_secretariat") ? errors.divisional_secretariat : undefined}>
+              <input value={form.divisional_secretariat} onChange={(e) => set("divisional_secretariat", e.target.value)} onBlur={() => blur("divisional_secretariat")} className={cls("divisional_secretariat")} maxLength={80} />
+            </FormField>
+            <FormField label="District" required span={6} error={showError("district") ? errors.district : undefined}>
+              <input value={form.district} onChange={(e) => set("district", e.target.value)} onBlur={() => blur("district")} className={cls("district")} maxLength={80} />
+            </FormField>
+            <FormField label="Province" required span={6} error={showError("province") ? errors.province : undefined}>
+              <input value={form.province} onChange={(e) => set("province", e.target.value)} onBlur={() => blur("province")} className={cls("province")} maxLength={80} />
+            </FormField>
           </FormGrid>
         </Card>
 
         <Card className="p-6">
-          <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Livelihood</h2>
-          <FormGrid>
-            <FormField label="Occupation / business" required span={8} error={showError("occupation") ? errors.occupation : undefined}>
-              <input value={form.occupation} onChange={(e) => set("occupation", e.target.value)} onBlur={() => blur("occupation")} className={cls("occupation")} maxLength={80} />
-            </FormField>
-            <FormField label="Monthly income (KES)" required span={4} error={showError("monthly_income") ? errors.monthly_income : undefined}>
+          <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Customer photo</h2>
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-24 rounded-md border border-border overflow-hidden bg-muted flex items-center justify-center text-xs text-muted-foreground">
+              {photoPreview ? (
+                <img src={photoPreview} alt="Customer preview" className="w-full h-full object-cover" />
+              ) : (
+                "No photo"
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
               <input
-                inputMode="numeric"
-                value={form.monthly_income}
-                onChange={(e) => set("monthly_income", e.target.value.replace(/[^\d.]/g, ""))}
-                onBlur={() => blur("monthly_income")}
-                className={`${cls("monthly_income")} font-mono`}
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => onPickPhoto(e.target.files?.[0] ?? null)}
               />
-            </FormField>
-          </FormGrid>
+              <div className="flex gap-2">
+                <button type="button" className={btnSecondaryCls} onClick={() => fileRef.current?.click()}>
+                  {photoFile ? "Change photo" : "Choose photo"}
+                </button>
+                {photoFile && (
+                  <button type="button" className={btnGhostCls} onClick={() => onPickPhoto(null)}>
+                    Remove
+                  </button>
+                )}
+              </div>
+              <span className="text-[11px] text-muted-foreground">JPG or PNG, up to 5MB.</span>
+            </div>
+          </div>
         </Card>
 
         <Card className="p-6">
-          <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Next of kin</h2>
-          <FormGrid>
-            <FormField label="Full name" required span={8} error={showError("next_of_kin_name") ? errors.next_of_kin_name : undefined}>
-              <input value={form.next_of_kin_name} onChange={(e) => set("next_of_kin_name", e.target.value)} onBlur={() => blur("next_of_kin_name")} className={cls("next_of_kin_name")} maxLength={120} />
-            </FormField>
-            <FormField label="Phone" required span={4} error={showError("next_of_kin_phone") ? errors.next_of_kin_phone : undefined}>
-              <input value={form.next_of_kin_phone} onChange={(e) => set("next_of_kin_phone", e.target.value)} onBlur={() => blur("next_of_kin_phone")} placeholder="+254…" className={`${cls("next_of_kin_phone")} font-mono`} maxLength={20} />
-            </FormField>
-          </FormGrid>
+          <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Customer geo location</h2>
+          <div className="flex items-center gap-4 flex-wrap">
+            <button type="button" className={btnSecondaryCls} onClick={captureGeo} disabled={geoBusy}>
+              {geoBusy ? "Locating…" : geo ? "Recapture location" : "Capture current location"}
+            </button>
+            {geo && (
+              <span className="text-sm font-mono text-secondary-foreground">
+                {geo.lat}, {geo.lng}
+              </span>
+            )}
+            {geoError && <span className="text-xs text-destructive">{geoError}</span>}
+            {!geo && !geoError && (
+              <span className="text-xs text-muted-foreground">Optional. Uses your device location.</span>
+            )}
+          </div>
         </Card>
 
         <FormActions>
@@ -189,14 +363,13 @@ function NewClientPage() {
           <Link to="/clients" className={btnSecondaryCls}>Cancel</Link>
           <button
             type="submit"
-            disabled={post.isPending || (submitted && !isValid)}
+            disabled={post.isPending || uploading || (submitted && !isValid)}
             className={btnPrimaryCls}
           >
-            {post.isPending ? "Saving…" : "Register client"}
+            {uploading ? "Uploading photo…" : post.isPending ? "Saving…" : "Register client"}
           </button>
         </FormActions>
       </form>
     </div>
   );
 }
-

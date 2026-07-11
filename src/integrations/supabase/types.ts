@@ -62,12 +62,19 @@ export type Database = {
           branch_id: string
           created_at: string
           date_of_birth: string | null
+          district: string | null
+          divisional_secretariat: string | null
           email: string | null
+          first_name: string | null
           full_name: string
           gender: string | null
+          geo_lat: number | null
+          geo_lng: number | null
+          gn_division: string | null
           group_id: string | null
           id: string
           joined_on: string | null
+          last_name: string | null
           monthly_income: number | null
           national_id: string | null
           next_of_kin_name: string | null
@@ -75,6 +82,9 @@ export type Database = {
           occupation: string | null
           officer_id: string | null
           phone: string | null
+          phone_country_code: string | null
+          photo_url: string | null
+          province: string | null
           risk_grade: Database["public"]["Enums"]["risk_grade"] | null
           status: Database["public"]["Enums"]["client_status"]
         }
@@ -84,12 +94,19 @@ export type Database = {
           branch_id: string
           created_at?: string
           date_of_birth?: string | null
+          district?: string | null
+          divisional_secretariat?: string | null
           email?: string | null
+          first_name?: string | null
           full_name: string
           gender?: string | null
+          geo_lat?: number | null
+          geo_lng?: number | null
+          gn_division?: string | null
           group_id?: string | null
           id?: string
           joined_on?: string | null
+          last_name?: string | null
           monthly_income?: number | null
           national_id?: string | null
           next_of_kin_name?: string | null
@@ -97,6 +114,9 @@ export type Database = {
           occupation?: string | null
           officer_id?: string | null
           phone?: string | null
+          phone_country_code?: string | null
+          photo_url?: string | null
+          province?: string | null
           risk_grade?: Database["public"]["Enums"]["risk_grade"] | null
           status?: Database["public"]["Enums"]["client_status"]
         }
@@ -106,12 +126,19 @@ export type Database = {
           branch_id?: string
           created_at?: string
           date_of_birth?: string | null
+          district?: string | null
+          divisional_secretariat?: string | null
           email?: string | null
+          first_name?: string | null
           full_name?: string
           gender?: string | null
+          geo_lat?: number | null
+          geo_lng?: number | null
+          gn_division?: string | null
           group_id?: string | null
           id?: string
           joined_on?: string | null
+          last_name?: string | null
           monthly_income?: number | null
           national_id?: string | null
           next_of_kin_name?: string | null
@@ -119,6 +146,9 @@ export type Database = {
           occupation?: string | null
           officer_id?: string | null
           phone?: string | null
+          phone_country_code?: string | null
+          photo_url?: string | null
+          province?: string | null
           risk_grade?: Database["public"]["Enums"]["risk_grade"] | null
           status?: Database["public"]["Enums"]["client_status"]
         }

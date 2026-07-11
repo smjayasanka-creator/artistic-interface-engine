@@ -602,31 +602,41 @@ export const createClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (i: {
-      full_name: string;
+      first_name: string;
+      last_name: string;
+      phone_country_code: string;
       phone: string;
       national_id: string;
       date_of_birth: string;
       gender: "male" | "female" | "other";
       address: string;
-      occupation: string;
-      monthly_income: number;
-      next_of_kin_name: string;
-      next_of_kin_phone: string;
+      gn_division: string;
+      divisional_secretariat: string;
+      district: string;
+      province: string;
+      photo_url?: string | null;
+      geo_lat?: number | null;
+      geo_lng?: number | null;
       email?: string;
       group_id?: string | null;
     }) =>
       (() => {
         const schema = z.object({
-          full_name: z.string().trim().min(2, "Full name is required").max(120),
-          phone: z.string().trim().min(7, "Phone is required").max(20),
+          first_name: z.string().trim().min(1, "First name is required").max(60),
+          last_name: z.string().trim().min(1, "Last name is required").max(60),
+          phone_country_code: z.string().trim().min(1, "Country code is required").max(6),
+          phone: z.string().trim().min(6, "Phone is required").max(20),
           national_id: z.string().trim().min(4, "National ID is required").max(30),
           date_of_birth: z.string().min(1, "Date of birth is required"),
           gender: z.enum(["male", "female", "other"]),
           address: z.string().trim().min(3, "Address is required").max(200),
-          occupation: z.string().trim().min(2, "Occupation is required").max(80),
-          monthly_income: z.number().nonnegative("Monthly income must be 0 or more"),
-          next_of_kin_name: z.string().trim().min(1, "Next of kin name is required").max(120),
-          next_of_kin_phone: z.string().trim().min(7, "Next of kin phone is required").max(20),
+          gn_division: z.string().trim().min(1, "GN Division is required").max(80),
+          divisional_secretariat: z.string().trim().min(1, "Divisional Secretariat is required").max(80),
+          district: z.string().trim().min(1, "District is required").max(80),
+          province: z.string().trim().min(1, "Province is required").max(80),
+          photo_url: z.string().trim().max(500).nullable().optional(),
+          geo_lat: z.number().min(-90).max(90).nullable().optional(),
+          geo_lng: z.number().min(-180).max(180).nullable().optional(),
           email: z.string().trim().email().max(255).optional().or(z.literal("")),
           group_id: z.string().uuid().nullable().optional(),
         });
@@ -643,22 +653,30 @@ export const createClient = createServerFn({ method: "POST" })
     if (!staff) throw new Error("No staff profile");
     const colors = ["#0f766e", "#0369a1", "#7c3aed", "#c2410c", "#b45309", "#065f46", "#9333ea", "#be185d"];
     const color = colors[Math.floor(Math.random() * colors.length)];
+    const fullName = `${data.first_name} ${data.last_name}`.trim();
+    const fullPhone = `${data.phone_country_code}${data.phone}`;
     const { data: created, error } = await supabase
       .from("client")
       .insert({
         branch_id: staff.branch_id,
         officer_id: staff.id,
-        full_name: data.full_name,
-        phone: data.phone,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        full_name: fullName,
+        phone_country_code: data.phone_country_code,
+        phone: fullPhone,
         national_id: data.national_id,
         email: data.email || null,
         date_of_birth: data.date_of_birth,
         gender: data.gender,
         address: data.address,
-        occupation: data.occupation,
-        monthly_income: data.monthly_income,
-        next_of_kin_name: data.next_of_kin_name,
-        next_of_kin_phone: data.next_of_kin_phone,
+        gn_division: data.gn_division,
+        divisional_secretariat: data.divisional_secretariat,
+        district: data.district,
+        province: data.province,
+        photo_url: data.photo_url ?? null,
+        geo_lat: data.geo_lat ?? null,
+        geo_lng: data.geo_lng ?? null,
         group_id: data.group_id ?? null,
         status: "pending_kyc",
         avatar_color: color,
