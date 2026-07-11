@@ -88,6 +88,7 @@ function Admin() {
       {tab === "branches" && <BranchesTab />}
       {tab === "staff" && <StaffTab />}
       {tab === "products" && <ProductsTab />}
+      {tab === "fd_products" && <FdProductsTab />}
       {tab === "accounts" && <AccountsTab />}
     </div>
   );
