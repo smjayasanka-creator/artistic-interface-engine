@@ -27,6 +27,7 @@ import { Route as AuthenticatedTransactionsPaymentsRouteImport } from './routes/
 import { Route as AuthenticatedTransactionsDisbursementRouteImport } from './routes/_authenticated/transactions.disbursement'
 import { Route as AuthenticatedLoansNewRouteImport } from './routes/_authenticated/loans.new'
 import { Route as AuthenticatedFdNewRouteImport } from './routes/_authenticated/fd.new'
+import { Route as AuthenticatedFdIdRouteImport } from './routes/_authenticated/fd.$id'
 import { Route as AuthenticatedCollectionsNewRouteImport } from './routes/_authenticated/collections.new'
 import { Route as AuthenticatedClientsNewRouteImport } from './routes/_authenticated/clients.new'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
@@ -133,6 +134,11 @@ const AuthenticatedFdNewRoute = AuthenticatedFdNewRouteImport.update({
   path: '/fd/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFdIdRoute = AuthenticatedFdIdRouteImport.update({
+  id: '/fd/$id',
+  path: '/fd/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCollectionsNewRoute =
   AuthenticatedCollectionsNewRouteImport.update({
     id: '/new',
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/clients/new': typeof AuthenticatedClientsNewRoute
   '/collections/new': typeof AuthenticatedCollectionsNewRoute
+  '/fd/$id': typeof AuthenticatedFdIdRoute
   '/fd/new': typeof AuthenticatedFdNewRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/clients/new': typeof AuthenticatedClientsNewRoute
   '/collections/new': typeof AuthenticatedCollectionsNewRoute
+  '/fd/$id': typeof AuthenticatedFdIdRoute
   '/fd/new': typeof AuthenticatedFdNewRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/clients/new': typeof AuthenticatedClientsNewRoute
   '/_authenticated/collections/new': typeof AuthenticatedCollectionsNewRoute
+  '/_authenticated/fd/$id': typeof AuthenticatedFdIdRoute
   '/_authenticated/fd/new': typeof AuthenticatedFdNewRoute
   '/_authenticated/loans/new': typeof AuthenticatedLoansNewRoute
   '/_authenticated/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/clients/new'
     | '/collections/new'
+    | '/fd/$id'
     | '/fd/new'
     | '/loans/new'
     | '/transactions/disbursement'
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/clients/new'
     | '/collections/new'
+    | '/fd/$id'
     | '/fd/new'
     | '/loans/new'
     | '/transactions/disbursement'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/_authenticated/clients/$id'
     | '/_authenticated/clients/new'
     | '/_authenticated/collections/new'
+    | '/_authenticated/fd/$id'
     | '/_authenticated/fd/new'
     | '/_authenticated/loans/new'
     | '/_authenticated/transactions/disbursement'
@@ -490,6 +502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFdNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fd/$id': {
+      id: '/_authenticated/fd/$id'
+      path: '/fd/$id'
+      fullPath: '/fd/$id'
+      preLoaderRoute: typeof AuthenticatedFdIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/collections/new': {
       id: '/_authenticated/collections/new'
       path: '/new'
@@ -615,6 +634,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountsPaymentsRoute: typeof AuthenticatedAccountsPaymentsRouteWithChildren
   AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
   AuthenticatedClientsNewRoute: typeof AuthenticatedClientsNewRoute
+  AuthenticatedFdIdRoute: typeof AuthenticatedFdIdRoute
   AuthenticatedFdNewRoute: typeof AuthenticatedFdNewRoute
   AuthenticatedLoansNewRoute: typeof AuthenticatedLoansNewRoute
   AuthenticatedTransactionsDisbursementRoute: typeof AuthenticatedTransactionsDisbursementRoute
@@ -639,6 +659,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedAccountsPaymentsRouteWithChildren,
   AuthenticatedClientsIdRoute: AuthenticatedClientsIdRoute,
   AuthenticatedClientsNewRoute: AuthenticatedClientsNewRoute,
+  AuthenticatedFdIdRoute: AuthenticatedFdIdRoute,
   AuthenticatedFdNewRoute: AuthenticatedFdNewRoute,
   AuthenticatedLoansNewRoute: AuthenticatedLoansNewRoute,
   AuthenticatedTransactionsDisbursementRoute:
