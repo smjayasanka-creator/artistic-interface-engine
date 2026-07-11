@@ -66,6 +66,7 @@ function Admin() {
             ["branches", "Branches"],
             ["staff", "Staff"],
             ["products", "Loan products"],
+            ["fd_products", "FD products"],
             ["accounts", "Chart of accounts"],
           ] as const
         ).map(([id, label]) => (
