@@ -275,6 +275,408 @@ export type Database = {
           },
         ]
       }
+      fd_accrual: {
+        Row: {
+          accrual_date: string
+          cumulative_amount: number
+          daily_amount: number
+          deposit_id: string
+          id: string
+        }
+        Insert: {
+          accrual_date: string
+          cumulative_amount: number
+          daily_amount: number
+          deposit_id: string
+          id?: string
+        }
+        Update: {
+          accrual_date?: string
+          cumulative_amount?: number
+          daily_amount?: number
+          deposit_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fd_accrual_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_deposit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fd_interest_schedule: {
+        Row: {
+          deposit_id: string
+          due_date: string
+          gross_interest: number
+          id: string
+          net_interest: number
+          paid: boolean
+          paid_date: string | null
+          seq: number
+          wht_amount: number
+        }
+        Insert: {
+          deposit_id: string
+          due_date: string
+          gross_interest: number
+          id?: string
+          net_interest: number
+          paid?: boolean
+          paid_date?: string | null
+          seq: number
+          wht_amount: number
+        }
+        Update: {
+          deposit_id?: string
+          due_date?: string
+          gross_interest?: number
+          id?: string
+          net_interest?: number
+          paid?: boolean
+          paid_date?: string | null
+          seq?: number
+          wht_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fd_interest_schedule_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_deposit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fd_nominee: {
+        Row: {
+          deposit_id: string
+          id: string
+          name: string
+          nic: string | null
+          percentage: number
+          relationship: string | null
+        }
+        Insert: {
+          deposit_id: string
+          id?: string
+          name: string
+          nic?: string | null
+          percentage: number
+          relationship?: string | null
+        }
+        Update: {
+          deposit_id?: string
+          id?: string
+          name?: string
+          nic?: string | null
+          percentage?: number
+          relationship?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fd_nominee_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_deposit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fd_number_seq: {
+        Row: {
+          company_id: string
+          last_no: number
+          period: string
+        }
+        Insert: {
+          company_id: string
+          last_no?: number
+          period: string
+        }
+        Update: {
+          company_id?: string
+          last_no?: number
+          period?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fd_number_seq_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fd_product: {
+        Row: {
+          active: boolean
+          allow_at_maturity: boolean
+          allow_monthly: boolean
+          auto_renewal_default: Database["public"]["Enums"]["fd_maturity_instruction"]
+          code: string
+          company_id: string
+          created_at: string
+          id: string
+          max_amount: number | null
+          min_amount: number
+          name: string
+          penalty_type: Database["public"]["Enums"]["fd_penalty_type"]
+          penalty_value: number
+          updated_at: string
+          wht_rate: number
+        }
+        Insert: {
+          active?: boolean
+          allow_at_maturity?: boolean
+          allow_monthly?: boolean
+          auto_renewal_default?: Database["public"]["Enums"]["fd_maturity_instruction"]
+          code: string
+          company_id: string
+          created_at?: string
+          id?: string
+          max_amount?: number | null
+          min_amount?: number
+          name: string
+          penalty_type?: Database["public"]["Enums"]["fd_penalty_type"]
+          penalty_value?: number
+          updated_at?: string
+          wht_rate?: number
+        }
+        Update: {
+          active?: boolean
+          allow_at_maturity?: boolean
+          allow_monthly?: boolean
+          auto_renewal_default?: Database["public"]["Enums"]["fd_maturity_instruction"]
+          code?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          max_amount?: number | null
+          min_amount?: number
+          name?: string
+          penalty_type?: Database["public"]["Enums"]["fd_penalty_type"]
+          penalty_value?: number
+          updated_at?: string
+          wht_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fd_product_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fd_rate_tier: {
+        Row: {
+          annual_rate: number
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          product_id: string
+          tenure_months: number
+        }
+        Insert: {
+          annual_rate: number
+          created_at?: string
+          effective_from: string
+          effective_to?: string | null
+          id?: string
+          product_id: string
+          tenure_months: number
+        }
+        Update: {
+          annual_rate?: number
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          product_id?: string
+          tenure_months?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fd_rate_tier_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "fd_product"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fd_transaction: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          deposit_id: string
+          id: string
+          reference: string | null
+          txn_date: string
+          type: Database["public"]["Enums"]["fd_txn_type"]
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          deposit_id: string
+          id?: string
+          reference?: string | null
+          txn_date: string
+          type: Database["public"]["Enums"]["fd_txn_type"]
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          deposit_id?: string
+          id?: string
+          reference?: string | null
+          txn_date?: string
+          type?: Database["public"]["Enums"]["fd_txn_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fd_transaction_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_deposit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fixed_deposit: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string
+          certificate_no: string
+          client_id: string
+          close_reason: string | null
+          closed_at: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          maturity_date: string
+          maturity_instruction: Database["public"]["Enums"]["fd_maturity_instruction"]
+          parent_fd_id: string | null
+          payout_option: Database["public"]["Enums"]["fd_payout_option"]
+          principal: number
+          product_id: string
+          rate_at_booking: number
+          settlement_account: string | null
+          status: Database["public"]["Enums"]["fd_status"]
+          tenure_months: number
+          updated_at: string
+          value_date: string
+          wht_rate_at_booking: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id: string
+          certificate_no: string
+          client_id: string
+          close_reason?: string | null
+          closed_at?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          maturity_date: string
+          maturity_instruction: Database["public"]["Enums"]["fd_maturity_instruction"]
+          parent_fd_id?: string | null
+          payout_option: Database["public"]["Enums"]["fd_payout_option"]
+          principal: number
+          product_id: string
+          rate_at_booking: number
+          settlement_account?: string | null
+          status?: Database["public"]["Enums"]["fd_status"]
+          tenure_months: number
+          updated_at?: string
+          value_date: string
+          wht_rate_at_booking: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string
+          certificate_no?: string
+          client_id?: string
+          close_reason?: string | null
+          closed_at?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          maturity_date?: string
+          maturity_instruction?: Database["public"]["Enums"]["fd_maturity_instruction"]
+          parent_fd_id?: string | null
+          payout_option?: Database["public"]["Enums"]["fd_payout_option"]
+          principal?: number
+          product_id?: string
+          rate_at_booking?: number
+          settlement_account?: string | null
+          status?: Database["public"]["Enums"]["fd_status"]
+          tenure_months?: number
+          updated_at?: string
+          value_date?: string
+          wht_rate_at_booking?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fixed_deposit_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_deposit_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_deposit_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_deposit_parent_fd_id_fkey"
+            columns: ["parent_fd_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_deposit"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_deposit_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "fd_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_deposit_settlement_account_fkey"
+            columns: ["settlement_account"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gl_account: {
         Row: {
           code: string
@@ -884,6 +1286,7 @@ export type Database = {
       is_company_admin: { Args: { _company_id: string }; Returns: boolean }
       is_company_member: { Args: { _company_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      next_fd_certificate_no: { Args: { _company_id: string }; Returns: string }
     }
     Enums: {
       account_type: "asset" | "liability" | "equity" | "income" | "expense"
@@ -894,6 +1297,24 @@ export type Database = {
         | "dormant"
         | "blacklisted"
         | "exited"
+      fd_maturity_instruction:
+        | "payout"
+        | "renew_principal"
+        | "renew_principal_interest"
+      fd_payout_option: "monthly" | "at_maturity"
+      fd_penalty_type: "rate_reduction" | "reprice_minus_margin"
+      fd_status:
+        | "pending"
+        | "active"
+        | "matured"
+        | "prematurely_closed"
+        | "renewed"
+      fd_txn_type:
+        | "opening"
+        | "interest_payout"
+        | "premature_closure"
+        | "maturity_payout"
+        | "renewal"
       installment_state:
         | "upcoming"
         | "due"
@@ -1055,6 +1476,27 @@ export const Constants = {
         "dormant",
         "blacklisted",
         "exited",
+      ],
+      fd_maturity_instruction: [
+        "payout",
+        "renew_principal",
+        "renew_principal_interest",
+      ],
+      fd_payout_option: ["monthly", "at_maturity"],
+      fd_penalty_type: ["rate_reduction", "reprice_minus_margin"],
+      fd_status: [
+        "pending",
+        "active",
+        "matured",
+        "prematurely_closed",
+        "renewed",
+      ],
+      fd_txn_type: [
+        "opening",
+        "interest_payout",
+        "premature_closure",
+        "maturity_payout",
+        "renewal",
       ],
       installment_state: [
         "upcoming",
