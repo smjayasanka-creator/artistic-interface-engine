@@ -347,6 +347,7 @@ export const approveFixedDeposit = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
     const { data: isAdmin } = await supabase.rpc("is_company_admin", { _company_id: cid });
     if (!isAdmin) throw new Error("Only approvers can activate deposits");
 
@@ -477,6 +478,7 @@ export const closePrematurely = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
     const { data: isAdmin } = await supabase.rpc("is_company_admin", { _company_id: cid });
     if (!isAdmin) throw new Error("Only approvers can close deposits early");
 
@@ -537,6 +539,7 @@ export const processMaturity = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
     const { data: isAdmin } = await supabase.rpc("is_company_admin", { _company_id: cid });
     if (!isAdmin) throw new Error("Only approvers can process maturity");
 
