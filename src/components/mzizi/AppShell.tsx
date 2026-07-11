@@ -25,6 +25,14 @@ const NAV: NavEntry[] = [
       { to: "/accounts/payments", label: "Payments", icon: HandCoins },
     ],
   },
+  {
+    section: "Fixed Deposits",
+    items: [
+      { to: "/fd", label: "Register", icon: PiggyBank },
+      { to: "/fd/new", label: "New Deposit", icon: FilePlus2 },
+      { to: "/fd/maturity", label: "Maturity Due", icon: CalendarClock },
+    ],
+  },
   { to: "/admin", label: "Administration", icon: Settings },
 ];
 
