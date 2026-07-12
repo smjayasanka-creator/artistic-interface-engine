@@ -16,34 +16,46 @@ export type Database = {
     Tables: {
       branch: {
         Row: {
+          branch_prefix: string | null
           code: string
           company_id: string
           created_at: string
           currency: string
+          fd_prefix: string | null
           id: string
+          loan_prefix: string | null
           name: string
           opened_on: string | null
           region: string | null
+          savings_prefix: string | null
         }
         Insert: {
+          branch_prefix?: string | null
           code: string
           company_id: string
           created_at?: string
           currency?: string
+          fd_prefix?: string | null
           id?: string
+          loan_prefix?: string | null
           name: string
           opened_on?: string | null
           region?: string | null
+          savings_prefix?: string | null
         }
         Update: {
+          branch_prefix?: string | null
           code?: string
           company_id?: string
           created_at?: string
           currency?: string
+          fd_prefix?: string | null
           id?: string
+          loan_prefix?: string | null
           name?: string
           opened_on?: string | null
           region?: string | null
+          savings_prefix?: string | null
         }
         Relationships: [
           {

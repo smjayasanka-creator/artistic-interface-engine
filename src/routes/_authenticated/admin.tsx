@@ -374,7 +374,7 @@ function BranchesTab() {
   const createFn = useServerFn(createBranch);
   const updateFn = useServerFn(updateBranch);
 
-  const emptyForm = { code: "", name: "", region: "", currency: "KES", opened_on: "" };
+  const emptyForm = { code: "", name: "", region: "", currency: "KES", opened_on: "", branch_prefix: "", savings_prefix: "", fd_prefix: "", loan_prefix: "" };
   const [form, setForm] = useState(emptyForm);
 
   const reset = () => {
@@ -412,6 +412,10 @@ function BranchesTab() {
       region: b.region ?? "",
       currency: b.currency ?? "KES",
       opened_on: b.opened_on ?? "",
+      branch_prefix: b.branch_prefix ?? "",
+      savings_prefix: b.savings_prefix ?? "",
+      fd_prefix: b.fd_prefix ?? "",
+      loan_prefix: b.loan_prefix ?? "",
     });
     setEditingId(b.id);
     setMode("edit");
@@ -451,6 +455,18 @@ function BranchesTab() {
             </FormField>
             <FormField label="Region" span={12} hint="Optional">
               <input value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} className={inputCls} />
+            </FormField>
+            <FormField label="Branch prefix" span={3} hint="Used in transaction numbers">
+              <input value={form.branch_prefix} onChange={(e) => setForm({ ...form, branch_prefix: e.target.value.toUpperCase() })} maxLength={6} placeholder="NRB" className={inputCls + " font-mono"} />
+            </FormField>
+            <FormField label="Savings prefix" span={3}>
+              <input value={form.savings_prefix} onChange={(e) => setForm({ ...form, savings_prefix: e.target.value.toUpperCase() })} maxLength={6} placeholder="SAV" className={inputCls + " font-mono"} />
+            </FormField>
+            <FormField label="Fixed Deposit prefix" span={3}>
+              <input value={form.fd_prefix} onChange={(e) => setForm({ ...form, fd_prefix: e.target.value.toUpperCase() })} maxLength={6} placeholder="FD" className={inputCls + " font-mono"} />
+            </FormField>
+            <FormField label="Loan prefix" span={3}>
+              <input value={form.loan_prefix} onChange={(e) => setForm({ ...form, loan_prefix: e.target.value.toUpperCase() })} maxLength={6} placeholder="LN" className={inputCls + " font-mono"} />
             </FormField>
           </FormGrid>
           <FormActions>
