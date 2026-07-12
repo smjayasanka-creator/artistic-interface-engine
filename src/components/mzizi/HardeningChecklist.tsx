@@ -378,10 +378,12 @@ export function HardeningChecklist() {
             <div>
               {tier.items.map((it) => {
                 const entry = state[it.id] ?? { status: "missing" as Status };
+                const auto = autoById.get(it.id);
+                const isOpen = openEvidence === it.id;
                 return (
+                  <div key={it.id} className="border-b border-row-divider last:border-b-0">
                   <div
-                    key={it.id}
-                    className="grid items-center gap-3 px-5 py-3 border-b border-row-divider last:border-b-0"
+                    className="grid items-center gap-3 px-5 py-3"
                     style={{ gridTemplateColumns: "1.6fr 0.9fr 1fr 1.5fr" }}
                   >
                     <div className="flex items-start gap-2 min-w-0">
