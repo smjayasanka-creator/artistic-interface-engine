@@ -114,7 +114,15 @@ function NewLoan() {
     setFrequency(p.frequency as Frequency);
     setTerm(Number(p.min_term_months));
     if (!principal && p.min_principal) setPrincipal(String(p.min_principal));
+    setCheckedDocs({});
   }
+
+  const requiredDocs: string[] = Array.isArray(product?.required_documents)
+    ? (product?.required_documents as string[])
+    : [];
+  const missingDocs = requiredDocs.filter((d) => !checkedDocs[d]);
+  const docsSatisfied = requiredDocs.length === 0 || missingDocs.length === 0;
+
 
   const rateNum = typeof rate === "number" ? rate : Number(rate || product?.annual_rate_pct || 0);
   const principalNum = Number(principal || 0);
