@@ -307,7 +307,7 @@ function FdDetail() {
                 <tr key={t.id} className="border-b border-border/50">
                   <td className="py-1.5 pr-3">{t.txn_date}</td>
                   <td className="py-1.5 pr-3 capitalize">{t.type.replace(/_/g, " ")}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(t.amount).toLocaleString()}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(t.amount), true)}</td>
                   <td className="py-1.5 pr-3 text-muted-foreground">{t.reference ?? "—"}</td>
                 </tr>
               ))}
