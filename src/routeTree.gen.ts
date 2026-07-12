@@ -28,6 +28,7 @@ import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedTransactionsRepaymentRouteImport } from './routes/_authenticated/transactions.repayment'
 import { Route as AuthenticatedTransactionsPaymentsRouteImport } from './routes/_authenticated/transactions.payments'
 import { Route as AuthenticatedTransactionsDisbursementRouteImport } from './routes/_authenticated/transactions.disbursement'
+import { Route as AuthenticatedTransactionsDepositWithdrawalRouteImport } from './routes/_authenticated/transactions.deposit-withdrawal'
 import { Route as AuthenticatedTransactionsDepositReceiptRouteImport } from './routes/_authenticated/transactions.deposit-receipt'
 import { Route as AuthenticatedLoansNewRouteImport } from './routes/_authenticated/loans.new'
 import { Route as AuthenticatedFdNewRouteImport } from './routes/_authenticated/fd.new'
@@ -145,6 +146,12 @@ const AuthenticatedTransactionsDisbursementRoute =
     path: '/transactions/disbursement',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTransactionsDepositWithdrawalRoute =
+  AuthenticatedTransactionsDepositWithdrawalRouteImport.update({
+    id: '/transactions/deposit-withdrawal',
+    path: '/transactions/deposit-withdrawal',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTransactionsDepositReceiptRoute =
   AuthenticatedTransactionsDepositReceiptRouteImport.update({
     id: '/transactions/deposit-receipt',
@@ -245,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/fd/new': typeof AuthenticatedFdNewRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
   '/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
+  '/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
@@ -277,6 +285,7 @@ export interface FileRoutesByTo {
   '/fd/new': typeof AuthenticatedFdNewRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
   '/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
+  '/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
@@ -313,6 +322,7 @@ export interface FileRoutesById {
   '/_authenticated/fd/new': typeof AuthenticatedFdNewRoute
   '/_authenticated/loans/new': typeof AuthenticatedLoansNewRoute
   '/_authenticated/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
+  '/_authenticated/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/_authenticated/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/_authenticated/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/_authenticated/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/fd/new'
     | '/loans/new'
     | '/transactions/deposit-receipt'
+    | '/transactions/deposit-withdrawal'
     | '/transactions/disbursement'
     | '/transactions/payments'
     | '/transactions/repayment'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/fd/new'
     | '/loans/new'
     | '/transactions/deposit-receipt'
+    | '/transactions/deposit-withdrawal'
     | '/transactions/disbursement'
     | '/transactions/payments'
     | '/transactions/repayment'
@@ -416,6 +428,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fd/new'
     | '/_authenticated/loans/new'
     | '/_authenticated/transactions/deposit-receipt'
+    | '/_authenticated/transactions/deposit-withdrawal'
     | '/_authenticated/transactions/disbursement'
     | '/_authenticated/transactions/payments'
     | '/_authenticated/transactions/repayment'
@@ -569,6 +582,13 @@ declare module '@tanstack/react-router' {
       path: '/transactions/disbursement'
       fullPath: '/transactions/disbursement'
       preLoaderRoute: typeof AuthenticatedTransactionsDisbursementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/transactions/deposit-withdrawal': {
+      id: '/_authenticated/transactions/deposit-withdrawal'
+      path: '/transactions/deposit-withdrawal'
+      fullPath: '/transactions/deposit-withdrawal'
+      preLoaderRoute: typeof AuthenticatedTransactionsDepositWithdrawalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/transactions/deposit-receipt': {
@@ -739,6 +759,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFdNewRoute: typeof AuthenticatedFdNewRoute
   AuthenticatedLoansNewRoute: typeof AuthenticatedLoansNewRoute
   AuthenticatedTransactionsDepositReceiptRoute: typeof AuthenticatedTransactionsDepositReceiptRoute
+  AuthenticatedTransactionsDepositWithdrawalRoute: typeof AuthenticatedTransactionsDepositWithdrawalRoute
   AuthenticatedTransactionsDisbursementRoute: typeof AuthenticatedTransactionsDisbursementRoute
   AuthenticatedTransactionsPaymentsRoute: typeof AuthenticatedTransactionsPaymentsRoute
   AuthenticatedTransactionsRepaymentRoute: typeof AuthenticatedTransactionsRepaymentRoute
@@ -770,6 +791,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLoansNewRoute: AuthenticatedLoansNewRoute,
   AuthenticatedTransactionsDepositReceiptRoute:
     AuthenticatedTransactionsDepositReceiptRoute,
+  AuthenticatedTransactionsDepositWithdrawalRoute:
+    AuthenticatedTransactionsDepositWithdrawalRoute,
   AuthenticatedTransactionsDisbursementRoute:
     AuthenticatedTransactionsDisbursementRoute,
   AuthenticatedTransactionsPaymentsRoute:
