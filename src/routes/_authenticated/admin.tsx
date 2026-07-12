@@ -33,6 +33,8 @@ import { cn } from "@/lib/utils";
 import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
 import { FdProductsTab } from "@/components/mzizi/FdProductsTab";
 import { TimeTravelTab } from "@/components/mzizi/TimeTravelTab";
+import { SecurityTypesTab } from "@/components/mzizi/SecurityTypesTab";
+import { DelegationAuthorityTab } from "@/components/mzizi/DelegationAuthorityTab";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
