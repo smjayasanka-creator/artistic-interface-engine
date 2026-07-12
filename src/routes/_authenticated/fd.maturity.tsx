@@ -23,7 +23,7 @@ function MaturityDue() {
   const matureM = useMutation({
     mutationFn: (id: string) => matureFn({ data: { id } }),
     onSuccess: (r) => {
-      toast.success(r.action === "renewed" ? `Renewed as ${r.new_certificate}` : `Payout LKR ${r.settlement?.toLocaleString()}`);
+      toast.success(r.action === "renewed" ? `Renewed as ${r.new_certificate}` : `Payout ${money(r.settlement ?? 0)}`);
       qc.invalidateQueries({ queryKey: ["fd-maturity"] });
     },
     onError: (e: Error) => toast.error(e.message),
