@@ -1885,3 +1885,116 @@ export const getPendingDisbursements = createServerFn({ method: "GET" })
     if (error) throw error;
     return data ?? [];
   });
+
+export const createDebitNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      loan_id: string;
+      amount: number;
+      charge_type: "fee" | "penalty" | "insurance" | "legal" | "other";
+      entry_date?: string;
+      reference?: string;
+      description?: string;
+    }) =>
+      z
+        .object({
+          loan_id: z.string().uuid(),
+          amount: z.number().positive(),
+          charge_type: z.enum(["fee", "penalty", "insurance", "legal", "other"]),
+          entry_date: z.string().optional(),
+          reference: z.string().trim().max(60).optional(),
+          description: z.string().trim().max(300).optional(),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: staff } = await supabase
+      .from("staff")
+      .select("id, branch_id")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!staff) throw new Error("No staff profile");
+
+    const { data: loan } = await supabase
+      .from("loan")
+      .select("id, branch_id, product_id, status")
+      .eq("id", data.loan_id)
+      .maybeSingle();
+    if (!loan) throw new Error("Loan not found");
+    if (!["disbursed", "active"].includes(loan.status as string))
+      throw new Error("Debit notes can only be added to disbursed / active facilities");
+
+    // Resolve GL accounts: Dr principal AR, Cr fee income
+    const { data: product } = await supabase
+      .from("loan_product")
+      .select("principal_account_id, fee_income_account_id, interest_income_account_id")
+      .eq("id", loan.product_id)
+      .maybeSingle<{
+        principal_account_id: string | null;
+        fee_income_account_id: string | null;
+        interest_income_account_id: string | null;
+      }>();
+    let arId = product?.principal_account_id ?? null;
+    let incomeId = product?.fee_income_account_id ?? product?.interest_income_account_id ?? null;
+    if (!arId || !incomeId) {
+      const { data: accts } = await supabase
+        .from("gl_account")
+        .select("id, code")
+        .in("code", ["1100", "4100", "4000"]);
+      arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
+      incomeId =
+        incomeId ??
+        accts?.find((a) => a.code === "4100")?.id ??
+        accts?.find((a) => a.code === "4000")?.id ??
+        null;
+    }
+    if (!arId || !incomeId)
+      throw new Error("Chart of accounts missing — configure principal & fee income accounts");
+
+    const ref = data.reference?.trim() || "DN-" + Math.floor(1000 + Math.random() * 9000);
+    const entryDate = (data.entry_date || serverToday()).slice(0, 10);
+    const label =
+      { fee: "Fee", penalty: "Penalty", insurance: "Insurance", legal: "Legal cost", other: "Charge" }[
+        data.charge_type
+      ] || "Charge";
+
+    const { data: entry, error: eErr } = await supabase
+      .from("journal_entry")
+      .insert({
+        reference: ref,
+        branch_id: loan.branch_id,
+        loan_id: loan.id,
+        posted_by: staff.id,
+        entry_date: entryDate,
+        description: `Debit note ${ref} · ${label}${data.description ? " · " + data.description : ""}`,
+      })
+      .select()
+      .single();
+    if (eErr) throw eErr;
+
+    const { error: pErr } = await supabase.from("posting").insert([
+      { entry_id: entry.id, account_id: arId, debit: data.amount, credit: 0 },
+      { entry_id: entry.id, account_id: incomeId, debit: 0, credit: data.amount },
+    ]);
+    if (pErr) throw pErr;
+
+    // Bump the next unpaid installment's principal_due so outstanding balance reflects the charge.
+    const { data: inst } = await supabase
+      .from("loan_installment")
+      .select("id, principal_due")
+      .eq("loan_id", loan.id)
+      .in("state", ["upcoming", "due", "partial", "overdue"])
+      .order("seq")
+      .limit(1)
+      .maybeSingle();
+    if (inst) {
+      await supabase
+        .from("loan_installment")
+        .update({ principal_due: Number(inst.principal_due) + data.amount })
+        .eq("id", inst.id);
+    }
+
+    return { ok: true, reference: ref, entry_id: entry.id };
+  });
