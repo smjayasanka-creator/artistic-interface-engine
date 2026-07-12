@@ -129,6 +129,44 @@ function NewLoan() {
     setTerm(Number(p.min_term_months));
     if (!principal && p.min_principal) setPrincipal(String(p.min_principal));
     setCheckedDocs({});
+    setUploadedDocs({});
+  }
+
+  async function uploadDocFile(doc: string, file: File) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error(`${file.name} exceeds 10 MB limit.`);
+      return;
+    }
+    setUploadingDoc(doc);
+    try {
+      const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";
+      const path = `applications/${clientId || "unassigned"}/${productId || "no-product"}/${slugifyDoc(doc)}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("loan-documents").upload(path, file, {
+        upsert: true,
+        contentType: file.type || undefined,
+      });
+      if (error) throw error;
+      setUploadedDocs((prev) => ({ ...prev, [doc]: { path, name: file.name, size: file.size } }));
+      setCheckedDocs((prev) => ({ ...prev, [doc]: true }));
+      toast.success(`Uploaded ${doc}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Upload failed");
+    } finally {
+      setUploadingDoc(null);
+    }
+  }
+
+  async function removeDocFile(doc: string) {
+    const existing = uploadedDocs[doc];
+    if (existing) {
+      await supabase.storage.from("loan-documents").remove([existing.path]);
+    }
+    setUploadedDocs((prev) => {
+      const next = { ...prev };
+      delete next[doc];
+      return next;
+    });
+    setCheckedDocs((prev) => ({ ...prev, [doc]: false }));
   }
 
   const requiredDocs: string[] = Array.isArray(product?.required_documents)
