@@ -1250,11 +1250,13 @@ function AccountsTab() {
             when you pick a type.
           </p>
           <FormActions>
-            <button type="button" onClick={() => setMode("list")} className={btnSecondaryCls}>
+            <button type="button" onClick={() => { setMode("list"); setEditingId(null); resetForm(); }} className={btnSecondaryCls}>
               Cancel
             </button>
-            <button type="submit" disabled={create.isPending} className={btnPrimaryCls}>
-              {create.isPending ? "Creating…" : "Create account"}
+            <button type="submit" disabled={create.isPending || update.isPending} className={btnPrimaryCls}>
+              {isEdit
+                ? (update.isPending ? "Saving…" : "Save changes")
+                : (create.isPending ? "Creating…" : "Create account")}
             </button>
           </FormActions>
         </form>
