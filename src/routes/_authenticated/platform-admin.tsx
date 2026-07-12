@@ -17,12 +17,13 @@ import {
   listSubscriptionPlans,
   upsertCompanySubscription,
 } from "@/lib/platform-admin.functions";
+import { HardeningChecklist } from "@/components/mzizi/HardeningChecklist";
 
 export const Route = createFileRoute("/_authenticated/platform-admin")({
   component: PlatformAdmin,
 });
 
-type Tab = "overview" | "companies" | "plans";
+type Tab = "overview" | "companies" | "plans" | "hardening";
 
 const STATUS_TONE: Record<string, string> = {
   trialing: "bg-sky-500/10 text-sky-700 border-sky-500/30",
@@ -87,9 +88,32 @@ function PlatformAdmin() {
         ))}
       </div>
 
+      <div className="flex gap-1 border-b border-border">
+        {(
+          [
+            ["overview", "Overview"],
+            ["companies", "Companies"],
+            ["plans", "Plans"],
+            ["hardening", "Hardening"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={cn(
+              "px-4 py-2.5 text-[13px] font-medium border-b-2 -mb-px",
+              tab === id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {tab === "overview" && <OverviewTab />}
       {tab === "companies" && <CompaniesTab />}
       {tab === "plans" && <PlansTab />}
+      {tab === "hardening" && <HardeningChecklist />}
     </div>
   );
 }
