@@ -29,7 +29,7 @@ const NAV: NavEntry[] = [
   {
     section: "User",
     items: [
-      { to: "/admin", label: "Platform Admin Control", icon: ShieldCheck },
+      { to: "/platform-admin", label: "Platform Admin Control", icon: ShieldCheck },
     ],
   },
 ];
@@ -52,6 +52,7 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/fd/new")) return { title: "New fixed deposit", sub: "Deposit acceptance" };
   if (pathname.startsWith("/fd/maturity")) return { title: "Maturity due", sub: "Deposits maturing soon" };
   if (pathname.startsWith("/fd")) return { title: "Fixed deposits", sub: "Portfolio & register" };
+  if (pathname.startsWith("/platform-admin")) return { title: "Platform Admin", sub: "Tenant oversight & subscriptions" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };
   return { title: "Mzizi Core", sub: "" };
 }
@@ -116,6 +117,7 @@ function ShellInner() {
         <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">
           {NAV.map((entry) => {
             if ("section" in entry) {
+              if (entry.section === "User" && !(session?.roles ?? []).includes("platform_admin")) return null;
               return (
                 <div key={entry.section} className="mt-3 mb-1">
                   <div className="px-3 text-[10px] font-semibold tracking-wider uppercase text-rail-muted mb-1">{entry.section}</div>

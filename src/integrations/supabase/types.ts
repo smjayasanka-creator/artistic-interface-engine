@@ -275,6 +275,72 @@ export type Database = {
           },
         ]
       }
+      company_subscription: {
+        Row: {
+          billing_cycle: string
+          company_id: string
+          created_at: string
+          currency: string
+          current_period_end: string | null
+          id: string
+          mrr: number
+          notes: string | null
+          plan_id: string
+          seats: number
+          started_on: string
+          status: string
+          trial_ends_on: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: string
+          company_id: string
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          id?: string
+          mrr?: number
+          notes?: string | null
+          plan_id: string
+          seats?: number
+          started_on?: string
+          status?: string
+          trial_ends_on?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string
+          company_id?: string
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          id?: string
+          mrr?: number
+          notes?: string | null
+          plan_id?: string
+          seats?: number
+          started_on?: string
+          status?: string
+          trial_ends_on?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_subscription_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_subscription_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plan"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fd_accrual: {
         Row: {
           accrual_date: string
@@ -1232,6 +1298,51 @@ export type Database = {
           },
         ]
       }
+      subscription_plan: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          currency: string
+          features: Json
+          id: string
+          name: string
+          price_annual: number
+          price_monthly: number
+          seat_limit: number | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          currency?: string
+          features?: Json
+          id?: string
+          name: string
+          price_annual?: number
+          price_monthly?: number
+          seat_limit?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          currency?: string
+          features?: Json
+          id?: string
+          name?: string
+          price_annual?: number
+          price_monthly?: number
+          seat_limit?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1290,7 +1401,7 @@ export type Database = {
     }
     Enums: {
       account_type: "asset" | "liability" | "equity" | "income" | "expense"
-      app_role: "loan_officer" | "branch_manager" | "admin"
+      app_role: "loan_officer" | "branch_manager" | "admin" | "platform_admin"
       client_status:
         | "pending_kyc"
         | "active"
@@ -1469,7 +1580,7 @@ export const Constants = {
   public: {
     Enums: {
       account_type: ["asset", "liability", "equity", "income", "expense"],
-      app_role: ["loan_officer", "branch_manager", "admin"],
+      app_role: ["loan_officer", "branch_manager", "admin", "platform_admin"],
       client_status: [
         "pending_kyc",
         "active",
