@@ -149,10 +149,10 @@ export function HardeningChecklist() {
   }, [state, hydrated]);
 
   const update = (id: string, patch: Partial<Entry>) => {
-    setState((prev) => ({
-      ...prev,
-      [id]: { status: "missing", ...prev[id], ...patch, updated_at: new Date().toISOString() },
-    }));
+    setState((prev) => {
+      const base: Entry = prev[id] ?? { status: "missing" };
+      return { ...prev, [id]: { ...base, ...patch, updated_at: new Date().toISOString() } };
+    });
   };
 
   const overall = useMemo(() => {
