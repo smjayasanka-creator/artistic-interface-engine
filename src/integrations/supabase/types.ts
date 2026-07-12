@@ -1290,7 +1290,7 @@ export type Database = {
     }
     Enums: {
       account_type: "asset" | "liability" | "equity" | "income" | "expense"
-      app_role: "loan_officer" | "branch_manager" | "admin"
+      app_role: "loan_officer" | "branch_manager" | "admin" | "platform_admin"
       client_status:
         | "pending_kyc"
         | "active"
@@ -1469,7 +1469,7 @@ export const Constants = {
   public: {
     Enums: {
       account_type: ["asset", "liability", "equity", "income", "expense"],
-      app_role: ["loan_officer", "branch_manager", "admin"],
+      app_role: ["loan_officer", "branch_manager", "admin", "platform_admin"],
       client_status: [
         "pending_kyc",
         "active",
