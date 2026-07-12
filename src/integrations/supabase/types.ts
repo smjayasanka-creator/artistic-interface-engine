@@ -1332,6 +1332,172 @@ export type Database = {
           },
         ]
       }
+      passbook_issue: {
+        Row: {
+          account_id: string
+          company_id: string
+          created_at: string
+          id: string
+          issued_by: string | null
+          issued_on: string
+          notes: string | null
+          serial_no: number
+          series_prefix: string | null
+          stock_id: string
+          updated_at: string
+          void_reason: string | null
+          voided: boolean
+        }
+        Insert: {
+          account_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          issued_by?: string | null
+          issued_on?: string
+          notes?: string | null
+          serial_no: number
+          series_prefix?: string | null
+          stock_id: string
+          updated_at?: string
+          void_reason?: string | null
+          voided?: boolean
+        }
+        Update: {
+          account_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          issued_by?: string | null
+          issued_on?: string
+          notes?: string | null
+          serial_no?: number
+          series_prefix?: string | null
+          stock_id?: string
+          updated_at?: string
+          void_reason?: string | null
+          voided?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passbook_issue_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passbook_issue_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passbook_issue_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passbook_issue_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "passbook_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      passbook_stock: {
+        Row: {
+          branch_id: string
+          company_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          product_id: string | null
+          quantity_issued: number
+          quantity_received: number
+          quantity_void: number
+          received_by: string | null
+          received_on: string
+          serial_from: number
+          serial_to: number
+          series_prefix: string | null
+          status: Database["public"]["Enums"]["passbook_stock_status"]
+          supplier: string | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id?: string | null
+          quantity_issued?: number
+          quantity_received: number
+          quantity_void?: number
+          received_by?: string | null
+          received_on?: string
+          serial_from: number
+          serial_to: number
+          series_prefix?: string | null
+          status?: Database["public"]["Enums"]["passbook_stock_status"]
+          supplier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id?: string | null
+          quantity_issued?: number
+          quantity_received?: number
+          quantity_void?: number
+          received_by?: string | null
+          received_on?: string
+          serial_from?: number
+          serial_to?: number
+          series_prefix?: string | null
+          status?: Database["public"]["Enums"]["passbook_stock_status"]
+          supplier?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passbook_stock_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passbook_stock_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passbook_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "savings_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passbook_stock_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posting: {
         Row: {
           account_id: string
@@ -1424,6 +1590,282 @@ export type Database = {
           {
             foreignKeyName: "repayment_received_by_fkey"
             columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_account: {
+        Row: {
+          account_no: string
+          available_balance: number
+          balance: number
+          branch_id: string
+          client_id: string
+          closed_by: string | null
+          closed_on: string | null
+          closure_reason: string | null
+          company_id: string
+          created_at: string
+          currency: string
+          external_ref: string | null
+          id: string
+          interest_accrued: number
+          last_txn_at: string | null
+          opened_by: string | null
+          opened_on: string
+          product_id: string
+          status: Database["public"]["Enums"]["savings_account_status"]
+          updated_at: string
+        }
+        Insert: {
+          account_no: string
+          available_balance?: number
+          balance?: number
+          branch_id: string
+          client_id: string
+          closed_by?: string | null
+          closed_on?: string | null
+          closure_reason?: string | null
+          company_id: string
+          created_at?: string
+          currency?: string
+          external_ref?: string | null
+          id?: string
+          interest_accrued?: number
+          last_txn_at?: string | null
+          opened_by?: string | null
+          opened_on?: string
+          product_id: string
+          status?: Database["public"]["Enums"]["savings_account_status"]
+          updated_at?: string
+        }
+        Update: {
+          account_no?: string
+          available_balance?: number
+          balance?: number
+          branch_id?: string
+          client_id?: string
+          closed_by?: string | null
+          closed_on?: string | null
+          closure_reason?: string | null
+          company_id?: string
+          created_at?: string
+          currency?: string
+          external_ref?: string | null
+          id?: string
+          interest_accrued?: number
+          last_txn_at?: string | null
+          opened_by?: string | null
+          opened_on?: string
+          product_id?: string
+          status?: Database["public"]["Enums"]["savings_account_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_account_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_opened_by_fkey"
+            columns: ["opened_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "savings_product"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_number_seq: {
+        Row: {
+          company_id: string
+          last_no: number
+          period: string
+        }
+        Insert: {
+          company_id: string
+          last_no?: number
+          period: string
+        }
+        Update: {
+          company_id?: string
+          last_no?: number
+          period?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_number_seq_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_product: {
+        Row: {
+          active: boolean
+          closure_fee: number
+          code: string
+          company_id: string
+          created_at: string
+          currency: string
+          dormancy_days: number
+          id: string
+          interest_rate_pct: number
+          min_balance: number
+          min_opening_balance: number
+          name: string
+          opening_fee: number
+          passbook_required: boolean
+          passbook_series_prefix: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          closure_fee?: number
+          code: string
+          company_id: string
+          created_at?: string
+          currency?: string
+          dormancy_days?: number
+          id?: string
+          interest_rate_pct?: number
+          min_balance?: number
+          min_opening_balance?: number
+          name: string
+          opening_fee?: number
+          passbook_required?: boolean
+          passbook_series_prefix?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          closure_fee?: number
+          code?: string
+          company_id?: string
+          created_at?: string
+          currency?: string
+          dormancy_days?: number
+          id?: string
+          interest_rate_pct?: number
+          min_balance?: number
+          min_opening_balance?: number
+          name?: string
+          opening_fee?: number
+          passbook_required?: boolean
+          passbook_series_prefix?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_product_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_transaction: {
+        Row: {
+          account_id: string
+          amount: number
+          channel: Database["public"]["Enums"]["savings_channel"]
+          company_id: string
+          created_at: string
+          external_ref: string | null
+          id: string
+          idempotency_key: string | null
+          narration: string | null
+          performed_by: string | null
+          reference: string | null
+          running_balance: number
+          txn_date: string
+          txn_type: Database["public"]["Enums"]["savings_txn_type"]
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          channel?: Database["public"]["Enums"]["savings_channel"]
+          company_id: string
+          created_at?: string
+          external_ref?: string | null
+          id?: string
+          idempotency_key?: string | null
+          narration?: string | null
+          performed_by?: string | null
+          reference?: string | null
+          running_balance: number
+          txn_date?: string
+          txn_type: Database["public"]["Enums"]["savings_txn_type"]
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          channel?: Database["public"]["Enums"]["savings_channel"]
+          company_id?: string
+          created_at?: string
+          external_ref?: string | null
+          id?: string
+          idempotency_key?: string | null
+          narration?: string | null
+          performed_by?: string | null
+          reference?: string | null
+          running_balance?: number
+          txn_date?: string
+          txn_type?: Database["public"]["Enums"]["savings_txn_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_transaction_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_transaction_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_transaction_performed_by_fkey"
+            columns: ["performed_by"]
             isOneToOne: false
             referencedRelation: "staff"
             referencedColumns: ["id"]
@@ -1795,6 +2237,10 @@ export type Database = {
       is_company_member: { Args: { _company_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       next_fd_certificate_no: { Args: { _company_id: string }; Returns: string }
+      next_savings_account_no: {
+        Args: { _company_id: string }
+        Returns: string
+      }
     }
     Enums: {
       account_type: "asset" | "liability" | "equity" | "income" | "expense"
@@ -1842,9 +2288,31 @@ export type Database = {
         | "active"
         | "closed"
         | "written_off"
+      passbook_stock_status:
+        | "in_stock"
+        | "partially_issued"
+        | "exhausted"
+        | "void"
       payment_channel: "cash" | "mpesa" | "bank" | "internal"
       repayment_frequency: "weekly" | "biweekly" | "monthly" | "daily"
       risk_grade: "low" | "medium" | "high"
+      savings_account_status: "active" | "dormant" | "frozen" | "closed"
+      savings_channel:
+        | "branch"
+        | "atm"
+        | "ceft"
+        | "internet_banking"
+        | "mobile"
+        | "api"
+        | "other"
+      savings_txn_type:
+        | "deposit"
+        | "withdrawal"
+        | "interest"
+        | "fee"
+        | "opening"
+        | "closure"
+        | "adjustment"
       staff_role:
         | "loan_officer"
         | "branch_manager"
@@ -2037,9 +2505,34 @@ export const Constants = {
         "closed",
         "written_off",
       ],
+      passbook_stock_status: [
+        "in_stock",
+        "partially_issued",
+        "exhausted",
+        "void",
+      ],
       payment_channel: ["cash", "mpesa", "bank", "internal"],
       repayment_frequency: ["weekly", "biweekly", "monthly", "daily"],
       risk_grade: ["low", "medium", "high"],
+      savings_account_status: ["active", "dormant", "frozen", "closed"],
+      savings_channel: [
+        "branch",
+        "atm",
+        "ceft",
+        "internet_banking",
+        "mobile",
+        "api",
+        "other",
+      ],
+      savings_txn_type: [
+        "deposit",
+        "withdrawal",
+        "interest",
+        "fee",
+        "opening",
+        "closure",
+        "adjustment",
+      ],
       staff_role: [
         "loan_officer",
         "branch_manager",
