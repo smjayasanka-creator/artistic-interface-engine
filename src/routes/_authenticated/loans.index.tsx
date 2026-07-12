@@ -34,6 +34,13 @@ const TILES = [
     accent: "from-amber-500/15 to-amber-500/0 text-amber-600",
   },
   {
+    to: "/loans/termination",
+    label: "Facility Termination",
+    desc: "Settle the outstanding balance early and close the facility",
+    icon: XCircle,
+    accent: "from-teal-500/15 to-teal-500/0 text-teal-600",
+  },
+  {
     to: "/loans/transfer",
     label: "Facility Transfer",
     desc: "Transfer facilities for repossession or legal action",
