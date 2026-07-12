@@ -257,8 +257,6 @@ function CompaniesTab() {
 
 /* ---------------- Manage subscription modal ---------------- */
 
-type Row = ReturnType<typeof useOverviewRow>;
-function useOverviewRow() { return null as any; }
 
 function ManageSubscriptionModal({ company, onClose }: { company: any; onClose: () => void }) {
   const qc = useQueryClient();
