@@ -472,6 +472,69 @@ export type Database = {
           },
         ]
       }
+      delegation_authority: {
+        Row: {
+          active: boolean
+          amount_max: number
+          amount_min: number
+          company_id: string
+          created_at: string
+          id: string
+          ltv_max: number
+          ltv_min: number
+          name: string
+          rate_max: number
+          rate_min: number
+          security_type_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount_max?: number
+          amount_min?: number
+          company_id: string
+          created_at?: string
+          id?: string
+          ltv_max?: number
+          ltv_min?: number
+          name: string
+          rate_max?: number
+          rate_min?: number
+          security_type_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount_max?: number
+          amount_min?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          ltv_max?: number
+          ltv_min?: number
+          name?: string
+          rate_max?: number
+          rate_min?: number
+          security_type_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delegation_authority_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegation_authority_security_type_id_fkey"
+            columns: ["security_type_id"]
+            isOneToOne: false
+            referencedRelation: "security_type"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fd_accrual: {
         Row: {
           accrual_date: string
@@ -1868,6 +1931,50 @@ export type Database = {
             columns: ["performed_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_type: {
+        Row: {
+          active: boolean
+          category: string
+          company_id: string
+          created_at: string
+          fields: Json
+          id: string
+          kind: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          company_id: string
+          created_at?: string
+          fields?: Json
+          id?: string
+          kind: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          company_id?: string
+          created_at?: string
+          fields?: Json
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_type_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
             referencedColumns: ["id"]
           },
         ]
