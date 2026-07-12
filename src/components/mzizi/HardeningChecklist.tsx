@@ -7,7 +7,6 @@ import { ProgressBar } from "@/components/mzizi/ProgressBar";
 import { cn } from "@/lib/utils";
 import {
   listHardeningItems,
-  upsertHardeningItem,
   resetHardeningItems,
   runHardeningAutocheck,
   type AutoCheckResult,
