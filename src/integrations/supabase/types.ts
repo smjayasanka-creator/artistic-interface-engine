@@ -14,6 +14,125 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_key: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          environment: string
+          id: string
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at: string | null
+          revoked_at: string | null
+          scopes: string[]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          environment?: string
+          id?: string
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          scopes?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          environment?: string
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          label?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          scopes?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_key_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_transaction_log: {
+        Row: {
+          api_key_id: string | null
+          channel: string
+          company_id: string | null
+          created_at: string
+          direction: string
+          endpoint: string
+          error: string | null
+          id: string
+          method: string
+          reference: string | null
+          request: Json | null
+          response: Json | null
+          status_code: number | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          channel: string
+          company_id?: string | null
+          created_at?: string
+          direction: string
+          endpoint: string
+          error?: string | null
+          id?: string
+          method: string
+          reference?: string | null
+          request?: Json | null
+          response?: Json | null
+          status_code?: number | null
+        }
+        Update: {
+          api_key_id?: string | null
+          channel?: string
+          company_id?: string | null
+          created_at?: string
+          direction?: string
+          endpoint?: string
+          error?: string | null
+          id?: string
+          method?: string
+          reference?: string | null
+          request?: Json | null
+          response?: Json | null
+          status_code?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_transaction_log_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_key"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_transaction_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch: {
         Row: {
           branch_prefix: string | null
