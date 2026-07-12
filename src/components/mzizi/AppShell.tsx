@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, UserCog, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, UserCog, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ const NAV: NavEntry[] = [
       { to: "/reports", label: "Reports", icon: LineChart },
       { to: "/admin", label: "Employees", icon: UserCog },
       { to: "/workflows", label: "Work flow", icon: Workflow },
+      { to: "/api", label: "API", icon: Plug },
       { to: "/admin", label: "Administration", icon: Settings },
     ],
   },
@@ -56,6 +57,7 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/fd/maturity")) return { title: "Maturity due", sub: "Deposits maturing soon" };
   if (pathname.startsWith("/fd")) return { title: "Fixed deposits", sub: "Portfolio & register" };
   if (pathname.startsWith("/platform-admin")) return { title: "Platform Admin", sub: "Tenant oversight & subscriptions" };
+  if (pathname.startsWith("/api")) return { title: "API", sub: "Third-party integrations & endpoints" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };
   return { title: "Mzizi Core", sub: "" };
 }
