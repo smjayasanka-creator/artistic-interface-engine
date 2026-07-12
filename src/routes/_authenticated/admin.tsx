@@ -31,7 +31,6 @@ import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
 import { FdProductsTab } from "@/components/mzizi/FdProductsTab";
-import { WorkflowsTab } from "@/components/mzizi/WorkflowsTab";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
