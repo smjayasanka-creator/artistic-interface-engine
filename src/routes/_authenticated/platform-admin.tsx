@@ -67,26 +67,6 @@ function PlatformAdmin() {
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-border">
-        {(
-          [
-            ["overview", "Overview"],
-            ["companies", "Companies"],
-            ["plans", "Plans"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={cn(
-              "px-4 py-2.5 text-[13px] font-medium border-b-2 -mb-px",
-              tab === id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
 
       <div className="flex gap-1 border-b border-border">
         {(
