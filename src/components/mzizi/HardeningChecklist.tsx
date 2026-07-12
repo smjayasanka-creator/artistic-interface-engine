@@ -396,6 +396,16 @@ export function HardeningChecklist() {
                               <Zap size={8} /> auto
                             </span>
                           )}
+                          {auto && (
+                            <button
+                              onClick={() => setOpenEvidence(isOpen ? null : it.id)}
+                              className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded border border-border bg-card text-muted-foreground hover:bg-muted"
+                              title="Show SQL check + matching rows"
+                            >
+                              {isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                              <Code2 size={10} /> evidence ({auto.matches.length})
+                            </button>
+                          )}
                         </div>
                         {(entry.note ?? "").startsWith("auto:") && (
                           <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">
