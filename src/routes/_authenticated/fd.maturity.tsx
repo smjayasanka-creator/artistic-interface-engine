@@ -7,6 +7,7 @@ import { listMaturingDeposits, processMaturity } from "@/lib/fd.functions";
 import { Card } from "@/components/mzizi/Card";
 import { btnPrimaryCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
+import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/fd/maturity")({
   component: MaturityDue,
