@@ -485,27 +485,39 @@ function BranchesTab() {
 
 function StaffTab() {
   const [mode, setMode] = useState<Mode>("list");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const fn = useServerFn(getAdmin);
   const { data } = useQuery({ queryKey: ["admin"], queryFn: () => fn() });
   const qc = useQueryClient();
   const createFn = useServerFn(createStaff);
+  const updateFn = useServerFn(updateStaff);
   const toggleFn = useServerFn(toggleStaff);
 
-  const [form, setForm] = useState<{
-    full_name: string;
-    role: StaffRole;
-    branch_id: string;
-    email: string;
-    phone: string;
-  }>({ full_name: "", role: "loan_officer", branch_id: "", email: "", phone: "" });
+  const emptyForm = { full_name: "", role: "loan_officer" as StaffRole, branch_id: "", email: "", phone: "" };
+  const [form, setForm] = useState(emptyForm);
+
+  const reset = () => {
+    setForm(emptyForm);
+    setEditingId(null);
+    setMode("list");
+  };
 
   const create = useMutation({
     mutationFn: createFn,
     onSuccess: () => {
       toast.success("Staff added");
       qc.invalidateQueries({ queryKey: ["admin"] });
-      setForm({ full_name: "", role: "loan_officer", branch_id: form.branch_id, email: "", phone: "" });
-      setMode("list");
+      reset();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const update = useMutation({
+    mutationFn: updateFn,
+    onSuccess: () => {
+      toast.success("Staff updated");
+      qc.invalidateQueries({ queryKey: ["admin"] });
+      reset();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -518,97 +530,70 @@ function StaffTab() {
 
   if (!data) return <div className="text-sm text-muted-foreground">Loading…</div>;
 
+  function startEdit(s: any) {
+    setForm({
+      full_name: s.full_name ?? "",
+      role: (s.role as StaffRole) ?? "loan_officer",
+      branch_id: s.branch_id ?? "",
+      email: s.email ?? "",
+      phone: s.phone ?? "",
+    });
+    setEditingId(s.id);
+    setMode("edit");
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.full_name.trim() || !form.branch_id) {
       toast.error("Name and branch required");
       return;
     }
-    create.mutate({ data: form });
+    if (mode === "edit" && editingId) {
+      update.mutate({ data: { id: editingId, ...form } });
+    } else {
+      create.mutate({ data: form });
+    }
   }
 
-  if (mode === "create") {
+  if (mode === "create" || mode === "edit") {
+    const isEdit = mode === "edit";
     return (
       <Card>
-        <FormHeader title="New staff" onBack={() => setMode("list")} />
+        <FormHeader title={isEdit ? "Edit staff" : "New staff"} onBack={reset} />
         <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
           <FormGrid>
             <FormField label="Full name" required span={6}>
-              <input
-                value={form.full_name}
-                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                className={inputCls}
-                required
-              />
+              <input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className={inputCls} required />
             </FormField>
             <FormField label="Branch" required span={6}>
-              <select
-                value={form.branch_id}
-                onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
-                className={selectCls}
-                required
-              >
+              <select value={form.branch_id} onChange={(e) => setForm({ ...form, branch_id: e.target.value })} className={selectCls} required>
                 <option value="">Select branch…</option>
                 {data.branches.map((b: any) => (
-                  <option key={b.id} value={b.id}>
-                    {b.code} — {b.name}
-                  </option>
+                  <option key={b.id} value={b.id}>{b.code} — {b.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Role" required span={5}>
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })} className={selectCls + " capitalize"}>
+                {STAFF_ROLES.map((r) => (
+                  <option key={r} value={r}>{r.replace("_", " ")}</option>
                 ))}
               </select>
             </FormField>
             <FormField label="Email" span={4}>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className={inputCls}
-                placeholder="optional"
-              />
+              <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} placeholder="optional" />
             </FormField>
             <FormField label="Phone" span={3}>
-              <input
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className={inputCls + " font-mono"}
-                placeholder="optional"
-              />
-            </FormField>
-            <FormField label="Role" span={12}>
-              <div className="flex flex-wrap gap-1.5">
-                {STAFF_ROLES.map((r) => (
-                  <button
-                    type="button"
-                    key={r}
-                    onClick={() => setForm({ ...form, role: r })}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                      form.role === r ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
-                    )}
-                  >
-                    {r.replace("_", " ")}
-                  </button>
-                ))}
-              </div>
+              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputCls + " font-mono"} placeholder="optional" />
             </FormField>
           </FormGrid>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            Creates a staff profile. To let this person sign in, they still need to register with the same email — their
-            login will then link to this profile.
+            Creates a staff profile. To let this person sign in, they still need to register with the same email — their login will then link to this profile.
           </p>
           <FormActions>
-            <button
-              type="button"
-              onClick={() => setMode("list")}
-              className={btnSecondaryCls}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={create.isPending}
-              className={btnPrimaryCls}
-            >
-              {create.isPending ? "Adding…" : "Add staff"}
+            <button type="button" onClick={reset} className={btnSecondaryCls}>Cancel</button>
+            <button type="submit" disabled={create.isPending || update.isPending} className={btnPrimaryCls}>
+              {isEdit ? (update.isPending ? "Saving…" : "Save changes") : (create.isPending ? "Adding…" : "Add staff")}
             </button>
           </FormActions>
         </form>
@@ -616,47 +601,55 @@ function StaffTab() {
     );
   }
 
+  const GRID = "1.6fr .9fr 1fr 1.3fr .5fr .4fr";
   return (
     <div className="flex flex-col gap-5">
       <Card padded={false}>
         <ListHeader title="Staff" count={data.staff.length} onNew={() => setMode("create")} newLabel="New staff" />
         <div
-          className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
-          style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr 0.6fr" }}
+          className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
+          style={{ gridTemplateColumns: GRID }}
         >
           <div>Name</div>
           <div>Role</div>
           <div>Branch</div>
           <div>Contact</div>
           <div className="text-right">Status</div>
+          <div className="text-right">Edit</div>
         </div>
         {data.staff.map((s: any) => (
           <div
             key={s.id}
-            className="grid items-center text-[13px] py-3 px-5 border-b border-row-divider last:border-b-0"
-            style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr 0.6fr" }}
+            className="grid items-center text-[12px] py-1.5 px-5 border-b border-row-divider last:border-b-0"
+            style={{ gridTemplateColumns: GRID }}
           >
-            <div className="flex items-center gap-2.5 font-semibold">
+            <div className="flex items-center gap-2 font-medium truncate" title={s.full_name}>
               <Avatar name={s.full_name} />
-              {s.full_name}
+              <span className="truncate">{s.full_name}</span>
             </div>
-            <div className="capitalize text-secondary-foreground">{(s.role ?? "").replace("_", " ")}</div>
-            <div className="text-secondary-foreground">{s.branch?.name ?? "—"}</div>
-            <div className="text-muted-foreground text-[12px] truncate">
+            <div className="capitalize text-muted-foreground truncate">{(s.role ?? "").replace("_", " ")}</div>
+            <div className="text-muted-foreground truncate">{s.branch?.name ?? "—"}</div>
+            <div className="text-muted-foreground text-[11px] truncate">
               <div className="truncate">{s.email ?? "—"}</div>
-              {s.phone && <div className="font-mono text-[11px]">{s.phone}</div>}
+              {s.phone && <div className="font-mono">{s.phone}</div>}
             </div>
             <div className="text-right">
               <button
                 onClick={() => toggle.mutate({ data: { id: s.id, is_active: !s.is_active } })}
                 className={cn(
-                  "text-[11px] px-2 py-0.5 rounded-full border",
-                  s.is_active
-                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
-                    : "border-muted bg-muted text-muted-foreground",
+                  "text-[10px] px-2 py-0.5 rounded-full border",
+                  s.is_active ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700" : "border-muted bg-muted text-muted-foreground",
                 )}
               >
                 {s.is_active ? "Active" : "Off"}
+              </button>
+            </div>
+            <div className="text-right">
+              <button
+                onClick={() => startEdit(s)}
+                className="text-[10.5px] px-2 py-0.5 rounded border border-border hover:border-primary hover:text-primary transition-colors"
+              >
+                Edit
               </button>
             </div>
           </div>
