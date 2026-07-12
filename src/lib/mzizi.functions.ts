@@ -616,6 +616,46 @@ export const toggleStaff = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const updateStaff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      id: string;
+      full_name: string;
+      role: "loan_officer" | "branch_manager" | "teller" | "operations" | "admin";
+      branch_id: string;
+      email?: string | null;
+      phone?: string | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          full_name: z.string().trim().min(2).max(80),
+          role: z.enum(["loan_officer", "branch_manager", "teller", "operations", "admin"]),
+          branch_id: z.string().uuid(),
+          email: z.string().trim().email().nullable().optional().or(z.literal("")),
+          phone: z.string().trim().max(30).nullable().optional().or(z.literal("")),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can edit staff");
+    const { error } = await supabase
+      .from("staff")
+      .update({
+        full_name: data.full_name,
+        role: data.role,
+        branch_id: data.branch_id,
+        email: data.email || null,
+        phone: data.phone || null,
+      })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
 export const getProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
