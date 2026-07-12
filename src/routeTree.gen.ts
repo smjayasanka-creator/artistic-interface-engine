@@ -48,8 +48,15 @@ import { Route as AuthenticatedAccountsPaymentsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAccountsJournalRouteImport } from './routes/_authenticated/accounts.journal'
 import { Route as AuthenticatedAccountsPaymentsIndexRouteImport } from './routes/_authenticated/accounts.payments.index'
 import { Route as AuthenticatedAccountsJournalIndexRouteImport } from './routes/_authenticated/accounts.journal.index'
+import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
+import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/api/public/v1/transactions.outbound'
+import { Route as ApiPublicV1TransactionsInboundRouteImport } from './routes/api/public/v1/transactions.inbound'
+import { Route as ApiPublicV1IbTransactionRouteImport } from './routes/api/public/v1/ib.transaction'
+import { Route as ApiPublicV1CribReportRouteImport } from './routes/api/public/v1/crib.report'
+import { Route as ApiPublicV1CeftTransferRouteImport } from './routes/api/public/v1/ceft.transfer'
+import { Route as ApiPublicV1AtmAuthorizeRouteImport } from './routes/api/public/v1/atm.authorize'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -267,6 +274,11 @@ const AuthenticatedAccountsJournalIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAccountsJournalRoute,
   } as any)
+const ApiPublicV1HealthRoute = ApiPublicV1HealthRouteImport.update({
+  id: '/api/public/v1/health',
+  path: '/api/public/v1/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAccountsPaymentsNewRoute =
   AuthenticatedAccountsPaymentsNewRouteImport.update({
     id: '/new',
@@ -279,6 +291,39 @@ const AuthenticatedAccountsJournalNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedAccountsJournalRoute,
   } as any)
+const ApiPublicV1TransactionsOutboundRoute =
+  ApiPublicV1TransactionsOutboundRouteImport.update({
+    id: '/api/public/v1/transactions/outbound',
+    path: '/api/public/v1/transactions/outbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1TransactionsInboundRoute =
+  ApiPublicV1TransactionsInboundRouteImport.update({
+    id: '/api/public/v1/transactions/inbound',
+    path: '/api/public/v1/transactions/inbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1IbTransactionRoute =
+  ApiPublicV1IbTransactionRouteImport.update({
+    id: '/api/public/v1/ib/transaction',
+    path: '/api/public/v1/ib/transaction',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CribReportRoute = ApiPublicV1CribReportRouteImport.update({
+  id: '/api/public/v1/crib/report',
+  path: '/api/public/v1/crib/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1CeftTransferRoute = ApiPublicV1CeftTransferRouteImport.update({
+  id: '/api/public/v1/ceft/transfer',
+  path: '/api/public/v1/ceft/transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1AtmAuthorizeRoute = ApiPublicV1AtmAuthorizeRouteImport.update({
+  id: '/api/public/v1/atm/authorize',
+  path: '/api/public/v1/atm/authorize',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -319,8 +364,15 @@ export interface FileRoutesByFullPath {
   '/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
   '/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
+  '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
+  '/api/public/v1/ceft/transfer': typeof ApiPublicV1CeftTransferRoute
+  '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
+  '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
+  '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
+  '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -358,8 +410,15 @@ export interface FileRoutesByTo {
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/accounts/journal': typeof AuthenticatedAccountsJournalIndexRoute
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsIndexRoute
+  '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
+  '/api/public/v1/ceft/transfer': typeof ApiPublicV1CeftTransferRoute
+  '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
+  '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
+  '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
+  '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -402,8 +461,15 @@ export interface FileRoutesById {
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/_authenticated/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/_authenticated/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/_authenticated/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
   '/_authenticated/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
+  '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
+  '/api/public/v1/ceft/transfer': typeof ApiPublicV1CeftTransferRoute
+  '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
+  '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
+  '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
+  '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -446,8 +512,15 @@ export interface FileRouteTypes {
     | '/transactions/'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
+    | '/api/public/v1/health'
     | '/accounts/journal/'
     | '/accounts/payments/'
+    | '/api/public/v1/atm/authorize'
+    | '/api/public/v1/ceft/transfer'
+    | '/api/public/v1/crib/report'
+    | '/api/public/v1/ib/transaction'
+    | '/api/public/v1/transactions/inbound'
+    | '/api/public/v1/transactions/outbound'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -485,8 +558,15 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
+    | '/api/public/v1/health'
     | '/accounts/journal'
     | '/accounts/payments'
+    | '/api/public/v1/atm/authorize'
+    | '/api/public/v1/ceft/transfer'
+    | '/api/public/v1/crib/report'
+    | '/api/public/v1/ib/transaction'
+    | '/api/public/v1/transactions/inbound'
+    | '/api/public/v1/transactions/outbound'
   id:
     | '__root__'
     | '/'
@@ -528,14 +608,28 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions/'
     | '/_authenticated/accounts/journal/new'
     | '/_authenticated/accounts/payments/new'
+    | '/api/public/v1/health'
     | '/_authenticated/accounts/journal/'
     | '/_authenticated/accounts/payments/'
+    | '/api/public/v1/atm/authorize'
+    | '/api/public/v1/ceft/transfer'
+    | '/api/public/v1/crib/report'
+    | '/api/public/v1/ib/transaction'
+    | '/api/public/v1/transactions/inbound'
+    | '/api/public/v1/transactions/outbound'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
+  ApiPublicV1AtmAuthorizeRoute: typeof ApiPublicV1AtmAuthorizeRoute
+  ApiPublicV1CeftTransferRoute: typeof ApiPublicV1CeftTransferRoute
+  ApiPublicV1CribReportRoute: typeof ApiPublicV1CribReportRoute
+  ApiPublicV1IbTransactionRoute: typeof ApiPublicV1IbTransactionRoute
+  ApiPublicV1TransactionsInboundRoute: typeof ApiPublicV1TransactionsInboundRoute
+  ApiPublicV1TransactionsOutboundRoute: typeof ApiPublicV1TransactionsOutboundRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -813,6 +907,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsJournalIndexRouteImport
       parentRoute: typeof AuthenticatedAccountsJournalRoute
     }
+    '/api/public/v1/health': {
+      id: '/api/public/v1/health'
+      path: '/api/public/v1/health'
+      fullPath: '/api/public/v1/health'
+      preLoaderRoute: typeof ApiPublicV1HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/accounts/payments/new': {
       id: '/_authenticated/accounts/payments/new'
       path: '/new'
@@ -826,6 +927,48 @@ declare module '@tanstack/react-router' {
       fullPath: '/accounts/journal/new'
       preLoaderRoute: typeof AuthenticatedAccountsJournalNewRouteImport
       parentRoute: typeof AuthenticatedAccountsJournalRoute
+    }
+    '/api/public/v1/transactions/outbound': {
+      id: '/api/public/v1/transactions/outbound'
+      path: '/api/public/v1/transactions/outbound'
+      fullPath: '/api/public/v1/transactions/outbound'
+      preLoaderRoute: typeof ApiPublicV1TransactionsOutboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/transactions/inbound': {
+      id: '/api/public/v1/transactions/inbound'
+      path: '/api/public/v1/transactions/inbound'
+      fullPath: '/api/public/v1/transactions/inbound'
+      preLoaderRoute: typeof ApiPublicV1TransactionsInboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/ib/transaction': {
+      id: '/api/public/v1/ib/transaction'
+      path: '/api/public/v1/ib/transaction'
+      fullPath: '/api/public/v1/ib/transaction'
+      preLoaderRoute: typeof ApiPublicV1IbTransactionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/crib/report': {
+      id: '/api/public/v1/crib/report'
+      path: '/api/public/v1/crib/report'
+      fullPath: '/api/public/v1/crib/report'
+      preLoaderRoute: typeof ApiPublicV1CribReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/ceft/transfer': {
+      id: '/api/public/v1/ceft/transfer'
+      path: '/api/public/v1/ceft/transfer'
+      fullPath: '/api/public/v1/ceft/transfer'
+      preLoaderRoute: typeof ApiPublicV1CeftTransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/atm/authorize': {
+      id: '/api/public/v1/atm/authorize'
+      path: '/api/public/v1/atm/authorize'
+      fullPath: '/api/public/v1/atm/authorize'
+      preLoaderRoute: typeof ApiPublicV1AtmAuthorizeRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -977,6 +1120,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
+  ApiPublicV1AtmAuthorizeRoute: ApiPublicV1AtmAuthorizeRoute,
+  ApiPublicV1CeftTransferRoute: ApiPublicV1CeftTransferRoute,
+  ApiPublicV1CribReportRoute: ApiPublicV1CribReportRoute,
+  ApiPublicV1IbTransactionRoute: ApiPublicV1IbTransactionRoute,
+  ApiPublicV1TransactionsInboundRoute: ApiPublicV1TransactionsInboundRoute,
+  ApiPublicV1TransactionsOutboundRoute: ApiPublicV1TransactionsOutboundRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
