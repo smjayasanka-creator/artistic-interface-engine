@@ -136,11 +136,11 @@ function Dashboard() {
     <div className="flex flex-col gap-5 animate-fadein">
       {/* Vibrant KPIs */}
       <div className="grid grid-cols-5 gap-3.5">
-        <VibrantKpi tone="indigo" label="Active clients" value={String(data.kpis.activeClients)} delta={`+${Math.floor(data.kpis.activeClients / 20 || 1)} this week`} icon={Users} />
-        <VibrantKpi tone="teal"   label="Portfolio outstanding" value={data.kpis.outstanding} delta="Live balance" icon={Wallet} />
-        <VibrantKpi tone="rose"   label="PAR > 30 days" value={data.kpis.par30plus} delta={totalPar > 0 ? `${((data.kpis.par30plus / totalPar) * 100).toFixed(1)}% of book` : "—"} icon={AlertTriangle} />
-        <VibrantKpi tone="amber"  label="Collected today" value={data.kpis.collectedToday} delta="Since midnight" icon={ArrowDownCircle} />
-        <VibrantKpi tone="violet" label="Disbursed / week" value={data.kpis.disbursedWeek} delta="Last 7 days" icon={ArrowUpCircle} />
+        <VibrantKpi tone="indigo" to="/clients" label="Active clients" value={String(data.kpis.activeClients)} delta={`+${Math.floor(data.kpis.activeClients / 20 || 1)} this week`} icon={Users} />
+        <VibrantKpi tone="teal"   to="/loans" label="Portfolio outstanding" value={data.kpis.outstanding} delta="Live balance" icon={Wallet} />
+        <VibrantKpi tone="rose"   to="/collections" label="PAR > 30 days" value={data.kpis.par30plus} delta={totalPar > 0 ? `${((data.kpis.par30plus / totalPar) * 100).toFixed(1)}% of book` : "—"} icon={AlertTriangle} />
+        <VibrantKpi tone="amber"  to="/collections" label="Collected today" value={data.kpis.collectedToday} delta="Since midnight" icon={ArrowDownCircle} />
+        <VibrantKpi tone="violet" to="/transactions" label="Disbursed / week" value={data.kpis.disbursedWeek} delta="Last 7 days" icon={ArrowUpCircle} />
       </div>
 
       {/* PAR + Meetings */}
