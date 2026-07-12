@@ -7,6 +7,78 @@ import { generateSchedule, type Frequency } from "@/lib/loan-schedule";
 // READS
 // ─────────────────────────────────────────────────────────────────────────────
 
+export const getTellerSummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: staff } = await supabase
+      .from("staff")
+      .select("id, full_name, branch_id, branch:branch_id(id, code, name)")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const sinceIso = startOfDay.toISOString();
+    const todayDate = sinceIso.slice(0, 10);
+
+    const staffId = staff?.id ?? null;
+
+    const [
+      { data: repays },
+      { data: fdReceipts },
+      { data: fdWithdrawals },
+      { data: disbursals },
+    ] = await Promise.all([
+      staffId
+        ? supabase
+            .from("repayment")
+            .select("amount")
+            .eq("received_by", staffId)
+            .gte("received_at", sinceIso)
+        : Promise.resolve({ data: [] as { amount: number }[] } as any),
+      supabase
+        .from("fd_transaction")
+        .select("amount")
+        .eq("created_by", userId)
+        .eq("type", "deposit_receipt")
+        .gte("txn_date", todayDate),
+      supabase
+        .from("fd_transaction")
+        .select("amount")
+        .eq("created_by", userId)
+        .eq("type", "withdrawal")
+        .gte("txn_date", todayDate),
+      staffId
+        ? supabase
+            .from("loan")
+            .select("principal")
+            .eq("approved_by", staffId)
+            .gte("disbursed_at", sinceIso)
+        : Promise.resolve({ data: [] as { principal: number }[] } as any),
+    ]);
+
+    const sum = (rows: any[] | null | undefined, key: string) =>
+      (rows ?? []).reduce((s, r) => s + Number(r[key] ?? 0), 0);
+
+    return {
+      staff,
+      asOf: new Date().toISOString(),
+      opening_balance: 0,
+      cash_from_vault: 0,
+      receipts: {
+        loan_repayments: sum(repays, "amount"),
+        deposit_receipts: sum(fdReceipts, "amount"),
+        other: 0,
+      },
+      payments: {
+        loan_disbursements: sum(disbursals, "principal"),
+        deposit_withdrawals: sum(fdWithdrawals, "amount"),
+        other: 0,
+      },
+    };
+  });
+
 export const getSession = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
