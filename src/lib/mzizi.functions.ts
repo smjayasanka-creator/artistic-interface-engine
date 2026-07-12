@@ -1228,6 +1228,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       frequency: "daily" | "weekly" | "biweekly" | "monthly";
       interest_method?: "flat" | "declining_balance";
       processing_fee_pct?: number;
+      termination_fee?: number;
+      termination_fee_pct?: number;
       principal_account_id?: string | null;
       cash_account_id?: string | null;
       interest_income_account_id?: string | null;
