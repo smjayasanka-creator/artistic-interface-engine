@@ -331,25 +331,55 @@ function FormHeader({ title, onBack }: { title: string; onBack: () => void }) {
 
 function BranchesTab() {
   const [mode, setMode] = useState<Mode>("list");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const fn = useServerFn(getAdmin);
   const { data } = useQuery({ queryKey: ["admin"], queryFn: () => fn() });
   const qc = useQueryClient();
   const createFn = useServerFn(createBranch);
+  const updateFn = useServerFn(updateBranch);
 
-  const [form, setForm] = useState({ code: "", name: "", region: "", currency: "KES", opened_on: "" });
+  const emptyForm = { code: "", name: "", region: "", currency: "KES", opened_on: "" };
+  const [form, setForm] = useState(emptyForm);
+
+  const reset = () => {
+    setForm(emptyForm);
+    setEditingId(null);
+    setMode("list");
+  };
 
   const create = useMutation({
     mutationFn: createFn,
     onSuccess: () => {
       toast.success("Branch created");
       qc.invalidateQueries({ queryKey: ["admin"] });
-      setForm({ code: "", name: "", region: "", currency: "KES", opened_on: "" });
-      setMode("list");
+      reset();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const update = useMutation({
+    mutationFn: updateFn,
+    onSuccess: () => {
+      toast.success("Branch updated");
+      qc.invalidateQueries({ queryKey: ["admin"] });
+      reset();
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   if (!data) return <div className="text-sm text-muted-foreground">Loading…</div>;
+
+  function startEdit(b: any) {
+    setForm({
+      code: b.code ?? "",
+      name: b.name ?? "",
+      region: b.region ?? "",
+      currency: b.currency ?? "KES",
+      opened_on: b.opened_on ?? "",
+    });
+    setEditingId(b.id);
+    setMode("edit");
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -357,71 +387,40 @@ function BranchesTab() {
       toast.error("Code and name required");
       return;
     }
-    create.mutate({ data: form });
+    if (mode === "edit" && editingId) {
+      update.mutate({ data: { id: editingId, ...form } });
+    } else {
+      create.mutate({ data: form });
+    }
   }
 
-  if (mode === "create") {
+  if (mode === "create" || mode === "edit") {
+    const isEdit = mode === "edit";
     return (
       <Card>
-        <FormHeader title="New branch" onBack={() => setMode("list")} />
+        <FormHeader title={isEdit ? "Edit branch" : "New branch"} onBack={reset} />
         <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
           <FormGrid>
             <FormField label="Code" required span={2}>
-              <input
-                value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                placeholder="NRB"
-                className={inputCls + " font-mono"}
-                required
-              />
+              <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="NRB" className={inputCls + " font-mono"} required />
             </FormField>
             <FormField label="Name" required span={6}>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Nairobi Branch"
-                className={inputCls}
-                required
-              />
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nairobi Branch" className={inputCls} required />
             </FormField>
             <FormField label="Currency" span={2}>
-              <input
-                value={form.currency}
-                onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
-                maxLength={3}
-                className={inputCls + " font-mono"}
-              />
+              <input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })} maxLength={3} className={inputCls + " font-mono"} />
             </FormField>
             <FormField label="Opened on" span={2}>
-              <input
-                type="date"
-                value={form.opened_on}
-                onChange={(e) => setForm({ ...form, opened_on: e.target.value })}
-                className={inputCls + " font-mono"}
-              />
+              <input type="date" value={form.opened_on} onChange={(e) => setForm({ ...form, opened_on: e.target.value })} className={inputCls + " font-mono"} />
             </FormField>
             <FormField label="Region" span={12} hint="Optional">
-              <input
-                value={form.region}
-                onChange={(e) => setForm({ ...form, region: e.target.value })}
-                className={inputCls}
-              />
+              <input value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} className={inputCls} />
             </FormField>
           </FormGrid>
           <FormActions>
-            <button
-              type="button"
-              onClick={() => setMode("list")}
-              className={btnSecondaryCls}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={create.isPending}
-              className={btnPrimaryCls}
-            >
-              {create.isPending ? "Creating…" : "Create branch"}
+            <button type="button" onClick={reset} className={btnSecondaryCls}>Cancel</button>
+            <button type="submit" disabled={create.isPending || update.isPending} className={btnPrimaryCls}>
+              {isEdit ? (update.isPending ? "Saving…" : "Save changes") : (create.isPending ? "Creating…" : "Create branch")}
             </button>
           </FormActions>
         </form>
@@ -429,6 +428,7 @@ function BranchesTab() {
     );
   }
 
+  const GRID = "0.55fr 1.5fr 1fr 0.5fr 0.7fr 0.4fr";
   return (
     <div className="flex flex-col gap-5">
       <Card>
@@ -451,26 +451,35 @@ function BranchesTab() {
       <Card padded={false}>
         <ListHeader title="Branches" count={data.branches.length} onNew={() => setMode("create")} newLabel="New branch" />
         <div
-          className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
-          style={{ gridTemplateColumns: "0.6fr 1.4fr 1fr 0.6fr 0.8fr" }}
+          className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
+          style={{ gridTemplateColumns: GRID }}
         >
           <div>Code</div>
           <div>Name</div>
           <div>Region</div>
           <div>Currency</div>
           <div>Opened</div>
+          <div className="text-right">Edit</div>
         </div>
         {data.branches.map((b: any) => (
           <div
             key={b.id}
-            className="grid items-center text-[13px] py-3 px-5 border-b border-row-divider last:border-b-0"
-            style={{ gridTemplateColumns: "0.6fr 1.4fr 1fr 0.6fr 0.8fr" }}
+            className="grid items-center text-[12px] py-1.5 px-5 border-b border-row-divider last:border-b-0"
+            style={{ gridTemplateColumns: GRID }}
           >
-            <div className="font-mono font-semibold">{b.code}</div>
-            <div className="font-semibold">{b.name}</div>
-            <div className="text-secondary-foreground">{b.region ?? "—"}</div>
-            <div className="font-mono">{b.currency}</div>
-            <div className="text-secondary-foreground">{shortDate(b.opened_on)}</div>
+            <div className="font-mono font-medium text-[11.5px]">{b.code}</div>
+            <div className="truncate font-medium" title={b.name}>{b.name}</div>
+            <div className="text-muted-foreground truncate">{b.region ?? "—"}</div>
+            <div className="font-mono text-[11px]">{b.currency}</div>
+            <div className="text-muted-foreground text-[11px]">{shortDate(b.opened_on)}</div>
+            <div className="text-right">
+              <button
+                onClick={() => startEdit(b)}
+                className="text-[10.5px] px-2 py-0.5 rounded border border-border hover:border-primary hover:text-primary transition-colors"
+              >
+                Edit
+              </button>
+            </div>
           </div>
         ))}
         {data.branches.length === 0 && (
