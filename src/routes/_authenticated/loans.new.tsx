@@ -169,6 +169,17 @@ function NewLoan() {
     setCheckedDocs((prev) => ({ ...prev, [doc]: false }));
   }
 
+  async function openSignedUrl(path: string, downloadName?: string) {
+    const { data, error } = await supabase.storage
+      .from("loan-documents")
+      .createSignedUrl(path, 60, downloadName ? { download: downloadName } : undefined);
+    if (error || !data?.signedUrl) {
+      toast.error(error?.message ?? "Could not open file");
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
   const requiredDocs: string[] = Array.isArray(product?.required_documents)
     ? (product?.required_documents as string[])
     : [];
