@@ -33,6 +33,7 @@ import { Route as AuthenticatedTransactionsDepositWithdrawalRouteImport } from '
 import { Route as AuthenticatedTransactionsDepositReceiptRouteImport } from './routes/_authenticated/transactions.deposit-receipt'
 import { Route as AuthenticatedLoansWriteOffRouteImport } from './routes/_authenticated/loans.write-off'
 import { Route as AuthenticatedLoansTransferRouteImport } from './routes/_authenticated/loans.transfer'
+import { Route as AuthenticatedLoansTerminationRouteImport } from './routes/_authenticated/loans.termination'
 import { Route as AuthenticatedLoansRescheduleRouteImport } from './routes/_authenticated/loans.reschedule'
 import { Route as AuthenticatedLoansNewRouteImport } from './routes/_authenticated/loans.new'
 import { Route as AuthenticatedLoansLegalActionRouteImport } from './routes/_authenticated/loans.legal-action'
@@ -182,6 +183,12 @@ const AuthenticatedLoansTransferRoute =
     path: '/loans/transfer',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedLoansTerminationRoute =
+  AuthenticatedLoansTerminationRouteImport.update({
+    id: '/loans/termination',
+    path: '/loans/termination',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLoansRescheduleRoute =
   AuthenticatedLoansRescheduleRouteImport.update({
     id: '/loans/reschedule',
@@ -297,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/loans/legal-action': typeof AuthenticatedLoansLegalActionRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
   '/loans/reschedule': typeof AuthenticatedLoansRescheduleRoute
+  '/loans/termination': typeof AuthenticatedLoansTerminationRoute
   '/loans/transfer': typeof AuthenticatedLoansTransferRoute
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
@@ -335,6 +343,7 @@ export interface FileRoutesByTo {
   '/loans/legal-action': typeof AuthenticatedLoansLegalActionRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
   '/loans/reschedule': typeof AuthenticatedLoansRescheduleRoute
+  '/loans/termination': typeof AuthenticatedLoansTerminationRoute
   '/loans/transfer': typeof AuthenticatedLoansTransferRoute
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
@@ -378,6 +387,7 @@ export interface FileRoutesById {
   '/_authenticated/loans/legal-action': typeof AuthenticatedLoansLegalActionRoute
   '/_authenticated/loans/new': typeof AuthenticatedLoansNewRoute
   '/_authenticated/loans/reschedule': typeof AuthenticatedLoansRescheduleRoute
+  '/_authenticated/loans/termination': typeof AuthenticatedLoansTerminationRoute
   '/_authenticated/loans/transfer': typeof AuthenticatedLoansTransferRoute
   '/_authenticated/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/_authenticated/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | '/loans/legal-action'
     | '/loans/new'
     | '/loans/reschedule'
+    | '/loans/termination'
     | '/loans/transfer'
     | '/loans/write-off'
     | '/transactions/deposit-receipt'
@@ -459,6 +470,7 @@ export interface FileRouteTypes {
     | '/loans/legal-action'
     | '/loans/new'
     | '/loans/reschedule'
+    | '/loans/termination'
     | '/loans/transfer'
     | '/loans/write-off'
     | '/transactions/deposit-receipt'
@@ -501,6 +513,7 @@ export interface FileRouteTypes {
     | '/_authenticated/loans/legal-action'
     | '/_authenticated/loans/new'
     | '/_authenticated/loans/reschedule'
+    | '/_authenticated/loans/termination'
     | '/_authenticated/loans/transfer'
     | '/_authenticated/loans/write-off'
     | '/_authenticated/transactions/deposit-receipt'
@@ -693,6 +706,13 @@ declare module '@tanstack/react-router' {
       path: '/loans/transfer'
       fullPath: '/loans/transfer'
       preLoaderRoute: typeof AuthenticatedLoansTransferRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/loans/termination': {
+      id: '/_authenticated/loans/termination'
+      path: '/loans/termination'
+      fullPath: '/loans/termination'
+      preLoaderRoute: typeof AuthenticatedLoansTerminationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/loans/reschedule': {
@@ -909,6 +929,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLoansLegalActionRoute: typeof AuthenticatedLoansLegalActionRoute
   AuthenticatedLoansNewRoute: typeof AuthenticatedLoansNewRoute
   AuthenticatedLoansRescheduleRoute: typeof AuthenticatedLoansRescheduleRoute
+  AuthenticatedLoansTerminationRoute: typeof AuthenticatedLoansTerminationRoute
   AuthenticatedLoansTransferRoute: typeof AuthenticatedLoansTransferRoute
   AuthenticatedLoansWriteOffRoute: typeof AuthenticatedLoansWriteOffRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
@@ -940,6 +961,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLoansLegalActionRoute: AuthenticatedLoansLegalActionRoute,
   AuthenticatedLoansNewRoute: AuthenticatedLoansNewRoute,
   AuthenticatedLoansRescheduleRoute: AuthenticatedLoansRescheduleRoute,
+  AuthenticatedLoansTerminationRoute: AuthenticatedLoansTerminationRoute,
   AuthenticatedLoansTransferRoute: AuthenticatedLoansTransferRoute,
   AuthenticatedLoansWriteOffRoute: AuthenticatedLoansWriteOffRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
