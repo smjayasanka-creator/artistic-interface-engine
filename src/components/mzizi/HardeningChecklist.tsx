@@ -170,41 +170,10 @@ export function HardeningChecklist() {
   }, [autoResults]);
 
 
-  const upsertMutation = useMutation({
-    mutationFn: (vars: { item_id: string; patch: Partial<Entry> }) =>
-      upsertFn({
-        data: {
-          item_id: vars.item_id,
-          status: vars.patch.status,
-          owner: vars.patch.owner ?? undefined,
-          note: vars.patch.note ?? undefined,
-        },
-      }),
-    onMutate: async (vars) => {
-      await queryClient.cancelQueries({ queryKey: ["hardening-checklist"] });
-      const prev = queryClient.getQueryData<any[]>(["hardening-checklist"]) ?? [];
-      const existing = prev.find((r: any) => r.item_id === vars.item_id);
-      const merged = { item_id: vars.item_id, status: "missing", ...(existing ?? {}), ...vars.patch };
-      const next = existing
-        ? prev.map((r: any) => (r.item_id === vars.item_id ? merged : r))
-        : [...prev, merged];
-      queryClient.setQueryData(["hardening-checklist"], next);
-      return { prev };
-    },
-    onError: (_e, _v, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(["hardening-checklist"], ctx.prev);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["hardening-checklist"] }),
-  });
-
   const resetMutation = useMutation({
     mutationFn: () => resetFn(),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["hardening-checklist"] }),
   });
-
-  const update = (id: string, patch: Partial<Entry>) => {
-    upsertMutation.mutate({ item_id: id, patch });
-  };
 
   const overall = useMemo(() => {
     const all = TIERS.flatMap((t) => t.items);
