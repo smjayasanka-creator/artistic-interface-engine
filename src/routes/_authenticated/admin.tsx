@@ -817,7 +817,9 @@ function ProductsTab() {
       cashAcct: p.cash_account_id ?? "",
       interestAcct: p.interest_income_account_id ?? "",
       feeAcct: p.fee_income_account_id ?? "",
+      requiredDocs: Array.isArray(p.required_documents) ? [...p.required_documents] : [],
     });
+
     setEditingId(p.id);
     setMode("edit");
   }
