@@ -68,7 +68,7 @@ function MaturityDue() {
                 </td>
                 <td className="py-2 pr-3">{d.client?.full_name}</td>
                 <td className="py-2 pr-3">{d.product?.name}</td>
-                <td className="py-2 pr-3 text-right font-mono">{Number(d.principal).toLocaleString()}</td>
+                <td className="py-2 pr-3 text-right font-mono">{money(Number(d.principal))}</td>
                 <td className="py-2 pr-3">{d.maturity_date}</td>
                 <td className="py-2 pr-3 capitalize">{d.maturity_instruction.replace(/_/g, " ")}</td>
                 <td className="py-2 pr-3 text-right">
