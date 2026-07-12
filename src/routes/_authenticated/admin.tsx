@@ -1280,7 +1280,7 @@ function AccountsTab() {
       />
       <div
         className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
-        style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr" }}
+        style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr 0.4fr" }}
       >
         <div>Code</div>
         <div>Name</div>
@@ -1289,6 +1289,7 @@ function AccountsTab() {
         <div>Branches</div>
         <div>Normal</div>
         <div className="text-right">Status</div>
+        <div className="text-right">Edit</div>
       </div>
       {sortedAccounts.map((a: any) => {
         const bids: string[] = Array.isArray(a.branch_ids) ? a.branch_ids : [];
