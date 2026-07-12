@@ -138,6 +138,16 @@ export function HardeningChecklist() {
   const listFn = useServerFn(listHardeningItems);
   const upsertFn = useServerFn(upsertHardeningItem);
   const resetFn = useServerFn(resetHardeningItems);
+  const autocheckFn = useServerFn(runHardeningAutocheck);
+  const [autoResults, setAutoResults] = useState<AutoCheckResult[] | null>(null);
+
+  const autocheckMutation = useMutation({
+    mutationFn: (apply: boolean) => autocheckFn({ data: { apply } }),
+    onSuccess: (results) => {
+      setAutoResults(results);
+      queryClient.invalidateQueries({ queryKey: ["hardening-checklist"] });
+    },
+  });
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["hardening-checklist"],
