@@ -1273,6 +1273,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
         frequency: data.frequency,
         interest_method: data.interest_method ?? "flat",
         processing_fee_pct: data.processing_fee_pct ?? 0,
+        termination_fee: data.termination_fee ?? 0,
+        termination_fee_pct: data.termination_fee_pct ?? 0,
         principal_account_id: data.principal_account_id ?? null,
         cash_account_id: data.cash_account_id ?? null,
         interest_income_account_id: data.interest_income_account_id ?? null,
