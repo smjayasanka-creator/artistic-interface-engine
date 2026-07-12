@@ -1128,6 +1128,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       frequency: "daily" | "weekly" | "biweekly" | "monthly";
       interest_method?: "flat" | "declining_balance";
       processing_fee_pct?: number;
+      termination_fee?: number;
+      termination_fee_pct?: number;
       color?: string;
       principal_account_id?: string | null;
       cash_account_id?: string | null;
@@ -1146,6 +1148,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
           frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]),
           interest_method: z.enum(["flat", "declining_balance"]).optional(),
           processing_fee_pct: z.number().nonnegative().max(50).optional(),
+          termination_fee: z.number().nonnegative().max(10_000_000).optional(),
+          termination_fee_pct: z.number().nonnegative().max(100).optional(),
           color: z.string().max(20).optional(),
           principal_account_id: z.string().uuid().nullable().optional(),
           cash_account_id: z.string().uuid().nullable().optional(),
@@ -1178,6 +1182,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
         frequency: data.frequency,
         interest_method: data.interest_method ?? "flat",
         processing_fee_pct: data.processing_fee_pct ?? 0,
+        termination_fee: data.termination_fee ?? 0,
+        termination_fee_pct: data.termination_fee_pct ?? 0,
         color: data.color ?? "#0f766e",
         is_active: true,
         principal_account_id: data.principal_account_id ?? null,
@@ -1190,6 +1196,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
     if (error) throw error;
     return created;
   });
+
 
 
 export const toggleLoanProduct = createServerFn({ method: "POST" })
