@@ -94,7 +94,7 @@ export function FdProductsTab() {
     onError: (e: Error) => toast.error(e.message),
   });
   const updateM = useMutation({
-    mutationFn: (v: { id: string; patch: typeof EMPTY }) => updateFn({ data: v }),
+    mutationFn: (v: { id: string; patch: Partial<typeof EMPTY> }) => updateFn({ data: v }),
     onSuccess: () => {
       toast.success("Product updated");
       setEditing(null);
