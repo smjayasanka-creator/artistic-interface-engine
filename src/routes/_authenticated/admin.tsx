@@ -1138,10 +1138,11 @@ function AccountsTab() {
 
   const allBranchesSelected = form.branch_ids.length === 0 || form.branch_ids.length === branches.length;
 
-  if (mode === "create") {
+  if (mode === "create" || mode === "edit") {
+    const isEdit = mode === "edit";
     return (
       <Card>
-        <FormHeader title="New account" onBack={() => setMode("list")} />
+        <FormHeader title={isEdit ? "Edit account" : "New account"} onBack={() => { setMode("list"); setEditingId(null); resetForm(); }} />
         <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
           <FormGrid>
             <FormField label="Code" required span={2}>
