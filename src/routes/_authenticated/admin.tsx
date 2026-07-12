@@ -14,6 +14,7 @@ import {
   getGlAccounts,
   createGlAccount,
   toggleGlAccount,
+  updateGlAccount,
   getCompany,
   updateCompany,
   listTeam,
