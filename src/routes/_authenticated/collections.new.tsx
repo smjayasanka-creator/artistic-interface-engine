@@ -18,7 +18,8 @@ export const Route = createFileRoute("/_authenticated/collections/new")({
 });
 
 export function RecordRepaymentPage() {
-  const { loanId: presetLoanId } = useSearch({ from: "/_authenticated/collections/new" });
+  const search = useSearch({ strict: false }) as { loanId?: string };
+  const presetLoanId = search.loanId;
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [loanId, setLoanId] = useState<string>(presetLoanId ?? "");
