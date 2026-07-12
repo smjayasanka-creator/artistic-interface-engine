@@ -570,7 +570,7 @@ export const getAdmin = createServerFn({ method: "GET" })
 
 export const createBranch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { code: string; name: string; region?: string; currency?: string; opened_on?: string }) =>
+  .inputValidator((i: { code: string; name: string; region?: string; currency?: string; opened_on?: string; branch_prefix?: string; savings_prefix?: string; fd_prefix?: string; loan_prefix?: string }) =>
     z
       .object({
         code: z.string().trim().min(1).max(20),
@@ -578,6 +578,10 @@ export const createBranch = createServerFn({ method: "POST" })
         region: z.string().trim().max(80).optional().or(z.literal("")),
         currency: z.string().trim().length(3).optional(),
         opened_on: z.string().optional().or(z.literal("")),
+        branch_prefix: z.string().trim().max(6).optional().or(z.literal("")),
+        savings_prefix: z.string().trim().max(6).optional().or(z.literal("")),
+        fd_prefix: z.string().trim().max(6).optional().or(z.literal("")),
+        loan_prefix: z.string().trim().max(6).optional().or(z.literal("")),
       })
       .parse(i),
   )
@@ -596,6 +600,10 @@ export const createBranch = createServerFn({ method: "POST" })
         region: data.region || null,
         currency: (data.currency || "KES").toUpperCase(),
         opened_on: data.opened_on || null,
+        branch_prefix: data.branch_prefix?.toUpperCase() || null,
+        savings_prefix: data.savings_prefix?.toUpperCase() || null,
+        fd_prefix: data.fd_prefix?.toUpperCase() || null,
+        loan_prefix: data.loan_prefix?.toUpperCase() || null,
       })
       .select()
       .single();
@@ -606,7 +614,7 @@ export const createBranch = createServerFn({ method: "POST" })
 export const updateBranch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (i: { id: string; code: string; name: string; region?: string | null; currency?: string; opened_on?: string | null }) =>
+    (i: { id: string; code: string; name: string; region?: string | null; currency?: string; opened_on?: string | null; branch_prefix?: string | null; savings_prefix?: string | null; fd_prefix?: string | null; loan_prefix?: string | null }) =>
       z
         .object({
           id: z.string().uuid(),
@@ -615,9 +623,13 @@ export const updateBranch = createServerFn({ method: "POST" })
           region: z.string().trim().max(80).nullable().optional().or(z.literal("")),
           currency: z.string().trim().length(3).optional(),
           opened_on: z.string().nullable().optional().or(z.literal("")),
+          branch_prefix: z.string().trim().max(6).nullable().optional().or(z.literal("")),
+          savings_prefix: z.string().trim().max(6).nullable().optional().or(z.literal("")),
+          fd_prefix: z.string().trim().max(6).nullable().optional().or(z.literal("")),
+          loan_prefix: z.string().trim().max(6).nullable().optional().or(z.literal("")),
         })
         .parse(i),
-  )
+    )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
@@ -630,11 +642,16 @@ export const updateBranch = createServerFn({ method: "POST" })
         region: data.region || null,
         currency: (data.currency || "KES").toUpperCase(),
         opened_on: data.opened_on || null,
+        branch_prefix: data.branch_prefix?.toUpperCase() || null,
+        savings_prefix: data.savings_prefix?.toUpperCase() || null,
+        fd_prefix: data.fd_prefix?.toUpperCase() || null,
+        loan_prefix: data.loan_prefix?.toUpperCase() || null,
       })
       .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
+
 
 export const createStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
