@@ -352,12 +352,12 @@ function FdDetail() {
                   <Row k="Period held" v={`${preview.completeMonths}m ${preview.trailingDays}d`} />
                   <Row k="Published rate for period" v={`${preview.publishedRate.toFixed(3)}%`} />
                   <Row k="Applicable rate (after penalty)" v={`${preview.applicableRate.toFixed(3)}%`} />
-                  <Row k="Interest entitled (gross)" v={`LKR ${preview.grossEntitled.toLocaleString()}`} />
-                  <Row k="WHT" v={`LKR ${preview.whtEntitled.toLocaleString()}`} />
-                  <Row k="Interest entitled (net)" v={`LKR ${preview.netEntitled.toLocaleString()}`} />
-                  <Row k="Already paid (net)" v={`LKR ${preview.alreadyPaidNet.toLocaleString()}`} />
-                  <Row k="Excess to recover from principal" v={`LKR ${preview.excessPaid.toLocaleString()}`} />
-                  <Row k="Settlement amount" v={`LKR ${preview.settlement.toLocaleString()}`} strong />
+                  <Row k="Interest entitled (gross)" v={money(preview.grossEntitled, true)} />
+                  <Row k="WHT" v={money(preview.whtEntitled, true)} />
+                  <Row k="Interest entitled (net)" v={money(preview.netEntitled, true)} />
+                  <Row k="Already paid (net)" v={money(preview.alreadyPaidNet, true)} />
+                  <Row k="Excess to recover from principal" v={money(preview.excessPaid, true)} />
+                  <Row k="Settlement amount" v={money(preview.settlement, true)} strong />
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
