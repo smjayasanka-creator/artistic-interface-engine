@@ -73,6 +73,7 @@ function Admin() {
             ["products", "Loan products"],
             ["fd_products", "FD products"],
             ["accounts", "Chart of accounts"],
+            ["workflows", "Approval workflows"],
           ] as const
         ).map(([id, label]) => (
           <button
