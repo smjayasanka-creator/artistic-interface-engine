@@ -1019,19 +1019,46 @@ function ProductsTab() {
 
 /* ---------------- Accounts ---------------- */
 
+const SUBCATEGORIES: Record<AccountType, string[]> = {
+  asset: ["Cash & Cash Equivalents", "Investments", "Loan and Receivables", "Fixed Assets", "Other Assets"],
+  liability: ["Bank Borrowings", "Customer Deposits", "Financial Liabilities", "Other Liabilities", "Tax Liability"],
+  equity: ["Share Capital", "Reserves", "Retaining Earning"],
+  income: ["Interest Income", "Fees and Other Income"],
+  expense: [
+    "Interest Expenses",
+    "Personal Expenses",
+    "Operating Expenses",
+    "Marketing Expenses",
+    "Travelling and Running Expenses",
+  ],
+};
+
 function AccountsTab() {
   const [mode, setMode] = useState<Mode>("list");
   const listFn = useServerFn(getGlAccounts);
   const { data: accounts } = useQuery({ queryKey: ["gl_accounts"], queryFn: () => listFn() });
+  const adminFn = useServerFn(getAdmin);
+  const { data: adminData } = useQuery({ queryKey: ["admin"], queryFn: () => adminFn() });
+  const branches: Array<{ id: string; name: string; code: string }> = adminData?.branches ?? [];
+  const branchNameById = new Map(branches.map((b) => [b.id, b.name] as const));
   const qc = useQueryClient();
   const createFn = useServerFn(createGlAccount);
   const toggleFn = useServerFn(toggleGlAccount);
 
-  const [form, setForm] = useState<{ code: string; name: string; type: AccountType; normal_balance: 1 | -1 }>({
+  const [form, setForm] = useState<{
+    code: string;
+    name: string;
+    type: AccountType;
+    subcategory: string;
+    normal_balance: 1 | -1;
+    branch_ids: string[]; // empty = all branches
+  }>({
     code: "",
     name: "",
     type: "asset",
+    subcategory: SUBCATEGORIES.asset[0],
     normal_balance: 1,
+    branch_ids: [],
   });
 
   const create = useMutation({
@@ -1039,7 +1066,14 @@ function AccountsTab() {
     onSuccess: () => {
       toast.success("Account created");
       qc.invalidateQueries({ queryKey: ["gl_accounts"] });
-      setForm({ code: "", name: "", type: form.type, normal_balance: form.normal_balance });
+      setForm({
+        code: "",
+        name: "",
+        type: form.type,
+        subcategory: SUBCATEGORIES[form.type][0],
+        normal_balance: form.normal_balance,
+        branch_ids: [],
+      });
       setMode("list");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -1057,13 +1091,24 @@ function AccountsTab() {
       toast.error("Code and name required");
       return;
     }
-    create.mutate({ data: form });
+    create.mutate({
+      data: {
+        code: form.code,
+        name: form.name,
+        type: form.type,
+        normal_balance: form.normal_balance,
+        subcategory: form.subcategory || null,
+        branch_ids: form.branch_ids.length > 0 ? form.branch_ids : null,
+      },
+    });
   }
 
   const grouped = ACCOUNT_TYPES.map((t) => ({
     type: t,
     rows: (accounts ?? []).filter((a: any) => a.type === t),
   }));
+
+  const allBranchesSelected = form.branch_ids.length === 0 || form.branch_ids.length === branches.length;
 
   if (mode === "create") {
     return (
@@ -1090,39 +1135,84 @@ function AccountsTab() {
               />
             </FormField>
             <FormField label="Normal balance" span={3}>
-              <div className="flex gap-1.5">
-                {([1, -1] as const).map((v) => (
-                  <button
-                    type="button"
-                    key={v}
-                    onClick={() => setForm({ ...form, normal_balance: v })}
-                    className={cn(
-                      "flex-1 px-3 py-1.5 rounded-md border text-[11.5px] font-medium",
-                      form.normal_balance === v
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card border-border",
-                    )}
-                  >
-                    {v === 1 ? "Debit" : "Credit"}
-                  </button>
-                ))}
-              </div>
+              <select
+                value={form.normal_balance}
+                onChange={(e) => setForm({ ...form, normal_balance: Number(e.target.value) as 1 | -1 })}
+                className={selectCls}
+              >
+                <option value={1}>Debit</option>
+                <option value={-1}>Credit</option>
+              </select>
             </FormField>
-            <FormField label="Type" span={12}>
-              <div className="flex flex-wrap gap-1.5">
+            <FormField label="Type" required span={6}>
+              <select
+                value={form.type}
+                onChange={(e) => {
+                  const t = e.target.value as AccountType;
+                  setForm({
+                    ...form,
+                    type: t,
+                    subcategory: SUBCATEGORIES[t][0],
+                    normal_balance: DEFAULT_NORMAL_BALANCE[t],
+                  });
+                }}
+                className={selectCls + " capitalize"}
+              >
                 {ACCOUNT_TYPES.map((t) => (
-                  <button
-                    type="button"
-                    key={t}
-                    onClick={() => setForm({ ...form, type: t, normal_balance: DEFAULT_NORMAL_BALANCE[t] })}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                      form.type === t ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border",
-                    )}
-                  >
-                    {t}
-                  </button>
+                  <option key={t} value={t} className="capitalize">
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </option>
                 ))}
+              </select>
+            </FormField>
+            <FormField label="Sub-category" required span={6}>
+              <select
+                value={form.subcategory}
+                onChange={(e) => setForm({ ...form, subcategory: e.target.value })}
+                className={selectCls}
+              >
+                {SUBCATEGORIES[form.type].map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Branches" span={12} hint="Leave 'All branches' checked to apply this account to every branch.">
+              <div className="border border-input rounded-md bg-background p-2.5 flex flex-col gap-1.5">
+                <label className="flex items-center gap-2 text-[12.5px] font-medium pb-1.5 border-b border-border">
+                  <input
+                    type="checkbox"
+                    checked={allBranchesSelected}
+                    onChange={(e) => setForm({ ...form, branch_ids: e.target.checked ? [] : branches.map((b) => b.id) })}
+                  />
+                  <span>Select all branches</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
+                  {branches.map((b) => {
+                    const checked = allBranchesSelected || form.branch_ids.includes(b.id);
+                    return (
+                      <label key={b.id} className="flex items-center gap-2 text-[12.5px]">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            const base = allBranchesSelected ? branches.map((x) => x.id) : form.branch_ids;
+                            const next = e.target.checked
+                              ? Array.from(new Set([...base, b.id]))
+                              : base.filter((id) => id !== b.id);
+                            setForm({ ...form, branch_ids: next.length === branches.length ? [] : next });
+                          }}
+                        />
+                        <span className="font-mono text-faint">{b.code}</span>
+                        <span className="truncate">{b.name}</span>
+                      </label>
+                    );
+                  })}
+                  {branches.length === 0 && (
+                    <div className="text-[12px] text-muted-foreground col-span-full">No branches yet.</div>
+                  )}
+                </div>
               </div>
             </FormField>
           </FormGrid>
@@ -1131,18 +1221,10 @@ function AccountsTab() {
             when you pick a type.
           </p>
           <FormActions>
-            <button
-              type="button"
-              onClick={() => setMode("list")}
-              className={btnSecondaryCls}
-            >
+            <button type="button" onClick={() => setMode("list")} className={btnSecondaryCls}>
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={create.isPending}
-              className={btnPrimaryCls}
-            >
+            <button type="submit" disabled={create.isPending} className={btnPrimaryCls}>
               {create.isPending ? "Creating…" : "Create account"}
             </button>
           </FormActions>
@@ -1161,56 +1243,67 @@ function AccountsTab() {
       />
       <div
         className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
-        style={{ gridTemplateColumns: "0.6fr 1.8fr 0.8fr 0.7fr 0.5fr" }}
+        style={{ gridTemplateColumns: "0.55fr 1.5fr 1.1fr 1.1fr 0.6fr 0.5fr" }}
       >
         <div>Code</div>
         <div>Name</div>
-        <div>Type</div>
+        <div>Sub-category</div>
+        <div>Branches</div>
         <div>Normal</div>
         <div className="text-right">Status</div>
       </div>
       {grouped.map((g) =>
         g.rows.length === 0 ? null : (
           <div key={g.type}>
-            <div className="px-5 py-2 text-[10.5px] uppercase tracking-wider text-muted-foreground bg-secondary/20 font-semibold border-b border-border">
-              {g.type}
-            </div>
-            {g.rows.map((a: any) => (
-              <div
-                key={a.id}
-                className="grid items-center text-[12.5px] py-3 px-5 border-b border-row-divider last:border-b-0"
-                style={{ gridTemplateColumns: "0.6fr 1.8fr 0.8fr 0.7fr 0.5fr" }}
+            <div className="px-5 py-2 text-[10.5px] uppercase tracking-wider text-muted-foreground bg-secondary/20 font-semibold border-b border-border flex items-center gap-2">
+              <span
+                className={cn(
+                  "text-[10.5px] px-2 py-0.5 rounded-full border capitalize",
+                  TYPE_TONE[g.type as AccountType],
+                )}
               >
-                <div className="font-mono font-semibold">{a.code}</div>
-                <div>{a.name}</div>
-                <div>
-                  <span
-                    className={cn(
-                      "text-[10.5px] px-2 py-0.5 rounded-full border capitalize",
-                      TYPE_TONE[a.type as AccountType],
-                    )}
-                  >
-                    {a.type}
-                  </span>
+                {g.type}
+              </span>
+            </div>
+            {g.rows.map((a: any) => {
+              const bids: string[] = Array.isArray(a.branch_ids) ? a.branch_ids : [];
+              const branchLabel =
+                bids.length === 0
+                  ? "All branches"
+                  : bids
+                      .map((id) => branchNameById.get(id) ?? "—")
+                      .join(", ");
+              return (
+                <div
+                  key={a.id}
+                  className="grid items-center text-[12.5px] py-3 px-5 border-b border-row-divider last:border-b-0"
+                  style={{ gridTemplateColumns: "0.55fr 1.5fr 1.1fr 1.1fr 0.6fr 0.5fr" }}
+                >
+                  <div className="font-mono font-semibold">{a.code}</div>
+                  <div>{a.name}</div>
+                  <div className="text-muted-foreground">{a.subcategory ?? "—"}</div>
+                  <div className="text-muted-foreground truncate" title={branchLabel}>
+                    {branchLabel}
+                  </div>
+                  <div className="font-mono text-secondary-foreground">
+                    {a.normal_balance === 1 ? "Debit" : "Credit"}
+                  </div>
+                  <div className="text-right">
+                    <button
+                      onClick={() => toggle.mutate({ data: { id: a.id, is_active: !a.is_active } })}
+                      className={cn(
+                        "text-[11px] px-2 py-0.5 rounded-full border",
+                        a.is_active
+                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                          : "border-muted bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {a.is_active ? "Active" : "Off"}
+                    </button>
+                  </div>
                 </div>
-                <div className="font-mono text-secondary-foreground">
-                  {a.normal_balance === 1 ? "Debit" : "Credit"}
-                </div>
-                <div className="text-right">
-                  <button
-                    onClick={() => toggle.mutate({ data: { id: a.id, is_active: !a.is_active } })}
-                    className={cn(
-                      "text-[11px] px-2 py-0.5 rounded-full border",
-                      a.is_active
-                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
-                        : "border-muted bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {a.is_active ? "Active" : "Off"}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ),
       )}
@@ -1220,4 +1313,5 @@ function AccountsTab() {
     </Card>
   );
 }
+
 
