@@ -222,9 +222,9 @@ function FdDetail() {
                 <tr key={r.id} className="border-b border-border/50">
                   <td className="py-1.5 pr-3">{r.seq}</td>
                   <td className="py-1.5 pr-3">{r.due_date}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(r.gross_interest).toLocaleString()}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(r.wht_amount).toLocaleString()}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(r.net_interest).toLocaleString()}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(r.gross_interest), true)}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(r.wht_amount), true)}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(r.net_interest), true)}</td>
                   <td className="py-1.5 pr-3">
                     {r.paid ? (
                       <span className="text-emerald-600">Paid {r.paid_date}</span>
