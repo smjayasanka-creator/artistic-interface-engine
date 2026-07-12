@@ -122,9 +122,11 @@ function EndpointsTab() {
       {ENDPOINTS.map((e) => {
         const isOpen = open === e.path;
         const url = `${base}${e.path}`;
+        const spec = endpointSpec(e.scope, e.method);
+        const headerLines = spec.headers.map((h) => `  -H "${h.name}: ${h.value}"`).join(" \\\n");
         const curl = e.method === "GET"
-          ? `curl -H "Authorization: Bearer <YOUR_KEY>" \\\n  ${url}`
-          : `curl -X POST ${url} \\\n  -H "Authorization: Bearer <YOUR_KEY>" \\\n  -H "Content-Type: application/json" \\\n  -d '${sampleBody(e.scope)}'`;
+          ? `curl ${url} \\\n${headerLines}`
+          : `curl -X POST ${url} \\\n${headerLines} \\\n  -d '${JSON.stringify(spec.requestExample)}'`;
         return (
           <div key={e.path} className="border-b border-row-divider last:border-b-0">
             <button onClick={() => setOpen(isOpen ? null : e.path)} className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-muted/40">
@@ -137,11 +139,74 @@ function EndpointsTab() {
               <span className="text-[10.5px] font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{e.scope}</span>
             </button>
             {isOpen && (
-              <div className="px-5 pb-5">
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mt-2 mb-1">Channel</div>
-                <div className="text-[13px] mb-3">{e.channel}</div>
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">cURL</div>
-                <pre className="font-mono text-[11.5px] bg-muted rounded p-3 whitespace-pre-wrap">{curl}</pre>
+              <div className="px-5 pb-5 flex flex-col gap-4">
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mt-2 mb-1">Channel</div>
+                  <div className="text-[13px]">{e.channel}</div>
+                </div>
+
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">Required headers</div>
+                  <div className="border border-border rounded-md overflow-hidden">
+                    <div className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-2 px-3 bg-secondary/40 border-b border-border"
+                         style={{ gridTemplateColumns: "1fr 1.4fr 0.5fr" }}>
+                      <div>Header</div><div>Example value</div><div>Required</div>
+                    </div>
+                    {spec.headers.map((h) => (
+                      <div key={h.name} className="grid items-center text-[12px] py-2 px-3 border-b border-row-divider last:border-b-0"
+                           style={{ gridTemplateColumns: "1fr 1.4fr 0.5fr" }}>
+                        <div className="font-mono">{h.name}</div>
+                        <div className="font-mono text-muted-foreground truncate">{h.value}</div>
+                        <div className={cn("text-[11px] font-semibold", h.required ? "text-emerald-700" : "text-muted-foreground")}>
+                          {h.required ? "Yes" : "Optional"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {spec.idempotency && (
+                    <div className="mt-2 text-[11.5px] text-foreground/80 bg-amber-500/10 border border-amber-500/30 rounded-md px-3 py-2">
+                      <b>Idempotency:</b> {spec.idempotency}
+                    </div>
+                  )}
+                </div>
+
+                {spec.requestExample !== null && (
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Request body</div>
+                    <pre className="font-mono text-[11.5px] bg-muted rounded p-3 whitespace-pre-wrap overflow-x-auto">{JSON.stringify(spec.requestExample, null, 2)}</pre>
+                  </div>
+                )}
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Response · {spec.responseStatus}</div>
+                    <div className="text-[11px] text-muted-foreground font-mono">Content-Type: application/json</div>
+                  </div>
+                  <pre className="font-mono text-[11.5px] bg-muted rounded p-3 whitespace-pre-wrap overflow-x-auto">{JSON.stringify(spec.responseExample, null, 2)}</pre>
+                </div>
+
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Error responses</div>
+                  <div className="border border-border rounded-md overflow-hidden">
+                    <div className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-2 px-3 bg-secondary/40 border-b border-border"
+                         style={{ gridTemplateColumns: "0.4fr 0.7fr 1.6fr" }}>
+                      <div>Code</div><div>Error</div><div>Meaning</div>
+                    </div>
+                    {spec.errors.map((er) => (
+                      <div key={er.code + er.error} className="grid items-start text-[12px] py-2 px-3 border-b border-row-divider last:border-b-0"
+                           style={{ gridTemplateColumns: "0.4fr 0.7fr 1.6fr" }}>
+                        <div className="font-mono font-semibold">{er.code}</div>
+                        <div className="font-mono text-muted-foreground">{er.error}</div>
+                        <div className="text-foreground/85">{er.meaning}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">cURL</div>
+                  <pre className="font-mono text-[11.5px] bg-muted rounded p-3 whitespace-pre-wrap overflow-x-auto">{curl}</pre>
+                </div>
               </div>
             )}
           </div>
@@ -151,24 +216,100 @@ function EndpointsTab() {
   );
 }
 
-function sampleBody(scope: string): string {
+type HeaderSpec = { name: string; value: string; required: boolean };
+type EndpointSpec = {
+  headers: HeaderSpec[];
+  idempotency: string | null;
+  requestExample: unknown | null;
+  responseStatus: string;
+  responseExample: unknown;
+  errors: { code: number; error: string; meaning: string }[];
+};
+
+const COMMON_ERRORS = [
+  { code: 400, error: "validation_failed", meaning: "Request body failed schema validation. See `details` for field-level errors." },
+  { code: 401, error: "missing_bearer_token", meaning: "Authorization header missing, malformed, or key revoked." },
+  { code: 403, error: "insufficient_scope", meaning: "API key is valid but does not include the scope required for this endpoint." },
+  { code: 429, error: "rate_limited", meaning: "Too many requests. Back off and retry after the `Retry-After` header." },
+  { code: 500, error: "internal_error", meaning: "Unexpected server error. Safe to retry idempotent calls." },
+];
+
+function endpointSpec(scope: string, method: string): EndpointSpec {
+  const bearer: HeaderSpec = { name: "Authorization", value: "Bearer sk_live_a1b2c3…", required: true };
+  const contentType: HeaderSpec = { name: "Content-Type", value: "application/json", required: method !== "GET" };
+  const accept: HeaderSpec = { name: "Accept", value: "application/json", required: false };
+  const idem: HeaderSpec = { name: "Idempotency-Key", value: "req-2026-07-12-abc123", required: true };
+
+  const nowIso = "2026-07-12T10:15:30Z";
+
   switch (scope) {
     case "transactions.inbound":
-      return JSON.stringify({ external_reference: "PARTNER-9821", counterparty: { name: "Acme Ltd", account: "0011223344" }, amount: 15000, currency: "LKR", narrative: "Salary credit" });
+      return {
+        headers: [bearer, contentType, accept, { ...idem, required: false, value: "partner-evt-88213" }],
+        idempotency: "Optional. When supplied, repeated calls with the same key within 24h return the original response instead of creating a duplicate credit.",
+        requestExample: { external_reference: "PARTNER-9821", counterparty: { name: "Acme Ltd", account: "0011223344", bank_code: "7010" }, amount: 15000, currency: "LKR", narrative: "Salary credit", value_date: "2026-07-12" },
+        responseStatus: "202 Accepted",
+        responseExample: { status: "accepted", reference: "INB-20260712-0001", received_at: nowIso, counterparty: { name: "Acme Ltd", account: "0011223344" }, amount: 15000, currency: "LKR" },
+        errors: COMMON_ERRORS,
+      };
     case "transactions.outbound":
-      return JSON.stringify({ source_account: "1002200330", destination: { name: "Jane Doe", account: "0099887766", bank_code: "7010" }, amount: 4500, currency: "LKR", idempotency_key: "req-abc-123" });
+      return {
+        headers: [bearer, contentType, accept, idem],
+        idempotency: "Required. Reusing the same `Idempotency-Key` within 24h returns the original queued response — the transfer is never submitted twice, even on retries after network failure.",
+        requestExample: { source_account: "1002200330", destination: { name: "Jane Doe", account: "0099887766", bank_code: "7010" }, amount: 4500, currency: "LKR", narrative: "Vendor payout", idempotency_key: "req-abc-123" },
+        responseStatus: "202 Accepted",
+        responseExample: { status: "queued", reference: "OUT-20260712-0007", idempotency_key: "req-abc-123", submitted_at: nowIso },
+        errors: [...COMMON_ERRORS, { code: 409, error: "idempotency_conflict", meaning: "Same `Idempotency-Key` reused with a different request body." }],
+      };
     case "ceft":
-      return JSON.stringify({ transaction_type: "credit", originator: { name: "Mzizi", account: "1000", bank_code: "7010" }, beneficiary: { name: "Sam", account: "2000", bank_code: "7135" }, amount: 25000, currency: "LKR", session_id: "S-20260712-01" });
+      return {
+        headers: [bearer, contentType, accept, { ...idem, required: false, value: "ceft-20260712-01" }],
+        idempotency: "Optional but recommended. LankaClear rejects duplicate `session_id` submissions — pair each session_id with a matching Idempotency-Key.",
+        requestExample: { transaction_type: "credit", originator: { name: "Mzizi Finance", account: "1000200030", bank_code: "7010" }, beneficiary: { name: "Sam Perera", account: "2000300040", bank_code: "7135" }, amount: 25000, currency: "LKR", session_id: "S-20260712-01", narrative: "Loan disbursement" },
+        responseStatus: "202 Accepted",
+        responseExample: { status: "accepted", ceft_reference: "CEFT-20260712-0031", session_id: "S-20260712-01", cleared_at: null },
+        errors: COMMON_ERRORS,
+      };
     case "atm":
-      return JSON.stringify({ terminal_id: "TERM-045", card_pan_masked: "411111******1234", transaction_type: "withdrawal", amount: 10000, currency: "LKR", stan: "004587" });
+      return {
+        headers: [bearer, contentType, accept, { name: "X-Terminal-Id", value: "TERM-045", required: true }, idem],
+        idempotency: "Required. Every ATM message carries a STAN (System Trace Audit Number); the STAN plus `Idempotency-Key` guarantees at-most-once authorization.",
+        requestExample: { terminal_id: "TERM-045", card_pan_masked: "411111******1234", transaction_type: "withdrawal", amount: 10000, currency: "LKR", stan: "004587" },
+        responseStatus: "200 OK",
+        responseExample: { status: "approved", authorization_code: "A7Q9K2", stan: "004587", balance_after: 87250, currency: "LKR", processed_at: nowIso },
+        errors: [...COMMON_ERRORS, { code: 402, error: "insufficient_funds", meaning: "Card account balance below requested amount." }, { code: 423, error: "card_blocked", meaning: "Card is frozen, expired, or reported lost." }],
+      };
     case "internet_banking":
-      return JSON.stringify({ customer_id: "CUS-1102", channel: "internet_banking", action: "loan_repayment", amount: 8500, currency: "LKR", source_account: "1001", device_fingerprint: "fp-9a1b2c3d", otp_verified: true });
+      return {
+        headers: [bearer, contentType, accept, { name: "X-Device-Fingerprint", value: "fp-9a1b2c3d", required: true }, idem],
+        idempotency: "Required. Protects against double-submits from browser retries. Reusing an `Idempotency-Key` within 24h returns the original transaction result.",
+        requestExample: { customer_id: "CUS-1102", channel: "internet_banking", action: "loan_repayment", amount: 8500, currency: "LKR", source_account: "1001", device_fingerprint: "fp-9a1b2c3d", otp_verified: true },
+        responseStatus: "200 OK",
+        responseExample: { status: "posted", reference: "IB-20260712-0142", posted_at: nowIso, new_balance: 122400, currency: "LKR" },
+        errors: [...COMMON_ERRORS, { code: 401, error: "otp_required", meaning: "`otp_verified` was false or the OTP session expired." }],
+      };
     case "crib":
-      return JSON.stringify({ national_id: "199012345678", purpose: "loan_application", consent_reference: "CNSNT-4471" });
+      return {
+        headers: [bearer, contentType, accept, { name: "X-Consent-Reference", value: "CNSNT-4471", required: true }],
+        idempotency: "Not applicable. CRIB report requests are read-only lookups; repeat calls simply re-query the bureau (each call is billed).",
+        requestExample: { national_id: "199012345678", purpose: "loan_application", consent_reference: "CNSNT-4471" },
+        responseStatus: "200 OK",
+        responseExample: { status: "ok", national_id: "199012345678", score: 742, band: "A", active_facilities: 3, delinquencies_12m: 0, report_generated_at: nowIso, report_url: "https://crib.example/reports/rpt-9f2a.pdf" },
+        errors: [...COMMON_ERRORS, { code: 404, error: "subject_not_found", meaning: "No CRIB record exists for the supplied national ID." }, { code: 451, error: "consent_invalid", meaning: "`consent_reference` expired, revoked, or does not match the subject." }],
+      };
     default:
-      return "{}";
+      // health
+      return {
+        headers: [accept],
+        idempotency: null,
+        requestExample: null,
+        responseStatus: "200 OK",
+        responseExample: { status: "ok", time: nowIso, version: "v1" },
+        errors: [{ code: 503, error: "service_unavailable", meaning: "Backend dependency (database or clearing switch) is unreachable." }],
+      };
   }
 }
+
 
 function KeysTab() {
   const listFn = useServerFn(listApiKeys);
