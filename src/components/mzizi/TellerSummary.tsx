@@ -41,7 +41,7 @@ export function TellerSummary() {
   });
 
   return (
-    <aside className="hidden xl:flex w-[300px] flex-none flex-col gap-3 border-l border-border bg-secondary/30 p-4 overflow-y-auto">
+    <aside className="flex w-[280px] lg:w-[300px] flex-none flex-col gap-3 border-l border-border bg-secondary/30 p-4 overflow-y-auto">
       {/* Header */}
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center gap-3">
