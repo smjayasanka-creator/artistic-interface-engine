@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, Upload, Landmark } from "lucide-react";
+import { BookOpen, Upload, Landmark, ArrowRight } from "lucide-react";
 import { Card } from "@/components/mzizi/Card";
 
 export const Route = createFileRoute("/_authenticated/accounts/")({
