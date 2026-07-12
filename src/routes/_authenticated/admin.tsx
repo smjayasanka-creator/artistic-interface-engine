@@ -374,7 +374,7 @@ function BranchesTab() {
   const createFn = useServerFn(createBranch);
   const updateFn = useServerFn(updateBranch);
 
-  const emptyForm = { code: "", name: "", region: "", currency: "KES", opened_on: "" };
+  const emptyForm = { code: "", name: "", region: "", currency: "KES", opened_on: "", branch_prefix: "", savings_prefix: "", fd_prefix: "", loan_prefix: "" };
   const [form, setForm] = useState(emptyForm);
 
   const reset = () => {
