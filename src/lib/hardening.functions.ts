@@ -58,7 +58,13 @@ export const resetHardeningItems = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export type AutoCheckResult = { item_id: string; status: "done" | "partial" | "missing"; evidence: string };
+export type AutoCheckResult = {
+  item_id: string;
+  status: "done" | "partial" | "missing";
+  evidence: string;
+  check_sql: string;
+  matches: Array<Record<string, unknown>>;
+};
 
 export const runHardeningAutocheck = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
