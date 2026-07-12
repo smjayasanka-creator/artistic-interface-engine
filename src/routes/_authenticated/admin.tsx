@@ -31,12 +31,13 @@ import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
 import { FdProductsTab } from "@/components/mzizi/FdProductsTab";
+import { WorkflowsTab } from "@/components/mzizi/WorkflowsTab";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "accounts";
+type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "accounts" | "workflows";
 type Mode = "list" | "create" | "edit";
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
@@ -72,6 +73,7 @@ function Admin() {
             ["products", "Loan products"],
             ["fd_products", "FD products"],
             ["accounts", "Chart of accounts"],
+            ["workflows", "Approval workflows"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -94,6 +96,7 @@ function Admin() {
       {tab === "products" && <ProductsTab />}
       {tab === "fd_products" && <FdProductsTab />}
       {tab === "accounts" && <AccountsTab />}
+      {tab === "workflows" && <WorkflowsTab />}
     </div>
   );
 }

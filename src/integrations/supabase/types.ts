@@ -1370,6 +1370,226 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_action: {
+        Row: {
+          acted_at: string
+          actor_user_id: string
+          comment: string | null
+          created_at: string
+          decision: Database["public"]["Enums"]["workflow_action_decision"]
+          due_at: string | null
+          escalated_at: string | null
+          id: string
+          instance_id: string
+          step_order: number
+        }
+        Insert: {
+          acted_at?: string
+          actor_user_id: string
+          comment?: string | null
+          created_at?: string
+          decision: Database["public"]["Enums"]["workflow_action_decision"]
+          due_at?: string | null
+          escalated_at?: string | null
+          id?: string
+          instance_id: string
+          step_order: number
+        }
+        Update: {
+          acted_at?: string
+          actor_user_id?: string
+          comment?: string | null
+          created_at?: string
+          decision?: Database["public"]["Enums"]["workflow_action_decision"]
+          due_at?: string | null
+          escalated_at?: string | null
+          id?: string
+          instance_id?: string
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_action_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_instance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_definition: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_enabled: boolean
+          name: string
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          name: string
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          name?: string
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_definition_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_instance: {
+        Row: {
+          amount: number | null
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          current_step: number
+          id: string
+          initiated_at: string
+          initiated_by: string
+          reference_id: string | null
+          reference_label: string
+          status: Database["public"]["Enums"]["workflow_instance_status"]
+          transaction_type: string
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          amount?: number | null
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          initiated_at?: string
+          initiated_by: string
+          reference_id?: string | null
+          reference_label: string
+          status?: Database["public"]["Enums"]["workflow_instance_status"]
+          transaction_type: string
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          amount?: number | null
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          initiated_at?: string
+          initiated_by?: string
+          reference_id?: string | null
+          reference_label?: string
+          status?: Database["public"]["Enums"]["workflow_instance_status"]
+          transaction_type?: string
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_instance_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_instance_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_definition"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_step: {
+        Row: {
+          approver_kind: Database["public"]["Enums"]["workflow_approver_kind"]
+          branch_id: string | null
+          created_at: string
+          escalation_role: Database["public"]["Enums"]["staff_role"] | null
+          id: string
+          name: string
+          required_approvals: number
+          role: Database["public"]["Enums"]["staff_role"] | null
+          sla_action: Database["public"]["Enums"]["workflow_sla_action"]
+          sla_hours: number | null
+          step_order: number
+          updated_at: string
+          user_id: string | null
+          workflow_id: string
+        }
+        Insert: {
+          approver_kind: Database["public"]["Enums"]["workflow_approver_kind"]
+          branch_id?: string | null
+          created_at?: string
+          escalation_role?: Database["public"]["Enums"]["staff_role"] | null
+          id?: string
+          name: string
+          required_approvals?: number
+          role?: Database["public"]["Enums"]["staff_role"] | null
+          sla_action?: Database["public"]["Enums"]["workflow_sla_action"]
+          sla_hours?: number | null
+          step_order: number
+          updated_at?: string
+          user_id?: string | null
+          workflow_id: string
+        }
+        Update: {
+          approver_kind?: Database["public"]["Enums"]["workflow_approver_kind"]
+          branch_id?: string | null
+          created_at?: string
+          escalation_role?: Database["public"]["Enums"]["staff_role"] | null
+          id?: string
+          name?: string
+          required_approvals?: number
+          role?: Database["public"]["Enums"]["staff_role"] | null
+          sla_action?: Database["public"]["Enums"]["workflow_sla_action"]
+          sla_hours?: number | null
+          step_order?: number
+          updated_at?: string
+          user_id?: string | null
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_step_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_step_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_definition"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       v_loan_outstanding: {
@@ -1458,6 +1678,14 @@ export type Database = {
         | "teller"
         | "operations"
         | "admin"
+      workflow_action_decision: "approve" | "decline"
+      workflow_approver_kind: "role" | "branch_role" | "user"
+      workflow_instance_status:
+        | "pending"
+        | "approved"
+        | "declined"
+        | "cancelled"
+      workflow_sla_action: "flag" | "escalate"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1644,6 +1872,15 @@ export const Constants = {
         "operations",
         "admin",
       ],
+      workflow_action_decision: ["approve", "decline"],
+      workflow_approver_kind: ["role", "branch_role", "user"],
+      workflow_instance_status: [
+        "pending",
+        "approved",
+        "declined",
+        "cancelled",
+      ],
+      workflow_sla_action: ["flag", "escalate"],
     },
   },
 } as const
