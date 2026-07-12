@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-async function assertPlatformAdmin(supabase: Awaited<ReturnType<typeof requireSupabaseAuth>> extends never ? never : any, userId: string) {
+async function assertPlatformAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "platform_admin" });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Forbidden: platform admin only");
