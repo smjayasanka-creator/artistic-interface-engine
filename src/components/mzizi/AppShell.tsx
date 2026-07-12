@@ -18,6 +18,7 @@ const NAV: NavEntry[] = [
       { to: "/transactions", label: "Transaction", icon: ArrowLeftRight },
       { to: "/clients", label: "Customers", icon: Users },
       { to: "/loans", label: "Loans", icon: Wallet },
+      { to: "/approvals", label: "Approvals", icon: CheckSquare },
       { to: "/fd", label: "Deposits", icon: PiggyBank },
       { to: "/ledger", label: "Accounts", icon: BookOpen },
       { to: "/reports", label: "Reports", icon: LineChart },
