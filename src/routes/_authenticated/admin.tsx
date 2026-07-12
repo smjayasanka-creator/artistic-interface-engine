@@ -882,6 +882,12 @@ function ProductsTab() {
                 ))}
               </select>
             </FormField>
+            <FormField label="Termination fee (KES)" span={6} hint="Flat charge on early termination">
+              <input type="number" step="0.01" min={0} value={form.terminationFee} onChange={(e) => setForm({ ...form, terminationFee: e.target.value })} className={inputCls + " font-mono"} />
+            </FormField>
+            <FormField label="Termination fee (%)" span={6} hint="% of outstanding principal charged on termination">
+              <input type="number" step="0.01" min={0} max={100} value={form.terminationFeePct} onChange={(e) => setForm({ ...form, terminationFeePct: e.target.value })} className={inputCls + " font-mono"} />
+            </FormField>
           </FormGrid>
 
           <div className="pt-3 border-t border-border">
