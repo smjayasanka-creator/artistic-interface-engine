@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWorkflowsRouteImport } from './routes/_authenticated/workflows'
+import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlatformAdminRouteImport } from './routes/_authenticated/platform-admin'
 import { Route as AuthenticatedLedgerRouteImport } from './routes/_authenticated/ledger'
@@ -63,6 +64,12 @@ const AuthenticatedWorkflowsRoute = AuthenticatedWorkflowsRouteImport.update({
   path: '/workflows',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTransactionsRoute =
+  AuthenticatedTransactionsRouteImport.update({
+    id: '/transactions',
+    path: '/transactions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -102,9 +109,9 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 } as any)
 const AuthenticatedTransactionsIndexRoute =
   AuthenticatedTransactionsIndexRouteImport.update({
-    id: '/transactions/',
-    path: '/transactions/',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedLoansIndexRoute = AuthenticatedLoansIndexRouteImport.update({
   id: '/loans/',
@@ -130,33 +137,33 @@ const AuthenticatedClientsIndexRoute =
   } as any)
 const AuthenticatedTransactionsRepaymentRoute =
   AuthenticatedTransactionsRepaymentRouteImport.update({
-    id: '/transactions/repayment',
-    path: '/transactions/repayment',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/repayment',
+    path: '/repayment',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedTransactionsPaymentsRoute =
   AuthenticatedTransactionsPaymentsRouteImport.update({
-    id: '/transactions/payments',
-    path: '/transactions/payments',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/payments',
+    path: '/payments',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedTransactionsDisbursementRoute =
   AuthenticatedTransactionsDisbursementRouteImport.update({
-    id: '/transactions/disbursement',
-    path: '/transactions/disbursement',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/disbursement',
+    path: '/disbursement',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedTransactionsDepositWithdrawalRoute =
   AuthenticatedTransactionsDepositWithdrawalRouteImport.update({
-    id: '/transactions/deposit-withdrawal',
-    path: '/transactions/deposit-withdrawal',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/deposit-withdrawal',
+    path: '/deposit-withdrawal',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedTransactionsDepositReceiptRoute =
   AuthenticatedTransactionsDepositReceiptRouteImport.update({
-    id: '/transactions/deposit-receipt',
-    path: '/transactions/deposit-receipt',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/deposit-receipt',
+    path: '/deposit-receipt',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedLoansNewRoute = AuthenticatedLoansNewRouteImport.update({
   id: '/loans/new',
@@ -241,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/ledger': typeof AuthenticatedLedgerRoute
   '/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/workflows': typeof AuthenticatedWorkflowsRoute
   '/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
@@ -311,6 +319,7 @@ export interface FileRoutesById {
   '/_authenticated/ledger': typeof AuthenticatedLedgerRoute
   '/_authenticated/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/_authenticated/workflows': typeof AuthenticatedWorkflowsRoute
   '/_authenticated/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
   '/_authenticated/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
@@ -348,6 +357,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/platform-admin'
     | '/reports'
+    | '/transactions'
     | '/workflows'
     | '/accounts/journal'
     | '/accounts/payments'
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ledger'
     | '/_authenticated/platform-admin'
     | '/_authenticated/reports'
+    | '/_authenticated/transactions'
     | '/_authenticated/workflows'
     | '/_authenticated/accounts/journal'
     | '/_authenticated/accounts/payments'
@@ -479,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkflowsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/transactions': {
+      id: '/_authenticated/transactions'
+      path: '/transactions'
+      fullPath: '/transactions'
+      preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports': {
       id: '/_authenticated/reports'
       path: '/reports'
@@ -530,10 +548,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/transactions/': {
       id: '/_authenticated/transactions/'
-      path: '/transactions'
+      path: '/'
       fullPath: '/transactions/'
       preLoaderRoute: typeof AuthenticatedTransactionsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/loans/': {
       id: '/_authenticated/loans/'
@@ -565,38 +583,38 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/transactions/repayment': {
       id: '/_authenticated/transactions/repayment'
-      path: '/transactions/repayment'
+      path: '/repayment'
       fullPath: '/transactions/repayment'
       preLoaderRoute: typeof AuthenticatedTransactionsRepaymentRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/transactions/payments': {
       id: '/_authenticated/transactions/payments'
-      path: '/transactions/payments'
+      path: '/payments'
       fullPath: '/transactions/payments'
       preLoaderRoute: typeof AuthenticatedTransactionsPaymentsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/transactions/disbursement': {
       id: '/_authenticated/transactions/disbursement'
-      path: '/transactions/disbursement'
+      path: '/disbursement'
       fullPath: '/transactions/disbursement'
       preLoaderRoute: typeof AuthenticatedTransactionsDisbursementRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/transactions/deposit-withdrawal': {
       id: '/_authenticated/transactions/deposit-withdrawal'
-      path: '/transactions/deposit-withdrawal'
+      path: '/deposit-withdrawal'
       fullPath: '/transactions/deposit-withdrawal'
       preLoaderRoute: typeof AuthenticatedTransactionsDepositWithdrawalRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/transactions/deposit-receipt': {
       id: '/_authenticated/transactions/deposit-receipt'
-      path: '/transactions/deposit-receipt'
+      path: '/deposit-receipt'
       fullPath: '/transactions/deposit-receipt'
       preLoaderRoute: typeof AuthenticatedTransactionsDepositReceiptRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/loans/new': {
       id: '/_authenticated/loans/new'
@@ -706,6 +724,35 @@ const AuthenticatedCollectionsRouteWithChildren =
     AuthenticatedCollectionsRouteChildren,
   )
 
+interface AuthenticatedTransactionsRouteChildren {
+  AuthenticatedTransactionsDepositReceiptRoute: typeof AuthenticatedTransactionsDepositReceiptRoute
+  AuthenticatedTransactionsDepositWithdrawalRoute: typeof AuthenticatedTransactionsDepositWithdrawalRoute
+  AuthenticatedTransactionsDisbursementRoute: typeof AuthenticatedTransactionsDisbursementRoute
+  AuthenticatedTransactionsPaymentsRoute: typeof AuthenticatedTransactionsPaymentsRoute
+  AuthenticatedTransactionsRepaymentRoute: typeof AuthenticatedTransactionsRepaymentRoute
+  AuthenticatedTransactionsIndexRoute: typeof AuthenticatedTransactionsIndexRoute
+}
+
+const AuthenticatedTransactionsRouteChildren: AuthenticatedTransactionsRouteChildren =
+  {
+    AuthenticatedTransactionsDepositReceiptRoute:
+      AuthenticatedTransactionsDepositReceiptRoute,
+    AuthenticatedTransactionsDepositWithdrawalRoute:
+      AuthenticatedTransactionsDepositWithdrawalRoute,
+    AuthenticatedTransactionsDisbursementRoute:
+      AuthenticatedTransactionsDisbursementRoute,
+    AuthenticatedTransactionsPaymentsRoute:
+      AuthenticatedTransactionsPaymentsRoute,
+    AuthenticatedTransactionsRepaymentRoute:
+      AuthenticatedTransactionsRepaymentRoute,
+    AuthenticatedTransactionsIndexRoute: AuthenticatedTransactionsIndexRoute,
+  }
+
+const AuthenticatedTransactionsRouteWithChildren =
+  AuthenticatedTransactionsRoute._addFileChildren(
+    AuthenticatedTransactionsRouteChildren,
+  )
+
 interface AuthenticatedAccountsJournalRouteChildren {
   AuthenticatedAccountsJournalNewRoute: typeof AuthenticatedAccountsJournalNewRoute
   AuthenticatedAccountsJournalIndexRoute: typeof AuthenticatedAccountsJournalIndexRoute
@@ -749,6 +796,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLedgerRoute: typeof AuthenticatedLedgerRoute
   AuthenticatedPlatformAdminRoute: typeof AuthenticatedPlatformAdminRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRouteWithChildren
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
   AuthenticatedAccountsJournalRoute: typeof AuthenticatedAccountsJournalRouteWithChildren
   AuthenticatedAccountsPaymentsRoute: typeof AuthenticatedAccountsPaymentsRouteWithChildren
@@ -758,16 +806,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFdMaturityRoute: typeof AuthenticatedFdMaturityRoute
   AuthenticatedFdNewRoute: typeof AuthenticatedFdNewRoute
   AuthenticatedLoansNewRoute: typeof AuthenticatedLoansNewRoute
-  AuthenticatedTransactionsDepositReceiptRoute: typeof AuthenticatedTransactionsDepositReceiptRoute
-  AuthenticatedTransactionsDepositWithdrawalRoute: typeof AuthenticatedTransactionsDepositWithdrawalRoute
-  AuthenticatedTransactionsDisbursementRoute: typeof AuthenticatedTransactionsDisbursementRoute
-  AuthenticatedTransactionsPaymentsRoute: typeof AuthenticatedTransactionsPaymentsRoute
-  AuthenticatedTransactionsRepaymentRoute: typeof AuthenticatedTransactionsRepaymentRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedFdIndexRoute: typeof AuthenticatedFdIndexRoute
   AuthenticatedGroupsIndexRoute: typeof AuthenticatedGroupsIndexRoute
   AuthenticatedLoansIndexRoute: typeof AuthenticatedLoansIndexRoute
-  AuthenticatedTransactionsIndexRoute: typeof AuthenticatedTransactionsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -778,6 +820,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLedgerRoute: AuthenticatedLedgerRoute,
   AuthenticatedPlatformAdminRoute: AuthenticatedPlatformAdminRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedTransactionsRoute: AuthenticatedTransactionsRouteWithChildren,
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
   AuthenticatedAccountsJournalRoute:
     AuthenticatedAccountsJournalRouteWithChildren,
@@ -789,21 +832,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFdMaturityRoute: AuthenticatedFdMaturityRoute,
   AuthenticatedFdNewRoute: AuthenticatedFdNewRoute,
   AuthenticatedLoansNewRoute: AuthenticatedLoansNewRoute,
-  AuthenticatedTransactionsDepositReceiptRoute:
-    AuthenticatedTransactionsDepositReceiptRoute,
-  AuthenticatedTransactionsDepositWithdrawalRoute:
-    AuthenticatedTransactionsDepositWithdrawalRoute,
-  AuthenticatedTransactionsDisbursementRoute:
-    AuthenticatedTransactionsDisbursementRoute,
-  AuthenticatedTransactionsPaymentsRoute:
-    AuthenticatedTransactionsPaymentsRoute,
-  AuthenticatedTransactionsRepaymentRoute:
-    AuthenticatedTransactionsRepaymentRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedFdIndexRoute: AuthenticatedFdIndexRoute,
   AuthenticatedGroupsIndexRoute: AuthenticatedGroupsIndexRoute,
   AuthenticatedLoansIndexRoute: AuthenticatedLoansIndexRoute,
-  AuthenticatedTransactionsIndexRoute: AuthenticatedTransactionsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
