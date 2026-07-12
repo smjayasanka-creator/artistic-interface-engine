@@ -2,9 +2,9 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { Users, Wallet, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Activity, TrendingUp, CheckCircle2 } from "lucide-react";
 import { getDashboard, approveLoan, declineLoan } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
-import { Kpi } from "@/components/mzizi/Kpi";
 import { RiskBadge } from "@/components/mzizi/Badge";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { money } from "@/lib/format";
@@ -34,12 +34,63 @@ function DashboardError({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 const PAR_TONES: Record<string, string> = {
-  current: "var(--teal-bright)",
+  current: "#14b8a6",
   "1-30": "#f59e0b",
   "31-60": "#f97316",
   "61-90": "#ef4444",
   "90+": "#b91c1c",
 };
+
+type KpiTone = {
+  from: string;
+  to: string;
+  ring: string;
+  fg: string;
+  chip: string;
+};
+
+const TONES: Record<string, KpiTone> = {
+  teal:   { from: "#0d9488", to: "#14b8a6", ring: "rgba(20,184,166,.35)", fg: "#ffffff", chip: "rgba(255,255,255,.18)" },
+  indigo: { from: "#4f46e5", to: "#6366f1", ring: "rgba(99,102,241,.35)", fg: "#ffffff", chip: "rgba(255,255,255,.18)" },
+  rose:   { from: "#e11d48", to: "#f43f5e", ring: "rgba(244,63,94,.35)",  fg: "#ffffff", chip: "rgba(255,255,255,.18)" },
+  amber:  { from: "#d97706", to: "#f59e0b", ring: "rgba(245,158,11,.35)", fg: "#ffffff", chip: "rgba(255,255,255,.2)"  },
+  violet: { from: "#7c3aed", to: "#a855f7", ring: "rgba(168,85,247,.35)", fg: "#ffffff", chip: "rgba(255,255,255,.18)" },
+};
+
+function VibrantKpi({
+  tone, label, value, delta, icon: Icon,
+}: {
+  tone: keyof typeof TONES;
+  label: string;
+  value: string | number;
+  delta?: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}) {
+  const t = TONES[tone];
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl px-4 py-4 text-white"
+      style={{
+        background: `linear-gradient(135deg, ${t.from} 0%, ${t.to} 100%)`,
+        boxShadow: `0 10px 24px -12px ${t.ring}, 0 1px 0 rgba(255,255,255,.15) inset`,
+      }}
+    >
+      <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20" style={{ background: "radial-gradient(circle, #fff 0%, transparent 70%)" }} />
+      <div className="relative flex items-center justify-between mb-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,.85)" }}>{label}</div>
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: t.chip }}>
+          <Icon size={14} className="text-white" />
+        </div>
+      </div>
+      <div className="relative text-[22px] font-semibold tracking-tight leading-none">
+        {typeof value === "number" ? money(value) : value}
+      </div>
+      {delta && (
+        <div className="relative text-[11px] font-medium mt-2" style={{ color: "rgba(255,255,255,.9)" }}>{delta}</div>
+      )}
+    </div>
+  );
+}
 
 function Dashboard() {
   const fn = useServerFn(getDashboard);
@@ -47,7 +98,6 @@ function Dashboard() {
     queryKey: ["dashboard"],
     queryFn: () => fn(),
     retry: (count, err: any) => {
-      // Retry transient network failures a few times; don't hammer on 4xx.
       const msg = String(err?.message ?? "");
       if (/Failed to fetch|NetworkError|fetch failed/i.test(msg)) return count < 3;
       return count < 1;
@@ -71,16 +121,18 @@ function Dashboard() {
   if (!data) return <div className="text-sm text-muted-foreground">Loading…</div>;
 
   const totalPar = data.par.reduce((s, b) => s + b.amount, 0);
+  const team = data.team ?? [];
+  const teamTotals = data.teamTotals ?? { totalToday: 0, totalWeek: 0, activeStaff: 0, maxWeek: 0 };
 
   return (
     <div className="flex flex-col gap-5 animate-fadein">
-      {/* KPIs */}
+      {/* Vibrant KPIs */}
       <div className="grid grid-cols-5 gap-3.5">
-        <Kpi label="Active clients" value={String(data.kpis.activeClients)} delta={`+${Math.floor(data.kpis.activeClients / 20 || 1)} this week`} />
-        <Kpi label="Portfolio outstanding" value={data.kpis.outstanding} delta="Live" deltaTone="neutral" />
-        <Kpi label="PAR > 30 days" value={data.kpis.par30plus} delta={totalPar > 0 ? `${((data.kpis.par30plus / totalPar) * 100).toFixed(1)}% of book` : "—"} deltaTone={data.kpis.par30plus > 0 ? "negative" : "positive"} />
-        <Kpi label="Collected today" value={data.kpis.collectedToday} delta="Since midnight" deltaTone="neutral" />
-        <Kpi label="Disbursed / week" value={data.kpis.disbursedWeek} delta="Last 7 days" deltaTone="neutral" />
+        <VibrantKpi tone="indigo" label="Active clients" value={String(data.kpis.activeClients)} delta={`+${Math.floor(data.kpis.activeClients / 20 || 1)} this week`} icon={Users} />
+        <VibrantKpi tone="teal"   label="Portfolio outstanding" value={data.kpis.outstanding} delta="Live balance" icon={Wallet} />
+        <VibrantKpi tone="rose"   label="PAR > 30 days" value={data.kpis.par30plus} delta={totalPar > 0 ? `${((data.kpis.par30plus / totalPar) * 100).toFixed(1)}% of book` : "—"} icon={AlertTriangle} />
+        <VibrantKpi tone="amber"  label="Collected today" value={data.kpis.collectedToday} delta="Since midnight" icon={ArrowDownCircle} />
+        <VibrantKpi tone="violet" label="Disbursed / week" value={data.kpis.disbursedWeek} delta="Last 7 days" icon={ArrowUpCircle} />
       </div>
 
       {/* PAR + Meetings */}
@@ -98,7 +150,13 @@ function Dashboard() {
                   <span className="font-mono text-muted-foreground">{money(b.amount)} · {pct.toFixed(1)}%</span>
                 </div>
                 <div className="h-2 rounded-md bg-muted overflow-hidden">
-                  <div className="h-full rounded-md" style={{ width: `${Math.max(pct, 2)}%`, background: PAR_TONES[b.bucket] }} />
+                  <div
+                    className="h-full rounded-md transition-all"
+                    style={{
+                      width: `${Math.max(pct, 2)}%`,
+                      background: `linear-gradient(90deg, ${PAR_TONES[b.bucket]} 0%, ${PAR_TONES[b.bucket]}cc 100%)`,
+                    }}
+                  />
                 </div>
               </div>
             );
@@ -124,7 +182,76 @@ function Dashboard() {
         </Card>
       </div>
 
-      {/* Approvals */}
+      {/* Team attendance / workflow performance */}
+      <Card>
+        <CardTitle
+          subtitle="Staff logging activity — based on approval workflow decisions"
+          right={
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary font-semibold">
+                <Activity size={12} /> {teamTotals.totalToday} actions today
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted text-secondary-foreground font-semibold">
+                <TrendingUp size={12} /> {teamTotals.totalWeek} / 7d
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted text-secondary-foreground font-semibold">
+                <Users size={12} /> {teamTotals.activeStaff} active
+              </span>
+            </div>
+          }
+        >
+          Team activity
+        </CardTitle>
+
+        {team.length === 0 && (
+          <div className="text-center text-faint text-sm py-6">No workflow actions recorded in the last 7 days.</div>
+        )}
+
+        {team.map((t: any, idx: number) => {
+          const pct = teamTotals.maxWeek > 0 ? Math.round((t.week / teamTotals.maxWeek) * 100) : 0;
+          const isTop = idx === 0 && t.week > 0;
+          return (
+            <div key={t.staff_id} className="py-2.5 border-t border-row-divider first:border-t-0">
+              <div className="flex items-center gap-3">
+                <Avatar name={t.name} size={30} color={isTop ? "#4f46e5" : "#0f766e"} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-semibold truncate">{t.name}</span>
+                    <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-muted text-secondary-foreground capitalize">{t.role?.replace("_", " ")}</span>
+                    {isTop && (
+                      <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">Top performer</span>
+                    )}
+                  </div>
+                  <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.max(pct, 4)}%`,
+                        background: "linear-gradient(90deg, #14b8a6 0%, #6366f1 100%)",
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="text-right shrink-0 w-40">
+                  <div className="flex items-center justify-end gap-3 text-[11.5px]">
+                    <span className="text-muted-foreground">Today <span className="font-mono font-semibold text-foreground">{t.today}</span></span>
+                    <span className="text-muted-foreground">7d <span className="font-mono font-semibold text-foreground">{t.week}</span></span>
+                  </div>
+                  <div className="flex items-center justify-end gap-2 mt-0.5 text-[10.5px]">
+                    <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 size={10} />{t.approvals}</span>
+                    <span className="text-rose-600">✕ {t.declines}</span>
+                    {t.last_at && (
+                      <span className="text-faint">· {new Date(t.last_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </Card>
+
+      {/* Approvals — kept intact */}
       <Card>
         <CardTitle>
           <span className="flex items-center gap-2">
@@ -168,4 +295,3 @@ function Dashboard() {
     </div>
   );
 }
-
