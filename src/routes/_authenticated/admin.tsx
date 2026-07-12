@@ -1301,7 +1301,7 @@ function AccountsTab() {
           <div
             key={a.id}
             className="grid items-center text-[12px] py-1.5 px-5 border-b border-row-divider last:border-b-0"
-            style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr" }}
+            style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr 0.4fr" }}
           >
             <div className="font-mono font-medium text-[11.5px]">{a.code}</div>
             <div className="truncate" title={a.name}>{a.name}</div>
@@ -1335,6 +1335,14 @@ function AccountsTab() {
                 )}
               >
                 {a.is_active ? "Active" : "Off"}
+              </button>
+            </div>
+            <div className="text-right">
+              <button
+                onClick={() => startEdit(a)}
+                className="text-[10.5px] px-2 py-0.5 rounded border border-border hover:border-primary hover:text-primary transition-colors"
+              >
+                Edit
               </button>
             </div>
           </div>
