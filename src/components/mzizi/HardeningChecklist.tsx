@@ -1,11 +1,17 @@
-import { useMemo } from "react";
-import { Download, ShieldAlert, ShieldCheck, RotateCcw, Loader2 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient, useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { Download, ShieldAlert, ShieldCheck, RotateCcw, Loader2, Sparkles, Zap } from "lucide-react";
+import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { ProgressBar } from "@/components/mzizi/ProgressBar";
 import { cn } from "@/lib/utils";
-import { listHardeningItems, upsertHardeningItem, resetHardeningItems } from "@/lib/hardening.functions";
+import {
+  listHardeningItems,
+  upsertHardeningItem,
+  resetHardeningItems,
+  runHardeningAutocheck,
+  type AutoCheckResult,
+} from "@/lib/hardening.functions";
 
 type Status = "done" | "partial" | "missing";
 
