@@ -1233,6 +1233,12 @@ function AccountsTab() {
     );
   }
 
+  const sortedAccounts = (accounts ?? []).slice().sort((a: any, b: any) => {
+    const typeOrder = ACCOUNT_TYPES.indexOf(a.type) - ACCOUNT_TYPES.indexOf(b.type);
+    if (typeOrder !== 0) return typeOrder;
+    return a.code.localeCompare(b.code);
+  });
+
   return (
     <Card padded={false}>
       <ListHeader
@@ -1242,71 +1248,66 @@ function AccountsTab() {
         newLabel="New account"
       />
       <div
-        className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
-        style={{ gridTemplateColumns: "0.55fr 1.5fr 1.1fr 1.1fr 0.6fr 0.5fr" }}
+        className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
+        style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr" }}
       >
         <div>Code</div>
         <div>Name</div>
+        <div>Category</div>
         <div>Sub-category</div>
         <div>Branches</div>
         <div>Normal</div>
         <div className="text-right">Status</div>
       </div>
-      {grouped.map((g) =>
-        g.rows.length === 0 ? null : (
-          <div key={g.type}>
-            <div className="px-5 py-2 text-[10.5px] uppercase tracking-wider text-muted-foreground bg-secondary/20 font-semibold border-b border-border flex items-center gap-2">
+      {sortedAccounts.map((a: any) => {
+        const bids: string[] = Array.isArray(a.branch_ids) ? a.branch_ids : [];
+        const branchLabel =
+          bids.length === 0
+            ? "All branches"
+            : bids.map((id) => branchNameById.get(id) ?? "—").join(", ");
+        return (
+          <div
+            key={a.id}
+            className="grid items-center text-[12px] py-1.5 px-5 border-b border-row-divider last:border-b-0"
+            style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr" }}
+          >
+            <div className="font-mono font-medium text-[11.5px]">{a.code}</div>
+            <div className="truncate" title={a.name}>{a.name}</div>
+            <div>
               <span
                 className={cn(
-                  "text-[10.5px] px-2 py-0.5 rounded-full border capitalize",
-                  TYPE_TONE[g.type as AccountType],
+                  "inline-flex px-1.5 py-0.5 rounded border capitalize text-[10px]",
+                  TYPE_TONE[a.type as AccountType],
                 )}
               >
-                {g.type}
+                {a.type}
               </span>
             </div>
-            {g.rows.map((a: any) => {
-              const bids: string[] = Array.isArray(a.branch_ids) ? a.branch_ids : [];
-              const branchLabel =
-                bids.length === 0
-                  ? "All branches"
-                  : bids
-                      .map((id) => branchNameById.get(id) ?? "—")
-                      .join(", ");
-              return (
-                <div
-                  key={a.id}
-                  className="grid items-center text-[12.5px] py-3 px-5 border-b border-row-divider last:border-b-0"
-                  style={{ gridTemplateColumns: "0.55fr 1.5fr 1.1fr 1.1fr 0.6fr 0.5fr" }}
-                >
-                  <div className="font-mono font-semibold">{a.code}</div>
-                  <div>{a.name}</div>
-                  <div className="text-muted-foreground">{a.subcategory ?? "—"}</div>
-                  <div className="text-muted-foreground truncate" title={branchLabel}>
-                    {branchLabel}
-                  </div>
-                  <div className="font-mono text-secondary-foreground">
-                    {a.normal_balance === 1 ? "Debit" : "Credit"}
-                  </div>
-                  <div className="text-right">
-                    <button
-                      onClick={() => toggle.mutate({ data: { id: a.id, is_active: !a.is_active } })}
-                      className={cn(
-                        "text-[11px] px-2 py-0.5 rounded-full border",
-                        a.is_active
-                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
-                          : "border-muted bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {a.is_active ? "Active" : "Off"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            <div className="text-muted-foreground truncate" title={a.subcategory ?? undefined}>
+              {a.subcategory ?? "—"}
+            </div>
+            <div className="text-muted-foreground truncate" title={branchLabel}>
+              {branchLabel}
+            </div>
+            <div className="font-mono text-[11px] text-secondary-foreground">
+              {a.normal_balance === 1 ? "Dr" : "Cr"}
+            </div>
+            <div className="text-right">
+              <button
+                onClick={() => toggle.mutate({ data: { id: a.id, is_active: !a.is_active } })}
+                className={cn(
+                  "text-[10px] px-2 py-0.5 rounded-full border",
+                  a.is_active
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                    : "border-muted bg-muted text-muted-foreground",
+                )}
+              >
+                {a.is_active ? "Active" : "Off"}
+              </button>
+            </div>
           </div>
-        ),
-      )}
+        );
+      })}
       {(accounts ?? []).length === 0 && (
         <div className="text-center text-faint text-sm py-8">No accounts yet.</div>
       )}
