@@ -466,6 +466,17 @@ export function HardeningChecklist() {
                   )}
                   </div>
                 );
+              })}
+            </div>
+          </Card>
+        );
+      })}
+
+      <div className="text-[11.5px] text-muted-foreground">
+        Status is set only by the automated system check — click <span className="font-semibold">Run auto-check</span> to refresh. Items marked <span className="italic">manual review</span> can't be verified from the schema and need an operational sign-off. Board state is shared across all platform admins.
+      </div>
+    </div>
+  );
 }
 
 // Keep exported query options for optional loader priming.
