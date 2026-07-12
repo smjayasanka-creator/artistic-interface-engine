@@ -823,6 +823,8 @@ function ProductsTab() {
       frequency: form.frequency,
       interest_method: form.method,
       processing_fee_pct: Number(form.processingFee || 0),
+      termination_fee: Number(form.terminationFee || 0),
+      termination_fee_pct: Number(form.terminationFeePct || 0),
       principal_account_id: form.principalAcct || null,
       cash_account_id: form.cashAcct || null,
       interest_income_account_id: form.interestAcct || null,
