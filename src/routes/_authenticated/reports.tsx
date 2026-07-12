@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { getReports, getFinancials } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
-import { money } from "@/lib/format";
+import { money, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/reports")({
