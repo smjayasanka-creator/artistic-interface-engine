@@ -58,23 +58,18 @@ const TONES: Record<string, KpiTone> = {
 };
 
 function VibrantKpi({
-  tone, label, value, delta, icon: Icon,
+  tone, label, value, delta, icon: Icon, to,
 }: {
   tone: keyof typeof TONES;
   label: string;
   value: string | number;
   delta?: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
+  to?: string;
 }) {
   const t = TONES[tone];
-  return (
-    <div
-      className="relative overflow-hidden rounded-2xl px-4 py-4 text-white"
-      style={{
-        background: `linear-gradient(135deg, ${t.from} 0%, ${t.to} 100%)`,
-        boxShadow: `0 10px 24px -12px ${t.ring}, 0 1px 0 rgba(255,255,255,.15) inset`,
-      }}
-    >
+  const inner = (
+    <>
       <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20" style={{ background: "radial-gradient(circle, #fff 0%, transparent 70%)" }} />
       <div className="relative flex items-center justify-between mb-2">
         <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,.85)" }}>{label}</div>
@@ -88,8 +83,21 @@ function VibrantKpi({
       {delta && (
         <div className="relative text-[11px] font-medium mt-2" style={{ color: "rgba(255,255,255,.9)" }}>{delta}</div>
       )}
-    </div>
+    </>
   );
+  const style = {
+    background: `linear-gradient(135deg, ${t.from} 0%, ${t.to} 100%)`,
+    boxShadow: `0 10px 24px -12px ${t.ring}, 0 1px 0 rgba(255,255,255,.15) inset`,
+  } as const;
+  const cls = "relative overflow-hidden rounded-2xl px-4 py-4 text-white block transition-transform hover:-translate-y-0.5 hover:shadow-lg";
+  if (to) {
+    return (
+      <Link to={to} className={cls} style={style}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={cls} style={style}>{inner}</div>;
 }
 
 function Dashboard() {
