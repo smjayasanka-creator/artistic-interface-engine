@@ -793,6 +793,8 @@ function ProductsTab() {
       frequency: (p.frequency as Frequency) ?? "monthly",
       method: (p.interest_method as InterestMethod) ?? "flat",
       processingFee: String(p.processing_fee_pct ?? 0),
+      terminationFee: String(p.termination_fee ?? 0),
+      terminationFeePct: String(p.termination_fee_pct ?? 0),
       principalAcct: p.principal_account_id ?? "",
       cashAcct: p.cash_account_id ?? "",
       interestAcct: p.interest_income_account_id ?? "",
