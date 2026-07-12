@@ -211,9 +211,9 @@ function FdDetail() {
               <tr className="text-left text-faint font-semibold border-b border-border">
                 <th className="py-2 pr-3">#</th>
                 <th className="py-2 pr-3">Due date</th>
-                <th className="py-2 pr-3 text-right">Gross (LKR)</th>
-                <th className="py-2 pr-3 text-right">WHT (LKR)</th>
-                <th className="py-2 pr-3 text-right">Net (LKR)</th>
+                <th className="py-2 pr-3 text-right">Gross ({getActiveCurrency()})</th>
+                <th className="py-2 pr-3 text-right">WHT ({getActiveCurrency()})</th>
+                <th className="py-2 pr-3 text-right">Net ({getActiveCurrency()})</th>
                 <th className="py-2 pr-3">Status</th>
               </tr>
             </thead>
