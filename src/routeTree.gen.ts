@@ -27,6 +27,7 @@ import { Route as AuthenticatedLoansIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenticated/groups.index'
 import { Route as AuthenticatedFdIndexRouteImport } from './routes/_authenticated/fd.index'
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients.index'
+import { Route as AuthenticatedAccountsIndexRouteImport } from './routes/_authenticated/accounts.index'
 import { Route as AuthenticatedTransactionsRepaymentRouteImport } from './routes/_authenticated/transactions.repayment'
 import { Route as AuthenticatedTransactionsPaymentsRouteImport } from './routes/_authenticated/transactions.payments'
 import { Route as AuthenticatedTransactionsDisbursementRouteImport } from './routes/_authenticated/transactions.disbursement'
@@ -47,6 +48,8 @@ import { Route as AuthenticatedClientsNewRouteImport } from './routes/_authentic
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as AuthenticatedAccountsPaymentsRouteImport } from './routes/_authenticated/accounts.payments'
 import { Route as AuthenticatedAccountsJournalRouteImport } from './routes/_authenticated/accounts.journal'
+import { Route as AuthenticatedAccountsBulkJournalRouteImport } from './routes/_authenticated/accounts.bulk-journal'
+import { Route as AuthenticatedAccountsBankReconciliationRouteImport } from './routes/_authenticated/accounts.bank-reconciliation'
 import { Route as AuthenticatedAccountsPaymentsIndexRouteImport } from './routes/_authenticated/accounts.payments.index'
 import { Route as AuthenticatedAccountsJournalIndexRouteImport } from './routes/_authenticated/accounts.journal.index'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
@@ -152,6 +155,12 @@ const AuthenticatedClientsIndexRoute =
   AuthenticatedClientsIndexRouteImport.update({
     id: '/clients/',
     path: '/clients/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountsIndexRoute =
+  AuthenticatedAccountsIndexRouteImport.update({
+    id: '/accounts/',
+    path: '/accounts/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedTransactionsRepaymentRoute =
@@ -268,6 +277,18 @@ const AuthenticatedAccountsJournalRoute =
     path: '/accounts/journal',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAccountsBulkJournalRoute =
+  AuthenticatedAccountsBulkJournalRouteImport.update({
+    id: '/accounts/bulk-journal',
+    path: '/accounts/bulk-journal',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountsBankReconciliationRoute =
+  AuthenticatedAccountsBankReconciliationRouteImport.update({
+    id: '/accounts/bank-reconciliation',
+    path: '/accounts/bank-reconciliation',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAccountsPaymentsIndexRoute =
   AuthenticatedAccountsPaymentsIndexRouteImport.update({
     id: '/',
@@ -344,6 +365,8 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/workflows': typeof AuthenticatedWorkflowsRoute
+  '/accounts/bank-reconciliation': typeof AuthenticatedAccountsBankReconciliationRoute
+  '/accounts/bulk-journal': typeof AuthenticatedAccountsBulkJournalRoute
   '/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRoute
@@ -364,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
   '/fd/': typeof AuthenticatedFdIndexRoute
   '/groups/': typeof AuthenticatedGroupsIndexRoute
@@ -393,6 +417,8 @@ export interface FileRoutesByTo {
   '/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
+  '/accounts/bank-reconciliation': typeof AuthenticatedAccountsBankReconciliationRoute
+  '/accounts/bulk-journal': typeof AuthenticatedAccountsBulkJournalRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/clients/new': typeof AuthenticatedClientsNewRoute
   '/collections/new': typeof AuthenticatedCollectionsNewRoute
@@ -411,6 +437,7 @@ export interface FileRoutesByTo {
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/accounts': typeof AuthenticatedAccountsIndexRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/fd': typeof AuthenticatedFdIndexRoute
   '/groups': typeof AuthenticatedGroupsIndexRoute
@@ -443,6 +470,8 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/_authenticated/workflows': typeof AuthenticatedWorkflowsRoute
+  '/_authenticated/accounts/bank-reconciliation': typeof AuthenticatedAccountsBankReconciliationRoute
+  '/_authenticated/accounts/bulk-journal': typeof AuthenticatedAccountsBulkJournalRoute
   '/_authenticated/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
   '/_authenticated/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
@@ -463,6 +492,7 @@ export interface FileRoutesById {
   '/_authenticated/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/_authenticated/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/_authenticated/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/_authenticated/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/fd/': typeof AuthenticatedFdIndexRoute
   '/_authenticated/groups/': typeof AuthenticatedGroupsIndexRoute
@@ -495,6 +525,8 @@ export interface FileRouteTypes {
     | '/reports'
     | '/transactions'
     | '/workflows'
+    | '/accounts/bank-reconciliation'
+    | '/accounts/bulk-journal'
     | '/accounts/journal'
     | '/accounts/payments'
     | '/clients/$id'
@@ -515,6 +547,7 @@ export interface FileRouteTypes {
     | '/transactions/disbursement'
     | '/transactions/payments'
     | '/transactions/repayment'
+    | '/accounts/'
     | '/clients/'
     | '/fd/'
     | '/groups/'
@@ -544,6 +577,8 @@ export interface FileRouteTypes {
     | '/platform-admin'
     | '/reports'
     | '/workflows'
+    | '/accounts/bank-reconciliation'
+    | '/accounts/bulk-journal'
     | '/clients/$id'
     | '/clients/new'
     | '/collections/new'
@@ -562,6 +597,7 @@ export interface FileRouteTypes {
     | '/transactions/disbursement'
     | '/transactions/payments'
     | '/transactions/repayment'
+    | '/accounts'
     | '/clients'
     | '/fd'
     | '/groups'
@@ -593,6 +629,8 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/transactions'
     | '/_authenticated/workflows'
+    | '/_authenticated/accounts/bank-reconciliation'
+    | '/_authenticated/accounts/bulk-journal'
     | '/_authenticated/accounts/journal'
     | '/_authenticated/accounts/payments'
     | '/_authenticated/clients/$id'
@@ -613,6 +651,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions/disbursement'
     | '/_authenticated/transactions/payments'
     | '/_authenticated/transactions/repayment'
+    | '/_authenticated/accounts/'
     | '/_authenticated/clients/'
     | '/_authenticated/fd/'
     | '/_authenticated/groups/'
@@ -772,6 +811,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/accounts/': {
+      id: '/_authenticated/accounts/'
+      path: '/accounts'
+      fullPath: '/accounts/'
+      preLoaderRoute: typeof AuthenticatedAccountsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/transactions/repayment': {
       id: '/_authenticated/transactions/repayment'
       path: '/repayment'
@@ -910,6 +956,20 @@ declare module '@tanstack/react-router' {
       path: '/accounts/journal'
       fullPath: '/accounts/journal'
       preLoaderRoute: typeof AuthenticatedAccountsJournalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/accounts/bulk-journal': {
+      id: '/_authenticated/accounts/bulk-journal'
+      path: '/accounts/bulk-journal'
+      fullPath: '/accounts/bulk-journal'
+      preLoaderRoute: typeof AuthenticatedAccountsBulkJournalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/accounts/bank-reconciliation': {
+      id: '/_authenticated/accounts/bank-reconciliation'
+      path: '/accounts/bank-reconciliation'
+      fullPath: '/accounts/bank-reconciliation'
+      preLoaderRoute: typeof AuthenticatedAccountsBankReconciliationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/accounts/payments/': {
@@ -1081,6 +1141,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRouteWithChildren
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
+  AuthenticatedAccountsBankReconciliationRoute: typeof AuthenticatedAccountsBankReconciliationRoute
+  AuthenticatedAccountsBulkJournalRoute: typeof AuthenticatedAccountsBulkJournalRoute
   AuthenticatedAccountsJournalRoute: typeof AuthenticatedAccountsJournalRouteWithChildren
   AuthenticatedAccountsPaymentsRoute: typeof AuthenticatedAccountsPaymentsRouteWithChildren
   AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
@@ -1095,6 +1157,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLoansTerminationRoute: typeof AuthenticatedLoansTerminationRoute
   AuthenticatedLoansTransferRoute: typeof AuthenticatedLoansTransferRoute
   AuthenticatedLoansWriteOffRoute: typeof AuthenticatedLoansWriteOffRoute
+  AuthenticatedAccountsIndexRoute: typeof AuthenticatedAccountsIndexRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedFdIndexRoute: typeof AuthenticatedFdIndexRoute
   AuthenticatedGroupsIndexRoute: typeof AuthenticatedGroupsIndexRoute
@@ -1112,6 +1175,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRouteWithChildren,
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
+  AuthenticatedAccountsBankReconciliationRoute:
+    AuthenticatedAccountsBankReconciliationRoute,
+  AuthenticatedAccountsBulkJournalRoute: AuthenticatedAccountsBulkJournalRoute,
   AuthenticatedAccountsJournalRoute:
     AuthenticatedAccountsJournalRouteWithChildren,
   AuthenticatedAccountsPaymentsRoute:
@@ -1128,6 +1194,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLoansTerminationRoute: AuthenticatedLoansTerminationRoute,
   AuthenticatedLoansTransferRoute: AuthenticatedLoansTransferRoute,
   AuthenticatedLoansWriteOffRoute: AuthenticatedLoansWriteOffRoute,
+  AuthenticatedAccountsIndexRoute: AuthenticatedAccountsIndexRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedFdIndexRoute: AuthenticatedFdIndexRoute,
   AuthenticatedGroupsIndexRoute: AuthenticatedGroupsIndexRoute,

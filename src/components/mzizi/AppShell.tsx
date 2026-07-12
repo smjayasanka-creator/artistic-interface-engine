@@ -20,7 +20,7 @@ const NAV: NavEntry[] = [
       { to: "/loans", label: "Loans", icon: Wallet },
       { to: "/approvals", label: "Approvals", icon: CheckSquare },
       { to: "/fd", label: "Deposits", icon: PiggyBank },
-      { to: "/ledger", label: "Accounts", icon: BookOpen },
+      { to: "/accounts", label: "Accounts", icon: BookOpen },
       { to: "/reports", label: "Reports", icon: LineChart },
       { to: "/admin", label: "Employees", icon: UserCog },
       { to: "/workflows", label: "Work flow", icon: Workflow },
@@ -46,7 +46,10 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/reports")) return { title: "Reports & analytics", sub: "Portfolio performance" };
   if (pathname.startsWith("/ledger")) return { title: "General ledger", sub: "Journal entries & postings" };
   if (pathname.startsWith("/accounts/journal")) return { title: "Journal Entries", sub: "Accounting entries & postings" };
+  if (pathname.startsWith("/accounts/bulk-journal")) return { title: "Bulk Journal Upload", sub: "Upload many entries via Excel/CSV" };
+  if (pathname.startsWith("/accounts/bank-reconciliation")) return { title: "Bank Reconciliation", sub: "Match statement lines with ledger" };
   if (pathname.startsWith("/accounts/payments")) return { title: "Payments", sub: "Received repayments" };
+  if (pathname.startsWith("/accounts")) return { title: "Accounts", sub: "General ledger workspace" };
   if (pathname.startsWith("/transactions/repayment")) return { title: "Loan Repayment", sub: "Record customer repayments" };
   if (pathname.startsWith("/transactions/payments")) return { title: "Payments", sub: "Post incoming payments" };
   if (pathname.startsWith("/transactions/disbursement")) return { title: "Disbursement", sub: "Release approved loans" };
