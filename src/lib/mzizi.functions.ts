@@ -1248,6 +1248,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
           frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]),
           interest_method: z.enum(["flat", "declining_balance"]).optional(),
           processing_fee_pct: z.number().nonnegative().max(50).optional(),
+          termination_fee: z.number().nonnegative().max(10_000_000).optional(),
+          termination_fee_pct: z.number().nonnegative().max(100).optional(),
           principal_account_id: z.string().uuid().nullable().optional(),
           cash_account_id: z.string().uuid().nullable().optional(),
           interest_income_account_id: z.string().uuid().nullable().optional(),
