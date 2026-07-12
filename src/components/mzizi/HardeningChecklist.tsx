@@ -135,7 +135,6 @@ const hardeningQueryOptions = queryOptions({
 export function HardeningChecklist() {
   const queryClient = useQueryClient();
   const listFn = useServerFn(listHardeningItems);
-  const upsertFn = useServerFn(upsertHardeningItem);
   const resetFn = useServerFn(resetHardeningItems);
   const autocheckFn = useServerFn(runHardeningAutocheck);
   const [autoResults, setAutoResults] = useState<AutoCheckResult[] | null>(null);
