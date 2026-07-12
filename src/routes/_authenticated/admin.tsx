@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "accounts";
-type Mode = "list" | "create";
+type Mode = "list" | "create" | "edit";
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
 type StaffRole = (typeof STAFF_ROLES)[number];
