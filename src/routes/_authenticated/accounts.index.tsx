@@ -11,22 +11,19 @@ const CARDS = [
     to: "/accounts/journal",
     icon: BookOpen,
     title: "Journal Entry",
-    desc: "Post double-entry transactions to the general ledger. Supports multi-branch posting with balanced debit/credit lines and auto-generated references.",
-    cta: "Open journal",
+    accent: "from-blue-500/15 to-blue-500/0 text-blue-600",
   },
   {
     to: "/accounts/bulk-journal",
     icon: Upload,
     title: "Bulk Journal Upload",
-    desc: "Import many journal entries at once from an Excel/CSV file. Download the sample template, fill it in, and upload — each reference becomes one balanced entry.",
-    cta: "Upload entries",
+    accent: "from-violet-500/15 to-violet-500/0 text-violet-600",
   },
   {
     to: "/accounts/bank-reconciliation",
     icon: Landmark,
     title: "Bank Reconciliation",
-    desc: "Match your bank statement lines against ledger postings for a chosen bank account and period. Flag differences, mark cleared items and export the reconciliation.",
-    cta: "Start reconciliation",
+    accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
   },
 ] as const;
 
