@@ -751,7 +751,7 @@ export const getProducts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await context.supabase
       .from("loan_product")
-      .select("id, name, annual_rate_pct, frequency, color, min_principal, max_principal, min_term_months, max_term_months")
+      .select("id, name, annual_rate_pct, frequency, color, min_principal, max_principal, min_term_months, max_term_months, required_documents")
       .eq("is_active", true)
       .order("name");
     return data ?? [];
