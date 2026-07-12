@@ -451,7 +451,6 @@ export function HardeningChecklist() {
                       className="px-2.5 py-1.5 rounded-md border border-border bg-card text-[12px] outline-none focus:border-primary"
                     />
                   </div>
-                  </div>
                   {isOpen && auto && (
                     <div className="px-5 pb-4 pt-1 bg-muted/30 border-t border-row-divider">
                       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Check SQL</div>
