@@ -189,6 +189,88 @@ export const listFixedDeposits = createServerFn({ method: "GET" })
     return rows ?? [];
   });
 
+// ──────────────────────────────────────────────────────────────────────────
+// DEPOSIT RECEIPT / WITHDRAWAL (money movement transactions)
+// ──────────────────────────────────────────────────────────────────────────
+
+export const listActiveDeposits = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data, error } = await supabase
+      .from("fixed_deposit")
+      .select("id,certificate_no,principal,client:client_id(id,full_name),product:product_id(id,code,name)")
+      .eq("status", "active")
+      .order("certificate_no");
+    if (error) throw error;
+    return data ?? [];
+  });
+
+const depositMovementInput = z.object({
+  deposit_id: z.string().uuid(),
+  amount: z.number().positive(),
+  txn_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  reference: z.string().trim().max(120).optional().nullable(),
+});
+
+export const recordDepositReceipt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: z.infer<typeof depositMovementInput>) => depositMovementInput.parse(i))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: fd } = await supabase
+      .from("fixed_deposit")
+      .select("id,status,certificate_no")
+      .eq("id", data.deposit_id)
+      .maybeSingle();
+    if (!fd) throw new Error("Deposit not found");
+    if (fd.status !== "active") throw new Error("Only active deposits can accept receipts");
+    const { data: row, error } = await supabase
+      .from("fd_transaction")
+      .insert({
+        deposit_id: data.deposit_id,
+        type: "deposit_receipt" as any,
+        amount: data.amount,
+        txn_date: data.txn_date,
+        reference: data.reference ?? fd.certificate_no,
+        created_by: userId,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const recordDepositWithdrawal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: z.infer<typeof depositMovementInput>) => depositMovementInput.parse(i))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: fd } = await supabase
+      .from("fixed_deposit")
+      .select("id,status,certificate_no,principal")
+      .eq("id", data.deposit_id)
+      .maybeSingle();
+    if (!fd) throw new Error("Deposit not found");
+    if (fd.status !== "active") throw new Error("Only active deposits can be withdrawn from");
+    if (data.amount > Number(fd.principal)) throw new Error("Withdrawal exceeds deposit principal");
+    const { data: row, error } = await supabase
+      .from("fd_transaction")
+      .insert({
+        deposit_id: data.deposit_id,
+        type: "withdrawal" as any,
+        amount: data.amount,
+        txn_date: data.txn_date,
+        reference: data.reference ?? fd.certificate_no,
+        created_by: userId,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+
 export const getFdSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
