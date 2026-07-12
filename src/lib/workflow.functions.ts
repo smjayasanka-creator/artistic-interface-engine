@@ -176,10 +176,9 @@ export const startWorkflow = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: staff } = await supabase.from("staff").select("branch:branch_id(company_id)").limit(1).maybeSingle();
-    const companyId = (staff as any)?.branch?.company_id as string;
-    if (!companyId) throw new Error("No company");
+    const { data: cid } = await supabase.rpc("current_company_id");
+    const companyId = cid as string | null;
+    if (!companyId) throw new Error("No active company");
 
     const { data: wf, error: wErr } = await supabase
       .from("workflow_definition")
