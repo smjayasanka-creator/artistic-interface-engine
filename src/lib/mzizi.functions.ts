@@ -1257,7 +1257,9 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       cash_account_id?: string | null;
       interest_income_account_id?: string | null;
       fee_income_account_id?: string | null;
+      required_documents?: string[];
     }) =>
+
       z
         .object({
           id: z.string().uuid(),
