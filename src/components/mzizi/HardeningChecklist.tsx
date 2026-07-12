@@ -383,8 +383,8 @@ export function HardeningChecklist() {
                 return (
                   <div key={it.id} className="border-b border-row-divider last:border-b-0">
                   <div
-                    className="grid items-center gap-3 px-5 py-3"
-                    style={{ gridTemplateColumns: "1.6fr 0.9fr 1fr 1.5fr" }}
+                    className="grid items-start gap-3 px-5 py-3"
+                    style={{ gridTemplateColumns: "1fr auto auto" }}
                   >
                     <div className="flex items-start gap-2 min-w-0">
                       <span className={cn("mt-1.5 w-1.5 h-1.5 rounded-full flex-none", STATUS_META[entry.status].dot)} />
@@ -396,60 +396,38 @@ export function HardeningChecklist() {
                               <Zap size={8} /> auto
                             </span>
                           )}
-                          {auto && (
-                            <button
-                              onClick={() => setOpenEvidence(isOpen ? null : it.id)}
-                              className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded border border-border bg-card text-muted-foreground hover:bg-muted"
-                              title="Show SQL check + matching rows"
-                            >
-                              {isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                              <Code2 size={10} /> evidence ({auto.matches.length})
-                            </button>
-                          )}
                         </div>
                         {(entry.note ?? "").startsWith("auto:") && (
                           <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">
                             {(entry.note ?? "").replace(/^auto:\s*/, "")}
                           </div>
                         )}
+                        <div className="text-[11.5px] text-muted-foreground mt-1.5 leading-relaxed border-l-2 border-border pl-2.5">
+                          {it.detail}
+                        </div>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      {(["done", "partial", "missing"] as Status[]).map((st) => (
-                        <button
-                          key={st}
-                          onClick={() => update(it.id, { status: st })}
-                          className={cn(
-                            "px-2.5 py-1 rounded-md border text-[11px] font-semibold capitalize",
-                            entry.status === st
-                              ? STATUS_META[st].tone
-                              : "bg-card text-muted-foreground border-border hover:bg-muted",
-                          )}
-                        >
-                          {STATUS_META[st].label}
-                        </button>
-                      ))}
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Owner"
-                      defaultValue={entry.owner ?? ""}
-                      onBlur={(e) => {
-                        const v = e.target.value;
-                        if (v !== (entry.owner ?? "")) update(it.id, { owner: v });
-                      }}
-                      className="px-2.5 py-1.5 rounded-md border border-border bg-card text-[12px] outline-none focus:border-primary"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Notes / evidence link"
-                      defaultValue={entry.note ?? ""}
-                      onBlur={(e) => {
-                        const v = e.target.value;
-                        if (v !== (entry.note ?? "")) update(it.id, { note: v });
-                      }}
-                      className="px-2.5 py-1.5 rounded-md border border-border bg-card text-[12px] outline-none focus:border-primary"
-                    />
+                    <span
+                      className={cn(
+                        "px-2.5 py-1 rounded-md border text-[11px] font-semibold capitalize whitespace-nowrap",
+                        STATUS_META[entry.status].tone,
+                      )}
+                      title="Status is set by the automated system check only"
+                    >
+                      {STATUS_META[entry.status].label}
+                    </span>
+                    {auto ? (
+                      <button
+                        onClick={() => setOpenEvidence(isOpen ? null : it.id)}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md border border-border bg-card text-muted-foreground hover:bg-muted whitespace-nowrap"
+                        title="Show SQL check + matching rows"
+                      >
+                        {isOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                        <Code2 size={11} /> evidence ({auto.matches.length})
+                      </button>
+                    ) : (
+                      <span className="text-[10.5px] text-muted-foreground italic px-2 py-1 whitespace-nowrap">manual review</span>
+                    )}
                   </div>
                   {isOpen && auto && (
                     <div className="px-5 pb-4 pt-1 bg-muted/30 border-t border-row-divider">
@@ -488,17 +466,6 @@ export function HardeningChecklist() {
                   )}
                   </div>
                 );
-              })}
-            </div>
-          </Card>
-        );
-      })}
-
-      <div className="text-[11.5px] text-muted-foreground">
-        Checklist state is stored in the shared database — all platform admins see and edit the same board. Owner/notes save on blur.
-      </div>
-    </div>
-  );
 }
 
 // Keep exported query options for optional loader priming.
