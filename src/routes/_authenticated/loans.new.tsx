@@ -96,6 +96,8 @@ function NewLoan() {
   const [method, setMethod] = useState<InterestMethod>("flat");
   const [purpose, setPurpose] = useState("");
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDoc>>({});
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
 
 
   const clientsFn = useServerFn(getClients);
