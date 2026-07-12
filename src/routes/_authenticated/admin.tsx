@@ -672,15 +672,17 @@ function StaffTab() {
 
 function ProductsTab() {
   const [mode, setMode] = useState<Mode>("list");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const listFn = useServerFn(getAllLoanProducts);
   const { data: products } = useQuery({ queryKey: ["loan_products", "all"], queryFn: () => listFn() });
   const acctFn = useServerFn(getGlAccounts);
   const { data: accounts } = useQuery({ queryKey: ["gl_accounts"], queryFn: () => acctFn() });
   const qc = useQueryClient();
   const createFn = useServerFn(createLoanProduct);
+  const updateFn = useServerFn(updateLoanProduct);
   const toggleFn = useServerFn(toggleLoanProduct);
 
-  const [form, setForm] = useState({
+  const emptyForm = {
     name: "",
     minRate: "",
     maxRate: "",
@@ -695,11 +697,18 @@ function ProductsTab() {
     cashAcct: "",
     interestAcct: "",
     feeAcct: "",
-  });
+  };
+  const [form, setForm] = useState(emptyForm);
 
   const activeAccts = (accounts ?? []).filter((a: any) => a.is_active);
   const assetAccts = activeAccts.filter((a: any) => a.type === "asset");
   const incomeAccts = activeAccts.filter((a: any) => a.type === "income");
+
+  const reset = () => {
+    setForm(emptyForm);
+    setEditingId(null);
+    setMode("list");
+  };
 
   const create = useMutation({
     mutationFn: createFn,
@@ -707,8 +716,18 @@ function ProductsTab() {
       toast.success("Product created");
       qc.invalidateQueries({ queryKey: ["loan_products", "all"] });
       qc.invalidateQueries({ queryKey: ["products"] });
-      setForm({ ...form, name: "", minRate: "", maxRate: "" });
-      setMode("list");
+      reset();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const update = useMutation({
+    mutationFn: updateFn,
+    onSuccess: () => {
+      toast.success("Product updated");
+      qc.invalidateQueries({ queryKey: ["loan_products", "all"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      reset();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -722,6 +741,27 @@ function ProductsTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  function startEdit(p: any) {
+    setForm({
+      name: p.name ?? "",
+      minRate: String(p.annual_rate_pct ?? ""),
+      maxRate: p.max_annual_rate_pct != null ? String(p.max_annual_rate_pct) : "",
+      minTerm: String(p.min_term_months ?? 1),
+      maxTerm: String(p.max_term_months ?? 12),
+      minPrincipal: String(p.min_principal ?? 0),
+      maxPrincipal: p.max_principal != null ? String(p.max_principal) : "",
+      frequency: (p.frequency as Frequency) ?? "monthly",
+      method: (p.interest_method as InterestMethod) ?? "flat",
+      processingFee: String(p.processing_fee_pct ?? 0),
+      principalAcct: p.principal_account_id ?? "",
+      cashAcct: p.cash_account_id ?? "",
+      interestAcct: p.interest_income_account_id ?? "",
+      feeAcct: p.fee_income_account_id ?? "",
+    });
+    setEditingId(p.id);
+    setMode("edit");
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const minRate = Number(form.minRate);
@@ -730,226 +770,110 @@ function ProductsTab() {
       toast.error("Name and min rate required");
       return;
     }
-    create.mutate({
-      data: {
-        name: form.name.trim(),
-        annual_rate_pct: minRate,
-        max_annual_rate_pct: maxRate,
-        min_term_months: Number(form.minTerm),
-        max_term_months: Number(form.maxTerm),
-        min_principal: Number(form.minPrincipal),
-        max_principal: form.maxPrincipal ? Number(form.maxPrincipal) : null,
-        frequency: form.frequency,
-        interest_method: form.method,
-        processing_fee_pct: Number(form.processingFee || 0),
-        principal_account_id: form.principalAcct || null,
-        cash_account_id: form.cashAcct || null,
-        interest_income_account_id: form.interestAcct || null,
-        fee_income_account_id: form.feeAcct || null,
-      },
-    });
+    const payload = {
+      name: form.name.trim(),
+      annual_rate_pct: minRate,
+      max_annual_rate_pct: maxRate,
+      min_term_months: Number(form.minTerm),
+      max_term_months: Number(form.maxTerm),
+      min_principal: Number(form.minPrincipal),
+      max_principal: form.maxPrincipal ? Number(form.maxPrincipal) : null,
+      frequency: form.frequency,
+      interest_method: form.method,
+      processing_fee_pct: Number(form.processingFee || 0),
+      principal_account_id: form.principalAcct || null,
+      cash_account_id: form.cashAcct || null,
+      interest_income_account_id: form.interestAcct || null,
+      fee_income_account_id: form.feeAcct || null,
+    };
+    if (mode === "edit" && editingId) {
+      update.mutate({ data: { id: editingId, ...payload } });
+    } else {
+      create.mutate({ data: payload });
+    }
   }
 
-  if (mode === "create") {
+  if (mode === "create" || mode === "edit") {
+    const isEdit = mode === "edit";
     return (
       <Card>
-        <FormHeader title="New loan product" onBack={() => setMode("list")} />
+        <FormHeader title={isEdit ? "Edit loan product" : "New loan product"} onBack={reset} />
         <form onSubmit={submit} className="flex flex-col gap-4 mt-4 text-[12.5px]">
           <FormGrid>
             <FormField label="Product name" required span={6}>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Kilimo Boost"
-                className={inputCls}
-                required
-              />
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Kilimo Boost" className={inputCls} required />
             </FormField>
             <FormField label="Processing fee (%)" span={2}>
-              <input
-                type="number"
-                step="0.01"
-                value={form.processingFee}
-                onChange={(e) => setForm({ ...form, processingFee: e.target.value })}
-                className={inputCls + " font-mono"}
-              />
+              <input type="number" step="0.01" value={form.processingFee} onChange={(e) => setForm({ ...form, processingFee: e.target.value })} className={inputCls + " font-mono"} />
             </FormField>
             <FormField label="Min rate (%/yr)" required span={2}>
-              <input
-                type="number"
-                step="0.01"
-                value={form.minRate}
-                onChange={(e) => setForm({ ...form, minRate: e.target.value })}
-                className={inputCls + " font-mono"}
-                required
-              />
+              <input type="number" step="0.01" value={form.minRate} onChange={(e) => setForm({ ...form, minRate: e.target.value })} className={inputCls + " font-mono"} required />
             </FormField>
             <FormField label="Max rate (%/yr)" span={2}>
-              <input
-                type="number"
-                step="0.01"
-                value={form.maxRate}
-                onChange={(e) => setForm({ ...form, maxRate: e.target.value })}
-                placeholder="optional"
-                className={inputCls + " font-mono"}
-              />
+              <input type="number" step="0.01" value={form.maxRate} onChange={(e) => setForm({ ...form, maxRate: e.target.value })} placeholder="optional" className={inputCls + " font-mono"} />
             </FormField>
             <FormField label="Min term (months)" required span={3}>
-              <input
-                type="number"
-                min={1}
-                value={form.minTerm}
-                onChange={(e) => setForm({ ...form, minTerm: e.target.value })}
-                className={inputCls + " font-mono"}
-                required
-              />
+              <input type="number" min={1} value={form.minTerm} onChange={(e) => setForm({ ...form, minTerm: e.target.value })} className={inputCls + " font-mono"} required />
             </FormField>
             <FormField label="Max term (months)" required span={3}>
-              <input
-                type="number"
-                min={1}
-                value={form.maxTerm}
-                onChange={(e) => setForm({ ...form, maxTerm: e.target.value })}
-                className={inputCls + " font-mono"}
-                required
-              />
+              <input type="number" min={1} value={form.maxTerm} onChange={(e) => setForm({ ...form, maxTerm: e.target.value })} className={inputCls + " font-mono"} required />
             </FormField>
             <FormField label="Min principal (KES)" required span={3}>
-              <input
-                type="number"
-                value={form.minPrincipal}
-                onChange={(e) => setForm({ ...form, minPrincipal: e.target.value })}
-                className={inputCls + " font-mono"}
-                required
-              />
+              <input type="number" value={form.minPrincipal} onChange={(e) => setForm({ ...form, minPrincipal: e.target.value })} className={inputCls + " font-mono"} required />
             </FormField>
             <FormField label="Max principal (KES)" span={3}>
-              <input
-                type="number"
-                value={form.maxPrincipal}
-                onChange={(e) => setForm({ ...form, maxPrincipal: e.target.value })}
-                placeholder="optional"
-                className={inputCls + " font-mono"}
-              />
+              <input type="number" value={form.maxPrincipal} onChange={(e) => setForm({ ...form, maxPrincipal: e.target.value })} placeholder="optional" className={inputCls + " font-mono"} />
             </FormField>
             <FormField label="Repayment frequency" span={7}>
-              <div className="flex flex-wrap gap-1.5">
+              <select value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value as Frequency })} className={selectCls}>
                 {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
-                  <button
-                    type="button"
-                    key={f}
-                    onClick={() => setForm({ ...form, frequency: f })}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium",
-                      form.frequency === f
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card border-border",
-                    )}
-                  >
-                    {FREQ_META[f].label}
-                  </button>
+                  <option key={f} value={f}>{FREQ_META[f].label}</option>
                 ))}
-              </div>
+              </select>
             </FormField>
             <FormField label="Interest method" span={5}>
-              <div className="flex gap-1.5">
+              <select value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value as InterestMethod })} className={selectCls + " capitalize"}>
                 {(["flat", "declining_balance"] as InterestMethod[]).map((m) => (
-                  <button
-                    type="button"
-                    key={m}
-                    onClick={() => setForm({ ...form, method: m })}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full border text-[11.5px] font-medium capitalize",
-                      form.method === m
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card border-border",
-                    )}
-                  >
-                    {m.replace("_", " ")}
-                  </button>
+                  <option key={m} value={m}>{m.replace("_", " ")}</option>
                 ))}
-              </div>
+              </select>
             </FormField>
           </FormGrid>
 
           <div className="pt-3 border-t border-border">
-            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">
-              Ledger accounts (auto-posting)
-            </div>
+            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">Ledger accounts (auto-posting)</div>
             <FormGrid>
               <FormField label="Loans receivable (DR on disburse)" span={6}>
-                <select
-                  value={form.principalAcct}
-                  onChange={(e) => setForm({ ...form, principalAcct: e.target.value })}
-                  className={selectCls}
-                >
+                <select value={form.principalAcct} onChange={(e) => setForm({ ...form, principalAcct: e.target.value })} className={selectCls}>
                   <option value="">— default 1100 —</option>
-                  {assetAccts.map((a: any) => (
-                    <option key={a.id} value={a.id}>
-                      {a.code} · {a.name}
-                    </option>
-                  ))}
+                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
                 </select>
               </FormField>
               <FormField label="Cash / bank (CR on disburse)" span={6}>
-                <select
-                  value={form.cashAcct}
-                  onChange={(e) => setForm({ ...form, cashAcct: e.target.value })}
-                  className={selectCls}
-                >
+                <select value={form.cashAcct} onChange={(e) => setForm({ ...form, cashAcct: e.target.value })} className={selectCls}>
                   <option value="">— default 1000 —</option>
-                  {assetAccts.map((a: any) => (
-                    <option key={a.id} value={a.id}>
-                      {a.code} · {a.name}
-                    </option>
-                  ))}
+                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
                 </select>
               </FormField>
               <FormField label="Interest income (CR on repayment)" span={6}>
-                <select
-                  value={form.interestAcct}
-                  onChange={(e) => setForm({ ...form, interestAcct: e.target.value })}
-                  className={selectCls}
-                >
+                <select value={form.interestAcct} onChange={(e) => setForm({ ...form, interestAcct: e.target.value })} className={selectCls}>
                   <option value="">— default 4000 —</option>
-                  {incomeAccts.map((a: any) => (
-                    <option key={a.id} value={a.id}>
-                      {a.code} · {a.name}
-                    </option>
-                  ))}
+                  {incomeAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
                 </select>
               </FormField>
               <FormField label="Fee income (optional)" span={6}>
-                <select
-                  value={form.feeAcct}
-                  onChange={(e) => setForm({ ...form, feeAcct: e.target.value })}
-                  className={selectCls}
-                >
+                <select value={form.feeAcct} onChange={(e) => setForm({ ...form, feeAcct: e.target.value })} className={selectCls}>
                   <option value="">— none —</option>
-                  {incomeAccts.map((a: any) => (
-                    <option key={a.id} value={a.id}>
-                      {a.code} · {a.name}
-                    </option>
-                  ))}
+                  {incomeAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
                 </select>
               </FormField>
             </FormGrid>
           </div>
 
           <FormActions>
-            <button
-              type="button"
-              onClick={() => setMode("list")}
-              className={btnSecondaryCls}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={create.isPending}
-              className={btnPrimaryCls}
-            >
-              {create.isPending ? "Creating…" : "Create product"}
+            <button type="button" onClick={reset} className={btnSecondaryCls}>Cancel</button>
+            <button type="submit" disabled={create.isPending || update.isPending} className={btnPrimaryCls}>
+              {isEdit ? (update.isPending ? "Saving…" : "Save changes") : (create.isPending ? "Creating…" : "Create product")}
             </button>
           </FormActions>
         </form>
@@ -957,59 +881,61 @@ function ProductsTab() {
     );
   }
 
+  const GRID = "1.4fr .55fr .8fr 1fr .8fr .55fr .45fr .4fr";
   return (
     <Card padded={false}>
-      <ListHeader
-        title="Loan products"
-        count={products?.length ?? 0}
-        onNew={() => setMode("create")}
-        newLabel="New product"
-      />
+      <ListHeader title="Loan products" count={products?.length ?? 0} onNew={() => setMode("create")} newLabel="New product" />
       <div
-        className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-y border-border bg-secondary/40"
-        style={{ gridTemplateColumns: "1.4fr .7fr 1fr 1fr .8fr .5fr" }}
+        className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
+        style={{ gridTemplateColumns: GRID }}
       >
         <div>Name</div>
         <div>Rate</div>
         <div>Term</div>
         <div>Principal</div>
         <div>Frequency</div>
+        <div>Method</div>
         <div className="text-right">Status</div>
+        <div className="text-right">Edit</div>
       </div>
       {(products ?? []).map((p: any) => (
         <div
           key={p.id}
-          className="grid items-center text-[12.5px] py-3 px-5 border-b border-row-divider last:border-b-0"
-          style={{ gridTemplateColumns: "1.4fr .7fr 1fr 1fr .8fr .5fr" }}
+          className="grid items-center text-[12px] py-1.5 px-5 border-b border-row-divider last:border-b-0"
+          style={{ gridTemplateColumns: GRID }}
         >
-          <div className="font-semibold flex items-center gap-2">
-            <span
-              className="inline-block w-2.5 h-2.5 rounded-full"
-              style={{ background: p.color ?? "#0f766e" }}
-            />
-            {p.name}
+          <div className="font-medium flex items-center gap-2 truncate" title={p.name}>
+            <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: p.color ?? "#0f766e" }} />
+            <span className="truncate">{p.name}</span>
           </div>
-          <div className="font-mono">{p.annual_rate_pct}%</div>
-          <div className="font-mono text-secondary-foreground">
-            {p.min_term_months}–{p.max_term_months} mo
-          </div>
-          <div className="font-mono text-secondary-foreground">
+          <div className="font-mono text-[11.5px]">{p.annual_rate_pct}%</div>
+          <div className="font-mono text-[11px] text-muted-foreground">{p.min_term_months}–{p.max_term_months} mo</div>
+          <div className="font-mono text-[11px] text-muted-foreground truncate">
             {money(p.min_principal)}–{p.max_principal ? money(p.max_principal) : "∞"}
           </div>
-          <div className="capitalize text-secondary-foreground">
+          <div className="capitalize text-muted-foreground truncate">
             {FREQ_META[p.frequency as Frequency]?.label ?? p.frequency}
+          </div>
+          <div className="capitalize text-muted-foreground text-[11px] truncate">
+            {(p.interest_method ?? "flat").replace("_", " ")}
           </div>
           <div className="text-right">
             <button
               onClick={() => toggle.mutate({ data: { id: p.id, is_active: !p.is_active } })}
               className={cn(
-                "text-[11px] px-2 py-0.5 rounded-full border",
-                p.is_active
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
-                  : "border-muted bg-muted text-muted-foreground",
+                "text-[10px] px-2 py-0.5 rounded-full border",
+                p.is_active ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700" : "border-muted bg-muted text-muted-foreground",
               )}
             >
               {p.is_active ? "Active" : "Off"}
+            </button>
+          </div>
+          <div className="text-right">
+            <button
+              onClick={() => startEdit(p)}
+              className="text-[10.5px] px-2 py-0.5 rounded border border-border hover:border-primary hover:text-primary transition-colors"
+            >
+              Edit
             </button>
           </div>
         </div>
