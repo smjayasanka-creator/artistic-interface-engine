@@ -530,6 +530,39 @@ export const createBranch = createServerFn({ method: "POST" })
     return created;
   });
 
+export const updateBranch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: { id: string; code: string; name: string; region?: string | null; currency?: string; opened_on?: string | null }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          code: z.string().trim().min(1).max(20),
+          name: z.string().trim().min(2).max(80),
+          region: z.string().trim().max(80).nullable().optional().or(z.literal("")),
+          currency: z.string().trim().length(3).optional(),
+          opened_on: z.string().nullable().optional().or(z.literal("")),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can edit branches");
+    const { error } = await supabase
+      .from("branch")
+      .update({
+        code: data.code,
+        name: data.name,
+        region: data.region || null,
+        currency: (data.currency || "KES").toUpperCase(),
+        opened_on: data.opened_on || null,
+      })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
 export const createStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
