@@ -1128,6 +1128,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       frequency: "daily" | "weekly" | "biweekly" | "monthly";
       interest_method?: "flat" | "declining_balance";
       processing_fee_pct?: number;
+      termination_fee?: number;
+      termination_fee_pct?: number;
       color?: string;
       principal_account_id?: string | null;
       cash_account_id?: string | null;
@@ -1146,6 +1148,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
           frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]),
           interest_method: z.enum(["flat", "declining_balance"]).optional(),
           processing_fee_pct: z.number().nonnegative().max(50).optional(),
+          termination_fee: z.number().nonnegative().max(10_000_000).optional(),
+          termination_fee_pct: z.number().nonnegative().max(100).optional(),
           color: z.string().max(20).optional(),
           principal_account_id: z.string().uuid().nullable().optional(),
           cash_account_id: z.string().uuid().nullable().optional(),
@@ -1178,6 +1182,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
         frequency: data.frequency,
         interest_method: data.interest_method ?? "flat",
         processing_fee_pct: data.processing_fee_pct ?? 0,
+        termination_fee: data.termination_fee ?? 0,
+        termination_fee_pct: data.termination_fee_pct ?? 0,
         color: data.color ?? "#0f766e",
         is_active: true,
         principal_account_id: data.principal_account_id ?? null,
@@ -1190,6 +1196,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
     if (error) throw error;
     return created;
   });
+
 
 
 export const toggleLoanProduct = createServerFn({ method: "POST" })
@@ -1221,6 +1228,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       frequency: "daily" | "weekly" | "biweekly" | "monthly";
       interest_method?: "flat" | "declining_balance";
       processing_fee_pct?: number;
+      termination_fee?: number;
+      termination_fee_pct?: number;
       principal_account_id?: string | null;
       cash_account_id?: string | null;
       interest_income_account_id?: string | null;
@@ -1239,6 +1248,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
           frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]),
           interest_method: z.enum(["flat", "declining_balance"]).optional(),
           processing_fee_pct: z.number().nonnegative().max(50).optional(),
+          termination_fee: z.number().nonnegative().max(10_000_000).optional(),
+          termination_fee_pct: z.number().nonnegative().max(100).optional(),
           principal_account_id: z.string().uuid().nullable().optional(),
           cash_account_id: z.string().uuid().nullable().optional(),
           interest_income_account_id: z.string().uuid().nullable().optional(),
@@ -1262,6 +1273,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
         frequency: data.frequency,
         interest_method: data.interest_method ?? "flat",
         processing_fee_pct: data.processing_fee_pct ?? 0,
+        termination_fee: data.termination_fee ?? 0,
+        termination_fee_pct: data.termination_fee_pct ?? 0,
         principal_account_id: data.principal_account_id ?? null,
         cash_account_id: data.cash_account_id ?? null,
         interest_income_account_id: data.interest_income_account_id ?? null,
@@ -1997,4 +2010,248 @@ export const createDebitNote = createServerFn({ method: "POST" })
     }
 
     return { ok: true, reference: ref, entry_id: entry.id };
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FACILITY TERMINATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const getFacilityTerminationQuote = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { loan_id: string }) =>
+    z.object({ loan_id: z.string().uuid() }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: loan } = await supabase
+      .from("loan")
+      .select(
+        "id, principal, status, disbursed_at, client:client_id(id, full_name), product:product_id(id, name, termination_fee, termination_fee_pct)",
+      )
+      .eq("id", data.loan_id)
+      .maybeSingle<any>();
+    if (!loan) throw new Error("Loan not found");
+
+    const { data: outRow } = await supabase
+      .from("v_loan_outstanding")
+      .select("outstanding_principal, principal_repaid")
+      .eq("loan_id", data.loan_id)
+      .maybeSingle<{ outstanding_principal: number | null; principal_repaid: number | null }>();
+
+    const { data: insts } = await supabase
+      .from("loan_installment")
+      .select("interest_due, interest_paid, fee_due, fee_paid, state")
+      .eq("loan_id", data.loan_id);
+
+    const outstanding = Number(outRow?.outstanding_principal ?? loan.principal ?? 0);
+    const interestUnpaid = (insts ?? []).reduce(
+      (s, r: any) =>
+        s + Math.max(0, Number(r.interest_due ?? 0) - Number(r.interest_paid ?? 0)),
+      0,
+    );
+    const feesUnpaid = (insts ?? []).reduce(
+      (s, r: any) => s + Math.max(0, Number(r.fee_due ?? 0) - Number(r.fee_paid ?? 0)),
+      0,
+    );
+    const flatFee = Number(loan.product?.termination_fee ?? 0);
+    const pctFee = (outstanding * Number(loan.product?.termination_fee_pct ?? 0)) / 100;
+    const terminationFee = Math.round((flatFee + pctFee) * 100) / 100;
+    const settlement =
+      Math.round((outstanding + interestUnpaid + feesUnpaid + terminationFee) * 100) / 100;
+
+    return {
+      loan_id: loan.id,
+      status: loan.status,
+      client: loan.client,
+      product: loan.product,
+      principal: Number(loan.principal),
+      outstanding_principal: outstanding,
+      interest_unpaid: Math.round(interestUnpaid * 100) / 100,
+      fees_unpaid: Math.round(feesUnpaid * 100) / 100,
+      termination_fee_flat: flatFee,
+      termination_fee_pct: Number(loan.product?.termination_fee_pct ?? 0),
+      termination_fee: terminationFee,
+      settlement_amount: settlement,
+    };
+  });
+
+export const createFacilityTermination = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      loan_id: string;
+      amount_paid: number;
+      channel?: "cash" | "mpesa" | "bank" | "internal";
+      entry_date?: string;
+      reference?: string;
+      reason?: string;
+    }) =>
+      z
+        .object({
+          loan_id: z.string().uuid(),
+          amount_paid: z.number().nonnegative().max(100_000_000),
+          channel: z.enum(["cash", "mpesa", "bank", "internal"]).optional(),
+          entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+          reference: z.string().trim().max(60).optional(),
+          reason: z.string().trim().max(300).optional(),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: staff } = await supabase
+      .from("staff")
+      .select("id, branch_id")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!staff) throw new Error("No staff profile");
+
+    const { data: loan } = await supabase
+      .from("loan")
+      .select("id, branch_id, product_id, status, principal")
+      .eq("id", data.loan_id)
+      .maybeSingle();
+    if (!loan) throw new Error("Loan not found");
+    if (!["disbursed", "active"].includes(loan.status as string))
+      throw new Error("Only disbursed / active facilities can be terminated");
+
+    // Recompute the termination quote server-side (never trust client math).
+    const { data: product } = await supabase
+      .from("loan_product")
+      .select(
+        "termination_fee, termination_fee_pct, principal_account_id, cash_account_id, interest_income_account_id, fee_income_account_id",
+      )
+      .eq("id", loan.product_id)
+      .maybeSingle<any>();
+
+    const { data: outRow } = await supabase
+      .from("v_loan_outstanding")
+      .select("outstanding_principal")
+      .eq("loan_id", data.loan_id)
+      .maybeSingle<{ outstanding_principal: number | null }>();
+    const { data: insts } = await supabase
+      .from("loan_installment")
+      .select("id, interest_due, interest_paid, fee_due, fee_paid, state, seq")
+      .eq("loan_id", data.loan_id)
+      .order("seq");
+
+    const outstanding = Number(outRow?.outstanding_principal ?? loan.principal ?? 0);
+    const interestUnpaid = (insts ?? []).reduce(
+      (s, r: any) => s + Math.max(0, Number(r.interest_due ?? 0) - Number(r.interest_paid ?? 0)),
+      0,
+    );
+    const feesUnpaid = (insts ?? []).reduce(
+      (s, r: any) => s + Math.max(0, Number(r.fee_due ?? 0) - Number(r.fee_paid ?? 0)),
+      0,
+    );
+    const flatFee = Number(product?.termination_fee ?? 0);
+    const pctFee = (outstanding * Number(product?.termination_fee_pct ?? 0)) / 100;
+    const terminationFee = Math.round((flatFee + pctFee) * 100) / 100;
+    const settlement =
+      Math.round((outstanding + interestUnpaid + feesUnpaid + terminationFee) * 100) / 100;
+
+    // Resolve GL accounts.
+    let cashId = product?.cash_account_id ?? null;
+    let arId = product?.principal_account_id ?? null;
+    let intId = product?.interest_income_account_id ?? null;
+    let feeId = product?.fee_income_account_id ?? intId ?? null;
+    if (!cashId || !arId || !intId || !feeId) {
+      const { data: accts } = await supabase
+        .from("gl_account")
+        .select("id, code")
+        .in("code", ["1000", "1100", "4000", "4100"]);
+      cashId = cashId ?? accts?.find((a) => a.code === "1000")?.id ?? null;
+      arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
+      intId = intId ?? accts?.find((a) => a.code === "4000")?.id ?? null;
+      feeId =
+        feeId ??
+        accts?.find((a) => a.code === "4100")?.id ??
+        accts?.find((a) => a.code === "4000")?.id ??
+        null;
+    }
+    if (!cashId || !arId || !intId || !feeId)
+      throw new Error("Chart of accounts missing — configure cash, receivable, interest & fee income");
+
+    const ref = data.reference?.trim() || "TERM-" + Math.floor(1000 + Math.random() * 9000);
+    const entryDate = (data.entry_date || serverToday()).slice(0, 10);
+    const amount = data.amount_paid;
+
+    const { data: entry, error: eErr } = await supabase
+      .from("journal_entry")
+      .insert({
+        reference: ref,
+        branch_id: loan.branch_id,
+        loan_id: loan.id,
+        posted_by: staff.id,
+        entry_date: entryDate,
+        description: `Facility termination ${ref}${data.reason ? " · " + data.reason : ""}`,
+      })
+      .select()
+      .single();
+    if (eErr) throw eErr;
+
+    // Split the payment across principal, interest, and the termination fee.
+    const payInterest = Math.min(interestUnpaid, Math.max(0, amount));
+    const remainingAfterInt = Math.max(0, amount - payInterest);
+    const payTermFee = Math.min(terminationFee, remainingAfterInt);
+    const remainingAfterFee = Math.max(0, remainingAfterInt - payTermFee);
+    const payPrincipal = Math.min(outstanding, remainingAfterFee);
+
+    const postings: any[] = [{ entry_id: entry.id, account_id: cashId, debit: amount, credit: 0 }];
+    if (payInterest > 0)
+      postings.push({ entry_id: entry.id, account_id: intId, debit: 0, credit: payInterest });
+    if (payTermFee > 0)
+      postings.push({ entry_id: entry.id, account_id: feeId, debit: 0, credit: payTermFee });
+    if (payPrincipal > 0)
+      postings.push({ entry_id: entry.id, account_id: arId, debit: 0, credit: payPrincipal });
+
+    // Balance any rounding gap into the fee-income account.
+    const sumD = postings.reduce((s, p) => s + Number(p.debit || 0), 0);
+    const sumC = postings.reduce((s, p) => s + Number(p.credit || 0), 0);
+    const diff = Math.round((sumD - sumC) * 100) / 100;
+    if (Math.abs(diff) > 0.001) {
+      postings.push({
+        entry_id: entry.id,
+        account_id: feeId,
+        debit: diff < 0 ? -diff : 0,
+        credit: diff > 0 ? diff : 0,
+      });
+    }
+
+    const { error: pErr } = await supabase.from("posting").insert(postings);
+    if (pErr) throw pErr;
+
+    // Record repayment for the reporting layer.
+    await supabase.from("repayment").insert({
+      loan_id: loan.id,
+      amount,
+      channel: data.channel ?? "cash",
+      received_by: staff.id,
+      reference: ref,
+    } as never);
+
+    // Mark all remaining installments waived/paid and close the loan.
+    await supabase
+      .from("loan_installment")
+      .update({ state: "paid" })
+      .eq("loan_id", loan.id)
+      .in("state", ["upcoming", "due", "partial", "overdue"]);
+
+    await supabase
+      .from("loan")
+      .update({ status: "closed", closed_at: serverNow().toISOString() })
+      .eq("id", loan.id);
+
+    return {
+      ok: true,
+      reference: ref,
+      entry_id: entry.id,
+      settlement_amount: settlement,
+      applied: {
+        interest: payInterest,
+        termination_fee: payTermFee,
+        principal: payPrincipal,
+      },
+      shortfall: Math.max(0, Math.round((settlement - amount) * 100) / 100),
+    };
   });

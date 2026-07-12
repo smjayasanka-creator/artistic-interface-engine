@@ -1085,6 +1085,8 @@ export type Database = {
           name: string
           principal_account_id: string | null
           processing_fee_pct: number
+          termination_fee: number
+          termination_fee_pct: number
         }
         Insert: {
           annual_rate_pct: number
@@ -1104,6 +1106,8 @@ export type Database = {
           name: string
           principal_account_id?: string | null
           processing_fee_pct?: number
+          termination_fee?: number
+          termination_fee_pct?: number
         }
         Update: {
           annual_rate_pct?: number
@@ -1123,6 +1127,8 @@ export type Database = {
           name?: string
           principal_account_id?: string | null
           processing_fee_pct?: number
+          termination_fee?: number
+          termination_fee_pct?: number
         }
         Relationships: [
           {

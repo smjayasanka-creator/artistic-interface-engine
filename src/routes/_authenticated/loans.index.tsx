@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, ArrowRight } from "lucide-react";
+import { Plus, FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight } from "lucide-react";
 import { getLoans } from "@/lib/mzizi.functions";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { Card } from "@/components/mzizi/Card";
@@ -32,6 +32,13 @@ const TILES = [
     desc: "Change rental schedule and create a new facility from the settlement balance",
     icon: CalendarClock,
     accent: "from-amber-500/15 to-amber-500/0 text-amber-600",
+  },
+  {
+    to: "/loans/termination",
+    label: "Facility Termination",
+    desc: "Settle the outstanding balance early and close the facility",
+    icon: XCircle,
+    accent: "from-teal-500/15 to-teal-500/0 text-teal-600",
   },
   {
     to: "/loans/transfer",

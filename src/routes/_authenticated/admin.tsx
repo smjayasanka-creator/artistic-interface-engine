@@ -731,6 +731,8 @@ function ProductsTab() {
     frequency: "monthly" as Frequency,
     method: "flat" as InterestMethod,
     processingFee: "0",
+    terminationFee: "0",
+    terminationFeePct: "0",
     principalAcct: "",
     cashAcct: "",
     interestAcct: "",
@@ -791,6 +793,8 @@ function ProductsTab() {
       frequency: (p.frequency as Frequency) ?? "monthly",
       method: (p.interest_method as InterestMethod) ?? "flat",
       processingFee: String(p.processing_fee_pct ?? 0),
+      terminationFee: String(p.termination_fee ?? 0),
+      terminationFeePct: String(p.termination_fee_pct ?? 0),
       principalAcct: p.principal_account_id ?? "",
       cashAcct: p.cash_account_id ?? "",
       interestAcct: p.interest_income_account_id ?? "",
@@ -819,6 +823,8 @@ function ProductsTab() {
       frequency: form.frequency,
       interest_method: form.method,
       processing_fee_pct: Number(form.processingFee || 0),
+      termination_fee: Number(form.terminationFee || 0),
+      termination_fee_pct: Number(form.terminationFeePct || 0),
       principal_account_id: form.principalAcct || null,
       cash_account_id: form.cashAcct || null,
       interest_income_account_id: form.interestAcct || null,
@@ -875,6 +881,12 @@ function ProductsTab() {
                   <option key={m} value={m}>{m.replace("_", " ")}</option>
                 ))}
               </select>
+            </FormField>
+            <FormField label="Termination fee (KES)" span={6} hint="Flat charge on early termination">
+              <input type="number" step="0.01" min={0} value={form.terminationFee} onChange={(e) => setForm({ ...form, terminationFee: e.target.value })} className={inputCls + " font-mono"} />
+            </FormField>
+            <FormField label="Termination fee (%)" span={6} hint="% of outstanding principal charged on termination">
+              <input type="number" step="0.01" min={0} max={100} value={form.terminationFeePct} onChange={(e) => setForm({ ...form, terminationFeePct: e.target.value })} className={inputCls + " font-mono"} />
             </FormField>
           </FormGrid>
 
