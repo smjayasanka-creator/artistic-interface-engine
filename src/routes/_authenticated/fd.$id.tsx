@@ -75,7 +75,7 @@ function FdDetail() {
         toast.success(`Renewed as ${r.new_certificate}`);
         navigate({ to: "/fd/$id", params: { id: r.new_id! } });
       } else {
-        toast.success(`Matured. Payout LKR ${r.settlement?.toLocaleString?.() ?? r.settlement}`);
+        toast.success(`Matured. Payout ${money(r.settlement ?? 0)}`);
       }
       qc.invalidateQueries({ queryKey: ["fd", id] });
     },
