@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/accounts/payments/new")({
   component: NewPaymentPage,
 });
 
-function NewPaymentPage() {
+export function NewPaymentPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
