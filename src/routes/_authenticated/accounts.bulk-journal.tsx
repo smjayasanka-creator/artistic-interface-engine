@@ -212,13 +212,6 @@ function BulkJournalPage() {
       <Link to="/accounts" className="text-xs text-primary hover:underline">
         ← Back to Accounts
       </Link>
-      <div>
-        <h1 className="text-xl font-semibold">Bulk Journal Upload</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Upload an Excel/CSV file with journal lines. Rows sharing the same <code className="font-mono">reference</code> are
-          grouped into one balanced entry.
-        </p>
-      </div>
 
       <Card>
         <CardTitle

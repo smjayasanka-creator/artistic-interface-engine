@@ -39,12 +39,6 @@ function DisbursementPage() {
   return (
     <div className="animate-fadein flex flex-col gap-4">
       <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Disbursement</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Approved loans ready to release. Disbursing posts the schedule and journal entry.
-          </p>
-        </div>
         <div className="text-[11.5px] text-faint flex items-center gap-2">
           {isFetching && <Loader2 size={13} className="animate-spin" />}
           {loans.length} pending

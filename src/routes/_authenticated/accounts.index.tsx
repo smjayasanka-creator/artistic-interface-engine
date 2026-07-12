@@ -30,12 +30,6 @@ const CARDS = [
 function AccountsIndex() {
   return (
     <div className="animate-fadein flex flex-col gap-5">
-      <div>
-        <h1 className="text-xl font-semibold">Accounts</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manage the general ledger — post entries, bulk upload from spreadsheets, and reconcile bank accounts.
-        </p>
-      </div>
       <div className="grid gap-3 md:grid-cols-3">
         {CARDS.map((c) => {
           const Icon = c.icon;

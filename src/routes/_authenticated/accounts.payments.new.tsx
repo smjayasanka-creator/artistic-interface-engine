@@ -69,12 +69,6 @@ export function NewPaymentPage() {
       <Link to="/accounts/payments" className="text-xs text-primary hover:underline">
         ← Back to payments
       </Link>
-      <div>
-        <h1 className="text-xl font-semibold">New payment</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Record a customer repayment. Branch defaults to your assigned branch.
-        </p>
-      </div>
 
       <form
         onSubmit={(e) => {

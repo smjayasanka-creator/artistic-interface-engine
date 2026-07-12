@@ -53,13 +53,6 @@ function SavingsIndex() {
 
   return (
     <div className="animate-fadein flex flex-col gap-5">
-      <div>
-        <h1 className="text-xl font-semibold">Savings</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Member savings — open, service and close accounts. Connects with branch, ATM, CEFT, internet
-          banking and API channels for third-party integration.
-        </p>
-      </div>
 
       <div className="grid gap-3 md:grid-cols-3">
         <Card className="p-3.5">

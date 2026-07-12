@@ -182,13 +182,6 @@ function DebitNotePage() {
         <ArrowLeft size={14} /> Back to Loans
       </Link>
 
-      <div>
-        <h1 className="text-xl font-semibold">Debit note</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Add a charge to a disbursed facility. The amount is debited to the loan receivable and
-          credited to fee income, increasing the customer's outstanding balance.
-        </p>
-      </div>
 
       <form
         onSubmit={(e) => {

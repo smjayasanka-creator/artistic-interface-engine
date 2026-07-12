@@ -78,10 +78,6 @@ function Admin() {
   if (!tab) {
     return (
       <div className="animate-fadein flex flex-col gap-5">
-        <div>
-          <h1 className="text-xl font-semibold">Administration</h1>
-          <p className="text-sm text-muted-foreground mt-1">Workspace configuration, staff & accounting setup.</p>
-        </div>
         <div className="grid gap-3 md:grid-cols-3">
           {SECTIONS.map((s) => {
             const Icon = s.icon;

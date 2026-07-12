@@ -69,12 +69,6 @@ function LoansList() {
 
   return (
     <div className="animate-fadein space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">Loans</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Loan origination, servicing and recovery actions.
-        </p>
-      </div>
 
       <div className="grid gap-3 md:grid-cols-3">
         {TILES.map((t) => {

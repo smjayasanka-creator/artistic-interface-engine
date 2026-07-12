@@ -221,12 +221,6 @@ function NewClientPage() {
   return (
     <div className="animate-fadein flex flex-col gap-4">
       <Link to="/clients" className="text-xs text-primary hover:underline">← Back to clients</Link>
-      <div>
-        <h1 className="text-xl font-semibold">New client · KYC</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Capture full KYC details. All fields marked with <span className="text-destructive">*</span> are required.
-        </p>
-      </div>
 
       <form onSubmit={submit} noValidate className="flex flex-col gap-5">
         <Card className="p-6">
