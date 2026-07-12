@@ -388,10 +388,63 @@ function NewLoan() {
           )}
 
           {tab === "documents" && (
-            <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
-              Document uploads (ID, payslip, collateral photos) will appear here.
+            <div className="flex flex-col gap-3">
+              {!productId ? (
+                <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
+                  Select a product on the Application tab to see its required documents.
+                </div>
+              ) : requiredDocs.length === 0 ? (
+                <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
+                  This product has no required documents configured.
+                </div>
+              ) : (
+                <>
+                  <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
+                    Required documents for {product?.name}
+                  </div>
+                  <div className="border border-border rounded-lg divide-y divide-row-divider">
+                    {requiredDocs.map((doc) => {
+                      const checked = !!checkedDocs[doc];
+                      return (
+                        <label
+                          key={doc}
+                          className="flex items-center gap-3 px-3 py-2.5 text-[12.5px] cursor-pointer hover:bg-secondary/30"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) =>
+                              setCheckedDocs((prev) => ({ ...prev, [doc]: e.target.checked }))
+                            }
+                            className="h-4 w-4 accent-primary"
+                          />
+                          <span className={cn("flex-1", checked && "text-muted-foreground line-through")}>
+                            {doc}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-[10.5px] px-2 py-0.5 rounded-full border",
+                              checked
+                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                                : "border-amber-500/40 bg-amber-500/10 text-amber-700",
+                            )}
+                          >
+                            {checked ? "Provided" : "Missing"}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="text-[12px] text-muted-foreground">
+                    {missingDocs.length === 0
+                      ? "All required documents have been marked as provided."
+                      : `${missingDocs.length} of ${requiredDocs.length} document${requiredDocs.length === 1 ? "" : "s"} still missing.`}
+                  </div>
+                </>
+              )}
             </div>
           )}
+
 
           {tab === "evaluations" && (
             <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
