@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWorkflowsRouteImport } from './routes/_authenticated/workflows'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedSavingsRouteImport } from './routes/_authenticated/savings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlatformAdminRouteImport } from './routes/_authenticated/platform-admin'
 import { Route as AuthenticatedLedgerRouteImport } from './routes/_authenticated/ledger'
@@ -23,6 +24,7 @@ import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedApiRouteImport } from './routes/_authenticated/api'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedTransactionsIndexRouteImport } from './routes/_authenticated/transactions.index'
+import { Route as AuthenticatedSavingsIndexRouteImport } from './routes/_authenticated/savings.index'
 import { Route as AuthenticatedLoansIndexRouteImport } from './routes/_authenticated/loans.index'
 import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenticated/groups.index'
 import { Route as AuthenticatedFdIndexRouteImport } from './routes/_authenticated/fd.index'
@@ -33,6 +35,9 @@ import { Route as AuthenticatedTransactionsPaymentsRouteImport } from './routes/
 import { Route as AuthenticatedTransactionsDisbursementRouteImport } from './routes/_authenticated/transactions.disbursement'
 import { Route as AuthenticatedTransactionsDepositWithdrawalRouteImport } from './routes/_authenticated/transactions.deposit-withdrawal'
 import { Route as AuthenticatedTransactionsDepositReceiptRouteImport } from './routes/_authenticated/transactions.deposit-receipt'
+import { Route as AuthenticatedSavingsPassbookRouteImport } from './routes/_authenticated/savings.passbook'
+import { Route as AuthenticatedSavingsNewRouteImport } from './routes/_authenticated/savings.new'
+import { Route as AuthenticatedSavingsCloseRouteImport } from './routes/_authenticated/savings.close'
 import { Route as AuthenticatedLoansWriteOffRouteImport } from './routes/_authenticated/loans.write-off'
 import { Route as AuthenticatedLoansTransferRouteImport } from './routes/_authenticated/loans.transfer'
 import { Route as AuthenticatedLoansTerminationRouteImport } from './routes/_authenticated/loans.termination'
@@ -87,6 +92,11 @@ const AuthenticatedTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSavingsRoute = AuthenticatedSavingsRouteImport.update({
+  id: '/savings',
+  path: '/savings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -134,6 +144,12 @@ const AuthenticatedTransactionsIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
+const AuthenticatedSavingsIndexRoute =
+  AuthenticatedSavingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSavingsRoute,
   } as any)
 const AuthenticatedLoansIndexRoute = AuthenticatedLoansIndexRouteImport.update({
   id: '/loans/',
@@ -192,6 +208,23 @@ const AuthenticatedTransactionsDepositReceiptRoute =
     id: '/deposit-receipt',
     path: '/deposit-receipt',
     getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
+const AuthenticatedSavingsPassbookRoute =
+  AuthenticatedSavingsPassbookRouteImport.update({
+    id: '/passbook',
+    path: '/passbook',
+    getParentRoute: () => AuthenticatedSavingsRoute,
+  } as any)
+const AuthenticatedSavingsNewRoute = AuthenticatedSavingsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AuthenticatedSavingsRoute,
+} as any)
+const AuthenticatedSavingsCloseRoute =
+  AuthenticatedSavingsCloseRouteImport.update({
+    id: '/close',
+    path: '/close',
+    getParentRoute: () => AuthenticatedSavingsRoute,
   } as any)
 const AuthenticatedLoansWriteOffRoute =
   AuthenticatedLoansWriteOffRouteImport.update({
@@ -363,6 +396,7 @@ export interface FileRoutesByFullPath {
   '/ledger': typeof AuthenticatedLedgerRoute
   '/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/savings': typeof AuthenticatedSavingsRouteWithChildren
   '/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/workflows': typeof AuthenticatedWorkflowsRoute
   '/accounts/bank-reconciliation': typeof AuthenticatedAccountsBankReconciliationRoute
@@ -382,6 +416,9 @@ export interface FileRoutesByFullPath {
   '/loans/termination': typeof AuthenticatedLoansTerminationRoute
   '/loans/transfer': typeof AuthenticatedLoansTransferRoute
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
+  '/savings/close': typeof AuthenticatedSavingsCloseRoute
+  '/savings/new': typeof AuthenticatedSavingsNewRoute
+  '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
   '/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
   '/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -392,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/fd/': typeof AuthenticatedFdIndexRoute
   '/groups/': typeof AuthenticatedGroupsIndexRoute
   '/loans/': typeof AuthenticatedLoansIndexRoute
+  '/savings/': typeof AuthenticatedSavingsIndexRoute
   '/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
@@ -432,6 +470,9 @@ export interface FileRoutesByTo {
   '/loans/termination': typeof AuthenticatedLoansTerminationRoute
   '/loans/transfer': typeof AuthenticatedLoansTransferRoute
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
+  '/savings/close': typeof AuthenticatedSavingsCloseRoute
+  '/savings/new': typeof AuthenticatedSavingsNewRoute
+  '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
   '/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
   '/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -442,6 +483,7 @@ export interface FileRoutesByTo {
   '/fd': typeof AuthenticatedFdIndexRoute
   '/groups': typeof AuthenticatedGroupsIndexRoute
   '/loans': typeof AuthenticatedLoansIndexRoute
+  '/savings': typeof AuthenticatedSavingsIndexRoute
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
@@ -468,6 +510,7 @@ export interface FileRoutesById {
   '/_authenticated/ledger': typeof AuthenticatedLedgerRoute
   '/_authenticated/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/savings': typeof AuthenticatedSavingsRouteWithChildren
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/_authenticated/workflows': typeof AuthenticatedWorkflowsRoute
   '/_authenticated/accounts/bank-reconciliation': typeof AuthenticatedAccountsBankReconciliationRoute
@@ -487,6 +530,9 @@ export interface FileRoutesById {
   '/_authenticated/loans/termination': typeof AuthenticatedLoansTerminationRoute
   '/_authenticated/loans/transfer': typeof AuthenticatedLoansTransferRoute
   '/_authenticated/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
+  '/_authenticated/savings/close': typeof AuthenticatedSavingsCloseRoute
+  '/_authenticated/savings/new': typeof AuthenticatedSavingsNewRoute
+  '/_authenticated/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
   '/_authenticated/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
   '/_authenticated/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/_authenticated/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -497,6 +543,7 @@ export interface FileRoutesById {
   '/_authenticated/fd/': typeof AuthenticatedFdIndexRoute
   '/_authenticated/groups/': typeof AuthenticatedGroupsIndexRoute
   '/_authenticated/loans/': typeof AuthenticatedLoansIndexRoute
+  '/_authenticated/savings/': typeof AuthenticatedSavingsIndexRoute
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/_authenticated/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/_authenticated/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
@@ -523,6 +570,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/platform-admin'
     | '/reports'
+    | '/savings'
     | '/transactions'
     | '/workflows'
     | '/accounts/bank-reconciliation'
@@ -542,6 +590,9 @@ export interface FileRouteTypes {
     | '/loans/termination'
     | '/loans/transfer'
     | '/loans/write-off'
+    | '/savings/close'
+    | '/savings/new'
+    | '/savings/passbook'
     | '/transactions/deposit-receipt'
     | '/transactions/deposit-withdrawal'
     | '/transactions/disbursement'
@@ -552,6 +603,7 @@ export interface FileRouteTypes {
     | '/fd/'
     | '/groups/'
     | '/loans/'
+    | '/savings/'
     | '/transactions/'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
@@ -592,6 +644,9 @@ export interface FileRouteTypes {
     | '/loans/termination'
     | '/loans/transfer'
     | '/loans/write-off'
+    | '/savings/close'
+    | '/savings/new'
+    | '/savings/passbook'
     | '/transactions/deposit-receipt'
     | '/transactions/deposit-withdrawal'
     | '/transactions/disbursement'
@@ -602,6 +657,7 @@ export interface FileRouteTypes {
     | '/fd'
     | '/groups'
     | '/loans'
+    | '/savings'
     | '/transactions'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
@@ -627,6 +683,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ledger'
     | '/_authenticated/platform-admin'
     | '/_authenticated/reports'
+    | '/_authenticated/savings'
     | '/_authenticated/transactions'
     | '/_authenticated/workflows'
     | '/_authenticated/accounts/bank-reconciliation'
@@ -646,6 +703,9 @@ export interface FileRouteTypes {
     | '/_authenticated/loans/termination'
     | '/_authenticated/loans/transfer'
     | '/_authenticated/loans/write-off'
+    | '/_authenticated/savings/close'
+    | '/_authenticated/savings/new'
+    | '/_authenticated/savings/passbook'
     | '/_authenticated/transactions/deposit-receipt'
     | '/_authenticated/transactions/deposit-withdrawal'
     | '/_authenticated/transactions/disbursement'
@@ -656,6 +716,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fd/'
     | '/_authenticated/groups/'
     | '/_authenticated/loans/'
+    | '/_authenticated/savings/'
     | '/_authenticated/transactions/'
     | '/_authenticated/accounts/journal/new'
     | '/_authenticated/accounts/payments/new'
@@ -720,6 +781,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/savings': {
+      id: '/_authenticated/savings'
+      path: '/savings'
+      fullPath: '/savings'
+      preLoaderRoute: typeof AuthenticatedSavingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports': {
       id: '/_authenticated/reports'
       path: '/reports'
@@ -782,6 +850,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/transactions/'
       preLoaderRoute: typeof AuthenticatedTransactionsIndexRouteImport
       parentRoute: typeof AuthenticatedTransactionsRoute
+    }
+    '/_authenticated/savings/': {
+      id: '/_authenticated/savings/'
+      path: '/'
+      fullPath: '/savings/'
+      preLoaderRoute: typeof AuthenticatedSavingsIndexRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
     }
     '/_authenticated/loans/': {
       id: '/_authenticated/loans/'
@@ -852,6 +927,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/transactions/deposit-receipt'
       preLoaderRoute: typeof AuthenticatedTransactionsDepositReceiptRouteImport
       parentRoute: typeof AuthenticatedTransactionsRoute
+    }
+    '/_authenticated/savings/passbook': {
+      id: '/_authenticated/savings/passbook'
+      path: '/passbook'
+      fullPath: '/savings/passbook'
+      preLoaderRoute: typeof AuthenticatedSavingsPassbookRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
+    }
+    '/_authenticated/savings/new': {
+      id: '/_authenticated/savings/new'
+      path: '/new'
+      fullPath: '/savings/new'
+      preLoaderRoute: typeof AuthenticatedSavingsNewRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
+    }
+    '/_authenticated/savings/close': {
+      id: '/_authenticated/savings/close'
+      path: '/close'
+      fullPath: '/savings/close'
+      preLoaderRoute: typeof AuthenticatedSavingsCloseRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
     }
     '/_authenticated/loans/write-off': {
       id: '/_authenticated/loans/write-off'
@@ -1066,6 +1162,23 @@ const AuthenticatedCollectionsRouteWithChildren =
     AuthenticatedCollectionsRouteChildren,
   )
 
+interface AuthenticatedSavingsRouteChildren {
+  AuthenticatedSavingsCloseRoute: typeof AuthenticatedSavingsCloseRoute
+  AuthenticatedSavingsNewRoute: typeof AuthenticatedSavingsNewRoute
+  AuthenticatedSavingsPassbookRoute: typeof AuthenticatedSavingsPassbookRoute
+  AuthenticatedSavingsIndexRoute: typeof AuthenticatedSavingsIndexRoute
+}
+
+const AuthenticatedSavingsRouteChildren: AuthenticatedSavingsRouteChildren = {
+  AuthenticatedSavingsCloseRoute: AuthenticatedSavingsCloseRoute,
+  AuthenticatedSavingsNewRoute: AuthenticatedSavingsNewRoute,
+  AuthenticatedSavingsPassbookRoute: AuthenticatedSavingsPassbookRoute,
+  AuthenticatedSavingsIndexRoute: AuthenticatedSavingsIndexRoute,
+}
+
+const AuthenticatedSavingsRouteWithChildren =
+  AuthenticatedSavingsRoute._addFileChildren(AuthenticatedSavingsRouteChildren)
+
 interface AuthenticatedTransactionsRouteChildren {
   AuthenticatedTransactionsDepositReceiptRoute: typeof AuthenticatedTransactionsDepositReceiptRoute
   AuthenticatedTransactionsDepositWithdrawalRoute: typeof AuthenticatedTransactionsDepositWithdrawalRoute
@@ -1139,6 +1252,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLedgerRoute: typeof AuthenticatedLedgerRoute
   AuthenticatedPlatformAdminRoute: typeof AuthenticatedPlatformAdminRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedSavingsRoute: typeof AuthenticatedSavingsRouteWithChildren
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRouteWithChildren
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
   AuthenticatedAccountsBankReconciliationRoute: typeof AuthenticatedAccountsBankReconciliationRoute
@@ -1173,6 +1287,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLedgerRoute: AuthenticatedLedgerRoute,
   AuthenticatedPlatformAdminRoute: AuthenticatedPlatformAdminRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedSavingsRoute: AuthenticatedSavingsRouteWithChildren,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRouteWithChildren,
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
   AuthenticatedAccountsBankReconciliationRoute:
