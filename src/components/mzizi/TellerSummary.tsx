@@ -1,38 +1,37 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CircleUser, Wallet, ArrowDownCircle, ArrowUpCircle, Vault, Scale } from "lucide-react";
-import { getSession } from "@/lib/mzizi.functions";
+import { CircleUser, Wallet, ArrowDownCircle, ArrowUpCircle, Vault, Scale, Loader2 } from "lucide-react";
+import { getTellerSummary } from "@/lib/mzizi.functions";
 import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type Row = { label: string; value: number; tone?: "in" | "out" | "neutral" };
-
-// Placeholder teller till figures. Wire to real till/cash-drawer data when available.
-const OPENING_BALANCE = 0;
-const VAULT_RECEIVED = 0;
-
-const RECEIPTS: Row[] = [
-  { label: "Loan Repayments", value: 0, tone: "in" },
-  { label: "Deposit Receipts", value: 0, tone: "in" },
-  { label: "Other Payments In", value: 0, tone: "in" },
-];
-
-const PAYMENTS: Row[] = [
-  { label: "Loan Disbursements", value: 0, tone: "out" },
-  { label: "Deposit Withdrawals", value: 0, tone: "out" },
-  { label: "Other Payments Out", value: 0, tone: "out" },
-];
-
 export function TellerSummary() {
-  const sessionFn = useServerFn(getSession);
-  const { data: session } = useQuery({ queryKey: ["session"], queryFn: () => sessionFn() });
+  const fn = useServerFn(getTellerSummary);
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["teller-summary"],
+    queryFn: () => fn(),
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+  });
 
-  const totalReceipts = RECEIPTS.reduce((s, r) => s + r.value, 0);
-  const totalPayments = PAYMENTS.reduce((s, r) => s + r.value, 0);
-  const closing = OPENING_BALANCE + VAULT_RECEIVED + totalReceipts - totalPayments;
+  const opening = Number(data?.opening_balance ?? 0);
+  const vault = Number(data?.cash_from_vault ?? 0);
+  const receipts = [
+    { label: "Loan Repayments", value: Number(data?.receipts.loan_repayments ?? 0) },
+    { label: "Deposit Receipts", value: Number(data?.receipts.deposit_receipts ?? 0) },
+    { label: "Other Payments In", value: Number(data?.receipts.other ?? 0) },
+  ];
+  const payments = [
+    { label: "Loan Disbursements", value: Number(data?.payments.loan_disbursements ?? 0) },
+    { label: "Deposit Withdrawals", value: Number(data?.payments.deposit_withdrawals ?? 0) },
+    { label: "Other Payments Out", value: Number(data?.payments.other ?? 0) },
+  ];
+  const totalReceipts = receipts.reduce((s, r) => s + r.value, 0);
+  const totalPayments = payments.reduce((s, r) => s + r.value, 0);
+  const closing = opening + vault + totalReceipts - totalPayments;
 
-  const tellerName = session?.staff?.full_name ?? "—";
-  const branch = session?.staff?.branch?.name ?? "—";
+  const tellerName = data?.staff?.full_name ?? "—";
+  const branch = (data?.staff as any)?.branch?.name ?? "—";
   const today = new Date().toLocaleDateString("en-KE", {
     weekday: "short",
     day: "numeric",
@@ -48,8 +47,11 @@ export function TellerSummary() {
           <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
             <CircleUser size={20} />
           </div>
-          <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">Teller</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold flex items-center gap-1.5">
+              Teller
+              {(isLoading || isFetching) && <Loader2 size={10} className="animate-spin" />}
+            </div>
             <div className="font-semibold text-[13.5px] truncate">{tellerName}</div>
             <div className="text-[11px] text-muted-foreground truncate">{branch}</div>
           </div>
@@ -57,29 +59,25 @@ export function TellerSummary() {
         <div className="mt-2 text-[10.5px] text-faint">{today}</div>
       </div>
 
-      {/* Cash inflow / setup */}
       <Section title="Till">
-        <Line icon={<Wallet size={13} />} label="Opening Balance" value={OPENING_BALANCE} />
-        <Line icon={<Vault size={13} />} label="Cash from Vault" value={VAULT_RECEIVED} tone="in" />
+        <Line icon={<Wallet size={13} />} label="Opening Balance" value={opening} />
+        <Line icon={<Vault size={13} />} label="Cash from Vault" value={vault} tone="in" />
       </Section>
 
-      {/* Receipts */}
       <Section title="Receipts" icon={<ArrowDownCircle size={12} className="text-emerald-600" />}>
-        {RECEIPTS.map((r) => (
-          <Line key={r.label} label={r.label} value={r.value} tone={r.tone} />
+        {receipts.map((r) => (
+          <Line key={r.label} label={r.label} value={r.value} tone="in" />
         ))}
         <Total label="Total Receipts" value={totalReceipts} tone="in" />
       </Section>
 
-      {/* Payments */}
       <Section title="Payments" icon={<ArrowUpCircle size={12} className="text-rose-600" />}>
-        {PAYMENTS.map((r) => (
-          <Line key={r.label} label={r.label} value={r.value} tone={r.tone} />
+        {payments.map((r) => (
+          <Line key={r.label} label={r.label} value={r.value} tone="out" />
         ))}
         <Total label="Total Payments" value={totalPayments} tone="out" />
       </Section>
 
-      {/* Closing balance */}
       <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 mt-auto">
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-primary font-semibold">
           <Scale size={13} /> Closing Balance
@@ -117,7 +115,13 @@ function Line({
   icon?: React.ReactNode;
 }) {
   const color =
-    tone === "in" ? "text-emerald-600" : tone === "out" ? "text-rose-600" : "text-foreground";
+    value === 0
+      ? "text-muted-foreground"
+      : tone === "in"
+        ? "text-emerald-600"
+        : tone === "out"
+          ? "text-rose-600"
+          : "text-foreground";
   return (
     <div className="flex items-center justify-between gap-2 text-[12px]">
       <span className="flex items-center gap-1.5 text-muted-foreground truncate">
