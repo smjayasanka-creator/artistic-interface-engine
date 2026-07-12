@@ -124,58 +124,26 @@ function BankReconciliationPage() {
   }
 
   function autoMatch() {
+    const S = stmtLines.map((s) => ({ ...s, matchedTo: undefined as string | undefined }));
+    const L = ledgerLines.map((l) => ({ ...l, matchedTo: undefined as string | undefined }));
     let matches = 0;
-    setStmtLines((prevS) => {
-      setLedgerLines((prevL) => {
-        const S = prevS.map((s) => ({ ...s }));
-        const L = prevL.map((l) => ({ ...l }));
-        for (const s of S) {
-          if (s.matchedTo) continue;
-          const cand = L.find(
-            (l) =>
-              !l.matchedTo &&
-              Math.abs(l.debit - s.credit) < 0.01 &&
-              Math.abs(l.credit - s.debit) < 0.01 &&
-              (l.reference === s.reference || l.date === s.date),
-          );
-          if (cand) {
-            s.matchedTo = cand.id;
-            cand.matchedTo = s.id;
-            matches++;
-          }
-        }
-        return L;
-      });
-      return prevS.map((s) => ({ ...s })); // trigger with fresh copy after ledger callback
-    });
-    // Re-run: because setState is async, do it deterministically here:
-    setStmtLines((S0) => {
-      setLedgerLines((L0) => {
-        const S = S0.map((s) => ({ ...s, matchedTo: undefined as string | undefined }));
-        const L = L0.map((l) => ({ ...l, matchedTo: undefined as string | undefined }));
-        let n = 0;
-        for (const s of S) {
-          const cand = L.find(
-            (l) =>
-              !l.matchedTo &&
-              Math.abs(l.debit - s.credit) < 0.01 &&
-              Math.abs(l.credit - s.debit) < 0.01 &&
-              (l.reference === s.reference || l.date === s.date),
-          );
-          if (cand) {
-            s.matchedTo = cand.id;
-            cand.matchedTo = s.id;
-            n++;
-          }
-        }
-        matches = n;
-        // side-effect: also set statement lines
-        queueMicrotask(() => setStmtLines(S));
-        return L;
-      });
-      return S0;
-    });
-    setTimeout(() => toast.success(`Auto-matched ${matches} pair(s)`), 50);
+    for (const s of S) {
+      const cand = L.find(
+        (l) =>
+          !l.matchedTo &&
+          Math.abs(l.debit - s.credit) < 0.01 &&
+          Math.abs(l.credit - s.debit) < 0.01 &&
+          (l.reference === s.reference || l.date === s.date),
+      );
+      if (cand) {
+        s.matchedTo = cand.id;
+        cand.matchedTo = s.id;
+        matches++;
+      }
+    }
+    setStmtLines(S);
+    setLedgerLines(L);
+    toast.success(`Auto-matched ${matches} pair(s)`);
   }
 
   function toggleMatchLedger(ledgerId: string) {
