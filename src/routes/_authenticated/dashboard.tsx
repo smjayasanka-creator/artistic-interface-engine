@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -58,23 +58,18 @@ const TONES: Record<string, KpiTone> = {
 };
 
 function VibrantKpi({
-  tone, label, value, delta, icon: Icon,
+  tone, label, value, delta, icon: Icon, to,
 }: {
   tone: keyof typeof TONES;
   label: string;
   value: string | number;
   delta?: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
+  to?: string;
 }) {
   const t = TONES[tone];
-  return (
-    <div
-      className="relative overflow-hidden rounded-2xl px-4 py-4 text-white"
-      style={{
-        background: `linear-gradient(135deg, ${t.from} 0%, ${t.to} 100%)`,
-        boxShadow: `0 10px 24px -12px ${t.ring}, 0 1px 0 rgba(255,255,255,.15) inset`,
-      }}
-    >
+  const inner = (
+    <>
       <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20" style={{ background: "radial-gradient(circle, #fff 0%, transparent 70%)" }} />
       <div className="relative flex items-center justify-between mb-2">
         <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,.85)" }}>{label}</div>
@@ -88,8 +83,21 @@ function VibrantKpi({
       {delta && (
         <div className="relative text-[11px] font-medium mt-2" style={{ color: "rgba(255,255,255,.9)" }}>{delta}</div>
       )}
-    </div>
+    </>
   );
+  const style = {
+    background: `linear-gradient(135deg, ${t.from} 0%, ${t.to} 100%)`,
+    boxShadow: `0 10px 24px -12px ${t.ring}, 0 1px 0 rgba(255,255,255,.15) inset`,
+  } as const;
+  const cls = "relative overflow-hidden rounded-2xl px-4 py-4 text-white block transition-transform hover:-translate-y-0.5 hover:shadow-lg";
+  if (to) {
+    return (
+      <Link to={to} className={cls} style={style}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={cls} style={style}>{inner}</div>;
 }
 
 function Dashboard() {
@@ -128,11 +136,11 @@ function Dashboard() {
     <div className="flex flex-col gap-5 animate-fadein">
       {/* Vibrant KPIs */}
       <div className="grid grid-cols-5 gap-3.5">
-        <VibrantKpi tone="indigo" label="Active clients" value={String(data.kpis.activeClients)} delta={`+${Math.floor(data.kpis.activeClients / 20 || 1)} this week`} icon={Users} />
-        <VibrantKpi tone="teal"   label="Portfolio outstanding" value={data.kpis.outstanding} delta="Live balance" icon={Wallet} />
-        <VibrantKpi tone="rose"   label="PAR > 30 days" value={data.kpis.par30plus} delta={totalPar > 0 ? `${((data.kpis.par30plus / totalPar) * 100).toFixed(1)}% of book` : "—"} icon={AlertTriangle} />
-        <VibrantKpi tone="amber"  label="Collected today" value={data.kpis.collectedToday} delta="Since midnight" icon={ArrowDownCircle} />
-        <VibrantKpi tone="violet" label="Disbursed / week" value={data.kpis.disbursedWeek} delta="Last 7 days" icon={ArrowUpCircle} />
+        <VibrantKpi tone="indigo" to="/clients" label="Active clients" value={String(data.kpis.activeClients)} delta={`+${Math.floor(data.kpis.activeClients / 20 || 1)} this week`} icon={Users} />
+        <VibrantKpi tone="teal"   to="/loans" label="Portfolio outstanding" value={data.kpis.outstanding} delta="Live balance" icon={Wallet} />
+        <VibrantKpi tone="rose"   to="/collections" label="PAR > 30 days" value={data.kpis.par30plus} delta={totalPar > 0 ? `${((data.kpis.par30plus / totalPar) * 100).toFixed(1)}% of book` : "—"} icon={AlertTriangle} />
+        <VibrantKpi tone="amber"  to="/collections" label="Collected today" value={data.kpis.collectedToday} delta="Since midnight" icon={ArrowDownCircle} />
+        <VibrantKpi tone="violet" to="/transactions" label="Disbursed / week" value={data.kpis.disbursedWeek} delta="Last 7 days" icon={ArrowUpCircle} />
       </div>
 
       {/* PAR + Meetings */}
