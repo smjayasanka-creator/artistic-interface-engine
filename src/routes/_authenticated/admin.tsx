@@ -731,6 +731,8 @@ function ProductsTab() {
     frequency: "monthly" as Frequency,
     method: "flat" as InterestMethod,
     processingFee: "0",
+    terminationFee: "0",
+    terminationFeePct: "0",
     principalAcct: "",
     cashAcct: "",
     interestAcct: "",
