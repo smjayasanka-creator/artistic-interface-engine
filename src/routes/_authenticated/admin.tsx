@@ -136,9 +136,9 @@ function Admin() {
 
 /* ---------------- Company settings (workspace) ---------------- */
 
-const CURRENCIES = ["KES", "UGX", "TZS", "RWF", "USD", "EUR", "GBP"] as const;
-const COUNTRIES = ["Kenya", "Uganda", "Tanzania", "Rwanda", "Burundi", "South Sudan", "Ethiopia", "United States", "United Kingdom"] as const;
-const TIMEZONES = ["Africa/Nairobi", "Africa/Kampala", "Africa/Dar_es_Salaam", "Africa/Kigali", "Africa/Addis_Ababa", "UTC", "Europe/London", "America/New_York"] as const;
+const CURRENCIES = ["KES", "UGX", "TZS", "RWF", "LKR", "USD", "EUR", "GBP"] as const;
+const COUNTRIES = ["Kenya", "Uganda", "Tanzania", "Rwanda", "Burundi", "South Sudan", "Ethiopia", "Sri Lanka", "United States", "United Kingdom"] as const;
+const TIMEZONES = ["Africa/Nairobi", "Africa/Kampala", "Africa/Dar_es_Salaam", "Africa/Kigali", "Africa/Addis_Ababa", "Asia/Colombo", "UTC", "Europe/London", "America/New_York"] as const;
 const FY_MONTHS = [
   [1, "January"], [2, "February"], [3, "March"], [4, "April"],
   [5, "May"], [6, "June"], [7, "July"], [8, "August"],
