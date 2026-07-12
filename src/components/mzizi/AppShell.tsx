@@ -83,7 +83,15 @@ function ShellInner() {
   const { data: dash } = useQuery({ queryKey: ["dashboard"], queryFn: () => dashFn() });
   const companyFn = useServerFn(getCompany);
   const { data: company } = useQuery({ queryKey: ["company"], queryFn: () => companyFn() });
-  useEffect(() => { if (company?.currency) setActiveCurrency(company.currency); }, [company?.currency]);
+  // Sync active currency during render so first paint uses the company currency,
+  // and invalidate cached queries once when it actually changes so re-renders
+  // pick up the new formatting.
+  if (company?.currency && company.currency.toUpperCase() !== getActiveCurrency()) {
+    setActiveCurrency(company.currency);
+  }
+  useEffect(() => {
+    if (company?.currency) qc.invalidateQueries();
+  }, [company?.currency, qc]);
   const approvalsCount = dash?.approvals.length ?? 0;
 
   async function signOut() {
