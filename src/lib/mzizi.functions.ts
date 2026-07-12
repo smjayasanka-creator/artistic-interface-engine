@@ -1279,7 +1279,9 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
           cash_account_id: z.string().uuid().nullable().optional(),
           interest_income_account_id: z.string().uuid().nullable().optional(),
           fee_income_account_id: z.string().uuid().nullable().optional(),
+          required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
         })
+
         .parse(i),
   )
   .handler(async ({ context, data }) => {
