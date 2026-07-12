@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Download, ShieldAlert, ShieldCheck, RotateCcw, Loader2, Sparkles, Zap } from "lucide-react";
+import { Download, ShieldAlert, ShieldCheck, RotateCcw, Loader2, Sparkles, Zap, ChevronDown, ChevronRight, Code2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardTitle } from "@/components/mzizi/Card";
@@ -140,11 +140,12 @@ export function HardeningChecklist() {
   const resetFn = useServerFn(resetHardeningItems);
   const autocheckFn = useServerFn(runHardeningAutocheck);
   const [autoResults, setAutoResults] = useState<AutoCheckResult[] | null>(null);
+  const [openEvidence, setOpenEvidence] = useState<string | null>(null);
 
   const autocheckMutation = useMutation({
     mutationFn: (apply: boolean) => autocheckFn({ data: { apply } }),
     onSuccess: (results) => {
-      setAutoResults(results);
+      setAutoResults(results as AutoCheckResult[]);
       queryClient.invalidateQueries({ queryKey: ["hardening-checklist"] });
     },
   });
@@ -161,6 +162,13 @@ export function HardeningChecklist() {
     }
     return s;
   }, [rows]);
+
+  const autoById = useMemo(() => {
+    const m = new Map<string, AutoCheckResult>();
+    for (const r of autoResults ?? []) m.set(r.item_id, r);
+    return m;
+  }, [autoResults]);
+
 
   const upsertMutation = useMutation({
     mutationFn: (vars: { item_id: string; patch: Partial<Entry> }) =>
@@ -370,10 +378,12 @@ export function HardeningChecklist() {
             <div>
               {tier.items.map((it) => {
                 const entry = state[it.id] ?? { status: "missing" as Status };
+                const auto = autoById.get(it.id);
+                const isOpen = openEvidence === it.id;
                 return (
+                  <div key={it.id} className="border-b border-row-divider last:border-b-0">
                   <div
-                    key={it.id}
-                    className="grid items-center gap-3 px-5 py-3 border-b border-row-divider last:border-b-0"
+                    className="grid items-center gap-3 px-5 py-3"
                     style={{ gridTemplateColumns: "1.6fr 0.9fr 1fr 1.5fr" }}
                   >
                     <div className="flex items-start gap-2 min-w-0">
@@ -385,6 +395,16 @@ export function HardeningChecklist() {
                             <span className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold px-1 py-0.5 rounded bg-primary/10 text-primary border border-primary/30 uppercase tracking-wider">
                               <Zap size={8} /> auto
                             </span>
+                          )}
+                          {auto && (
+                            <button
+                              onClick={() => setOpenEvidence(isOpen ? null : it.id)}
+                              className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded border border-border bg-card text-muted-foreground hover:bg-muted"
+                              title="Show SQL check + matching rows"
+                            >
+                              {isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                              <Code2 size={10} /> evidence ({auto.matches.length})
+                            </button>
                           )}
                         </div>
                         {(entry.note ?? "").startsWith("auto:") && (
@@ -430,6 +450,42 @@ export function HardeningChecklist() {
                       }}
                       className="px-2.5 py-1.5 rounded-md border border-border bg-card text-[12px] outline-none focus:border-primary"
                     />
+                  </div>
+                  {isOpen && auto && (
+                    <div className="px-5 pb-4 pt-1 bg-muted/30 border-t border-row-divider">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Check SQL</div>
+                      <pre className="text-[11px] font-mono bg-card border border-border rounded-md p-2.5 overflow-x-auto whitespace-pre-wrap">{auto.check_sql.trim()}</pre>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-3 mb-1">
+                        Matching rows ({auto.matches.length})
+                      </div>
+                      {auto.matches.length === 0 ? (
+                        <div className="text-[12px] text-muted-foreground italic px-2 py-1.5">No rows matched — nothing detected in the database.</div>
+                      ) : (
+                        <div className="overflow-x-auto border border-border rounded-md bg-card">
+                          <table className="w-full text-[11.5px]">
+                            <thead className="bg-muted/50">
+                              <tr>
+                                {Object.keys(auto.matches[0]).map((k) => (
+                                  <th key={k} className="text-left font-semibold px-2.5 py-1.5 border-b border-border">{k}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {auto.matches.map((row, i) => (
+                                <tr key={i} className="border-b border-row-divider last:border-b-0">
+                                  {Object.keys(auto.matches[0]).map((k) => (
+                                    <td key={k} className="px-2.5 py-1.5 font-mono text-[11px] align-top">
+                                      {row[k] === null || row[k] === undefined ? <span className="text-muted-foreground">null</span> : String(row[k])}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   </div>
                 );
               })}
