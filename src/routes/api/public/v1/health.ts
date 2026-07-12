@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { json } from "@/lib/api-auth.server";
+import { HealthResponse, validateAndSend } from "@/lib/api-schemas.server";
 
 export const Route = createFileRoute("/api/public/v1/health")({
   server: {
     handlers: {
-      GET: async () => json({ status: "ok", service: "mzizi-api", version: "1.0.0", ts: new Date().toISOString() }),
+      GET: async () => validateAndSend(HealthResponse, { status: "ok", time: new Date().toISOString(), version: "v1" }, 200),
     },
   },
 });
