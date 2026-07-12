@@ -1,0 +1,1 @@
+ALTER TABLE public.loan_product ADD COLUMN IF NOT EXISTS required_documents text[] NOT NULL DEFAULT '{}'::text[];
