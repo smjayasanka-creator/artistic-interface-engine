@@ -103,6 +103,11 @@ export const getDashboard = createServerFn({ method: "GET" })
     const { supabase } = context;
     const today = serverToday();
 
+    const weekAgoIso = new Date(Date.now() - 7 * 864e5).toISOString();
+    const startOfDay = serverNow();
+    startOfDay.setHours(0, 0, 0, 0);
+    const startOfDayIso = startOfDay.toISOString();
+
     const [
       { count: activeClients },
       { data: outstanding },
@@ -111,12 +116,14 @@ export const getDashboard = createServerFn({ method: "GET" })
       { data: disbWeek },
       { data: approvals },
       { data: meetings },
+      { data: wfActions },
+      { data: staffRows },
     ] = await Promise.all([
       supabase.from("client").select("id", { count: "exact", head: true }).eq("status", "active"),
       supabase.from("v_loan_outstanding").select("outstanding_principal"),
       supabase.from("v_par_aging").select("bucket, principal_at_risk"),
       supabase.from("repayment").select("amount").gte("received_at", today),
-      supabase.from("loan").select("principal").gte("disbursed_at", new Date(Date.now() - 7 * 864e5).toISOString()),
+      supabase.from("loan").select("principal").gte("disbursed_at", weekAgoIso),
       supabase
         .from("loan")
         .select("id, principal, submitted_at, client:client_id(id, full_name, risk_grade, avatar_color), product:product_id(name)")
@@ -128,6 +135,11 @@ export const getDashboard = createServerFn({ method: "GET" })
         .select("id, name, meeting_day, meeting_place, target_today, color")
         .not("meeting_day", "is", null)
         .limit(4),
+      supabase
+        .from("workflow_action")
+        .select("actor_user_id, decision, acted_at")
+        .gte("acted_at", weekAgoIso),
+      supabase.from("staff").select("id, user_id, full_name, role"),
     ]);
 
     const outstandingTotal = (outstanding ?? []).reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0);
@@ -138,6 +150,29 @@ export const getDashboard = createServerFn({ method: "GET" })
     const collectedToday = (repayToday ?? []).reduce((s, r) => s + Number(r.amount), 0);
     const disbursedWeek = (disbWeek ?? []).reduce((s, r) => s + Number(r.principal), 0);
     const par30plus = parBuckets.filter((b) => b.bucket !== "current" && b.bucket !== "1-30").reduce((s, b) => s + b.amount, 0);
+
+    // Team activity — workflow actions per staff (today + last 7 days)
+    const staffByUser = new Map((staffRows ?? []).map((s: any) => [s.user_id, s]));
+    type TeamRow = { staff_id: string; name: string; role: string; today: number; week: number; approvals: number; declines: number; last_at: string | null };
+    const perStaff = new Map<string, TeamRow>();
+    for (const a of (wfActions ?? []) as any[]) {
+      const s = staffByUser.get(a.actor_user_id) as any;
+      if (!s) continue;
+      const row = perStaff.get(s.id) ?? { staff_id: s.id, name: s.full_name, role: s.role, today: 0, week: 0, approvals: 0, declines: 0, last_at: null };
+      row.week += 1;
+      if (a.acted_at >= startOfDayIso) row.today += 1;
+      if (a.decision === "approve") row.approvals += 1;
+      if (a.decision === "decline") row.declines += 1;
+      if (!row.last_at || a.acted_at > row.last_at) row.last_at = a.acted_at;
+      perStaff.set(s.id, row);
+    }
+    const team = Array.from(perStaff.values()).sort((a, b) => b.week - a.week).slice(0, 6);
+    const teamTotals = {
+      totalToday: (wfActions ?? []).filter((a: any) => a.acted_at >= startOfDayIso).length,
+      totalWeek: (wfActions ?? []).length,
+      activeStaff: perStaff.size,
+      maxWeek: team.reduce((m, r) => Math.max(m, r.week), 0),
+    };
 
     return {
       kpis: {
@@ -150,6 +185,8 @@ export const getDashboard = createServerFn({ method: "GET" })
       par: parBuckets,
       approvals: approvals ?? [],
       meetings: meetings ?? [],
+      team,
+      teamTotals,
     };
   });
 
