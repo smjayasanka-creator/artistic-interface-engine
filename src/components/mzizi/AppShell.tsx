@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { LayoutDashboard, Users, Wallet, HandCoins, Users2, LineChart, BookOpen, Settings, Search, Circle, LogOut, ArrowLeftRight, Banknote, Send, PiggyBank, CalendarClock, FilePlus2 } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, UserCog, Workflow, Settings, ShieldCheck, Search, Circle, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
 import { cn } from "@/lib/utils";
@@ -11,29 +11,27 @@ type NavSection = { section: string; items: NavItem[] };
 type NavEntry = NavItem | NavSection;
 
 const NAV: NavEntry[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/clients", label: "Clients", icon: Users },
-  { to: "/loans", label: "Loans", icon: Wallet },
-  { to: "/collections", label: "Collections", icon: HandCoins },
-  { to: "/groups", label: "Groups", icon: Users2 },
-  { to: "/reports", label: "Reports", icon: LineChart },
-  { to: "/ledger", label: "Ledger", icon: BookOpen },
   {
-    section: "Accounts",
+    section: "Workspace",
     items: [
-      { to: "/accounts/journal", label: "Journal Entries", icon: BookOpen },
-      { to: "/accounts/payments", label: "Payments", icon: HandCoins },
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/transactions", label: "Transaction", icon: ArrowLeftRight },
+      { to: "/clients", label: "Customers", icon: Users },
+      { to: "/loans", label: "Loans", icon: Wallet },
+      { to: "/fd", label: "Deposits", icon: PiggyBank },
+      { to: "/ledger", label: "Accounts", icon: BookOpen },
+      { to: "/reports", label: "Reports", icon: LineChart },
+      { to: "/admin", label: "Employees", icon: UserCog },
+      { to: "/groups", label: "Work flow", icon: Workflow },
+      { to: "/admin", label: "Administration", icon: Settings },
     ],
   },
   {
-    section: "Fixed Deposits",
+    section: "User",
     items: [
-      { to: "/fd", label: "Register", icon: PiggyBank },
-      { to: "/fd/new", label: "New Deposit", icon: FilePlus2 },
-      { to: "/fd/maturity", label: "Maturity Due", icon: CalendarClock },
+      { to: "/admin", label: "Platform Admin Control", icon: ShieldCheck },
     ],
   },
-  { to: "/admin", label: "Administration", icon: Settings },
 ];
 
 function TITLE(pathname: string): { title: string; sub: string } {
