@@ -95,7 +95,7 @@ function OverviewTab({ data }: { data: any }) {
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-4">
         <Card>
-          <CardTitle subtitle="Last 6 months · KES">Disbursement volume</CardTitle>
+          <CardTitle subtitle={`Last 6 months · ${getActiveCurrency()}`}>Disbursement volume</CardTitle>
           <div className="flex items-end gap-3 h-40 mt-3">
             {data.disbursement.map((m: any, i: number) => {
               const isCurrent = i === data.disbursement.length - 1;
