@@ -1,11 +1,17 @@
-import { useMemo } from "react";
-import { Download, ShieldAlert, ShieldCheck, RotateCcw, Loader2 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient, useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { Download, ShieldAlert, ShieldCheck, RotateCcw, Loader2, Sparkles, Zap } from "lucide-react";
+import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { ProgressBar } from "@/components/mzizi/ProgressBar";
 import { cn } from "@/lib/utils";
-import { listHardeningItems, upsertHardeningItem, resetHardeningItems } from "@/lib/hardening.functions";
+import {
+  listHardeningItems,
+  upsertHardeningItem,
+  resetHardeningItems,
+  runHardeningAutocheck,
+  type AutoCheckResult,
+} from "@/lib/hardening.functions";
 
 type Status = "done" | "partial" | "missing";
 
@@ -132,6 +138,16 @@ export function HardeningChecklist() {
   const listFn = useServerFn(listHardeningItems);
   const upsertFn = useServerFn(upsertHardeningItem);
   const resetFn = useServerFn(resetHardeningItems);
+  const autocheckFn = useServerFn(runHardeningAutocheck);
+  const [autoResults, setAutoResults] = useState<AutoCheckResult[] | null>(null);
+
+  const autocheckMutation = useMutation({
+    mutationFn: (apply: boolean) => autocheckFn({ data: { apply } }),
+    onSuccess: (results) => {
+      setAutoResults(results);
+      queryClient.invalidateQueries({ queryKey: ["hardening-checklist"] });
+    },
+  });
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["hardening-checklist"],
@@ -254,24 +270,51 @@ export function HardeningChecklist() {
         </Card>
         <Card className="flex flex-col justify-between">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Actions</div>
-          <div className="flex gap-2 mt-2">
+          <div className="flex flex-col gap-1.5 mt-2">
             <button
-              onClick={exportJson}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-border bg-card text-[12.5px] font-medium hover:bg-muted"
+              onClick={() => autocheckMutation.mutate(true)}
+              disabled={autocheckMutation.isPending}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-primary/40 bg-primary/10 text-primary text-[12.5px] font-semibold hover:bg-primary/15 disabled:opacity-50"
+              title="Inspect the database and auto-mark detectable items"
             >
-              <Download size={13} /> Export
+              {autocheckMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
+              {autocheckMutation.isPending ? "Checking…" : "Run auto-check"}
             </button>
-            <button
-              onClick={resetAll}
-              disabled={resetMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-border bg-card text-[12.5px] font-medium hover:bg-muted disabled:opacity-50"
-              title="Reset all (shared)"
-            >
-              {resetMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
-            </button>
+            <div className="flex gap-1.5">
+              <button
+                onClick={exportJson}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-[11.5px] font-medium hover:bg-muted"
+              >
+                <Download size={12} /> Export
+              </button>
+              <button
+                onClick={resetAll}
+                disabled={resetMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-[11.5px] font-medium hover:bg-muted disabled:opacity-50"
+                title="Reset all (shared)"
+              >
+                {resetMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
+              </button>
+            </div>
           </div>
         </Card>
       </div>
+
+      {autoResults && (
+        <div className="flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+          <Sparkles size={18} className="text-primary mt-0.5" />
+          <div className="text-[13px] flex-1">
+            <div className="font-semibold">Auto-check applied</div>
+            <div className="text-muted-foreground">
+              Inspected {autoResults.length} items from the live database. Detected:{" "}
+              <span className="text-emerald-700 font-semibold">{autoResults.filter((r) => r.status === "done").length} done</span>,{" "}
+              <span className="text-amber-700 font-semibold">{autoResults.filter((r) => r.status === "partial").length} partial</span>,{" "}
+              <span className="text-rose-700 font-semibold">{autoResults.filter((r) => r.status === "missing").length} missing</span>.
+              Non-checkable items (policy, operational, physical) still need manual review.
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLoading && (
         <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
@@ -335,7 +378,21 @@ export function HardeningChecklist() {
                   >
                     <div className="flex items-start gap-2 min-w-0">
                       <span className={cn("mt-1.5 w-1.5 h-1.5 rounded-full flex-none", STATUS_META[entry.status].dot)} />
-                      <div className="text-[13px] leading-snug">{it.label}</div>
+                      <div className="min-w-0">
+                        <div className="text-[13px] leading-snug flex items-center gap-1.5 flex-wrap">
+                          {it.label}
+                          {(entry.note ?? "").startsWith("auto:") && (
+                            <span className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold px-1 py-0.5 rounded bg-primary/10 text-primary border border-primary/30 uppercase tracking-wider">
+                              <Zap size={8} /> auto
+                            </span>
+                          )}
+                        </div>
+                        {(entry.note ?? "").startsWith("auto:") && (
+                          <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+                            {(entry.note ?? "").replace(/^auto:\s*/, "")}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex gap-1">
                       {(["done", "partial", "missing"] as Status[]).map((st) => (

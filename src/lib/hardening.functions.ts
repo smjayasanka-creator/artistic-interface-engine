@@ -57,3 +57,32 @@ export const resetHardeningItems = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export type AutoCheckResult = { item_id: string; status: "done" | "partial" | "missing"; evidence: string };
+
+export const runHardeningAutocheck = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { apply?: boolean } | undefined) =>
+    z.object({ apply: z.boolean().optional() }).parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await assertPlatformAdmin(context.supabase, context.userId);
+    const { data: results, error } = await context.supabase.rpc("hardening_autocheck");
+    if (error) throw new Error(error.message);
+    const list = (results as AutoCheckResult[]) ?? [];
+
+    if (data.apply && list.length > 0) {
+      const rows = list.map((r) => ({
+        item_id: r.item_id,
+        status: r.status,
+        note: `auto: ${r.evidence}`,
+        owner: "system (auto-check)",
+        updated_by: context.userId,
+      }));
+      const { error: upErr } = await context.supabase
+        .from("hardening_checklist_item")
+        .upsert(rows, { onConflict: "item_id" });
+      if (upErr) throw new Error(upErr.message);
+    }
+    return list;
+  });
