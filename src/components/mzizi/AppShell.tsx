@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, UserCog, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, UserCog, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug, Landmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ const NAV: NavEntry[] = [
       { to: "/clients", label: "Customers", icon: Users },
       { to: "/loans", label: "Loans", icon: Wallet },
       { to: "/approvals", label: "Approvals", icon: CheckSquare },
+      { to: "/savings", label: "Savings", icon: Landmark },
       { to: "/fd", label: "Deposits", icon: PiggyBank },
       { to: "/accounts", label: "Accounts", icon: BookOpen },
       { to: "/reports", label: "Reports", icon: LineChart },
@@ -56,6 +57,10 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/transactions/deposit-receipt")) return { title: "Deposit Receipt", sub: "Record money received into a deposit" };
   if (pathname.startsWith("/transactions/deposit-withdrawal")) return { title: "Deposit Withdrawal", sub: "Record money paid out from a deposit" };
   if (pathname.startsWith("/transactions")) return { title: "Transactions", sub: "Money movement across the workspace" };
+  if (pathname.startsWith("/savings/new")) return { title: "New Savings", sub: "Open a savings account" };
+  if (pathname.startsWith("/savings/close")) return { title: "Close Savings Account", sub: "Payout & closure" };
+  if (pathname.startsWith("/savings/passbook")) return { title: "Passbook Stock", sub: "Stock, distribution & serials" };
+  if (pathname.startsWith("/savings")) return { title: "Savings", sub: "Member savings accounts" };
   if (pathname.startsWith("/fd/new")) return { title: "New fixed deposit", sub: "Deposit acceptance" };
   if (pathname.startsWith("/fd/maturity")) return { title: "Maturity due", sub: "Deposits maturing soon" };
   if (pathname.startsWith("/fd")) return { title: "Fixed deposits", sub: "Portfolio & register" };
