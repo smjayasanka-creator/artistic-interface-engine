@@ -251,6 +251,94 @@ function Dashboard() {
         })}
       </Card>
 
+      {/* Work Attendance Progress */}
+      <Card>
+        <CardTitle
+          subtitle="Based on workflow decision activity over the last 7 days"
+          right={
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-700 font-semibold">
+                <CheckCircle2 size={12} /> {teamTotals.attendanceRate ?? 0}% present today
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted text-secondary-foreground font-semibold">
+                <Users size={12} /> {teamTotals.activeStaff}/{teamTotals.totalStaff ?? teamTotals.activeStaff} active this week
+              </span>
+            </div>
+          }
+        >
+          Work attendance progress
+        </CardTitle>
+
+        {(data.attendance ?? []).length === 0 && (
+          <div className="text-center text-faint text-sm py-6">No workflow attendance recorded in the last 7 days.</div>
+        )}
+
+        <div className="grid gap-2">
+          {(data.attendance ?? []).map((s: any) => {
+            const pct = Math.round((s.activeDays / 7) * 100);
+            const tone =
+              pct >= 85 ? { from: "#059669", to: "#10b981", chip: "bg-emerald-500/10 text-emerald-700", label: "Excellent" } :
+              pct >= 55 ? { from: "#4f46e5", to: "#6366f1", chip: "bg-indigo-500/10 text-indigo-700", label: "On track" } :
+              pct >= 25 ? { from: "#d97706", to: "#f59e0b", chip: "bg-amber-500/10 text-amber-800", label: "At risk" } :
+                          { from: "#dc2626", to: "#ef4444", chip: "bg-rose-500/10 text-rose-700", label: "Absent-heavy" };
+            const dayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+            const today = new Date().getDay(); // 0 Sun .. 6 Sat
+            // dayKeys built oldest->newest, aligned with actual weekday of each of the last 7 days
+            return (
+              <div key={s.staff_id} className="py-2.5 border-t border-row-divider first:border-t-0">
+                <div className="flex items-center gap-3">
+                  <Avatar name={s.name} size={30} color={tone.from} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[13px] font-semibold truncate">{s.name}</span>
+                      <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-muted text-secondary-foreground capitalize">{s.role?.replace("_", " ")}</span>
+                      <span className={`text-[10.5px] px-1.5 py-0.5 rounded font-semibold ${tone.chip}`}>{tone.label}</span>
+                      {s.streak >= 2 && (
+                        <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">🔥 {s.streak}-day streak</span>
+                      )}
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-3">
+                      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${Math.max(pct, 4)}%`,
+                            background: `linear-gradient(90deg, ${tone.from} 0%, ${tone.to} 100%)`,
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {(s.days ?? []).map((d: string, i: number) => {
+                          const dayOffset = 6 - i; // 0 = today
+                          const weekday = (today - dayOffset + 7) % 7; // 0=Sun
+                          const isoIdx = (weekday + 6) % 7; // 0=Mon
+                          return (
+                            <div key={i} className="flex flex-col items-center gap-0.5">
+                              <div
+                                className={`w-4 h-4 rounded-[3px] ${d === "1" ? "" : "bg-muted"}`}
+                                style={d === "1" ? { background: `linear-gradient(135deg, ${tone.from}, ${tone.to})` } : undefined}
+                                title={d === "1" ? "Active" : "No activity"}
+                              />
+                              <span className="text-[8.5px] text-faint">{dayLabels[isoIdx]}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 w-24">
+                    <div className="text-[16px] font-semibold text-foreground leading-none font-mono">{pct}%</div>
+                    <div className="text-[10.5px] text-faint mt-1">{s.activeDays}/7 days</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+
+
       {/* Approvals — kept intact */}
       <Card>
         <CardTitle>
