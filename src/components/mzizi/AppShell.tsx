@@ -20,7 +20,7 @@ const NAV: NavEntry[] = [
       { to: "/loans", label: "Loans", icon: Wallet },
       { to: "/approvals", label: "Approvals", icon: CheckSquare },
       { to: "/fd", label: "Deposits", icon: PiggyBank },
-      { to: "/ledger", label: "Accounts", icon: BookOpen },
+      { to: "/accounts", label: "Accounts", icon: BookOpen },
       { to: "/reports", label: "Reports", icon: LineChart },
       { to: "/admin", label: "Employees", icon: UserCog },
       { to: "/workflows", label: "Work flow", icon: Workflow },
