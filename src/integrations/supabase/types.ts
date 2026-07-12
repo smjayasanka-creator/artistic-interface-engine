@@ -1652,6 +1652,8 @@ export type Database = {
         | "premature_closure"
         | "maturity_payout"
         | "renewal"
+        | "deposit_receipt"
+        | "withdrawal"
       installment_state:
         | "upcoming"
         | "due"
@@ -1842,6 +1844,8 @@ export const Constants = {
         "premature_closure",
         "maturity_payout",
         "renewal",
+        "deposit_receipt",
+        "withdrawal",
       ],
       installment_state: [
         "upcoming",

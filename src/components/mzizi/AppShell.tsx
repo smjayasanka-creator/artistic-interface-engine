@@ -49,6 +49,8 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/transactions/repayment")) return { title: "Loan Repayment", sub: "Record customer repayments" };
   if (pathname.startsWith("/transactions/payments")) return { title: "Payments", sub: "Post incoming payments" };
   if (pathname.startsWith("/transactions/disbursement")) return { title: "Disbursement", sub: "Release approved loans" };
+  if (pathname.startsWith("/transactions/deposit-receipt")) return { title: "Deposit Receipt", sub: "Record money received into a deposit" };
+  if (pathname.startsWith("/transactions/deposit-withdrawal")) return { title: "Deposit Withdrawal", sub: "Record money paid out from a deposit" };
   if (pathname.startsWith("/transactions")) return { title: "Transactions", sub: "Money movement across the workspace" };
   if (pathname.startsWith("/fd/new")) return { title: "New fixed deposit", sub: "Deposit acceptance" };
   if (pathname.startsWith("/fd/maturity")) return { title: "Maturity due", sub: "Deposits maturing soon" };

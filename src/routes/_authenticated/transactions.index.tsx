@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { HandCoins, Banknote, Send, ArrowRight } from "lucide-react";
+import { HandCoins, Banknote, Send, ArrowRight, PiggyBank, Wallet } from "lucide-react";
 import { Card } from "@/components/mzizi/Card";
 
 export const Route = createFileRoute("/_authenticated/transactions/")({
@@ -25,7 +25,20 @@ const TILES = [
     icon: Send,
     accent: "from-amber-500/15 to-amber-500/0 text-amber-600",
   },
+  {
+    to: "/transactions/deposit-receipt",
+    label: "Deposit Receipt",
+    icon: PiggyBank,
+    accent: "from-teal-500/15 to-teal-500/0 text-teal-600",
+  },
+  {
+    to: "/transactions/deposit-withdrawal",
+    label: "Deposit Withdrawal",
+    icon: Wallet,
+    accent: "from-rose-500/15 to-rose-500/0 text-rose-600",
+  },
 ] as const;
+
 
 function TransactionsIndex() {
   return (
