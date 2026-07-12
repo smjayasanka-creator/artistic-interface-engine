@@ -10,11 +10,48 @@ export const KESdec = new Intl.NumberFormat("en-KE", {
   minimumFractionDigits: 2,
 });
 
-export function money(v: string | number | null | undefined, decimals = false): string {
+export const LKR = new Intl.NumberFormat("en-LK", {
+  style: "currency",
+  currency: "LKR",
+  maximumFractionDigits: 0,
+});
+
+export const LKRdec = new Intl.NumberFormat("en-LK", {
+  style: "currency",
+  currency: "LKR",
+  minimumFractionDigits: 2,
+});
+
+export type CurrencyCode = "KES" | "LKR";
+
+const FORMATTERS: Record<CurrencyCode, { whole: Intl.NumberFormat; dec: Intl.NumberFormat }> = {
+  KES: { whole: KES, dec: KESdec },
+  LKR: { whole: LKR, dec: LKRdec },
+};
+
+export function money(
+  v: string | number | null | undefined,
+  decimals: boolean | CurrencyCode = false,
+  currency: CurrencyCode = "KES",
+): string {
   if (v === null || v === undefined || v === "") return "—";
   const n = typeof v === "string" ? Number(v) : v;
   if (!Number.isFinite(n)) return "—";
-  return (decimals ? KESdec : KES).format(n);
+  // Backward compat: second arg can be a currency code instead of decimals flag.
+  let dec = false;
+  let cur: CurrencyCode = currency;
+  if (typeof decimals === "string") cur = decimals;
+  else dec = decimals;
+  const fmt = FORMATTERS[cur] ?? FORMATTERS.KES;
+  return (dec ? fmt.dec : fmt.whole).format(n);
+}
+
+export function moneyIn(
+  v: string | number | null | undefined,
+  currency: CurrencyCode,
+  decimals = false,
+): string {
+  return money(v, decimals, currency);
 }
 
 export function initials(name: string): string {
