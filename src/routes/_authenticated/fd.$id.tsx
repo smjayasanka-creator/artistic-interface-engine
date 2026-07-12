@@ -298,7 +298,7 @@ function FdDetail() {
               <tr className="text-left text-faint font-semibold border-b border-border">
                 <th className="py-2 pr-3">Date</th>
                 <th className="py-2 pr-3">Type</th>
-                <th className="py-2 pr-3 text-right">Amount (LKR)</th>
+                <th className="py-2 pr-3 text-right">Amount ({getActiveCurrency()})</th>
                 <th className="py-2 pr-3">Reference</th>
               </tr>
             </thead>
