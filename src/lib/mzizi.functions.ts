@@ -153,25 +153,49 @@ export const getDashboard = createServerFn({ method: "GET" })
 
     // Team activity — workflow actions per staff (today + last 7 days)
     const staffByUser = new Map((staffRows ?? []).map((s: any) => [s.user_id, s]));
-    type TeamRow = { staff_id: string; name: string; role: string; today: number; week: number; approvals: number; declines: number; last_at: string | null };
+    type TeamRow = { staff_id: string; name: string; role: string; today: number; week: number; approvals: number; declines: number; last_at: string | null; activeDays: number; streak: number; days: string[] };
     const perStaff = new Map<string, TeamRow>();
+    const daySetByStaff = new Map<string, Set<string>>();
     for (const a of (wfActions ?? []) as any[]) {
       const s = staffByUser.get(a.actor_user_id) as any;
       if (!s) continue;
-      const row = perStaff.get(s.id) ?? { staff_id: s.id, name: s.full_name, role: s.role, today: 0, week: 0, approvals: 0, declines: 0, last_at: null };
+      const row = perStaff.get(s.id) ?? { staff_id: s.id, name: s.full_name, role: s.role, today: 0, week: 0, approvals: 0, declines: 0, last_at: null, activeDays: 0, streak: 0, days: [] };
       row.week += 1;
       if (a.acted_at >= startOfDayIso) row.today += 1;
       if (a.decision === "approve") row.approvals += 1;
       if (a.decision === "decline") row.declines += 1;
       if (!row.last_at || a.acted_at > row.last_at) row.last_at = a.acted_at;
       perStaff.set(s.id, row);
+      const set = daySetByStaff.get(s.id) ?? new Set<string>();
+      set.add(String(a.acted_at).slice(0, 10));
+      daySetByStaff.set(s.id, set);
+    }
+    const dayKeys: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 86400000);
+      dayKeys.push(d.toISOString().slice(0, 10));
+    }
+    for (const row of perStaff.values()) {
+      const set = daySetByStaff.get(row.staff_id) ?? new Set<string>();
+      row.activeDays = set.size;
+      row.days = dayKeys.map((k) => (set.has(k) ? "1" : "0"));
+      let streak = 0;
+      for (let i = row.days.length - 1; i >= 0; i--) {
+        if (row.days[i] === "1") streak += 1; else break;
+      }
+      row.streak = streak;
     }
     const team = Array.from(perStaff.values()).sort((a, b) => b.week - a.week).slice(0, 6);
+    const attendance = Array.from(perStaff.values()).sort((a, b) => b.activeDays - a.activeDays || b.week - a.week).slice(0, 8);
     const teamTotals = {
       totalToday: (wfActions ?? []).filter((a: any) => a.acted_at >= startOfDayIso).length,
       totalWeek: (wfActions ?? []).length,
       activeStaff: perStaff.size,
       maxWeek: team.reduce((m, r) => Math.max(m, r.week), 0),
+      totalStaff: (staffRows ?? []).length,
+      attendanceRate: (staffRows ?? []).length > 0
+        ? Math.round((Array.from(perStaff.values()).filter((r) => r.today > 0).length / (staffRows ?? []).length) * 100)
+        : 0,
     };
 
     return {
