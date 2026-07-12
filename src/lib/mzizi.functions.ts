@@ -172,7 +172,7 @@ export const getDashboard = createServerFn({ method: "GET" })
     }
     const dayKeys: string[] = [];
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(now.getTime() - i * 86400000);
+      const d = new Date(Date.now() - i * 86400000);
       dayKeys.push(d.toISOString().slice(0, 10));
     }
     for (const row of perStaff.values()) {
