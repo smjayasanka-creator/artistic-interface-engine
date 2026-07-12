@@ -799,6 +799,36 @@ export type Database = {
           },
         ]
       }
+      hardening_checklist_item: {
+        Row: {
+          created_at: string
+          item_id: string
+          note: string | null
+          owner: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          item_id: string
+          note?: string | null
+          owner?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          item_id?: string
+          note?: string | null
+          owner?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       journal_entry: {
         Row: {
           branch_id: string
