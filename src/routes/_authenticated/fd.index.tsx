@@ -8,6 +8,7 @@ import { Card } from "@/components/mzizi/Card";
 import { Kpi } from "@/components/mzizi/Kpi";
 import { btnPrimaryCls, inputCls, selectCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
+import { money, getActiveCurrency } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/fd/")({
   component: FdRegister,
