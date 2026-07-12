@@ -11,22 +11,19 @@ const CARDS = [
     to: "/accounts/journal",
     icon: BookOpen,
     title: "Journal Entry",
-    desc: "Post double-entry transactions to the general ledger. Supports multi-branch posting with balanced debit/credit lines and auto-generated references.",
-    cta: "Open journal",
+    accent: "from-blue-500/15 to-blue-500/0 text-blue-600",
   },
   {
     to: "/accounts/bulk-journal",
     icon: Upload,
     title: "Bulk Journal Upload",
-    desc: "Import many journal entries at once from an Excel/CSV file. Download the sample template, fill it in, and upload — each reference becomes one balanced entry.",
-    cta: "Upload entries",
+    accent: "from-violet-500/15 to-violet-500/0 text-violet-600",
   },
   {
     to: "/accounts/bank-reconciliation",
     icon: Landmark,
     title: "Bank Reconciliation",
-    desc: "Match your bank statement lines against ledger postings for a chosen bank account and period. Flag differences, mark cleared items and export the reconciliation.",
-    cta: "Start reconciliation",
+    accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
   },
 ] as const;
 
@@ -39,25 +36,20 @@ function AccountsIndex() {
           Manage the general ledger — post entries, bulk upload from spreadsheets, and reconcile bank accounts.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid gap-3 md:grid-cols-3">
         {CARDS.map((c) => {
           const Icon = c.icon;
           return (
-            <Link
-              key={c.to}
-              to={c.to}
-              className="group block focus:outline-none focus:ring-2 focus:ring-primary/40 rounded-xl"
-            >
-              <Card className="h-full flex flex-col gap-3 hover:border-primary/50 transition-colors">
+            <Link key={c.to} to={c.to} className="group">
+              <Card className="p-3.5 hover:border-primary/40 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-none">
+                  <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${c.accent}`}>
                     <Icon size={18} />
                   </div>
-                  <div className="font-semibold text-[15px]">{c.title}</div>
-                </div>
-                <p className="text-[12.5px] leading-relaxed text-muted-foreground flex-1">{c.desc}</p>
-                <div className="mt-2 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-primary group-hover:gap-2 transition-all">
-                  {c.cta} <ArrowRight size={13} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-[14px] truncate">{c.title}</div>
+                  </div>
+                  <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </Card>
             </Link>
