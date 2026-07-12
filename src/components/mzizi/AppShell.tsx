@@ -52,6 +52,7 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/fd/new")) return { title: "New fixed deposit", sub: "Deposit acceptance" };
   if (pathname.startsWith("/fd/maturity")) return { title: "Maturity due", sub: "Deposits maturing soon" };
   if (pathname.startsWith("/fd")) return { title: "Fixed deposits", sub: "Portfolio & register" };
+  if (pathname.startsWith("/platform-admin")) return { title: "Platform Admin", sub: "Tenant oversight & subscriptions" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };
   return { title: "Mzizi Core", sub: "" };
 }
