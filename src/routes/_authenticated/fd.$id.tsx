@@ -16,6 +16,7 @@ import {
 import { Card } from "@/components/mzizi/Card";
 import { btnPrimaryCls, btnSecondaryCls, inputCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
+import { money, getActiveCurrency } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/fd/$id")({
   component: FdDetail,
