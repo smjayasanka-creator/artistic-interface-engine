@@ -14,6 +14,7 @@ import {
   getGlAccounts,
   createGlAccount,
   toggleGlAccount,
+  updateGlAccount,
   getCompany,
   updateCompany,
   listTeam,
@@ -1034,7 +1035,8 @@ const SUBCATEGORIES: Record<AccountType, string[]> = {
 };
 
 function AccountsTab() {
-  const [mode, setMode] = useState<Mode>("list");
+  const [mode, setMode] = useState<Mode | "edit">("list");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const listFn = useServerFn(getGlAccounts);
   const { data: accounts } = useQuery({ queryKey: ["gl_accounts"], queryFn: () => listFn() });
   const adminFn = useServerFn(getAdmin);
@@ -1044,7 +1046,16 @@ function AccountsTab() {
   const qc = useQueryClient();
   const createFn = useServerFn(createGlAccount);
   const toggleFn = useServerFn(toggleGlAccount);
+  const updateFn = useServerFn(updateGlAccount);
 
+  const emptyForm = {
+    code: "",
+    name: "",
+    type: "asset" as AccountType,
+    subcategory: SUBCATEGORIES.asset[0],
+    normal_balance: 1 as 1 | -1,
+    branch_ids: [] as string[],
+  };
   const [form, setForm] = useState<{
     code: string;
     name: string;
@@ -1052,28 +1063,28 @@ function AccountsTab() {
     subcategory: string;
     normal_balance: 1 | -1;
     branch_ids: string[]; // empty = all branches
-  }>({
-    code: "",
-    name: "",
-    type: "asset",
-    subcategory: SUBCATEGORIES.asset[0],
-    normal_balance: 1,
-    branch_ids: [],
-  });
+  }>(emptyForm);
+
+  const resetForm = () => setForm(emptyForm);
 
   const create = useMutation({
     mutationFn: createFn,
     onSuccess: () => {
       toast.success("Account created");
       qc.invalidateQueries({ queryKey: ["gl_accounts"] });
-      setForm({
-        code: "",
-        name: "",
-        type: form.type,
-        subcategory: SUBCATEGORIES[form.type][0],
-        normal_balance: form.normal_balance,
-        branch_ids: [],
-      });
+      resetForm();
+      setMode("list");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const update = useMutation({
+    mutationFn: updateFn,
+    onSuccess: () => {
+      toast.success("Account updated");
+      qc.invalidateQueries({ queryKey: ["gl_accounts"] });
+      resetForm();
+      setEditingId(null);
       setMode("list");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -1085,22 +1096,39 @@ function AccountsTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  function startEdit(a: any) {
+    const type = a.type as AccountType;
+    setForm({
+      code: a.code ?? "",
+      name: a.name ?? "",
+      type,
+      subcategory: a.subcategory || SUBCATEGORIES[type][0],
+      normal_balance: (Number(a.normal_balance) === -1 ? -1 : 1) as 1 | -1,
+      branch_ids: Array.isArray(a.branch_ids) ? a.branch_ids : [],
+    });
+    setEditingId(a.id);
+    setMode("edit");
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.code.trim() || !form.name.trim()) {
       toast.error("Code and name required");
       return;
     }
-    create.mutate({
-      data: {
-        code: form.code,
-        name: form.name,
-        type: form.type,
-        normal_balance: form.normal_balance,
-        subcategory: form.subcategory || null,
-        branch_ids: form.branch_ids.length > 0 ? form.branch_ids : null,
-      },
-    });
+    const payload = {
+      code: form.code,
+      name: form.name,
+      type: form.type,
+      normal_balance: form.normal_balance,
+      subcategory: form.subcategory || null,
+      branch_ids: form.branch_ids.length > 0 ? form.branch_ids : null,
+    };
+    if (mode === "edit" && editingId) {
+      update.mutate({ data: { id: editingId, ...payload } });
+    } else {
+      create.mutate({ data: payload });
+    }
   }
 
   const grouped = ACCOUNT_TYPES.map((t) => ({
@@ -1110,10 +1138,11 @@ function AccountsTab() {
 
   const allBranchesSelected = form.branch_ids.length === 0 || form.branch_ids.length === branches.length;
 
-  if (mode === "create") {
+  if (mode === "create" || mode === "edit") {
+    const isEdit = mode === "edit";
     return (
       <Card>
-        <FormHeader title="New account" onBack={() => setMode("list")} />
+        <FormHeader title={isEdit ? "Edit account" : "New account"} onBack={() => { setMode("list"); setEditingId(null); resetForm(); }} />
         <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
           <FormGrid>
             <FormField label="Code" required span={2}>
@@ -1221,11 +1250,13 @@ function AccountsTab() {
             when you pick a type.
           </p>
           <FormActions>
-            <button type="button" onClick={() => setMode("list")} className={btnSecondaryCls}>
+            <button type="button" onClick={() => { setMode("list"); setEditingId(null); resetForm(); }} className={btnSecondaryCls}>
               Cancel
             </button>
-            <button type="submit" disabled={create.isPending} className={btnPrimaryCls}>
-              {create.isPending ? "Creating…" : "Create account"}
+            <button type="submit" disabled={create.isPending || update.isPending} className={btnPrimaryCls}>
+              {isEdit
+                ? (update.isPending ? "Saving…" : "Save changes")
+                : (create.isPending ? "Creating…" : "Create account")}
             </button>
           </FormActions>
         </form>
@@ -1249,7 +1280,7 @@ function AccountsTab() {
       />
       <div
         className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
-        style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr" }}
+        style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr 0.4fr" }}
       >
         <div>Code</div>
         <div>Name</div>
@@ -1258,6 +1289,7 @@ function AccountsTab() {
         <div>Branches</div>
         <div>Normal</div>
         <div className="text-right">Status</div>
+        <div className="text-right">Edit</div>
       </div>
       {sortedAccounts.map((a: any) => {
         const bids: string[] = Array.isArray(a.branch_ids) ? a.branch_ids : [];
@@ -1269,7 +1301,7 @@ function AccountsTab() {
           <div
             key={a.id}
             className="grid items-center text-[12px] py-1.5 px-5 border-b border-row-divider last:border-b-0"
-            style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr" }}
+            style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr 0.4fr" }}
           >
             <div className="font-mono font-medium text-[11.5px]">{a.code}</div>
             <div className="truncate" title={a.name}>{a.name}</div>
@@ -1303,6 +1335,14 @@ function AccountsTab() {
                 )}
               >
                 {a.is_active ? "Active" : "Off"}
+              </button>
+            </div>
+            <div className="text-right">
+              <button
+                onClick={() => startEdit(a)}
+                className="text-[10.5px] px-2 py-0.5 rounded border border-border hover:border-primary hover:text-primary transition-colors"
+              >
+                Edit
               </button>
             </div>
           </div>

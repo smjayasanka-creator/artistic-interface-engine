@@ -1141,6 +1141,49 @@ export const toggleGlAccount = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const updateGlAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      id: string;
+      code: string;
+      name: string;
+      type: "asset" | "liability" | "equity" | "income" | "expense";
+      normal_balance: 1 | -1;
+      subcategory?: string | null;
+      branch_ids?: string[] | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          code: z.string().trim().min(1).max(20),
+          name: z.string().trim().min(2).max(120),
+          type: z.enum(["asset", "liability", "equity", "income", "expense"]),
+          normal_balance: z.union([z.literal(1), z.literal(-1)]),
+          subcategory: z.string().trim().max(80).nullable().optional(),
+          branch_ids: z.array(z.string().uuid()).nullable().optional(),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can modify GL accounts");
+    const { error } = await supabase
+      .from("gl_account")
+      .update({
+        code: data.code,
+        name: data.name,
+        type: data.type,
+        normal_balance: data.normal_balance,
+        subcategory: data.subcategory || null,
+        branch_ids: data.branch_ids && data.branch_ids.length > 0 ? data.branch_ids : null,
+      } as never)
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
 export const getJournalEntries = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
