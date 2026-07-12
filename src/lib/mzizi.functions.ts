@@ -1306,8 +1306,10 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
         cash_account_id: data.cash_account_id ?? null,
         interest_income_account_id: data.interest_income_account_id ?? null,
         fee_income_account_id: data.fee_income_account_id ?? null,
+        required_documents: data.required_documents ?? [],
       } as never)
       .eq("id", data.id);
+
     if (error) throw error;
     return { ok: true };
   });
