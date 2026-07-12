@@ -1,7 +1,6 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { NewPaymentPage } from "./accounts.payments.new";
 
 export const Route = createFileRoute("/_authenticated/transactions/payments")({
-  beforeLoad: () => {
-    throw redirect({ to: "/accounts/payments/new" });
-  },
+  component: NewPaymentPage,
 });
