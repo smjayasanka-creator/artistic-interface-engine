@@ -61,7 +61,7 @@ function FdDetail() {
   const closeM = useMutation({
     mutationFn: (v: { on_date: string; reason?: string }) => closeFn({ data: { id, ...v } }),
     onSuccess: (r) => {
-      toast.success(`Closed. Settlement LKR ${r.settlement.toLocaleString()}`);
+      toast.success(`Closed. Settlement ${money(r.settlement)}`);
       setCloseModal(null);
       setPreview(null);
       qc.invalidateQueries({ queryKey: ["fd", id] });
