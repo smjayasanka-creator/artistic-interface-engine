@@ -17,7 +17,7 @@ import {
   btnPrimaryCls,
   btnSecondaryCls,
 } from "@/components/mzizi/FormGrid";
-import { money } from "@/lib/format";
+import { money, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({ loanId: z.string().optional() });
@@ -246,7 +246,7 @@ function DebitNotePage() {
             </FormField>
 
             <FormField
-              label="Amount (KES)"
+              label={`Amount (${getActiveCurrency()})`}
               required
               span={2}
               error={errors.amount}

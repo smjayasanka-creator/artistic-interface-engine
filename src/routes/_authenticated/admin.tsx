@@ -28,7 +28,7 @@ import {
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
-import { money, shortDate } from "@/lib/format";
+import { money, shortDate, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
 import { FdProductsTab } from "@/components/mzizi/FdProductsTab";
@@ -982,10 +982,10 @@ function ProductsTab() {
             <FormField label="Max term (months)" required span={3}>
               <input type="number" min={1} value={form.maxTerm} onChange={(e) => setForm({ ...form, maxTerm: e.target.value })} className={inputCls + " font-mono"} required />
             </FormField>
-            <FormField label="Min principal (KES)" required span={3}>
+            <FormField label={`Min principal (${getActiveCurrency()})`} required span={3}>
               <input type="number" value={form.minPrincipal} onChange={(e) => setForm({ ...form, minPrincipal: e.target.value })} className={inputCls + " font-mono"} required />
             </FormField>
-            <FormField label="Max principal (KES)" span={3}>
+            <FormField label={`Max principal (${getActiveCurrency()})`} span={3}>
               <input type="number" value={form.maxPrincipal} onChange={(e) => setForm({ ...form, maxPrincipal: e.target.value })} placeholder="optional" className={inputCls + " font-mono"} />
             </FormField>
             <FormField label="Repayment frequency" span={7}>
@@ -1002,7 +1002,7 @@ function ProductsTab() {
                 ))}
               </select>
             </FormField>
-            <FormField label="Termination fee (KES)" span={6} hint="Flat charge on early termination">
+            <FormField label={`Termination fee (${getActiveCurrency()})`} span={6} hint="Flat charge on early termination">
               <input type="number" step="0.01" min={0} value={form.terminationFee} onChange={(e) => setForm({ ...form, terminationFee: e.target.value })} className={inputCls + " font-mono"} />
             </FormField>
             <FormField label="Termination fee (%)" span={6} hint="% of outstanding principal charged on termination">

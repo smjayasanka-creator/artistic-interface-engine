@@ -7,7 +7,7 @@ import { z } from "zod";
 import { getActiveLoansForClient, recordRepayment } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
 import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
-import { money } from "@/lib/format";
+import { money, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({ loanId: z.string().optional() });
@@ -83,7 +83,7 @@ export function RecordRepaymentPage() {
             <FormField label="Received on" required span={2}>
               <input type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} className={inputCls + " font-mono"} />
             </FormField>
-            <FormField label="Amount (KES)" required span={2}>
+            <FormField label={`Amount (${getActiveCurrency()})`} required span={2}>
               <input
                 inputMode="numeric"
                 value={amount}
