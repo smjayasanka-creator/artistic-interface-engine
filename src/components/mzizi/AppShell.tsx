@@ -29,7 +29,7 @@ const NAV: NavEntry[] = [
   {
     section: "User",
     items: [
-      { to: "/admin", label: "Platform Admin Control", icon: ShieldCheck },
+      { to: "/platform-admin", label: "Platform Admin Control", icon: ShieldCheck },
     ],
   },
 ];
