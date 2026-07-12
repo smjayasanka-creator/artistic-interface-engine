@@ -91,12 +91,13 @@ function FdRegister() {
   return (
     <div className="animate-fadein flex flex-col gap-5">
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Kpi label="Portfolio value" value={`LKR ${(summary?.portfolio_value ?? 0).toLocaleString()}`} />
+        <Kpi label="Portfolio value" value={money(summary?.portfolio_value ?? 0)} />
         <Kpi label="Active deposits" value={String(summary?.active_count ?? 0)} />
         <Kpi label="Weighted avg rate" value={`${(summary?.weighted_avg_rate ?? 0).toFixed(3)}%`} />
-        <Kpi label="Interest paid MTD" value={`LKR ${(summary?.interest_paid_mtd ?? 0).toLocaleString()}`} />
-        <Kpi label="Maturing this month" value={`${summary?.maturing_count ?? 0}`} delta={`LKR ${(summary?.maturing_this_month ?? 0).toLocaleString()}`} />
+        <Kpi label="Interest paid MTD" value={money(summary?.interest_paid_mtd ?? 0)} />
+        <Kpi label="Maturing this month" value={`${summary?.maturing_count ?? 0}`} delta={money(summary?.maturing_this_month ?? 0)} />
       </div>
+
 
       <Card>
         <div className="flex flex-wrap items-center gap-2 mb-3">
