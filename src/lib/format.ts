@@ -1,48 +1,73 @@
-export const KES = new Intl.NumberFormat("en-KE", {
-  style: "currency",
-  currency: "KES",
-  maximumFractionDigits: 0,
-});
+export type CurrencyCode = string;
 
-export const KESdec = new Intl.NumberFormat("en-KE", {
-  style: "currency",
-  currency: "KES",
-  minimumFractionDigits: 2,
-});
-
-export const LKR = new Intl.NumberFormat("en-LK", {
-  style: "currency",
-  currency: "LKR",
-  maximumFractionDigits: 0,
-});
-
-export const LKRdec = new Intl.NumberFormat("en-LK", {
-  style: "currency",
-  currency: "LKR",
-  minimumFractionDigits: 2,
-});
-
-export type CurrencyCode = "KES" | "LKR";
-
-const FORMATTERS: Record<CurrencyCode, { whole: Intl.NumberFormat; dec: Intl.NumberFormat }> = {
-  KES: { whole: KES, dec: KESdec },
-  LKR: { whole: LKR, dec: LKRdec },
+// Locale hints for known currencies; unknown codes fall back to en-US.
+const LOCALE_BY_CURRENCY: Record<string, string> = {
+  KES: "en-KE",
+  LKR: "en-LK",
+  USD: "en-US",
+  EUR: "en-IE",
+  GBP: "en-GB",
+  INR: "en-IN",
+  UGX: "en-UG",
+  TZS: "en-TZ",
+  RWF: "en-RW",
+  NGN: "en-NG",
+  ZAR: "en-ZA",
 };
+
+const cache = new Map<string, { whole: Intl.NumberFormat; dec: Intl.NumberFormat }>();
+
+function formattersFor(code: string) {
+  const cur = (code || "KES").toUpperCase();
+  let f = cache.get(cur);
+  if (!f) {
+    const locale = LOCALE_BY_CURRENCY[cur] ?? "en-US";
+    try {
+      f = {
+        whole: new Intl.NumberFormat(locale, { style: "currency", currency: cur, maximumFractionDigits: 0 }),
+        dec: new Intl.NumberFormat(locale, { style: "currency", currency: cur, minimumFractionDigits: 2 }),
+      };
+    } catch {
+      f = {
+        whole: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }),
+        dec: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }),
+      };
+    }
+    cache.set(cur, f);
+  }
+  return f;
+}
+
+// Active currency defaults to KES; set by CompanyCurrencyProvider at runtime.
+let ACTIVE_CURRENCY: string = "KES";
+export function setActiveCurrency(code: string | null | undefined) {
+  if (!code) return;
+  ACTIVE_CURRENCY = code.toUpperCase();
+}
+export function getActiveCurrency(): string {
+  return ACTIVE_CURRENCY;
+}
+
+// Kept for backward-compat imports; these reflect the active currency lazily.
+export const KES = formattersFor("KES").whole;
+export const KESdec = formattersFor("KES").dec;
+export const LKR = formattersFor("LKR").whole;
+export const LKRdec = formattersFor("LKR").dec;
 
 export function money(
   v: string | number | null | undefined,
   decimals: boolean | CurrencyCode = false,
-  currency: CurrencyCode = "KES",
+  currency?: CurrencyCode,
 ): string {
   if (v === null || v === undefined || v === "") return "—";
   const n = typeof v === "string" ? Number(v) : v;
   if (!Number.isFinite(n)) return "—";
   // Backward compat: second arg can be a currency code instead of decimals flag.
   let dec = false;
-  let cur: CurrencyCode = currency;
+  let cur: string = currency ?? ACTIVE_CURRENCY;
   if (typeof decimals === "string") cur = decimals;
   else dec = decimals;
-  const fmt = FORMATTERS[cur] ?? FORMATTERS.KES;
+  const fmt = formattersFor(cur);
   return (dec ? fmt.dec : fmt.whole).format(n);
 }
 
