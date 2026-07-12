@@ -378,7 +378,21 @@ export function HardeningChecklist() {
                   >
                     <div className="flex items-start gap-2 min-w-0">
                       <span className={cn("mt-1.5 w-1.5 h-1.5 rounded-full flex-none", STATUS_META[entry.status].dot)} />
-                      <div className="text-[13px] leading-snug">{it.label}</div>
+                      <div className="min-w-0">
+                        <div className="text-[13px] leading-snug flex items-center gap-1.5 flex-wrap">
+                          {it.label}
+                          {(entry.note ?? "").startsWith("auto:") && (
+                            <span className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold px-1 py-0.5 rounded bg-primary/10 text-primary border border-primary/30 uppercase tracking-wider">
+                              <Zap size={8} /> auto
+                            </span>
+                          )}
+                        </div>
+                        {(entry.note ?? "").startsWith("auto:") && (
+                          <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+                            {(entry.note ?? "").replace(/^auto:\s*/, "")}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex gap-1">
                       {(["done", "partial", "missing"] as Status[]).map((st) => (
