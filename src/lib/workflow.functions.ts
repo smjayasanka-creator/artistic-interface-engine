@@ -176,6 +176,7 @@ export const startWorkflow = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
     const { data: cid } = await supabase.rpc("current_company_id");
     const companyId = cid as string | null;
     if (!companyId) throw new Error("No active company");
