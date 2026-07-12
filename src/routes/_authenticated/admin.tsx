@@ -129,6 +129,8 @@ function Admin() {
       {tab === "products" && <ProductsTab />}
       {tab === "fd_products" && <FdProductsTab />}
       {tab === "accounts" && <AccountsTab />}
+      {tab === "security_types" && <SecurityTypesTab />}
+      {tab === "delegation" && <DelegationAuthorityTab />}
       {tab === "time_travel" && <TimeTravelTab />}
     </div>
   );
