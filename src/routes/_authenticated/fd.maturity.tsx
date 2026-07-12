@@ -7,6 +7,7 @@ import { listMaturingDeposits, processMaturity } from "@/lib/fd.functions";
 import { Card } from "@/components/mzizi/Card";
 import { btnPrimaryCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
+import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/fd/maturity")({
   component: MaturityDue,
@@ -22,7 +23,7 @@ function MaturityDue() {
   const matureM = useMutation({
     mutationFn: (id: string) => matureFn({ data: { id } }),
     onSuccess: (r) => {
-      toast.success(r.action === "renewed" ? `Renewed as ${r.new_certificate}` : `Payout LKR ${r.settlement?.toLocaleString()}`);
+      toast.success(r.action === "renewed" ? `Renewed as ${r.new_certificate}` : `Payout ${money(r.settlement ?? 0)}`);
       qc.invalidateQueries({ queryKey: ["fd-maturity"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -67,7 +68,7 @@ function MaturityDue() {
                 </td>
                 <td className="py-2 pr-3">{d.client?.full_name}</td>
                 <td className="py-2 pr-3">{d.product?.name}</td>
-                <td className="py-2 pr-3 text-right font-mono">{Number(d.principal).toLocaleString()}</td>
+                <td className="py-2 pr-3 text-right font-mono">{money(Number(d.principal))}</td>
                 <td className="py-2 pr-3">{d.maturity_date}</td>
                 <td className="py-2 pr-3 capitalize">{d.maturity_instruction.replace(/_/g, " ")}</td>
                 <td className="py-2 pr-3 text-right">

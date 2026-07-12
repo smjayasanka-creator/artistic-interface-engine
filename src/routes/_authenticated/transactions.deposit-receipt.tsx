@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { listActiveDeposits, recordDepositReceipt } from "@/lib/fd.functions";
 import { Card } from "@/components/mzizi/Card";
 import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
-import { money } from "@/lib/format";
+import { money, getActiveCurrency } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/transactions/deposit-receipt")({
   component: DepositReceiptPage,
@@ -74,7 +74,7 @@ function DepositReceiptPage() {
             <FormField label="Date" required span={2}>
               <input type="date" value={txnDate} onChange={(e) => setTxnDate(e.target.value)} className={`${inputCls} font-mono`} />
             </FormField>
-            <FormField label="Amount (KES)" required span={2}>
+            <FormField label={`Amount (${getActiveCurrency()})`} required span={2}>
               <input
                 inputMode="numeric"
                 value={amount}

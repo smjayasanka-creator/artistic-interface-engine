@@ -16,6 +16,7 @@ import {
 import { Card } from "@/components/mzizi/Card";
 import { btnPrimaryCls, btnSecondaryCls, inputCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
+import { money, getActiveCurrency } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/fd/$id")({
   component: FdDetail,
@@ -60,7 +61,7 @@ function FdDetail() {
   const closeM = useMutation({
     mutationFn: (v: { on_date: string; reason?: string }) => closeFn({ data: { id, ...v } }),
     onSuccess: (r) => {
-      toast.success(`Closed. Settlement LKR ${r.settlement.toLocaleString()}`);
+      toast.success(`Closed. Settlement ${money(r.settlement)}`);
       setCloseModal(null);
       setPreview(null);
       qc.invalidateQueries({ queryKey: ["fd", id] });
@@ -74,7 +75,7 @@ function FdDetail() {
         toast.success(`Renewed as ${r.new_certificate}`);
         navigate({ to: "/fd/$id", params: { id: r.new_id! } });
       } else {
-        toast.success(`Matured. Payout LKR ${r.settlement?.toLocaleString?.() ?? r.settlement}`);
+        toast.success(`Matured. Payout ${money(r.settlement ?? 0)}`);
       }
       qc.invalidateQueries({ queryKey: ["fd", id] });
     },
@@ -145,7 +146,7 @@ function FdDetail() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 text-[13px]">
-          <Info label="Principal" value={`LKR ${Number(fd.principal).toLocaleString()}`} />
+          <Info label="Principal" value={money(Number(fd.principal))} />
           <Info label="Rate" value={`${Number(fd.rate_at_booking).toFixed(3)}%`} />
           <Info label="Tenure" value={`${fd.tenure_months} months`} />
           <Info label="Payout" value={fd.payout_option.replace("_", " ")} />
@@ -210,9 +211,9 @@ function FdDetail() {
               <tr className="text-left text-faint font-semibold border-b border-border">
                 <th className="py-2 pr-3">#</th>
                 <th className="py-2 pr-3">Due date</th>
-                <th className="py-2 pr-3 text-right">Gross (LKR)</th>
-                <th className="py-2 pr-3 text-right">WHT (LKR)</th>
-                <th className="py-2 pr-3 text-right">Net (LKR)</th>
+                <th className="py-2 pr-3 text-right">Gross ({getActiveCurrency()})</th>
+                <th className="py-2 pr-3 text-right">WHT ({getActiveCurrency()})</th>
+                <th className="py-2 pr-3 text-right">Net ({getActiveCurrency()})</th>
                 <th className="py-2 pr-3">Status</th>
               </tr>
             </thead>
@@ -221,9 +222,9 @@ function FdDetail() {
                 <tr key={r.id} className="border-b border-border/50">
                   <td className="py-1.5 pr-3">{r.seq}</td>
                   <td className="py-1.5 pr-3">{r.due_date}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(r.gross_interest).toLocaleString()}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(r.wht_amount).toLocaleString()}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(r.net_interest).toLocaleString()}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(r.gross_interest), true)}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(r.wht_amount), true)}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(r.net_interest), true)}</td>
                   <td className="py-1.5 pr-3">
                     {r.paid ? (
                       <span className="text-emerald-600">Paid {r.paid_date}</span>
@@ -297,7 +298,7 @@ function FdDetail() {
               <tr className="text-left text-faint font-semibold border-b border-border">
                 <th className="py-2 pr-3">Date</th>
                 <th className="py-2 pr-3">Type</th>
-                <th className="py-2 pr-3 text-right">Amount (LKR)</th>
+                <th className="py-2 pr-3 text-right">Amount ({getActiveCurrency()})</th>
                 <th className="py-2 pr-3">Reference</th>
               </tr>
             </thead>
@@ -306,7 +307,7 @@ function FdDetail() {
                 <tr key={t.id} className="border-b border-border/50">
                   <td className="py-1.5 pr-3">{t.txn_date}</td>
                   <td className="py-1.5 pr-3 capitalize">{t.type.replace(/_/g, " ")}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(t.amount).toLocaleString()}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(t.amount), true)}</td>
                   <td className="py-1.5 pr-3 text-muted-foreground">{t.reference ?? "—"}</td>
                 </tr>
               ))}
@@ -351,12 +352,12 @@ function FdDetail() {
                   <Row k="Period held" v={`${preview.completeMonths}m ${preview.trailingDays}d`} />
                   <Row k="Published rate for period" v={`${preview.publishedRate.toFixed(3)}%`} />
                   <Row k="Applicable rate (after penalty)" v={`${preview.applicableRate.toFixed(3)}%`} />
-                  <Row k="Interest entitled (gross)" v={`LKR ${preview.grossEntitled.toLocaleString()}`} />
-                  <Row k="WHT" v={`LKR ${preview.whtEntitled.toLocaleString()}`} />
-                  <Row k="Interest entitled (net)" v={`LKR ${preview.netEntitled.toLocaleString()}`} />
-                  <Row k="Already paid (net)" v={`LKR ${preview.alreadyPaidNet.toLocaleString()}`} />
-                  <Row k="Excess to recover from principal" v={`LKR ${preview.excessPaid.toLocaleString()}`} />
-                  <Row k="Settlement amount" v={`LKR ${preview.settlement.toLocaleString()}`} strong />
+                  <Row k="Interest entitled (gross)" v={money(preview.grossEntitled, true)} />
+                  <Row k="WHT" v={money(preview.whtEntitled, true)} />
+                  <Row k="Interest entitled (net)" v={money(preview.netEntitled, true)} />
+                  <Row k="Already paid (net)" v={money(preview.alreadyPaidNet, true)} />
+                  <Row k="Excess to recover from principal" v={money(preview.excessPaid, true)} />
+                  <Row k="Settlement amount" v={money(preview.settlement, true)} strong />
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-2 border-t border-border">

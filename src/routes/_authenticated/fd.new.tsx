@@ -9,6 +9,7 @@ import { getClients, listGlAccounts } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
 import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
 import { addMonths } from "@/lib/fd-schedule";
+import { money, getActiveCurrency } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/fd/new")({
   component: NewFd,
@@ -161,7 +162,7 @@ function NewFd() {
             <input className={inputCls + " bg-muted/40 font-mono"} value={rate == null ? "—" : rate.toFixed(3)} readOnly />
           </FormField>
 
-          <FormField label="Principal (LKR)" required span={4}>
+          <FormField label={`Principal (${getActiveCurrency()})`} required span={4}>
             <input
               type="number"
               step="0.01"
@@ -171,7 +172,7 @@ function NewFd() {
             />
             {product && (
               <span className="text-[11px] text-muted-foreground mt-1">
-                Min {Number(product.min_amount).toLocaleString()} · Max {product.max_amount == null ? "—" : Number(product.max_amount).toLocaleString()}
+                Min {money(Number(product.min_amount))} · Max {product.max_amount == null ? "—" : money(Number(product.max_amount))}
               </span>
             )}
           </FormField>

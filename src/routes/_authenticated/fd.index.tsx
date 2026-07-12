@@ -8,6 +8,7 @@ import { Card } from "@/components/mzizi/Card";
 import { Kpi } from "@/components/mzizi/Kpi";
 import { btnPrimaryCls, inputCls, selectCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
+import { money, getActiveCurrency } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/fd/")({
   component: FdRegister,
@@ -90,12 +91,13 @@ function FdRegister() {
   return (
     <div className="animate-fadein flex flex-col gap-5">
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Kpi label="Portfolio value" value={`LKR ${(summary?.portfolio_value ?? 0).toLocaleString()}`} />
+        <Kpi label="Portfolio value" value={money(summary?.portfolio_value ?? 0)} />
         <Kpi label="Active deposits" value={String(summary?.active_count ?? 0)} />
         <Kpi label="Weighted avg rate" value={`${(summary?.weighted_avg_rate ?? 0).toFixed(3)}%`} />
-        <Kpi label="Interest paid MTD" value={`LKR ${(summary?.interest_paid_mtd ?? 0).toLocaleString()}`} />
-        <Kpi label="Maturing this month" value={`${summary?.maturing_count ?? 0}`} delta={`LKR ${(summary?.maturing_this_month ?? 0).toLocaleString()}`} />
+        <Kpi label="Interest paid MTD" value={money(summary?.interest_paid_mtd ?? 0)} />
+        <Kpi label="Maturing this month" value={`${summary?.maturing_count ?? 0}`} delta={money(summary?.maturing_this_month ?? 0)} />
       </div>
+
 
       <Card>
         <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -135,7 +137,7 @@ function FdRegister() {
                 <th className="py-2 pr-3">Certificate</th>
                 <th className="py-2 pr-3">Client</th>
                 <th className="py-2 pr-3">Product</th>
-                <th className="py-2 pr-3 text-right">Principal (LKR)</th>
+                <th className="py-2 pr-3 text-right">Principal ({getActiveCurrency()})</th>
                 <th className="py-2 pr-3 text-right">Rate %</th>
                 <th className="py-2 pr-3">Tenure</th>
                 <th className="py-2 pr-3">Payout</th>
@@ -153,7 +155,7 @@ function FdRegister() {
                   </td>
                   <td className="py-2 pr-3">{d.client?.full_name ?? "—"}</td>
                   <td className="py-2 pr-3">{d.product?.name ?? "—"}</td>
-                  <td className="py-2 pr-3 text-right font-mono">{Number(d.principal).toLocaleString()}</td>
+                  <td className="py-2 pr-3 text-right font-mono">{money(Number(d.principal))}</td>
                   <td className="py-2 pr-3 text-right font-mono">{Number(d.rate_at_booking).toFixed(3)}</td>
                   <td className="py-2 pr-3">{d.tenure_months}m</td>
                   <td className="py-2 pr-3 capitalize">{d.payout_option.replace("_", " ")}</td>

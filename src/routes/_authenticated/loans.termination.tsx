@@ -21,7 +21,7 @@ import {
   btnPrimaryCls,
   btnSecondaryCls,
 } from "@/components/mzizi/FormGrid";
-import { money } from "@/lib/format";
+import { money, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({ loanId: z.string().optional() });
@@ -250,7 +250,7 @@ function TerminationPage() {
             </FormField>
 
             <FormField
-              label="Amount paid (KES)"
+              label={`Amount paid (${getActiveCurrency()})`}
               required
               span={6}
               error={errors.amount_paid}

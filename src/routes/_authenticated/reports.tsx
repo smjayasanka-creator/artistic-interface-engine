@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { getReports, getFinancials } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
-import { money } from "@/lib/format";
+import { money, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/reports")({
@@ -95,7 +95,7 @@ function OverviewTab({ data }: { data: any }) {
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-4">
         <Card>
-          <CardTitle subtitle="Last 6 months · KES">Disbursement volume</CardTitle>
+          <CardTitle subtitle={`Last 6 months · ${getActiveCurrency()}`}>Disbursement volume</CardTitle>
           <div className="flex items-end gap-3 h-40 mt-3">
             {data.disbursement.map((m: any, i: number) => {
               const isCurrent = i === data.disbursement.length - 1;
@@ -109,7 +109,7 @@ function OverviewTab({ data }: { data: any }) {
           </div>
         </Card>
         <Card>
-          <CardTitle subtitle="Principal at risk · KES">PAR trend</CardTitle>
+          <CardTitle subtitle={`Principal at risk · ${getActiveCurrency()}`}>PAR trend</CardTitle>
           <div className="flex items-end gap-3 h-40 mt-3">
             {data.par.map((p: any) => (
               <div key={p.label} className="flex-1 flex flex-col items-center gap-2">
@@ -167,7 +167,7 @@ function SectionHeader({ label }: { label: string }) {
     >
       <div>Code</div>
       <div>{label}</div>
-      <div className="text-right">Amount (KES)</div>
+      <div className="text-right">Amount ({getActiveCurrency()})</div>
     </div>
   );
 }
