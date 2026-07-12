@@ -95,12 +95,6 @@ function NewJournalEntryPage() {
       <Link to="/accounts/journal" className="text-xs text-primary hover:underline">
         ← Back to journal entries
       </Link>
-      <div>
-        <h1 className="text-xl font-semibold">New journal entry</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Post a balanced entry. Each line must be either a debit or a credit.
-        </p>
-      </div>
 
       <form
         onSubmit={(e) => {

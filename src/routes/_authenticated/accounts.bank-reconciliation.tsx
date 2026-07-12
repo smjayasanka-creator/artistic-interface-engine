@@ -226,12 +226,6 @@ function BankReconciliationPage() {
       <Link to="/accounts" className="text-xs text-primary hover:underline">
         ← Back to Accounts
       </Link>
-      <div>
-        <h1 className="text-xl font-semibold">Bank Reconciliation</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Match your bank statement lines against ledger postings for a chosen bank/cash account and period.
-        </p>
-      </div>
 
       <Card>
         <CardTitle subtitle="Choose the ledger account and date range, then load ledger postings and upload the bank statement.">

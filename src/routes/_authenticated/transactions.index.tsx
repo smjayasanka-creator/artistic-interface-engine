@@ -43,12 +43,6 @@ const TILES = [
 function TransactionsIndex() {
   return (
     <div className="animate-fadein flex flex-col gap-5">
-      <div>
-        <h1 className="text-xl font-semibold">Transactions</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Post money-movement transactions. Every entry is captured against your assigned branch.
-        </p>
-      </div>
       <div className="grid gap-3 md:grid-cols-3">
         {TILES.map((t) => {
           const Icon = t.icon;

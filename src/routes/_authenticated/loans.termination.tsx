@@ -152,13 +152,6 @@ function TerminationPage() {
         <ArrowLeft size={14} /> Back to Loans
       </Link>
 
-      <div>
-        <h1 className="text-xl font-semibold">Facility termination</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Early-close a facility. The termination fee is taken from the product settings and added
-          to the outstanding balance to compute the settlement amount.
-        </p>
-      </div>
 
       <form
         onSubmit={(e) => {

@@ -45,10 +45,6 @@ function DepositWithdrawalPage() {
   return (
     <div className="animate-fadein flex flex-col gap-4">
       <Link to="/transactions" className="text-xs text-primary hover:underline">← Back to transactions</Link>
-      <div>
-        <h1 className="text-xl font-semibold">Deposit Withdrawal</h1>
-        <p className="text-sm text-muted-foreground mt-1">Record a withdrawal against an active fixed deposit.</p>
-      </div>
 
       <form
         onSubmit={(e) => {
