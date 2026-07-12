@@ -163,6 +163,13 @@ export function HardeningChecklist() {
     return s;
   }, [rows]);
 
+  const autoById = useMemo(() => {
+    const m = new Map<string, AutoCheckResult>();
+    for (const r of autoResults ?? []) m.set(r.item_id, r);
+    return m;
+  }, [autoResults]);
+
+
   const upsertMutation = useMutation({
     mutationFn: (vars: { item_id: string; patch: Partial<Entry> }) =>
       upsertFn({
