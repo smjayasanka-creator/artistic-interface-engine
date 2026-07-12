@@ -48,6 +48,7 @@ import { Route as AuthenticatedClientsNewRouteImport } from './routes/_authentic
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as AuthenticatedAccountsPaymentsRouteImport } from './routes/_authenticated/accounts.payments'
 import { Route as AuthenticatedAccountsJournalRouteImport } from './routes/_authenticated/accounts.journal'
+import { Route as AuthenticatedAccountsBulkJournalRouteImport } from './routes/_authenticated/accounts.bulk-journal'
 import { Route as AuthenticatedAccountsPaymentsIndexRouteImport } from './routes/_authenticated/accounts.payments.index'
 import { Route as AuthenticatedAccountsJournalIndexRouteImport } from './routes/_authenticated/accounts.journal.index'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
@@ -275,6 +276,12 @@ const AuthenticatedAccountsJournalRoute =
     path: '/accounts/journal',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAccountsBulkJournalRoute =
+  AuthenticatedAccountsBulkJournalRouteImport.update({
+    id: '/accounts/bulk-journal',
+    path: '/accounts/bulk-journal',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAccountsPaymentsIndexRoute =
   AuthenticatedAccountsPaymentsIndexRouteImport.update({
     id: '/',
@@ -351,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/workflows': typeof AuthenticatedWorkflowsRoute
+  '/accounts/bulk-journal': typeof AuthenticatedAccountsBulkJournalRoute
   '/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRoute
@@ -401,6 +409,7 @@ export interface FileRoutesByTo {
   '/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
+  '/accounts/bulk-journal': typeof AuthenticatedAccountsBulkJournalRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/clients/new': typeof AuthenticatedClientsNewRoute
   '/collections/new': typeof AuthenticatedCollectionsNewRoute
@@ -452,6 +461,7 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/_authenticated/workflows': typeof AuthenticatedWorkflowsRoute
+  '/_authenticated/accounts/bulk-journal': typeof AuthenticatedAccountsBulkJournalRoute
   '/_authenticated/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
   '/_authenticated/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
@@ -505,6 +515,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/transactions'
     | '/workflows'
+    | '/accounts/bulk-journal'
     | '/accounts/journal'
     | '/accounts/payments'
     | '/clients/$id'
@@ -555,6 +566,7 @@ export interface FileRouteTypes {
     | '/platform-admin'
     | '/reports'
     | '/workflows'
+    | '/accounts/bulk-journal'
     | '/clients/$id'
     | '/clients/new'
     | '/collections/new'
@@ -605,6 +617,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/transactions'
     | '/_authenticated/workflows'
+    | '/_authenticated/accounts/bulk-journal'
     | '/_authenticated/accounts/journal'
     | '/_authenticated/accounts/payments'
     | '/_authenticated/clients/$id'
@@ -932,6 +945,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsJournalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/accounts/bulk-journal': {
+      id: '/_authenticated/accounts/bulk-journal'
+      path: '/accounts/bulk-journal'
+      fullPath: '/accounts/bulk-journal'
+      preLoaderRoute: typeof AuthenticatedAccountsBulkJournalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/accounts/payments/': {
       id: '/_authenticated/accounts/payments/'
       path: '/'
@@ -1101,6 +1121,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRouteWithChildren
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
+  AuthenticatedAccountsBulkJournalRoute: typeof AuthenticatedAccountsBulkJournalRoute
   AuthenticatedAccountsJournalRoute: typeof AuthenticatedAccountsJournalRouteWithChildren
   AuthenticatedAccountsPaymentsRoute: typeof AuthenticatedAccountsPaymentsRouteWithChildren
   AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
@@ -1133,6 +1154,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRouteWithChildren,
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
+  AuthenticatedAccountsBulkJournalRoute: AuthenticatedAccountsBulkJournalRoute,
   AuthenticatedAccountsJournalRoute:
     AuthenticatedAccountsJournalRouteWithChildren,
   AuthenticatedAccountsPaymentsRoute:
