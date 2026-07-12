@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/collections/new")({
   component: RecordRepaymentPage,
 });
 
-function RecordRepaymentPage() {
+export function RecordRepaymentPage() {
   const { loanId: presetLoanId } = useSearch({ from: "/_authenticated/collections/new" });
   const navigate = useNavigate();
   const qc = useQueryClient();
