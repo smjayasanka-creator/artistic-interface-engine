@@ -270,24 +270,51 @@ export function HardeningChecklist() {
         </Card>
         <Card className="flex flex-col justify-between">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Actions</div>
-          <div className="flex gap-2 mt-2">
+          <div className="flex flex-col gap-1.5 mt-2">
             <button
-              onClick={exportJson}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-border bg-card text-[12.5px] font-medium hover:bg-muted"
+              onClick={() => autocheckMutation.mutate(true)}
+              disabled={autocheckMutation.isPending}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-primary/40 bg-primary/10 text-primary text-[12.5px] font-semibold hover:bg-primary/15 disabled:opacity-50"
+              title="Inspect the database and auto-mark detectable items"
             >
-              <Download size={13} /> Export
+              {autocheckMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
+              {autocheckMutation.isPending ? "Checking…" : "Run auto-check"}
             </button>
-            <button
-              onClick={resetAll}
-              disabled={resetMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-border bg-card text-[12.5px] font-medium hover:bg-muted disabled:opacity-50"
-              title="Reset all (shared)"
-            >
-              {resetMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
-            </button>
+            <div className="flex gap-1.5">
+              <button
+                onClick={exportJson}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-[11.5px] font-medium hover:bg-muted"
+              >
+                <Download size={12} /> Export
+              </button>
+              <button
+                onClick={resetAll}
+                disabled={resetMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-[11.5px] font-medium hover:bg-muted disabled:opacity-50"
+                title="Reset all (shared)"
+              >
+                {resetMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
+              </button>
+            </div>
           </div>
         </Card>
       </div>
+
+      {autoResults && (
+        <div className="flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+          <Sparkles size={18} className="text-primary mt-0.5" />
+          <div className="text-[13px] flex-1">
+            <div className="font-semibold">Auto-check applied</div>
+            <div className="text-muted-foreground">
+              Inspected {autoResults.length} items from the live database. Detected:{" "}
+              <span className="text-emerald-700 font-semibold">{autoResults.filter((r) => r.status === "done").length} done</span>,{" "}
+              <span className="text-amber-700 font-semibold">{autoResults.filter((r) => r.status === "partial").length} partial</span>,{" "}
+              <span className="text-rose-700 font-semibold">{autoResults.filter((r) => r.status === "missing").length} missing</span>.
+              Non-checkable items (policy, operational, physical) still need manual review.
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLoading && (
         <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
