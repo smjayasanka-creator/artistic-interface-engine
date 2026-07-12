@@ -1,37 +1,55 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
-import { authenticateApiKey, json, logApiCall, generateReference } from "@/lib/api-auth.server";
+import { authenticateApiKey, logApiCall, generateReference } from "@/lib/api-auth.server";
+import {
+  IbRequest, IbResponse,
+  parseJsonBody, validateAndSend, logAndReturnAuthError,
+  checkIdempotency, withIdempotencyEnvelope, errJson, ERRORS, requireHeader,
+} from "@/lib/api-schemas.server";
 
-const Body = z.object({
-  customer_id: z.string().min(1).max(64),
-  channel: z.literal("internet_banking"),
-  action: z.enum(["intra_transfer", "bill_payment", "loan_repayment", "deposit_topup"]),
-  amount: z.number().positive(),
-  currency: z.string().length(3),
-  source_account: z.string(),
-  destination_account: z.string().optional(),
-  biller_code: z.string().optional(),
-  reference_note: z.string().max(120).optional(),
-  device_fingerprint: z.string().min(6),
-  otp_verified: z.boolean(),
-});
+const ENDPOINT = "/api/public/v1/ib/transaction";
+const CHANNEL = "internet_banking";
 
 export const Route = createFileRoute("/api/public/v1/ib/transaction")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const auth = await authenticateApiKey(request, "internet_banking");
-        if (!auth.ok) return json({ error: auth.error }, auth.status);
-        let payload: unknown;
-        try { payload = await request.json(); } catch { return json({ error: "Invalid JSON body" }, 400); }
-        const parsed = Body.safeParse(payload);
-        if (!parsed.success) return json({ error: "validation_failed", details: parsed.error.flatten() }, 400);
-        if (!parsed.data.otp_verified) return json({ error: "otp_required" }, 401);
+        if (!auth.ok) return logAndReturnAuthError({ status: auth.status, error: auth.error, channel: CHANNEL, endpoint: ENDPOINT, direction: "inbound" });
+
+        const fp = requireHeader(request, "X-Device-Fingerprint");
+        if (!fp.ok) return fp.response;
+        const idem = requireHeader(request, "Idempotency-Key");
+        if (!idem.ok) return idem.response;
+
+        const parsed = await parseJsonBody(request, IbRequest);
+        if (!parsed.ok) {
+          await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
+            endpoint: ENDPOINT, method: "POST", status_code: 400, request: parsed.raw, error: "validation_failed" });
+          return parsed.response;
+        }
+        if (parsed.data.device_fingerprint !== fp.value) {
+          return errJson({ code: 400, error: "fingerprint_mismatch", message: "X-Device-Fingerprint header must match body device_fingerprint." });
+        }
+        if (!parsed.data.otp_verified) {
+          return errJson({ code: 401, error: "otp_required", message: "OTP has not been verified for this session." });
+        }
+
+        const hit = await checkIdempotency({ company_id: auth.key.company_id, endpoint: ENDPOINT, key: idem.value, body: parsed.data });
+        if (hit.kind === "conflict") return errJson(ERRORS.idempotency_conflict);
+        if (hit.kind === "replay") return validateAndSend(IbResponse, hit.response as any, hit.status);
+
         const reference = generateReference("IB");
-        const response = { status: "posted", ib_reference: reference, action: parsed.data.action, posted_at: new Date().toISOString() };
-        await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: "internet_banking", direction: "inbound",
-          endpoint: "/api/public/v1/ib/transaction", method: "POST", reference, status_code: 200, request: parsed.data, response });
-        return json(response, 200);
+        const response = {
+          status: "posted" as const,
+          reference,
+          posted_at: new Date().toISOString(),
+          new_balance: 122400,
+          currency: parsed.data.currency,
+        };
+        await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
+          endpoint: ENDPOINT, method: "POST", reference, status_code: 200,
+          request: withIdempotencyEnvelope(parsed.data, idem.value), response });
+        return validateAndSend(IbResponse, response, 200);
       },
     },
   },
