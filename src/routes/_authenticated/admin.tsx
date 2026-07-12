@@ -753,7 +753,9 @@ function ProductsTab() {
     cashAcct: "",
     interestAcct: "",
     feeAcct: "",
+    requiredDocs: [] as string[],
   };
+
   const [form, setForm] = useState(emptyForm);
 
   const activeAccts = (accounts ?? []).filter((a: any) => a.is_active);
