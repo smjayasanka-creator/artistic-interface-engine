@@ -31,7 +31,12 @@ import { Route as AuthenticatedTransactionsPaymentsRouteImport } from './routes/
 import { Route as AuthenticatedTransactionsDisbursementRouteImport } from './routes/_authenticated/transactions.disbursement'
 import { Route as AuthenticatedTransactionsDepositWithdrawalRouteImport } from './routes/_authenticated/transactions.deposit-withdrawal'
 import { Route as AuthenticatedTransactionsDepositReceiptRouteImport } from './routes/_authenticated/transactions.deposit-receipt'
+import { Route as AuthenticatedLoansWriteOffRouteImport } from './routes/_authenticated/loans.write-off'
+import { Route as AuthenticatedLoansTransferRouteImport } from './routes/_authenticated/loans.transfer'
+import { Route as AuthenticatedLoansRescheduleRouteImport } from './routes/_authenticated/loans.reschedule'
 import { Route as AuthenticatedLoansNewRouteImport } from './routes/_authenticated/loans.new'
+import { Route as AuthenticatedLoansLegalActionRouteImport } from './routes/_authenticated/loans.legal-action'
+import { Route as AuthenticatedLoansDebitNoteRouteImport } from './routes/_authenticated/loans.debit-note'
 import { Route as AuthenticatedFdNewRouteImport } from './routes/_authenticated/fd.new'
 import { Route as AuthenticatedFdMaturityRouteImport } from './routes/_authenticated/fd.maturity'
 import { Route as AuthenticatedFdIdRouteImport } from './routes/_authenticated/fd.$id'
@@ -165,11 +170,41 @@ const AuthenticatedTransactionsDepositReceiptRoute =
     path: '/deposit-receipt',
     getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
+const AuthenticatedLoansWriteOffRoute =
+  AuthenticatedLoansWriteOffRouteImport.update({
+    id: '/loans/write-off',
+    path: '/loans/write-off',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLoansTransferRoute =
+  AuthenticatedLoansTransferRouteImport.update({
+    id: '/loans/transfer',
+    path: '/loans/transfer',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLoansRescheduleRoute =
+  AuthenticatedLoansRescheduleRouteImport.update({
+    id: '/loans/reschedule',
+    path: '/loans/reschedule',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLoansNewRoute = AuthenticatedLoansNewRouteImport.update({
   id: '/loans/new',
   path: '/loans/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLoansLegalActionRoute =
+  AuthenticatedLoansLegalActionRouteImport.update({
+    id: '/loans/legal-action',
+    path: '/loans/legal-action',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLoansDebitNoteRoute =
+  AuthenticatedLoansDebitNoteRouteImport.update({
+    id: '/loans/debit-note',
+    path: '/loans/debit-note',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFdNewRoute = AuthenticatedFdNewRouteImport.update({
   id: '/fd/new',
   path: '/fd/new',
@@ -258,7 +293,12 @@ export interface FileRoutesByFullPath {
   '/fd/$id': typeof AuthenticatedFdIdRoute
   '/fd/maturity': typeof AuthenticatedFdMaturityRoute
   '/fd/new': typeof AuthenticatedFdNewRoute
+  '/loans/debit-note': typeof AuthenticatedLoansDebitNoteRoute
+  '/loans/legal-action': typeof AuthenticatedLoansLegalActionRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
+  '/loans/reschedule': typeof AuthenticatedLoansRescheduleRoute
+  '/loans/transfer': typeof AuthenticatedLoansTransferRoute
+  '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
   '/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -291,7 +331,12 @@ export interface FileRoutesByTo {
   '/fd/$id': typeof AuthenticatedFdIdRoute
   '/fd/maturity': typeof AuthenticatedFdMaturityRoute
   '/fd/new': typeof AuthenticatedFdNewRoute
+  '/loans/debit-note': typeof AuthenticatedLoansDebitNoteRoute
+  '/loans/legal-action': typeof AuthenticatedLoansLegalActionRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
+  '/loans/reschedule': typeof AuthenticatedLoansRescheduleRoute
+  '/loans/transfer': typeof AuthenticatedLoansTransferRoute
+  '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
   '/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -329,7 +374,12 @@ export interface FileRoutesById {
   '/_authenticated/fd/$id': typeof AuthenticatedFdIdRoute
   '/_authenticated/fd/maturity': typeof AuthenticatedFdMaturityRoute
   '/_authenticated/fd/new': typeof AuthenticatedFdNewRoute
+  '/_authenticated/loans/debit-note': typeof AuthenticatedLoansDebitNoteRoute
+  '/_authenticated/loans/legal-action': typeof AuthenticatedLoansLegalActionRoute
   '/_authenticated/loans/new': typeof AuthenticatedLoansNewRoute
+  '/_authenticated/loans/reschedule': typeof AuthenticatedLoansRescheduleRoute
+  '/_authenticated/loans/transfer': typeof AuthenticatedLoansTransferRoute
+  '/_authenticated/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/_authenticated/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
   '/_authenticated/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/_authenticated/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -367,7 +417,12 @@ export interface FileRouteTypes {
     | '/fd/$id'
     | '/fd/maturity'
     | '/fd/new'
+    | '/loans/debit-note'
+    | '/loans/legal-action'
     | '/loans/new'
+    | '/loans/reschedule'
+    | '/loans/transfer'
+    | '/loans/write-off'
     | '/transactions/deposit-receipt'
     | '/transactions/deposit-withdrawal'
     | '/transactions/disbursement'
@@ -400,7 +455,12 @@ export interface FileRouteTypes {
     | '/fd/$id'
     | '/fd/maturity'
     | '/fd/new'
+    | '/loans/debit-note'
+    | '/loans/legal-action'
     | '/loans/new'
+    | '/loans/reschedule'
+    | '/loans/transfer'
+    | '/loans/write-off'
     | '/transactions/deposit-receipt'
     | '/transactions/deposit-withdrawal'
     | '/transactions/disbursement'
@@ -437,7 +497,12 @@ export interface FileRouteTypes {
     | '/_authenticated/fd/$id'
     | '/_authenticated/fd/maturity'
     | '/_authenticated/fd/new'
+    | '/_authenticated/loans/debit-note'
+    | '/_authenticated/loans/legal-action'
     | '/_authenticated/loans/new'
+    | '/_authenticated/loans/reschedule'
+    | '/_authenticated/loans/transfer'
+    | '/_authenticated/loans/write-off'
     | '/_authenticated/transactions/deposit-receipt'
     | '/_authenticated/transactions/deposit-withdrawal'
     | '/_authenticated/transactions/disbursement'
@@ -616,11 +681,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransactionsDepositReceiptRouteImport
       parentRoute: typeof AuthenticatedTransactionsRoute
     }
+    '/_authenticated/loans/write-off': {
+      id: '/_authenticated/loans/write-off'
+      path: '/loans/write-off'
+      fullPath: '/loans/write-off'
+      preLoaderRoute: typeof AuthenticatedLoansWriteOffRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/loans/transfer': {
+      id: '/_authenticated/loans/transfer'
+      path: '/loans/transfer'
+      fullPath: '/loans/transfer'
+      preLoaderRoute: typeof AuthenticatedLoansTransferRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/loans/reschedule': {
+      id: '/_authenticated/loans/reschedule'
+      path: '/loans/reschedule'
+      fullPath: '/loans/reschedule'
+      preLoaderRoute: typeof AuthenticatedLoansRescheduleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/loans/new': {
       id: '/_authenticated/loans/new'
       path: '/loans/new'
       fullPath: '/loans/new'
       preLoaderRoute: typeof AuthenticatedLoansNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/loans/legal-action': {
+      id: '/_authenticated/loans/legal-action'
+      path: '/loans/legal-action'
+      fullPath: '/loans/legal-action'
+      preLoaderRoute: typeof AuthenticatedLoansLegalActionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/loans/debit-note': {
+      id: '/_authenticated/loans/debit-note'
+      path: '/loans/debit-note'
+      fullPath: '/loans/debit-note'
+      preLoaderRoute: typeof AuthenticatedLoansDebitNoteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/fd/new': {
@@ -805,7 +905,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFdIdRoute: typeof AuthenticatedFdIdRoute
   AuthenticatedFdMaturityRoute: typeof AuthenticatedFdMaturityRoute
   AuthenticatedFdNewRoute: typeof AuthenticatedFdNewRoute
+  AuthenticatedLoansDebitNoteRoute: typeof AuthenticatedLoansDebitNoteRoute
+  AuthenticatedLoansLegalActionRoute: typeof AuthenticatedLoansLegalActionRoute
   AuthenticatedLoansNewRoute: typeof AuthenticatedLoansNewRoute
+  AuthenticatedLoansRescheduleRoute: typeof AuthenticatedLoansRescheduleRoute
+  AuthenticatedLoansTransferRoute: typeof AuthenticatedLoansTransferRoute
+  AuthenticatedLoansWriteOffRoute: typeof AuthenticatedLoansWriteOffRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedFdIndexRoute: typeof AuthenticatedFdIndexRoute
   AuthenticatedGroupsIndexRoute: typeof AuthenticatedGroupsIndexRoute
@@ -831,7 +936,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFdIdRoute: AuthenticatedFdIdRoute,
   AuthenticatedFdMaturityRoute: AuthenticatedFdMaturityRoute,
   AuthenticatedFdNewRoute: AuthenticatedFdNewRoute,
+  AuthenticatedLoansDebitNoteRoute: AuthenticatedLoansDebitNoteRoute,
+  AuthenticatedLoansLegalActionRoute: AuthenticatedLoansLegalActionRoute,
   AuthenticatedLoansNewRoute: AuthenticatedLoansNewRoute,
+  AuthenticatedLoansRescheduleRoute: AuthenticatedLoansRescheduleRoute,
+  AuthenticatedLoansTransferRoute: AuthenticatedLoansTransferRoute,
+  AuthenticatedLoansWriteOffRoute: AuthenticatedLoansWriteOffRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedFdIndexRoute: AuthenticatedFdIndexRoute,
   AuthenticatedGroupsIndexRoute: AuthenticatedGroupsIndexRoute,
