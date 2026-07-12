@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Building2, Users, Wallet, PiggyBank, BookOpen, Settings2, ArrowRight, ArrowLeft } from "lucide-react";
 import {
   getAdmin,
   getAllLoanProducts,
@@ -59,34 +60,66 @@ const TYPE_TONE: Record<AccountType, string> = {
   expense: "bg-rose-500/10 text-rose-700 border-rose-500/30",
 };
 
+type Section = { id: Tab; label: string; desc: string; icon: React.ComponentType<{ size?: number }>; accent: string };
+const SECTIONS: Section[] = [
+  { id: "settings",    label: "Company settings",  desc: "Workspace defaults, currency & fiscal year",       icon: Settings2, accent: "from-slate-500/15 to-slate-500/0 text-slate-600" },
+  { id: "branches",    label: "Branches",          desc: "Locations, regions & operating currency",          icon: Building2, accent: "from-sky-500/15 to-sky-500/0 text-sky-600" },
+  { id: "staff",       label: "Staff",             desc: "Employees, roles & invitations",                   icon: Users,     accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600" },
+  { id: "products",    label: "Loan products",     desc: "Interest methods, terms & pricing",                icon: Wallet,    accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
+  { id: "fd_products", label: "FD products",       desc: "Fixed deposit tenors & rates",                     icon: PiggyBank, accent: "from-teal-500/15 to-teal-500/0 text-teal-600" },
+  { id: "accounts",    label: "Chart of accounts", desc: "General ledger accounts & posting rules",          icon: BookOpen,  accent: "from-violet-500/15 to-violet-500/0 text-violet-600" },
+];
+
 function Admin() {
-  const [tab, setTab] = useState<Tab>("settings");
+  const [tab, setTab] = useState<Tab | null>(null);
+
+  if (!tab) {
+    return (
+      <div className="animate-fadein flex flex-col gap-5">
+        <div>
+          <h1 className="text-xl font-semibold">Administration</h1>
+          <p className="text-sm text-muted-foreground mt-1">Workspace configuration, staff & accounting setup.</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          {SECTIONS.map((s) => {
+            const Icon = s.icon;
+            return (
+              <button key={s.id} onClick={() => setTab(s.id)} className="text-left group">
+                <Card className="p-3.5 hover:border-primary/40 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${s.accent}`}>
+                      <Icon size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-[14px] truncate">{s.label}</div>
+                      <div className="text-[11.5px] text-muted-foreground truncate">{s.desc}</div>
+                    </div>
+                    <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </Card>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  const current = SECTIONS.find((s) => s.id === tab)!;
+  const Icon = current.icon;
   return (
     <div className="animate-fadein flex flex-col gap-5">
-      <div className="flex gap-1 border-b border-border">
-        {(
-          [
-            ["settings", "Company settings"],
-            ["branches", "Branches"],
-            ["staff", "Staff"],
-            ["products", "Loan products"],
-            ["fd_products", "FD products"],
-            ["accounts", "Chart of accounts"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={cn(
-              "px-4 py-2.5 text-[13px] font-medium border-b-2 -mb-px",
-              tab === id
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="flex items-center gap-3">
+        <button onClick={() => setTab(null)} className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-2.5 py-1.5">
+          <ArrowLeft size={14} /> Administration
+        </button>
+        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center ${current.accent}`}>
+          <Icon size={16} />
+        </div>
+        <div className="min-w-0">
+          <div className="font-semibold text-[14px] leading-tight">{current.label}</div>
+          <div className="text-[11.5px] text-muted-foreground leading-tight">{current.desc}</div>
+        </div>
       </div>
       {tab === "settings" && <SettingsTab />}
       {tab === "branches" && <BranchesTab />}
