@@ -1,36 +1,46 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
-import { authenticateApiKey, json, logApiCall, generateReference } from "@/lib/api-auth.server";
+import { authenticateApiKey, logApiCall, generateReference } from "@/lib/api-auth.server";
+import {
+  TransactionsOutboundRequest, TransactionsOutboundResponse,
+  parseJsonBody, validateAndSend, logAndReturnAuthError,
+  checkIdempotency, withIdempotencyEnvelope, errJson, ERRORS, requireHeader,
+} from "@/lib/api-schemas.server";
 
-const Body = z.object({
-  source_account: z.string().min(1).max(64),
-  destination: z.object({
-    name: z.string().min(1).max(120),
-    account: z.string().min(1).max(64),
-    bank_code: z.string().max(20).optional(),
-    swift: z.string().max(20).optional(),
-  }),
-  amount: z.number().positive(),
-  currency: z.string().length(3),
-  narrative: z.string().max(160).optional(),
-  idempotency_key: z.string().min(6).max(80),
-});
+const ENDPOINT = "/api/public/v1/transactions/outbound";
+const CHANNEL = "transactions";
 
 export const Route = createFileRoute("/api/public/v1/transactions/outbound")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const auth = await authenticateApiKey(request, "transactions.outbound");
-        if (!auth.ok) return json({ error: auth.error }, auth.status);
-        let payload: unknown;
-        try { payload = await request.json(); } catch { return json({ error: "Invalid JSON body" }, 400); }
-        const parsed = Body.safeParse(payload);
-        if (!parsed.success) return json({ error: "validation_failed", details: parsed.error.flatten() }, 400);
+        if (!auth.ok) return logAndReturnAuthError({ status: auth.status, error: auth.error, channel: CHANNEL, endpoint: ENDPOINT, direction: "outbound" });
+
+        const idemHeader = requireHeader(request, "Idempotency-Key");
+        if (!idemHeader.ok) return idemHeader.response;
+
+        const parsed = await parseJsonBody(request, TransactionsOutboundRequest);
+        if (!parsed.ok) {
+          await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "outbound",
+            endpoint: ENDPOINT, method: "POST", status_code: 400, request: parsed.raw, error: "validation_failed" });
+          return parsed.response;
+        }
+
+        const hit = await checkIdempotency({ company_id: auth.key.company_id, endpoint: ENDPOINT, key: idemHeader.value, body: parsed.data });
+        if (hit.kind === "conflict") return errJson(ERRORS.idempotency_conflict);
+        if (hit.kind === "replay") return validateAndSend(TransactionsOutboundResponse, hit.response as any, hit.status);
+
         const reference = generateReference("OUT");
-        const response = { status: "queued", reference, idempotency_key: parsed.data.idempotency_key, submitted_at: new Date().toISOString() };
-        await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: "transactions", direction: "outbound",
-          endpoint: "/api/public/v1/transactions/outbound", method: "POST", reference, status_code: 202, request: parsed.data, response });
-        return json(response, 202);
+        const response = {
+          status: "queued" as const,
+          reference,
+          idempotency_key: parsed.data.idempotency_key,
+          submitted_at: new Date().toISOString(),
+        };
+        await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "outbound",
+          endpoint: ENDPOINT, method: "POST", reference, status_code: 202,
+          request: withIdempotencyEnvelope(parsed.data, idemHeader.value), response });
+        return validateAndSend(TransactionsOutboundResponse, response, 202);
       },
     },
   },
