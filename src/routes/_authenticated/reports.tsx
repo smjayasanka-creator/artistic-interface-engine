@@ -167,7 +167,7 @@ function SectionHeader({ label }: { label: string }) {
     >
       <div>Code</div>
       <div>{label}</div>
-      <div className="text-right">Amount (KES)</div>
+      <div className="text-right">Amount ({getActiveCurrency()})</div>
     </div>
   );
 }
