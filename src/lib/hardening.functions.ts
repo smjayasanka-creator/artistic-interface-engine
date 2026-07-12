@@ -63,7 +63,7 @@ export type AutoCheckResult = {
   status: "done" | "partial" | "missing";
   evidence: string;
   check_sql: string;
-  matches: Array<Record<string, unknown>>;
+  matches: Array<Record<string, string | number | boolean | null>>;
 };
 
 export const runHardeningAutocheck = createServerFn({ method: "POST" })
