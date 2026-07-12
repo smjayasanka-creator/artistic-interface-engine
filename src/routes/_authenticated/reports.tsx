@@ -109,7 +109,7 @@ function OverviewTab({ data }: { data: any }) {
           </div>
         </Card>
         <Card>
-          <CardTitle subtitle="Principal at risk · KES">PAR trend</CardTitle>
+          <CardTitle subtitle={`Principal at risk · ${getActiveCurrency()}`}>PAR trend</CardTitle>
           <div className="flex items-end gap-3 h-40 mt-3">
             {data.par.map((p: any) => (
               <div key={p.label} className="flex-1 flex flex-col items-center gap-2">
