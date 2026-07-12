@@ -458,23 +458,57 @@ function NewLoan() {
                   </div>
                   <div className="border border-border rounded-lg divide-y divide-row-divider">
                     {requiredDocs.map((doc) => {
+                      const uploaded = uploadedDocs[doc];
                       const checked = !!checkedDocs[doc];
+                      const busy = uploadingDoc === doc;
+                      const inputId = `docfile-${slugifyDoc(doc)}`;
                       return (
-                        <label
+                        <div
                           key={doc}
-                          className="flex items-center gap-3 px-3 py-2.5 text-[12.5px] cursor-pointer hover:bg-secondary/30"
+                          className="flex flex-wrap items-center gap-3 px-3 py-2.5 text-[12.5px]"
                         >
+                          <div className="flex-1 min-w-[180px]">
+                            <div className="font-medium">{doc}</div>
+                            {uploaded ? (
+                              <div className="text-[11px] text-muted-foreground font-mono truncate">
+                                {uploaded.name} · {formatBytes(uploaded.size)}
+                              </div>
+                            ) : (
+                              <div className="text-[11px] text-muted-foreground">
+                                PDF, image, or document up to 10 MB
+                              </div>
+                            )}
+                          </div>
+
                           <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={(e) =>
-                              setCheckedDocs((prev) => ({ ...prev, [doc]: e.target.checked }))
-                            }
-                            className="h-4 w-4 accent-primary"
+                            id={inputId}
+                            type="file"
+                            accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              e.target.value = "";
+                              if (f) uploadDocFile(doc, f);
+                            }}
                           />
-                          <span className={cn("flex-1", checked && "text-muted-foreground line-through")}>
-                            {doc}
-                          </span>
+                          <label
+                            htmlFor={inputId}
+                            className={cn(
+                              "text-[11.5px] px-3 py-1.5 rounded-md border border-border cursor-pointer hover:bg-secondary",
+                              busy && "opacity-60 pointer-events-none",
+                            )}
+                          >
+                            {busy ? "Uploading…" : uploaded ? "Replace" : "Upload file"}
+                          </label>
+                          {uploaded && (
+                            <button
+                              type="button"
+                              onClick={() => removeDocFile(doc)}
+                              className="text-[11.5px] px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
+                            >
+                              Remove
+                            </button>
+                          )}
                           <span
                             className={cn(
                               "text-[10.5px] px-2 py-0.5 rounded-full border",
@@ -485,7 +519,7 @@ function NewLoan() {
                           >
                             {checked ? "Provided" : "Missing"}
                           </span>
-                        </label>
+                        </div>
                       );
                     })}
                   </div>
