@@ -1,9 +1,11 @@
 import { Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect } from "react";
 import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug, Landmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
+import { setActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> };
@@ -81,6 +83,7 @@ function ShellInner() {
   const { data: dash } = useQuery({ queryKey: ["dashboard"], queryFn: () => dashFn() });
   const companyFn = useServerFn(getCompany);
   const { data: company } = useQuery({ queryKey: ["company"], queryFn: () => companyFn() });
+  useEffect(() => { if (company?.currency) setActiveCurrency(company.currency); }, [company?.currency]);
   const approvalsCount = dash?.approvals.length ?? 0;
 
   async function signOut() {
