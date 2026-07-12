@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getClients, getProducts, submitApplication } from "@/lib/mzizi.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
   FormGrid,
@@ -19,6 +20,17 @@ import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { generateSchedule, FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
+
+type UploadedDoc = { path: string; name: string; size: number };
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+function slugifyDoc(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "doc";
+}
+function formatBytes(n: number) {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(2)} MB`;
+}
 
 export const Route = createFileRoute("/_authenticated/loans/new")({
   component: NewLoan,
@@ -84,6 +96,8 @@ function NewLoan() {
   const [method, setMethod] = useState<InterestMethod>("flat");
   const [purpose, setPurpose] = useState("");
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDoc>>({});
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
 
 
   const clientsFn = useServerFn(getClients);
@@ -115,6 +129,44 @@ function NewLoan() {
     setTerm(Number(p.min_term_months));
     if (!principal && p.min_principal) setPrincipal(String(p.min_principal));
     setCheckedDocs({});
+    setUploadedDocs({});
+  }
+
+  async function uploadDocFile(doc: string, file: File) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error(`${file.name} exceeds 10 MB limit.`);
+      return;
+    }
+    setUploadingDoc(doc);
+    try {
+      const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";
+      const path = `applications/${clientId || "unassigned"}/${productId || "no-product"}/${slugifyDoc(doc)}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("loan-documents").upload(path, file, {
+        upsert: true,
+        contentType: file.type || undefined,
+      });
+      if (error) throw error;
+      setUploadedDocs((prev) => ({ ...prev, [doc]: { path, name: file.name, size: file.size } }));
+      setCheckedDocs((prev) => ({ ...prev, [doc]: true }));
+      toast.success(`Uploaded ${doc}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Upload failed");
+    } finally {
+      setUploadingDoc(null);
+    }
+  }
+
+  async function removeDocFile(doc: string) {
+    const existing = uploadedDocs[doc];
+    if (existing) {
+      await supabase.storage.from("loan-documents").remove([existing.path]);
+    }
+    setUploadedDocs((prev) => {
+      const next = { ...prev };
+      delete next[doc];
+      return next;
+    });
+    setCheckedDocs((prev) => ({ ...prev, [doc]: false }));
   }
 
   const requiredDocs: string[] = Array.isArray(product?.required_documents)
@@ -406,23 +458,57 @@ function NewLoan() {
                   </div>
                   <div className="border border-border rounded-lg divide-y divide-row-divider">
                     {requiredDocs.map((doc) => {
+                      const uploaded = uploadedDocs[doc];
                       const checked = !!checkedDocs[doc];
+                      const busy = uploadingDoc === doc;
+                      const inputId = `docfile-${slugifyDoc(doc)}`;
                       return (
-                        <label
+                        <div
                           key={doc}
-                          className="flex items-center gap-3 px-3 py-2.5 text-[12.5px] cursor-pointer hover:bg-secondary/30"
+                          className="flex flex-wrap items-center gap-3 px-3 py-2.5 text-[12.5px]"
                         >
+                          <div className="flex-1 min-w-[180px]">
+                            <div className="font-medium">{doc}</div>
+                            {uploaded ? (
+                              <div className="text-[11px] text-muted-foreground font-mono truncate">
+                                {uploaded.name} · {formatBytes(uploaded.size)}
+                              </div>
+                            ) : (
+                              <div className="text-[11px] text-muted-foreground">
+                                PDF, image, or document up to 10 MB
+                              </div>
+                            )}
+                          </div>
+
                           <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={(e) =>
-                              setCheckedDocs((prev) => ({ ...prev, [doc]: e.target.checked }))
-                            }
-                            className="h-4 w-4 accent-primary"
+                            id={inputId}
+                            type="file"
+                            accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              e.target.value = "";
+                              if (f) uploadDocFile(doc, f);
+                            }}
                           />
-                          <span className={cn("flex-1", checked && "text-muted-foreground line-through")}>
-                            {doc}
-                          </span>
+                          <label
+                            htmlFor={inputId}
+                            className={cn(
+                              "text-[11.5px] px-3 py-1.5 rounded-md border border-border cursor-pointer hover:bg-secondary",
+                              busy && "opacity-60 pointer-events-none",
+                            )}
+                          >
+                            {busy ? "Uploading…" : uploaded ? "Replace" : "Upload file"}
+                          </label>
+                          {uploaded && (
+                            <button
+                              type="button"
+                              onClick={() => removeDocFile(doc)}
+                              className="text-[11.5px] px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
+                            >
+                              Remove
+                            </button>
+                          )}
                           <span
                             className={cn(
                               "text-[10.5px] px-2 py-0.5 rounded-full border",
@@ -433,7 +519,7 @@ function NewLoan() {
                           >
                             {checked ? "Provided" : "Missing"}
                           </span>
-                        </label>
+                        </div>
                       );
                     })}
                   </div>
