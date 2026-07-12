@@ -153,7 +153,9 @@ function NewLoan() {
       term < Number(product.min_term_months) ||
       term > Number(product.max_term_months));
 
-  const canSubmit = !!clientId && !!productId && !!principal && !!rateNum && !submit.isPending;
+  const canSubmit =
+    !!clientId && !!productId && !!principal && !!rateNum && docsSatisfied && !submit.isPending;
+
 
   return (
     <div className="animate-fadein">
