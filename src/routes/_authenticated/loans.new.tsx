@@ -474,7 +474,14 @@ function NewLoan() {
               {tab !== "evaluations" ? (
                 <button
                   type="button"
+                  disabled={tab === "documents" && !docsSatisfied}
                   onClick={() => {
+                    if (tab === "documents" && !docsSatisfied) {
+                      toast.error(
+                        `Please provide all required documents (${missingDocs.length} missing).`,
+                      );
+                      return;
+                    }
                     const i = TABS.findIndex((t) => t.key === tab);
                     setTab(TABS[i + 1].key);
                   }}
@@ -482,6 +489,7 @@ function NewLoan() {
                 >
                   Next →
                 </button>
+
               ) : (
                 <button
                   type="button"
