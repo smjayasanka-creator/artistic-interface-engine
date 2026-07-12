@@ -210,6 +210,7 @@ export const getDashboard = createServerFn({ method: "GET" })
       approvals: approvals ?? [],
       meetings: meetings ?? [],
       team,
+      attendance,
       teamTotals,
     };
   });
