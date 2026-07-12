@@ -910,7 +910,14 @@ function ProductsTab() {
             <FormField label="Termination fee (%)" span={6} hint="% of outstanding principal charged on termination">
               <input type="number" step="0.01" min={0} max={100} value={form.terminationFeePct} onChange={(e) => setForm({ ...form, terminationFeePct: e.target.value })} className={inputCls + " font-mono"} />
             </FormField>
+            <FormField label="Required documents" span={12} hint="Applicants must upload each of these before submitting a loan application">
+              <RequiredDocsEditor
+                items={form.requiredDocs}
+                onChange={(next) => setForm({ ...form, requiredDocs: next })}
+              />
+            </FormField>
           </FormGrid>
+
 
           <div className="pt-3 border-t border-border">
             <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">Ledger accounts (auto-posting)</div>
