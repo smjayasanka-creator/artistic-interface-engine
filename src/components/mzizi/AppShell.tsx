@@ -83,6 +83,7 @@ function ShellInner() {
   const { data: dash } = useQuery({ queryKey: ["dashboard"], queryFn: () => dashFn() });
   const companyFn = useServerFn(getCompany);
   const { data: company } = useQuery({ queryKey: ["company"], queryFn: () => companyFn() });
+  useEffect(() => { if (company?.currency) setActiveCurrency(company.currency); }, [company?.currency]);
   const approvalsCount = dash?.approvals.length ?? 0;
 
   async function signOut() {
