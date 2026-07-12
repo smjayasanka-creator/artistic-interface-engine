@@ -376,7 +376,7 @@ function PlansTab() {
               <div className="text-[16px] font-semibold">{p.name}</div>
             </div>
             {p.active ? (
-              <Badge tone="success">Active</Badge>
+              <Badge tone="active">Active</Badge>
             ) : (
               <Badge tone="neutral">Inactive</Badge>
             )}
