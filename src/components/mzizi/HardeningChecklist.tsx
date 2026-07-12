@@ -451,6 +451,43 @@ export function HardeningChecklist() {
                       className="px-2.5 py-1.5 rounded-md border border-border bg-card text-[12px] outline-none focus:border-primary"
                     />
                   </div>
+                  </div>
+                  {isOpen && auto && (
+                    <div className="px-5 pb-4 pt-1 bg-muted/30 border-t border-row-divider">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Check SQL</div>
+                      <pre className="text-[11px] font-mono bg-card border border-border rounded-md p-2.5 overflow-x-auto whitespace-pre-wrap">{auto.check_sql.trim()}</pre>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-3 mb-1">
+                        Matching rows ({auto.matches.length})
+                      </div>
+                      {auto.matches.length === 0 ? (
+                        <div className="text-[12px] text-muted-foreground italic px-2 py-1.5">No rows matched — nothing detected in the database.</div>
+                      ) : (
+                        <div className="overflow-x-auto border border-border rounded-md bg-card">
+                          <table className="w-full text-[11.5px]">
+                            <thead className="bg-muted/50">
+                              <tr>
+                                {Object.keys(auto.matches[0]).map((k) => (
+                                  <th key={k} className="text-left font-semibold px-2.5 py-1.5 border-b border-border">{k}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {auto.matches.map((row, i) => (
+                                <tr key={i} className="border-b border-row-divider last:border-b-0">
+                                  {Object.keys(auto.matches[0]).map((k) => (
+                                    <td key={k} className="px-2.5 py-1.5 font-mono text-[11px] align-top">
+                                      {row[k] === null || row[k] === undefined ? <span className="text-muted-foreground">null</span> : String(row[k])}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  </div>
                 );
               })}
             </div>
