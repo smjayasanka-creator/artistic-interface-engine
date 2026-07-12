@@ -9,6 +9,7 @@ import { getClients, listGlAccounts } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
 import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
 import { addMonths } from "@/lib/fd-schedule";
+import { money, getActiveCurrency } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/fd/new")({
   component: NewFd,
