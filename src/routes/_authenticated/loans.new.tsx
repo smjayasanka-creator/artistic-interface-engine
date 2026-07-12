@@ -169,6 +169,17 @@ function NewLoan() {
     setCheckedDocs((prev) => ({ ...prev, [doc]: false }));
   }
 
+  async function openSignedUrl(path: string, downloadName?: string) {
+    const { data, error } = await supabase.storage
+      .from("loan-documents")
+      .createSignedUrl(path, 60, downloadName ? { download: downloadName } : undefined);
+    if (error || !data?.signedUrl) {
+      toast.error(error?.message ?? "Could not open file");
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
   const requiredDocs: string[] = Array.isArray(product?.required_documents)
     ? (product?.required_documents as string[])
     : [];
@@ -501,13 +512,29 @@ function NewLoan() {
                             {busy ? "Uploading…" : uploaded ? "Replace" : "Upload file"}
                           </label>
                           {uploaded && (
-                            <button
-                              type="button"
-                              onClick={() => removeDocFile(doc)}
-                              className="text-[11.5px] px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
-                            >
-                              Remove
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openSignedUrl(uploaded.path)}
+                                className="text-[11.5px] px-2.5 py-1.5 rounded-md border border-border hover:bg-secondary"
+                              >
+                                Preview
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openSignedUrl(uploaded.path, uploaded.name)}
+                                className="text-[11.5px] px-2.5 py-1.5 rounded-md border border-border hover:bg-secondary"
+                              >
+                                Download
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeDocFile(doc)}
+                                className="text-[11.5px] px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
+                              >
+                                Remove
+                              </button>
+                            </>
                           )}
                           <span
                             className={cn(
