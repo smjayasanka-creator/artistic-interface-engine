@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { Download, ShieldAlert, ShieldCheck, RotateCcw } from "lucide-react";
+import { useMemo } from "react";
+import { Download, ShieldAlert, ShieldCheck, RotateCcw, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient, useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { ProgressBar } from "@/components/mzizi/ProgressBar";
 import { cn } from "@/lib/utils";
+import { listHardeningItems, upsertHardeningItem, resetHardeningItems } from "@/lib/hardening.functions";
 
 type Status = "done" | "partial" | "missing";
 
@@ -97,25 +100,14 @@ const TIERS: Tier[] = [
   },
 ];
 
-type Entry = { status: Status; owner?: string; note?: string; updated_at?: string };
+type Entry = { status: Status; owner?: string | null; note?: string | null; updated_at?: string };
 type State = Record<string, Entry>;
-
-const STORAGE_KEY = "mzizi.hardening.v1";
 
 const STATUS_META: Record<Status, { label: string; tone: string; dot: string }> = {
   done: { label: "Done", tone: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30", dot: "bg-emerald-500" },
   partial: { label: "Partial", tone: "bg-amber-500/10 text-amber-700 border-amber-500/30", dot: "bg-amber-500" },
   missing: { label: "Missing", tone: "bg-rose-500/10 text-rose-700 border-rose-500/30", dot: "bg-rose-500" },
 };
-
-function loadState(): State {
-  try {
-    const raw = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
-    return raw ? (JSON.parse(raw) as State) : {};
-  } catch {
-    return {};
-  }
-}
 
 function scoreTier(tier: Tier, state: State) {
   const total = tier.items.length;
@@ -130,29 +122,64 @@ function scoreTier(tier: Tier, state: State) {
   return { pct: Math.round((pts / total) * 100), blockers };
 }
 
+const hardeningQueryOptions = queryOptions({
+  queryKey: ["hardening-checklist"],
+  queryFn: () => listHardeningItems(),
+});
+
 export function HardeningChecklist() {
-  const [state, setState] = useState<State>({});
-  const [hydrated, setHydrated] = useState(false);
+  const queryClient = useQueryClient();
+  const listFn = useServerFn(listHardeningItems);
+  const upsertFn = useServerFn(upsertHardeningItem);
+  const resetFn = useServerFn(resetHardeningItems);
 
-  useEffect(() => {
-    setState(loadState());
-    setHydrated(true);
-  }, []);
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["hardening-checklist"],
+    queryFn: () => listFn(),
+  });
 
-  useEffect(() => {
-    if (!hydrated) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* noop */
+  const state: State = useMemo(() => {
+    const s: State = {};
+    for (const r of rows as any[]) {
+      s[r.item_id] = { status: r.status, owner: r.owner, note: r.note, updated_at: r.updated_at };
     }
-  }, [state, hydrated]);
+    return s;
+  }, [rows]);
+
+  const upsertMutation = useMutation({
+    mutationFn: (vars: { item_id: string; patch: Partial<Entry> }) =>
+      upsertFn({
+        data: {
+          item_id: vars.item_id,
+          status: vars.patch.status,
+          owner: vars.patch.owner ?? undefined,
+          note: vars.patch.note ?? undefined,
+        },
+      }),
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: ["hardening-checklist"] });
+      const prev = queryClient.getQueryData<any[]>(["hardening-checklist"]) ?? [];
+      const existing = prev.find((r: any) => r.item_id === vars.item_id);
+      const merged = { item_id: vars.item_id, status: "missing", ...(existing ?? {}), ...vars.patch };
+      const next = existing
+        ? prev.map((r: any) => (r.item_id === vars.item_id ? merged : r))
+        : [...prev, merged];
+      queryClient.setQueryData(["hardening-checklist"], next);
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["hardening-checklist"], ctx.prev);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["hardening-checklist"] }),
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: () => resetFn(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["hardening-checklist"] }),
+  });
 
   const update = (id: string, patch: Partial<Entry>) => {
-    setState((prev) => {
-      const base: Entry = prev[id] ?? { status: "missing" };
-      return { ...prev, [id]: { ...base, ...patch, updated_at: new Date().toISOString() } };
-    });
+    upsertMutation.mutate({ item_id: id, patch });
   };
 
   const overall = useMemo(() => {
@@ -195,7 +222,9 @@ export function HardeningChecklist() {
   };
 
   const resetAll = () => {
-    if (confirm("Reset all checklist items to Missing?")) setState({});
+    if (confirm("Reset all checklist items to Missing? This affects all platform admins.")) {
+      resetMutation.mutate();
+    }
   };
 
   return (
@@ -221,7 +250,7 @@ export function HardeningChecklist() {
         <Card>
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Items tracked</div>
           <div className="text-[24px] font-semibold font-mono mt-1">{overall.total}</div>
-          <div className="text-[11.5px] text-muted-foreground mt-2">across {TIERS.length} tiers</div>
+          <div className="text-[11.5px] text-muted-foreground mt-2">across {TIERS.length} tiers · shared</div>
         </Card>
         <Card className="flex flex-col justify-between">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Actions</div>
@@ -234,14 +263,21 @@ export function HardeningChecklist() {
             </button>
             <button
               onClick={resetAll}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-border bg-card text-[12.5px] font-medium hover:bg-muted"
-              title="Reset"
+              disabled={resetMutation.isPending}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-border bg-card text-[12.5px] font-medium hover:bg-muted disabled:opacity-50"
+              title="Reset all (shared)"
             >
-              <RotateCcw size={13} />
+              {resetMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
             </button>
           </div>
         </Card>
       </div>
+
+      {isLoading && (
+        <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+          <Loader2 size={14} className="animate-spin" /> Loading shared checklist…
+        </div>
+      )}
 
       {tier1Blockers > 0 && (
         <div className="flex items-start gap-3 rounded-xl border border-rose-500/30 bg-rose-500/5 px-4 py-3">
@@ -302,33 +338,39 @@ export function HardeningChecklist() {
                       <div className="text-[13px] leading-snug">{it.label}</div>
                     </div>
                     <div className="flex gap-1">
-                      {(["done", "partial", "missing"] as Status[]).map((s) => (
+                      {(["done", "partial", "missing"] as Status[]).map((st) => (
                         <button
-                          key={s}
-                          onClick={() => update(it.id, { status: s })}
+                          key={st}
+                          onClick={() => update(it.id, { status: st })}
                           className={cn(
                             "px-2.5 py-1 rounded-md border text-[11px] font-semibold capitalize",
-                            entry.status === s
-                              ? STATUS_META[s].tone
+                            entry.status === st
+                              ? STATUS_META[st].tone
                               : "bg-card text-muted-foreground border-border hover:bg-muted",
                           )}
                         >
-                          {STATUS_META[s].label}
+                          {STATUS_META[st].label}
                         </button>
                       ))}
                     </div>
                     <input
                       type="text"
                       placeholder="Owner"
-                      value={entry.owner ?? ""}
-                      onChange={(e) => update(it.id, { owner: e.target.value })}
+                      defaultValue={entry.owner ?? ""}
+                      onBlur={(e) => {
+                        const v = e.target.value;
+                        if (v !== (entry.owner ?? "")) update(it.id, { owner: v });
+                      }}
                       className="px-2.5 py-1.5 rounded-md border border-border bg-card text-[12px] outline-none focus:border-primary"
                     />
                     <input
                       type="text"
                       placeholder="Notes / evidence link"
-                      value={entry.note ?? ""}
-                      onChange={(e) => update(it.id, { note: e.target.value })}
+                      defaultValue={entry.note ?? ""}
+                      onBlur={(e) => {
+                        const v = e.target.value;
+                        if (v !== (entry.note ?? "")) update(it.id, { note: v });
+                      }}
                       className="px-2.5 py-1.5 rounded-md border border-border bg-card text-[12px] outline-none focus:border-primary"
                     />
                   </div>
@@ -340,8 +382,11 @@ export function HardeningChecklist() {
       })}
 
       <div className="text-[11.5px] text-muted-foreground">
-        Checklist state is stored in your browser. Use Export to share a snapshot with auditors or migrate to a shared table later.
+        Checklist state is stored in the shared database — all platform admins see and edit the same board. Owner/notes save on blur.
       </div>
     </div>
   );
 }
+
+// Keep exported query options for optional loader priming.
+export { hardeningQueryOptions };
