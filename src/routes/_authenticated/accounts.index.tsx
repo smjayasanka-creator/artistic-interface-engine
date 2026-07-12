@@ -36,25 +36,20 @@ function AccountsIndex() {
           Manage the general ledger — post entries, bulk upload from spreadsheets, and reconcile bank accounts.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid gap-3 md:grid-cols-3">
         {CARDS.map((c) => {
           const Icon = c.icon;
           return (
-            <Link
-              key={c.to}
-              to={c.to}
-              className="group block focus:outline-none focus:ring-2 focus:ring-primary/40 rounded-xl"
-            >
-              <Card className="h-full flex flex-col gap-3 hover:border-primary/50 transition-colors">
+            <Link key={c.to} to={c.to} className="group">
+              <Card className="p-3.5 hover:border-primary/40 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-none">
+                  <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${c.accent}`}>
                     <Icon size={18} />
                   </div>
-                  <div className="font-semibold text-[15px]">{c.title}</div>
-                </div>
-                <p className="text-[12.5px] leading-relaxed text-muted-foreground flex-1">{c.desc}</p>
-                <div className="mt-2 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-primary group-hover:gap-2 transition-all">
-                  {c.cta} <ArrowRight size={13} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-[14px] truncate">{c.title}</div>
+                  </div>
+                  <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </Card>
             </Link>
