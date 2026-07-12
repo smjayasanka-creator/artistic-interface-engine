@@ -745,30 +745,36 @@ export type Database = {
       }
       gl_account: {
         Row: {
+          branch_ids: string[] | null
           code: string
           company_id: string
           id: string
           is_active: boolean
           name: string
           normal_balance: number
+          subcategory: string | null
           type: Database["public"]["Enums"]["account_type"]
         }
         Insert: {
+          branch_ids?: string[] | null
           code: string
           company_id: string
           id?: string
           is_active?: boolean
           name: string
           normal_balance: number
+          subcategory?: string | null
           type: Database["public"]["Enums"]["account_type"]
         }
         Update: {
+          branch_ids?: string[] | null
           code?: string
           company_id?: string
           id?: string
           is_active?: boolean
           name?: string
           normal_balance?: number
+          subcategory?: string | null
           type?: Database["public"]["Enums"]["account_type"]
         }
         Relationships: [
