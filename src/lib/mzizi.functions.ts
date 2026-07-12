@@ -530,6 +530,39 @@ export const createBranch = createServerFn({ method: "POST" })
     return created;
   });
 
+export const updateBranch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: { id: string; code: string; name: string; region?: string | null; currency?: string; opened_on?: string | null }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          code: z.string().trim().min(1).max(20),
+          name: z.string().trim().min(2).max(80),
+          region: z.string().trim().max(80).nullable().optional().or(z.literal("")),
+          currency: z.string().trim().length(3).optional(),
+          opened_on: z.string().nullable().optional().or(z.literal("")),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can edit branches");
+    const { error } = await supabase
+      .from("branch")
+      .update({
+        code: data.code,
+        name: data.name,
+        region: data.region || null,
+        currency: (data.currency || "KES").toUpperCase(),
+        opened_on: data.opened_on || null,
+      })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
 export const createStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -579,6 +612,46 @@ export const toggleStaff = createServerFn({ method: "POST" })
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) throw new Error("Only admins can modify staff");
     const { error } = await supabase.from("staff").update({ is_active: data.is_active }).eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+export const updateStaff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      id: string;
+      full_name: string;
+      role: "loan_officer" | "branch_manager" | "teller" | "operations" | "admin";
+      branch_id: string;
+      email?: string | null;
+      phone?: string | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          full_name: z.string().trim().min(2).max(80),
+          role: z.enum(["loan_officer", "branch_manager", "teller", "operations", "admin"]),
+          branch_id: z.string().uuid(),
+          email: z.string().trim().email().nullable().optional().or(z.literal("")),
+          phone: z.string().trim().max(30).nullable().optional().or(z.literal("")),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can edit staff");
+    const { error } = await supabase
+      .from("staff")
+      .update({
+        full_name: data.full_name,
+        role: data.role,
+        branch_id: data.branch_id,
+        email: data.email || null,
+        phone: data.phone || null,
+      })
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
@@ -1056,6 +1129,72 @@ export const toggleLoanProduct = createServerFn({ method: "POST" })
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) throw new Error("Only admins can modify loan products");
     const { error } = await supabase.from("loan_product").update({ is_active: data.is_active }).eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+export const updateLoanProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      id: string;
+      name: string;
+      annual_rate_pct: number;
+      max_annual_rate_pct?: number | null;
+      min_term_months: number;
+      max_term_months: number;
+      min_principal: number;
+      max_principal?: number | null;
+      frequency: "daily" | "weekly" | "biweekly" | "monthly";
+      interest_method?: "flat" | "declining_balance";
+      processing_fee_pct?: number;
+      principal_account_id?: string | null;
+      cash_account_id?: string | null;
+      interest_income_account_id?: string | null;
+      fee_income_account_id?: string | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          name: z.string().trim().min(2).max(80),
+          annual_rate_pct: z.number().positive().max(200),
+          max_annual_rate_pct: z.number().positive().max(200).nullable().optional(),
+          min_term_months: z.number().int().positive().max(120),
+          max_term_months: z.number().int().positive().max(120),
+          min_principal: z.number().nonnegative(),
+          max_principal: z.number().positive().nullable().optional(),
+          frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]),
+          interest_method: z.enum(["flat", "declining_balance"]).optional(),
+          processing_fee_pct: z.number().nonnegative().max(50).optional(),
+          principal_account_id: z.string().uuid().nullable().optional(),
+          cash_account_id: z.string().uuid().nullable().optional(),
+          interest_income_account_id: z.string().uuid().nullable().optional(),
+          fee_income_account_id: z.string().uuid().nullable().optional(),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can edit loan products");
+    const { error } = await supabase
+      .from("loan_product")
+      .update({
+        name: data.name,
+        annual_rate_pct: data.annual_rate_pct,
+        min_term_months: data.min_term_months,
+        max_term_months: data.max_term_months,
+        min_principal: data.min_principal,
+        max_principal: data.max_principal ?? null,
+        frequency: data.frequency,
+        interest_method: data.interest_method ?? "flat",
+        processing_fee_pct: data.processing_fee_pct ?? 0,
+        principal_account_id: data.principal_account_id ?? null,
+        cash_account_id: data.cash_account_id ?? null,
+        interest_income_account_id: data.interest_income_account_id ?? null,
+        fee_income_account_id: data.fee_income_account_id ?? null,
+      } as never)
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
