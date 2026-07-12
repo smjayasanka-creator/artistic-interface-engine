@@ -412,6 +412,10 @@ function BranchesTab() {
       region: b.region ?? "",
       currency: b.currency ?? "KES",
       opened_on: b.opened_on ?? "",
+      branch_prefix: b.branch_prefix ?? "",
+      savings_prefix: b.savings_prefix ?? "",
+      fd_prefix: b.fd_prefix ?? "",
+      loan_prefix: b.loan_prefix ?? "",
     });
     setEditingId(b.id);
     setMode("edit");
