@@ -1,22 +1,97 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus } from "lucide-react";
+import { Plus, FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, ArrowRight } from "lucide-react";
 import { getLoans } from "@/lib/mzizi.functions";
 import { Avatar } from "@/components/mzizi/Avatar";
+import { Card } from "@/components/mzizi/Card";
 import { money, shortDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/loans/")({
   component: LoansList,
 });
 
+const TILES = [
+  {
+    to: "/loans/new",
+    label: "New Loan Application",
+    desc: "Create a new loan facility",
+    icon: FilePlus2,
+    accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
+  },
+  {
+    to: "/loans/debit-note",
+    label: "Debit Note",
+    desc: "Add charges to the facility after disbursement",
+    icon: FileMinus2,
+    accent: "from-sky-500/15 to-sky-500/0 text-sky-600",
+  },
+  {
+    to: "/loans/reschedule",
+    label: "Reschedule / Restructure",
+    desc: "Change rental schedule and create a new facility from the settlement balance",
+    icon: CalendarClock,
+    accent: "from-amber-500/15 to-amber-500/0 text-amber-600",
+  },
+  {
+    to: "/loans/transfer",
+    label: "Facility Transfer",
+    desc: "Transfer facilities for repossession or legal action",
+    icon: ArrowRightLeft,
+    accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600",
+  },
+  {
+    to: "/loans/write-off",
+    label: "Write Off",
+    desc: "Write off overdue facilities",
+    icon: Ban,
+    accent: "from-rose-500/15 to-rose-500/0 text-rose-600",
+  },
+  {
+    to: "/loans/legal-action",
+    label: "Legal Action",
+    desc: "Record legal action against transferred facilities",
+    icon: Gavel,
+    accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600",
+  },
+] as const;
+
 function LoansList() {
   const fn = useServerFn(getLoans);
   const { data } = useQuery({ queryKey: ["loans"], queryFn: () => fn() });
 
   return (
-    <div className="animate-fadein space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="animate-fadein space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold">Loans</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Loan origination, servicing and recovery actions.
+        </p>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        {TILES.map((t) => {
+          const Icon = t.icon;
+          return (
+            <Link key={t.to} to={t.to} className="group">
+              <Card className="p-3.5 hover:border-primary/40 transition-colors h-full">
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${t.accent}`}>
+                    <Icon size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-[14px] truncate">{t.label}</div>
+                    <div className="text-[11.5px] text-muted-foreground truncate">{t.desc}</div>
+                  </div>
+                  <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center justify-between pt-2">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Loan portfolio</h2>
           <p className="text-[12.5px] text-faint mt-0.5">Disbursed loans and repayment status</p>
