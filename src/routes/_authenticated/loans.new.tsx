@@ -83,6 +83,8 @@ function NewLoan() {
   const [frequency, setFrequency] = useState<Frequency>("monthly");
   const [method, setMethod] = useState<InterestMethod>("flat");
   const [purpose, setPurpose] = useState("");
+  const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
+
 
   const clientsFn = useServerFn(getClients);
   const productsFn = useServerFn(getProducts);
@@ -112,7 +114,15 @@ function NewLoan() {
     setFrequency(p.frequency as Frequency);
     setTerm(Number(p.min_term_months));
     if (!principal && p.min_principal) setPrincipal(String(p.min_principal));
+    setCheckedDocs({});
   }
+
+  const requiredDocs: string[] = Array.isArray(product?.required_documents)
+    ? (product?.required_documents as string[])
+    : [];
+  const missingDocs = requiredDocs.filter((d) => !checkedDocs[d]);
+  const docsSatisfied = requiredDocs.length === 0 || missingDocs.length === 0;
+
 
   const rateNum = typeof rate === "number" ? rate : Number(rate || product?.annual_rate_pct || 0);
   const principalNum = Number(principal || 0);
@@ -143,7 +153,9 @@ function NewLoan() {
       term < Number(product.min_term_months) ||
       term > Number(product.max_term_months));
 
-  const canSubmit = !!clientId && !!productId && !!principal && !!rateNum && !submit.isPending;
+  const canSubmit =
+    !!clientId && !!productId && !!principal && !!rateNum && docsSatisfied && !submit.isPending;
+
 
   return (
     <div className="animate-fadein">
@@ -378,10 +390,63 @@ function NewLoan() {
           )}
 
           {tab === "documents" && (
-            <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
-              Document uploads (ID, payslip, collateral photos) will appear here.
+            <div className="flex flex-col gap-3">
+              {!productId ? (
+                <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
+                  Select a product on the Application tab to see its required documents.
+                </div>
+              ) : requiredDocs.length === 0 ? (
+                <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
+                  This product has no required documents configured.
+                </div>
+              ) : (
+                <>
+                  <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
+                    Required documents for {product?.name}
+                  </div>
+                  <div className="border border-border rounded-lg divide-y divide-row-divider">
+                    {requiredDocs.map((doc) => {
+                      const checked = !!checkedDocs[doc];
+                      return (
+                        <label
+                          key={doc}
+                          className="flex items-center gap-3 px-3 py-2.5 text-[12.5px] cursor-pointer hover:bg-secondary/30"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) =>
+                              setCheckedDocs((prev) => ({ ...prev, [doc]: e.target.checked }))
+                            }
+                            className="h-4 w-4 accent-primary"
+                          />
+                          <span className={cn("flex-1", checked && "text-muted-foreground line-through")}>
+                            {doc}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-[10.5px] px-2 py-0.5 rounded-full border",
+                              checked
+                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                                : "border-amber-500/40 bg-amber-500/10 text-amber-700",
+                            )}
+                          >
+                            {checked ? "Provided" : "Missing"}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="text-[12px] text-muted-foreground">
+                    {missingDocs.length === 0
+                      ? "All required documents have been marked as provided."
+                      : `${missingDocs.length} of ${requiredDocs.length} document${requiredDocs.length === 1 ? "" : "s"} still missing.`}
+                  </div>
+                </>
+              )}
             </div>
           )}
+
 
           {tab === "evaluations" && (
             <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
@@ -409,7 +474,14 @@ function NewLoan() {
               {tab !== "evaluations" ? (
                 <button
                   type="button"
+                  disabled={tab === "documents" && !docsSatisfied}
                   onClick={() => {
+                    if (tab === "documents" && !docsSatisfied) {
+                      toast.error(
+                        `Please provide all required documents (${missingDocs.length} missing).`,
+                      );
+                      return;
+                    }
                     const i = TABS.findIndex((t) => t.key === tab);
                     setTab(TABS[i + 1].key);
                   }}
@@ -417,6 +489,7 @@ function NewLoan() {
                 >
                   Next →
                 </button>
+
               ) : (
                 <button
                   type="button"

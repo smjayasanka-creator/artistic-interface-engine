@@ -751,7 +751,7 @@ export const getProducts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await context.supabase
       .from("loan_product")
-      .select("id, name, annual_rate_pct, frequency, color, min_principal, max_principal, min_term_months, max_term_months")
+      .select("id, name, annual_rate_pct, frequency, color, min_principal, max_principal, min_term_months, max_term_months, required_documents")
       .eq("is_active", true)
       .order("name");
     return data ?? [];
@@ -1152,7 +1152,9 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       cash_account_id?: string | null;
       interest_income_account_id?: string | null;
       fee_income_account_id?: string | null;
+      required_documents?: string[];
     }) =>
+
       z
         .object({
           name: z.string().trim().min(2).max(80),
@@ -1172,6 +1174,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
           cash_account_id: z.string().uuid().nullable().optional(),
           interest_income_account_id: z.string().uuid().nullable().optional(),
           fee_income_account_id: z.string().uuid().nullable().optional(),
+          required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
+
         })
         .refine((v) => v.max_term_months >= v.min_term_months, {
           message: "Max term must be >= min term",
@@ -1207,7 +1211,9 @@ export const createLoanProduct = createServerFn({ method: "POST" })
         cash_account_id: data.cash_account_id ?? null,
         interest_income_account_id: data.interest_income_account_id ?? null,
         fee_income_account_id: data.fee_income_account_id ?? null,
+        required_documents: data.required_documents ?? [],
       } as never)
+
       .select()
       .single();
     if (error) throw error;
@@ -1251,7 +1257,9 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       cash_account_id?: string | null;
       interest_income_account_id?: string | null;
       fee_income_account_id?: string | null;
+      required_documents?: string[];
     }) =>
+
       z
         .object({
           id: z.string().uuid(),
@@ -1271,7 +1279,9 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
           cash_account_id: z.string().uuid().nullable().optional(),
           interest_income_account_id: z.string().uuid().nullable().optional(),
           fee_income_account_id: z.string().uuid().nullable().optional(),
+          required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
         })
+
         .parse(i),
   )
   .handler(async ({ context, data }) => {
@@ -1296,8 +1306,10 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
         cash_account_id: data.cash_account_id ?? null,
         interest_income_account_id: data.interest_income_account_id ?? null,
         fee_income_account_id: data.fee_income_account_id ?? null,
+        required_documents: data.required_documents ?? [],
       } as never)
       .eq("id", data.id);
+
     if (error) throw error;
     return { ok: true };
   });

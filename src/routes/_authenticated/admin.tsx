@@ -363,6 +363,104 @@ function FormHeader({ title, onBack }: { title: string; onBack: () => void }) {
   );
 }
 
+const DOC_SUGGESTIONS = [
+  "National ID",
+  "Passport photo",
+  "Payslip",
+  "Bank statement (3 months)",
+  "Business permit",
+  "Utility bill",
+  "Collateral photo",
+  "Guarantor ID",
+];
+
+function RequiredDocsEditor({
+  items,
+  onChange,
+}: {
+  items: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  function add(name: string) {
+    const clean = name.trim();
+    if (!clean) return;
+    if (items.some((i) => i.toLowerCase() === clean.toLowerCase())) return;
+    onChange([...items, clean]);
+    setDraft("");
+  }
+  function remove(idx: number) {
+    onChange(items.filter((_, i) => i !== idx));
+  }
+  const remaining = DOC_SUGGESTIONS.filter(
+    (s) => !items.some((i) => i.toLowerCase() === s.toLowerCase()),
+  );
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-1.5 min-h-[28px]">
+        {items.length === 0 && (
+          <span className="text-[11.5px] text-muted-foreground italic">
+            No documents required. Add one below.
+          </span>
+        )}
+        {items.map((it, i) => (
+          <span
+            key={`${it}-${i}`}
+            className="inline-flex items-center gap-1 text-[11.5px] px-2 py-0.5 rounded-full border border-primary/40 bg-primary/10 text-foreground"
+          >
+            {it}
+            <button
+              type="button"
+              onClick={() => remove(i)}
+              className="text-muted-foreground hover:text-destructive"
+              aria-label={`Remove ${it}`}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add(draft);
+            }
+          }}
+          placeholder="Type a document name and press Enter"
+          className={inputCls}
+        />
+        <button
+          type="button"
+          onClick={() => add(draft)}
+          className={btnSecondaryCls}
+        >
+          Add
+        </button>
+      </div>
+      {remaining.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {remaining.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => add(s)}
+              className="text-[11px] px-2 py-0.5 rounded border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary"
+            >
+              + {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 /* ---------------- Branches ---------------- */
 
 function BranchesTab() {
@@ -753,7 +851,9 @@ function ProductsTab() {
     cashAcct: "",
     interestAcct: "",
     feeAcct: "",
+    requiredDocs: [] as string[],
   };
+
   const [form, setForm] = useState(emptyForm);
 
   const activeAccts = (accounts ?? []).filter((a: any) => a.is_active);
@@ -815,7 +915,9 @@ function ProductsTab() {
       cashAcct: p.cash_account_id ?? "",
       interestAcct: p.interest_income_account_id ?? "",
       feeAcct: p.fee_income_account_id ?? "",
+      requiredDocs: Array.isArray(p.required_documents) ? [...p.required_documents] : [],
     });
+
     setEditingId(p.id);
     setMode("edit");
   }
@@ -845,7 +947,9 @@ function ProductsTab() {
       cash_account_id: form.cashAcct || null,
       interest_income_account_id: form.interestAcct || null,
       fee_income_account_id: form.feeAcct || null,
+      required_documents: form.requiredDocs.map((s) => s.trim()).filter(Boolean),
     };
+
     if (mode === "edit" && editingId) {
       update.mutate({ data: { id: editingId, ...payload } });
     } else {
@@ -904,7 +1008,14 @@ function ProductsTab() {
             <FormField label="Termination fee (%)" span={6} hint="% of outstanding principal charged on termination">
               <input type="number" step="0.01" min={0} max={100} value={form.terminationFeePct} onChange={(e) => setForm({ ...form, terminationFeePct: e.target.value })} className={inputCls + " font-mono"} />
             </FormField>
+            <FormField label="Required documents" span={12} hint="Applicants must upload each of these before submitting a loan application">
+              <RequiredDocsEditor
+                items={form.requiredDocs}
+                onChange={(next) => setForm({ ...form, requiredDocs: next })}
+              />
+            </FormField>
           </FormGrid>
+
 
           <div className="pt-3 border-t border-border">
             <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">Ledger accounts (auto-posting)</div>
