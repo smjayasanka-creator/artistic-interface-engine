@@ -68,8 +68,8 @@ export async function logApiCall(entry: {
       method: entry.method,
       reference: entry.reference ?? null,
       status_code: entry.status_code,
-      request: entry.request ?? null,
-      response: entry.response ?? null,
+      request: (entry.request ?? null) as any,
+      response: (entry.response ?? null) as any,
       error: entry.error ?? null,
     });
   } catch {
