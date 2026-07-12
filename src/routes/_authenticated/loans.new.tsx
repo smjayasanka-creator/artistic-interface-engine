@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getClients, getProducts, submitApplication } from "@/lib/mzizi.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
   FormGrid,
@@ -19,6 +20,17 @@ import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { generateSchedule, FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
+
+type UploadedDoc = { path: string; name: string; size: number };
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+function slugifyDoc(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "doc";
+}
+function formatBytes(n: number) {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(2)} MB`;
+}
 
 export const Route = createFileRoute("/_authenticated/loans/new")({
   component: NewLoan,
