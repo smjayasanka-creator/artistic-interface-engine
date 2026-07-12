@@ -137,7 +137,7 @@ function FdRegister() {
                 <th className="py-2 pr-3">Certificate</th>
                 <th className="py-2 pr-3">Client</th>
                 <th className="py-2 pr-3">Product</th>
-                <th className="py-2 pr-3 text-right">Principal (LKR)</th>
+                <th className="py-2 pr-3 text-right">Principal ({getActiveCurrency()})</th>
                 <th className="py-2 pr-3 text-right">Rate %</th>
                 <th className="py-2 pr-3">Tenure</th>
                 <th className="py-2 pr-3">Payout</th>
