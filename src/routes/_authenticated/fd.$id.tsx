@@ -146,7 +146,7 @@ function FdDetail() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 text-[13px]">
-          <Info label="Principal" value={`LKR ${Number(fd.principal).toLocaleString()}`} />
+          <Info label="Principal" value={money(Number(fd.principal))} />
           <Info label="Rate" value={`${Number(fd.rate_at_booking).toFixed(3)}%`} />
           <Info label="Tenure" value={`${fd.tenure_months} months`} />
           <Info label="Payout" value={fd.payout_option.replace("_", " ")} />
