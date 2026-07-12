@@ -155,7 +155,7 @@ function FdRegister() {
                   </td>
                   <td className="py-2 pr-3">{d.client?.full_name ?? "—"}</td>
                   <td className="py-2 pr-3">{d.product?.name ?? "—"}</td>
-                  <td className="py-2 pr-3 text-right font-mono">{Number(d.principal).toLocaleString()}</td>
+                  <td className="py-2 pr-3 text-right font-mono">{money(Number(d.principal))}</td>
                   <td className="py-2 pr-3 text-right font-mono">{Number(d.rate_at_booking).toFixed(3)}</td>
                   <td className="py-2 pr-3">{d.tenure_months}m</td>
                   <td className="py-2 pr-3 capitalize">{d.payout_option.replace("_", " ")}</td>
