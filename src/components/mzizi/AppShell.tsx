@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug, Landmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
-import { setActiveCurrency } from "@/lib/format";
+import { setActiveCurrency, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> };
