@@ -85,15 +85,9 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
 
-    // Resolve company via has_role/is_company_member helper: pick the user's staff row.
-    const { data: staff, error: sErr } = await supabase
-      .from("staff")
-      .select("id, branch:branch_id(company_id)")
-      .limit(1)
-      .maybeSingle();
-    if (sErr) throw sErr;
-    if (!staff) throw new Error("No staff record");
-    const companyId = (staff as any).branch?.company_id as string;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
+    const companyId = cid as string;
 
     let wfId = data.id ?? null;
     if (wfId) {
