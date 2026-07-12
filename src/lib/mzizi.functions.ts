@@ -1090,6 +1090,8 @@ export const createGlAccount = createServerFn({ method: "POST" })
       name: string;
       type: "asset" | "liability" | "equity" | "income" | "expense";
       normal_balance: 1 | -1;
+      subcategory?: string | null;
+      branch_ids?: string[] | null;
     }) =>
       z
         .object({
@@ -1097,6 +1099,8 @@ export const createGlAccount = createServerFn({ method: "POST" })
           name: z.string().trim().min(2).max(120),
           type: z.enum(["asset", "liability", "equity", "income", "expense"]),
           normal_balance: z.union([z.literal(1), z.literal(-1)]),
+          subcategory: z.string().trim().max(80).nullable().optional(),
+          branch_ids: z.array(z.string().uuid()).nullable().optional(),
         })
         .parse(i),
   )
@@ -1114,7 +1118,9 @@ export const createGlAccount = createServerFn({ method: "POST" })
         name: data.name,
         type: data.type,
         normal_balance: data.normal_balance,
-      })
+        subcategory: data.subcategory || null,
+        branch_ids: data.branch_ids && data.branch_ids.length > 0 ? data.branch_ids : null,
+      } as never)
       .select()
       .single();
     if (error) throw error;
