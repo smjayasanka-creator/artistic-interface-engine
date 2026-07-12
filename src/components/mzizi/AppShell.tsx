@@ -23,7 +23,7 @@ const NAV: NavEntry[] = [
       { to: "/ledger", label: "Accounts", icon: BookOpen },
       { to: "/reports", label: "Reports", icon: LineChart },
       { to: "/admin", label: "Employees", icon: UserCog },
-      { to: "/groups", label: "Work flow", icon: Workflow },
+      { to: "/workflows", label: "Work flow", icon: Workflow },
       { to: "/admin", label: "Administration", icon: Settings },
     ],
   },

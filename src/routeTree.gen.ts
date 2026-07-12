@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedWorkflowsRouteImport } from './routes/_authenticated/workflows'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlatformAdminRouteImport } from './routes/_authenticated/platform-admin'
 import { Route as AuthenticatedLedgerRouteImport } from './routes/_authenticated/ledger'
@@ -54,6 +55,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedWorkflowsRoute = AuthenticatedWorkflowsRouteImport.update({
+  id: '/workflows',
+  path: '/workflows',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
@@ -221,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/ledger': typeof AuthenticatedLedgerRoute
   '/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/workflows': typeof AuthenticatedWorkflowsRoute
   '/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRoute
@@ -253,6 +260,7 @@ export interface FileRoutesByTo {
   '/ledger': typeof AuthenticatedLedgerRoute
   '/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/workflows': typeof AuthenticatedWorkflowsRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/clients/new': typeof AuthenticatedClientsNewRoute
   '/collections/new': typeof AuthenticatedCollectionsNewRoute
@@ -285,6 +293,7 @@ export interface FileRoutesById {
   '/_authenticated/ledger': typeof AuthenticatedLedgerRoute
   '/_authenticated/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/workflows': typeof AuthenticatedWorkflowsRoute
   '/_authenticated/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
   '/_authenticated/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
@@ -319,6 +328,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/platform-admin'
     | '/reports'
+    | '/workflows'
     | '/accounts/journal'
     | '/accounts/payments'
     | '/clients/$id'
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/platform-admin'
     | '/reports'
+    | '/workflows'
     | '/clients/$id'
     | '/clients/new'
     | '/collections/new'
@@ -382,6 +393,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ledger'
     | '/_authenticated/platform-admin'
     | '/_authenticated/reports'
+    | '/_authenticated/workflows'
     | '/_authenticated/accounts/journal'
     | '/_authenticated/accounts/payments'
     | '/_authenticated/clients/$id'
@@ -433,6 +445,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/workflows': {
+      id: '/_authenticated/workflows'
+      path: '/workflows'
+      fullPath: '/workflows'
+      preLoaderRoute: typeof AuthenticatedWorkflowsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports': {
       id: '/_authenticated/reports'
@@ -690,6 +709,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLedgerRoute: typeof AuthenticatedLedgerRoute
   AuthenticatedPlatformAdminRoute: typeof AuthenticatedPlatformAdminRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
   AuthenticatedAccountsJournalRoute: typeof AuthenticatedAccountsJournalRouteWithChildren
   AuthenticatedAccountsPaymentsRoute: typeof AuthenticatedAccountsPaymentsRouteWithChildren
   AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
@@ -716,6 +736,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLedgerRoute: AuthenticatedLedgerRoute,
   AuthenticatedPlatformAdminRoute: AuthenticatedPlatformAdminRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
   AuthenticatedAccountsJournalRoute:
     AuthenticatedAccountsJournalRouteWithChildren,
   AuthenticatedAccountsPaymentsRoute:
