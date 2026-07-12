@@ -116,6 +116,7 @@ function ShellInner() {
         <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">
           {NAV.map((entry) => {
             if ("section" in entry) {
+              if (entry.section === "User" && !(session?.roles ?? []).includes("platform_admin")) return null;
               return (
                 <div key={entry.section} className="mt-3 mb-1">
                   <div className="px-3 text-[10px] font-semibold tracking-wider uppercase text-rail-muted mb-1">{entry.section}</div>
