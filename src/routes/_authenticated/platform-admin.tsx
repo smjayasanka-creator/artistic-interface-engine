@@ -17,12 +17,13 @@ import {
   listSubscriptionPlans,
   upsertCompanySubscription,
 } from "@/lib/platform-admin.functions";
+import { HardeningChecklist } from "@/components/mzizi/HardeningChecklist";
 
 export const Route = createFileRoute("/_authenticated/platform-admin")({
   component: PlatformAdmin,
 });
 
-type Tab = "overview" | "companies" | "plans";
+type Tab = "overview" | "companies" | "plans" | "hardening";
 
 const STATUS_TONE: Record<string, string> = {
   trialing: "bg-sky-500/10 text-sky-700 border-sky-500/30",
@@ -66,12 +67,14 @@ function PlatformAdmin() {
         </div>
       </div>
 
+
       <div className="flex gap-1 border-b border-border">
         {(
           [
             ["overview", "Overview"],
             ["companies", "Companies"],
             ["plans", "Plans"],
+            ["hardening", "Hardening"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -90,6 +93,7 @@ function PlatformAdmin() {
       {tab === "overview" && <OverviewTab />}
       {tab === "companies" && <CompaniesTab />}
       {tab === "plans" && <PlansTab />}
+      {tab === "hardening" && <HardeningChecklist />}
     </div>
   );
 }
