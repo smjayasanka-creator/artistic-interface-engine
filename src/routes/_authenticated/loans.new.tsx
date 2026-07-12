@@ -83,6 +83,8 @@ function NewLoan() {
   const [frequency, setFrequency] = useState<Frequency>("monthly");
   const [method, setMethod] = useState<InterestMethod>("flat");
   const [purpose, setPurpose] = useState("");
+  const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
+
 
   const clientsFn = useServerFn(getClients);
   const productsFn = useServerFn(getProducts);
