@@ -79,7 +79,7 @@ export const getTellerSummary = createServerFn({ method: "GET" })
     };
   });
 
-
+export const getSession = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
