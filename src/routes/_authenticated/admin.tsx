@@ -849,7 +849,9 @@ function ProductsTab() {
       cash_account_id: form.cashAcct || null,
       interest_income_account_id: form.interestAcct || null,
       fee_income_account_id: form.feeAcct || null,
+      required_documents: form.requiredDocs.map((s) => s.trim()).filter(Boolean),
     };
+
     if (mode === "edit" && editingId) {
       update.mutate({ data: { id: editingId, ...payload } });
     } else {
