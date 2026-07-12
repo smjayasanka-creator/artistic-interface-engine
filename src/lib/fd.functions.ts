@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { serverNow, serverToday } from "@/lib/clock-server";
 import { buildSchedule, dailyAccrual, addMonths, daysBetween, interestForPeriod } from "@/lib/fd-schedule";
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -275,7 +276,7 @@ export const getFdSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = serverToday();
     const monthStart = today.slice(0, 8) + "01";
     const monthEnd = addMonths(monthStart, 1);
     const [{ data: active }, { data: paidMtd }, { data: maturingMtd }] = await Promise.all([
@@ -600,8 +601,8 @@ export const listMaturingDeposits = createServerFn({ method: "GET" })
   .inputValidator((i: { window: 7 | 30 | 60 }) => z.object({ window: z.union([z.literal(7), z.literal(30), z.literal(60)]) }).parse(i))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const today = new Date().toISOString().slice(0, 10);
-    const end = new Date(Date.now() + data.window * 86400000).toISOString().slice(0, 10);
+    const today = serverToday();
+    const end = new Date(serverNow().getTime() + data.window * 86400000).toISOString().slice(0, 10);
     const { data: rows } = await supabase
       .from("fixed_deposit")
       .select(
@@ -626,7 +627,7 @@ export const processMaturity = createServerFn({ method: "POST" })
     const { data: isAdmin } = await supabase.rpc("is_company_admin", { _company_id: cid });
     if (!isAdmin) throw new Error("Only approvers can process maturity");
 
-    const onDate = data.on_date ?? new Date().toISOString().slice(0, 10);
+    const onDate = data.on_date ?? serverToday();
 
     const { data: fd } = await supabase
       .from("fixed_deposit")
@@ -764,7 +765,7 @@ export const runFdDailyAccrual = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = serverToday();
     const { data: active } = await supabase
       .from("fixed_deposit")
       .select("id,principal,rate_at_booking")
@@ -795,7 +796,7 @@ export const runFdInterestPayouts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = serverToday();
     const { data: due } = await supabase
       .from("fd_interest_schedule")
       .select("id,deposit_id,net_interest,due_date")

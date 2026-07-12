@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { serverNow, serverToday } from "@/lib/clock-server";
 import { generateSchedule, type Frequency } from "@/lib/loan-schedule";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -17,7 +18,7 @@ export const getTellerSummary = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .maybeSingle();
 
-    const startOfDay = new Date();
+    const startOfDay = serverNow();
     startOfDay.setHours(0, 0, 0, 0);
     const sinceIso = startOfDay.toISOString();
     const todayDate = sinceIso.slice(0, 10);
@@ -63,7 +64,7 @@ export const getTellerSummary = createServerFn({ method: "GET" })
 
     return {
       staff,
-      asOf: new Date().toISOString(),
+      asOf: serverNow().toISOString(),
       opening_balance: 0,
       cash_from_vault: 0,
       receipts: {
@@ -100,7 +101,7 @@ export const getDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = serverToday();
 
     const [
       { count: activeClients },
@@ -291,7 +292,7 @@ export const getLoans = createServerFn({ method: "GET" })
       const out = Number(o?.outstanding_principal ?? 0);
       const rep = Number(o?.principal_repaid ?? 0);
       const nxt = nextMap.get(l.id);
-      const overdue = nxt && new Date(nxt.due_date) < new Date();
+      const overdue = nxt && new Date(nxt.due_date) < serverNow();
       return {
         ...l,
         outstanding: out,
@@ -367,7 +368,7 @@ export const getReports = createServerFn({ method: "GET" })
       .select("principal, disbursed_at, product:product_id(id, name, color)")
       .not("disbursed_at", "is", null);
 
-    const now = new Date();
+    const now = serverNow();
     const months: { label: string; total: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -1082,7 +1083,7 @@ export const getCollections = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = serverToday();
     const { data: today_rep } = await supabase
       .from("repayment")
       .select("id, amount, channel, received_at, loan:loan_id(client:client_id(full_name, avatar_color))")

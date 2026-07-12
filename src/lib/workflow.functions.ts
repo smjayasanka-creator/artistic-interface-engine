@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { serverNow } from "@/lib/clock-server";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -250,7 +251,7 @@ export const listInstances = createServerFn({ method: "GET" })
     }
 
     // Enrich with SLA
-    const now = Date.now();
+    const now = serverNow().getTime();
     return filtered.map((r: any) => {
       const step = (r.workflow?.steps ?? []).find((s: any) => s.step_order === r.current_step);
       const dueAt = step?.sla_hours ? new Date(new Date(r.initiated_at).getTime() + step.sla_hours * 3600e3) : null;
