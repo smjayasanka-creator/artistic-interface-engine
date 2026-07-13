@@ -81,8 +81,10 @@ function PlatformAdmin() {
             ["companies", "Companies"],
             ["plans", "Plans"],
             ["jobs", "Jobs"],
+            ["processes", "Processes"],
             ["hardening", "Hardening"],
             ["architecture", "Architecture"],
+
           ] as const
         ).map(([id, label]) => (
           <button
