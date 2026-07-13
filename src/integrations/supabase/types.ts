@@ -2908,6 +2908,24 @@ export type Database = {
       is_company_admin: { Args: { _company_id: string }; Returns: boolean }
       is_company_member: { Args: { _company_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      list_audit_log: {
+        Args: {
+          _action_prefix?: string
+          _company_id: string
+          _entity_type?: string
+          _limit?: number
+          _offset?: number
+        }
+        Returns: {
+          action: string
+          actor_user_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          metadata: Json
+        }[]
+      }
       mark_domain_event_dispatched: {
         Args: { _id: string }
         Returns: undefined
