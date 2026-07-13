@@ -19,6 +19,7 @@ import {
 } from "@/lib/platform-admin.functions";
 import { HardeningChecklist } from "@/components/mzizi/HardeningChecklist";
 import { ArchitectureExplorer } from "@/components/mzizi/ArchitectureExplorer";
+import { ServiceBoundaries } from "@/components/mzizi/ServiceBoundaries";
 
 export const Route = createFileRoute("/_authenticated/platform-admin")({
   component: PlatformAdmin,
@@ -96,12 +97,39 @@ function PlatformAdmin() {
       {tab === "companies" && <CompaniesTab />}
       {tab === "plans" && <PlansTab />}
       {tab === "hardening" && <HardeningChecklist />}
-      {tab === "architecture" && <ArchitectureExplorer />}
+      {tab === "architecture" && <ArchitectureView />}
     </div>
   );
 }
 
-/* ---------------- Overview ---------------- */
+/* ---------------- Architecture (runtime + service boundaries) ---------------- */
+
+function ArchitectureView() {
+  const [mode, setMode] = useState<"runtime" | "services">("runtime");
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="inline-flex self-start rounded-lg border border-border bg-card p-0.5">
+        {([
+          ["runtime", "Runtime map"],
+          ["services", "Service boundaries"],
+        ] as const).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setMode(id)}
+            className={cn(
+              "px-3 py-1.5 text-[12.5px] font-medium rounded-md",
+              mode === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {mode === "runtime" ? <ArchitectureExplorer /> : <ServiceBoundaries />}
+    </div>
+  );
+}
+
 
 function OverviewTab() {
   const fn = useServerFn(getPlatformOverview);
