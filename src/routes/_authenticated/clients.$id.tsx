@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-
 import {
   User2,
   Wallet,
@@ -21,7 +20,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getClient, updateClient } from "@/lib/mzizi.functions";
+import { getClient } from "@/lib/mzizi.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
@@ -508,123 +507,25 @@ function DocumentsPanel({ documents, clientId }: { documents: any[]; clientId: s
 }
 
 function ProfilePanel({ client, bankAccounts }: any) {
-  const qc = useQueryClient();
-  const update = useServerFn(updateClient);
-  const [edit, setEdit] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<any>({
-    first_name: client.first_name ?? "",
-    last_name: client.last_name ?? "",
-    phone: client.phone ?? "",
-    email: client.email ?? "",
-    address: client.address ?? "",
-    gn_division: client.gn_division ?? "",
-    divisional_secretariat: client.divisional_secretariat ?? "",
-    district: client.district ?? "",
-    province: client.province ?? "",
-    date_of_birth: client.date_of_birth ?? "",
-    gender: client.gender ?? "",
-    occupation: client.occupation ?? "",
-    monthly_income: client.monthly_income ?? "",
-  });
-
-  function set(k: string, v: any) { setForm((f: any) => ({ ...f, [k]: v })); }
-
-  async function save() {
-    setSaving(true);
-    try {
-      await update({
-        data: {
-          id: client.id,
-          first_name: form.first_name || undefined,
-          last_name: form.last_name || undefined,
-          phone: form.phone || undefined,
-          email: form.email || null,
-          address: form.address || null,
-          gn_division: form.gn_division || null,
-          divisional_secretariat: form.divisional_secretariat || null,
-          district: form.district || null,
-          province: form.province || null,
-          date_of_birth: form.date_of_birth || null,
-          gender: (form.gender || null) as any,
-          occupation: form.occupation || null,
-          monthly_income: form.monthly_income === "" || form.monthly_income == null ? null : Number(form.monthly_income),
-        },
-      });
-      await qc.invalidateQueries({ queryKey: ["client", client.id] });
-      await qc.invalidateQueries({ queryKey: ["clients"] });
-      toast.success("Client updated");
-      setEdit(false);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to update");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="md:col-span-2 flex justify-end gap-2">
-        {edit ? (
-          <>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => setEdit(false)}
-              className="border border-border-strong px-3.5 py-2 rounded-full text-[12.5px] font-medium hover:border-input"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={save}
-              className="bg-primary text-primary-foreground px-3.5 py-2 rounded-full text-[12.5px] font-semibold hover:bg-primary-hover disabled:opacity-60"
-            >
-              {saving ? "Saving…" : "Save changes"}
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setEdit(true)}
-            className="border border-border-strong px-3.5 py-2 rounded-full text-[12.5px] font-medium hover:border-input inline-flex items-center gap-1"
-          >
-            <Pencil size={12} /> Edit
-          </button>
-        )}
-      </div>
       <Card>
         <SectionTitle>Personal</SectionTitle>
-        <EditField edit={edit} label="First name" value={form.first_name} display={client.first_name ?? "—"} onChange={(v) => set("first_name", v)} />
-        <EditField edit={edit} label="Last name" value={form.last_name} display={client.last_name ?? "—"} onChange={(v) => set("last_name", v)} />
-        <EditField edit={edit} label="Date of birth" type="date" value={form.date_of_birth} display={client.date_of_birth ? shortDate(client.date_of_birth) : "—"} onChange={(v) => set("date_of_birth", v)} />
-        <EditField
-          edit={edit}
-          label="Gender"
-          value={form.gender}
-          display={client.gender ?? "—"}
-          onChange={(v) => set("gender", v)}
-          options={[
-            { value: "", label: "—" },
-            { value: "male", label: "Male" },
-            { value: "female", label: "Female" },
-            { value: "other", label: "Other" },
-          ]}
-        />
-        <EditField edit={edit} label="Occupation" value={form.occupation} display={client.occupation ?? "—"} onChange={(v) => set("occupation", v)} />
-        <EditField edit={edit} label="Monthly income" type="number" value={form.monthly_income} display={client.monthly_income ? money(Number(client.monthly_income), true) : "—"} onChange={(v) => set("monthly_income", v)} mono />
+        <Field label="Full name" value={client.full_name} />
+        <Field label="Date of birth" value={client.date_of_birth ? shortDate(client.date_of_birth) : "—"} />
+        <Field label="Gender" value={client.gender ?? "—"} />
+        <Field label="Occupation" value={client.occupation ?? "—"} />
+        <Field label="Monthly income" value={client.monthly_income ? money(Number(client.monthly_income), true) : "—"} mono />
         <Field label="Risk grade" value={client.risk_grade ?? "—"} />
       </Card>
       <Card>
         <SectionTitle>Contact</SectionTitle>
-        <EditField edit={edit} label="Phone" value={form.phone} display={client.phone ?? "—"} onChange={(v) => set("phone", v)} icon={<Phone size={12} />} />
-        <EditField edit={edit} label="Email" value={form.email} display={client.email ?? "—"} onChange={(v) => set("email", v)} icon={<Mail size={12} />} />
-        <EditField edit={edit} label="Address" value={form.address} display={client.address ?? "—"} onChange={(v) => set("address", v)} icon={<MapPin size={12} />} />
-        <EditField edit={edit} label="GN Division" value={form.gn_division} display={client.gn_division ?? "—"} onChange={(v) => set("gn_division", v)} />
-        <EditField edit={edit} label="DS Division" value={form.divisional_secretariat} display={client.divisional_secretariat ?? "—"} onChange={(v) => set("divisional_secretariat", v)} />
-        <EditField edit={edit} label="District" value={form.district} display={client.district ?? "—"} onChange={(v) => set("district", v)} />
-        <EditField edit={edit} label="Province" value={form.province} display={client.province ?? "—"} onChange={(v) => set("province", v)} />
+        <Field label="Phone" value={client.phone ?? "—"} icon={<Phone size={12} />} />
+        <Field label="Email" value={client.email ?? "—"} icon={<Mail size={12} />} />
+        <Field label="Address" value={client.address ?? "—"} icon={<MapPin size={12} />} />
+        <Field label="GN Division" value={client.gn_division ?? "—"} />
+        <Field label="DS Division" value={client.divisional_secretariat ?? "—"} />
+        <Field label="District / Province" value={`${client.district ?? "—"} · ${client.province ?? "—"}`} />
       </Card>
       <Card className="md:col-span-2">
         <SectionTitle>Bank accounts</SectionTitle>
@@ -650,57 +551,6 @@ function ProfilePanel({ client, bankAccounts }: any) {
     </div>
   );
 }
-
-function EditField({
-  edit,
-  label,
-  value,
-  display,
-  onChange,
-  icon,
-  mono,
-  type = "text",
-  options,
-}: {
-  edit: boolean;
-  label: string;
-  value: any;
-  display: string;
-  onChange: (v: any) => void;
-  icon?: React.ReactNode;
-  mono?: boolean;
-  type?: string;
-  options?: { value: string; label: string }[];
-}) {
-  if (!edit) return <Field label={label} value={display} mono={mono} icon={icon} />;
-  return (
-    <div className="flex items-center justify-between gap-4 py-1.5 text-[12.5px] border-b border-row-divider last:border-b-0">
-      <span className="text-muted-foreground inline-flex items-center gap-1.5 shrink-0">{icon}{label}</span>
-      {options ? (
-        <select
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value)}
-          className="bg-transparent border border-border rounded-md px-2 py-1 text-[12.5px] text-right focus:outline-none focus:border-primary"
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      ) : (
-        <input
-          type={type}
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value)}
-          className={cn(
-            "bg-transparent border border-border rounded-md px-2 py-1 text-[12.5px] text-right focus:outline-none focus:border-primary min-w-0 flex-1 max-w-xs",
-            mono && "font-mono",
-          )}
-        />
-      )}
-    </div>
-  );
-}
-
 
 function Field({ label, value, mono, icon }: { label: string; value: string; mono?: boolean; icon?: React.ReactNode }) {
   return (
