@@ -132,6 +132,21 @@ export const Route = createFileRoute("/api/public/hooks/fd-mature")({
               .single();
             if (newErr) throw newErr;
 
+            // Generate the interest schedule so the daily payout cron pays this renewal too.
+            const schedRows = buildSchedule({
+              principal: newPrincipal,
+              annualRatePct: rate,
+              tenureMonths: d.tenure_months,
+              valueDate: today,
+              payoutOption: d.payout_option,
+              whtRatePct: Number(d.wht_rate_at_booking),
+            });
+            if (schedRows.length > 0) {
+              await supabaseAdmin
+                .from("fd_interest_schedule")
+                .insert(schedRows.map((r) => ({ ...r, deposit_id: newFd.id })));
+            }
+
             await supabaseAdmin.from("fd_transaction").insert({
               deposit_id: newFd.id,
               type: "renewal",
