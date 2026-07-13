@@ -11,6 +11,7 @@ import {
   upsertFdRateTier,
   deleteFdRateTier,
 } from "@/lib/fd.functions";
+import { getGlAccounts } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
 import {
   FormGrid,
@@ -63,6 +64,12 @@ const EMPTY = {
   wht_rate: 5,
   auto_renewal_default: "payout" as MaturityInstr,
   active: true,
+  capital_account_id: null as string | null,
+  interest_payable_account_id: null as string | null,
+  interest_expense_account_id: null as string | null,
+  wht_payable_account_id: null as string | null,
+  introducer_commission_account_id: null as string | null,
+  marketing_incentive_account_id: null as string | null,
 };
 
 const GRID_COLS = "0.5fr 1.4fr 0.95fr 0.75fr 0.45fr 0.85fr 0.55fr 0.4fr";
@@ -201,6 +208,12 @@ export function FdProductsTab() {
                       wht_rate: Number(product.wht_rate),
                       auto_renewal_default: product.auto_renewal_default,
                       active: product.active,
+                      capital_account_id: (product as any).capital_account_id ?? null,
+                      interest_payable_account_id: (product as any).interest_payable_account_id ?? null,
+                      interest_expense_account_id: (product as any).interest_expense_account_id ?? null,
+                      wht_payable_account_id: (product as any).wht_payable_account_id ?? null,
+                      introducer_commission_account_id: (product as any).introducer_commission_account_id ?? null,
+                      marketing_incentive_account_id: (product as any).marketing_incentive_account_id ?? null,
                     },
                     rateTiers: product.rate_tiers,
                   })
@@ -251,6 +264,36 @@ function ProductModal({
   const qc = useQueryClient();
   const upsertFn = useServerFn(upsertFdRateTier);
   const deleteFn = useServerFn(deleteFdRateTier);
+  const glListFn = useServerFn(getGlAccounts);
+  const { data: glAccounts } = useQuery({
+    queryKey: ["gl-accounts-fd-product"],
+    queryFn: () => glListFn(),
+  });
+  const glOptions = ((glAccounts as any[]) ?? [])
+    .filter((a) => a.is_active !== false)
+    .sort((a, b) => a.code.localeCompare(b.code));
+  const glSelect = (
+    key:
+      | "capital_account_id"
+      | "interest_payable_account_id"
+      | "interest_expense_account_id"
+      | "wht_payable_account_id"
+      | "introducer_commission_account_id"
+      | "marketing_incentive_account_id",
+  ) => (
+    <select
+      className={selectCls}
+      value={v[key] ?? ""}
+      onChange={(e) => setV({ ...v, [key]: e.target.value || null })}
+    >
+      <option value="">— Select account —</option>
+      {glOptions.map((a) => (
+        <option key={a.id} value={a.id}>
+          {a.code} · {a.name}
+        </option>
+      ))}
+    </select>
+  );
 
   const upsertM = useMutation({
     mutationFn: (tier: {
@@ -381,6 +424,20 @@ function ProductModal({
               </label>
             </FormField>
           </FormGrid>
+
+          <div>
+            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">
+              GL account mapping
+            </div>
+            <FormGrid>
+              <FormField label="Capital account" span={6}>{glSelect("capital_account_id")}</FormField>
+              <FormField label="Interest payable account" span={6}>{glSelect("interest_payable_account_id")}</FormField>
+              <FormField label="Interest expense account" span={6}>{glSelect("interest_expense_account_id")}</FormField>
+              <FormField label="WHT payable account" span={6}>{glSelect("wht_payable_account_id")}</FormField>
+              <FormField label="Introducer commission account" span={6}>{glSelect("introducer_commission_account_id")}</FormField>
+              <FormField label="Marketing incentive account" span={6}>{glSelect("marketing_incentive_account_id")}</FormField>
+            </FormGrid>
+          </div>
 
           {productId && (
             <div>
