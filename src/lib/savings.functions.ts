@@ -2,6 +2,29 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// ─────────── Ledger kernel helper ───────────
+// Resolves GL account ids from savings_product (preferred) or falls back
+// to standard chart-of-accounts codes: 1000 cash, 2100 deposits liability,
+// 4100 fee income, 5100 interest expense.
+async function resolveSavingsAccounts(supabase: any, product: any) {
+  const need: Record<string, { fromProduct: string | null; code: string }> = {
+    cash: { fromProduct: product?.cash_account_id ?? null, code: "1000" },
+    liab: { fromProduct: product?.deposit_liability_account_id ?? null, code: "2100" },
+    fee: { fromProduct: product?.fee_income_account_id ?? null, code: "4100" },
+    intr: { fromProduct: product?.interest_expense_account_id ?? null, code: "5100" },
+  };
+  const missingCodes = Object.values(need).filter((n) => !n.fromProduct).map((n) => n.code);
+  let byCode: Record<string, string> = {};
+  if (missingCodes.length) {
+    const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", missingCodes);
+    byCode = Object.fromEntries((accts ?? []).map((a: any) => [a.code, a.id]));
+  }
+  const resolved: Record<string, string | null> = {};
+  for (const [k, v] of Object.entries(need)) resolved[k] = v.fromProduct ?? byCode[v.code] ?? null;
+  return resolved as { cash: string | null; liab: string | null; fee: string | null; intr: string | null };
+}
+
+
 // ─────────── Products ───────────
 export const listSavingsProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -169,8 +192,44 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
       performed_by: staff?.id ?? null,
     });
     await (supabase as any).from("savings_transaction").insert(txnRows);
+
+    // Ledger postings via kernel (best-effort — skip silently if COA not configured)
+    const gl = await resolveSavingsAccounts(supabase, product);
+    const today = new Date().toISOString().slice(0, 10);
+    const fee = Number(product.opening_fee ?? 0);
+    if (gl.cash && gl.liab && Number(data.opening_deposit) > 0) {
+      await supabase.rpc("post_entry", {
+        _entry_date: today,
+        _reference: `SAV-OPEN-${acct.account_no}`,
+        _description: `Savings opening deposit · ${acct.account_no}`,
+        _lines: [
+          { account_id: gl.cash, debit: Number(data.opening_deposit), credit: 0 },
+          { account_id: gl.liab, debit: 0, credit: Number(data.opening_deposit) },
+        ] as any,
+        _branch_id: data.branch_id,
+        _source_module: "savings",
+        _source_ref: acct.id,
+        _idempotency_key: `savings:open:${acct.id}`,
+      });
+    }
+    if (fee > 0 && gl.liab && gl.fee) {
+      await supabase.rpc("post_entry", {
+        _entry_date: today,
+        _reference: `SAV-FEE-${acct.account_no}`,
+        _description: `Savings opening fee · ${acct.account_no}`,
+        _lines: [
+          { account_id: gl.liab, debit: fee, credit: 0 },
+          { account_id: gl.fee, debit: 0, credit: fee },
+        ] as any,
+        _branch_id: data.branch_id,
+        _source_module: "savings",
+        _source_ref: acct.id,
+        _idempotency_key: `savings:open-fee:${acct.id}`,
+      });
+    }
     return acct;
   });
+
 
 export const postSavingsTransaction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -198,7 +257,7 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
 
     const { data: acct, error } = await (supabase as any)
       .from("savings_account")
-      .select("id, balance, available_balance, status, product:product_id(min_balance)")
+      .select("id, account_no, branch_id, balance, available_balance, status, product:product_id(min_balance, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)")
       .eq("id", data.account_id)
       .single();
     if (error) throw new Error(error.message);
@@ -237,8 +296,54 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
       .from("savings_account")
       .update({ balance: newBal, available_balance: newBal, last_txn_at: new Date().toISOString() })
       .eq("id", data.account_id);
+
+    // Ledger posting via kernel
+    const gl = await resolveSavingsAccounts(supabase, acct.product);
+    const amt = Math.abs(data.amount);
+    const today = new Date().toISOString().slice(0, 10);
+    let lines: Array<{ account_id: string; debit: number; credit: number }> | null = null;
+    let refPrefix = "";
+    if (data.txn_type === "deposit" && gl.cash && gl.liab) {
+      refPrefix = "SAV-DEP";
+      lines = [
+        { account_id: gl.cash, debit: amt, credit: 0 },
+        { account_id: gl.liab, debit: 0, credit: amt },
+      ];
+    } else if (data.txn_type === "withdrawal" && gl.cash && gl.liab) {
+      refPrefix = "SAV-WD";
+      lines = [
+        { account_id: gl.liab, debit: amt, credit: 0 },
+        { account_id: gl.cash, debit: 0, credit: amt },
+      ];
+    } else if (data.txn_type === "fee" && gl.liab && gl.fee) {
+      refPrefix = "SAV-FEE";
+      lines = [
+        { account_id: gl.liab, debit: amt, credit: 0 },
+        { account_id: gl.fee, debit: 0, credit: amt },
+      ];
+    } else if (data.txn_type === "interest" && gl.liab && gl.intr) {
+      refPrefix = "SAV-INT";
+      lines = [
+        { account_id: gl.intr, debit: amt, credit: 0 },
+        { account_id: gl.liab, debit: 0, credit: amt },
+      ];
+    }
+    if (lines) {
+      const idem = data.idempotency_key ?? `savings:${data.txn_type}:${txn.id}`;
+      await supabase.rpc("post_entry", {
+        _entry_date: today,
+        _reference: `${refPrefix}-${acct.account_no}`,
+        _description: data.narration ?? `${data.txn_type} · ${acct.account_no}`,
+        _lines: lines as any,
+        _branch_id: acct.branch_id,
+        _source_module: "savings",
+        _source_ref: txn.id,
+        _idempotency_key: `savings:txn:${idem}`,
+      });
+    }
     return txn;
   });
+
 
 export const closeSavingsAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -270,7 +375,7 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
 
     const { data: acct, error } = await (supabase as any)
       .from("savings_account")
-      .select("id, balance, status, product:product_id(closure_fee)")
+      .select("id, account_no, branch_id, balance, status, product:product_id(closure_fee, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)")
       .eq("id", data.account_id)
       .single();
     if (error) throw new Error(error.message);
@@ -309,6 +414,40 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
     }
     if (rows.length) await (supabase as any).from("savings_transaction").insert(rows);
 
+    // Ledger postings via kernel
+    const gl = await resolveSavingsAccounts(supabase, acct.product);
+    const today = new Date().toISOString().slice(0, 10);
+    if (fee > 0 && gl.liab && gl.fee) {
+      await supabase.rpc("post_entry", {
+        _entry_date: today,
+        _reference: `SAV-CLOSE-FEE-${acct.account_no}`,
+        _description: `Savings closure fee · ${acct.account_no}`,
+        _lines: [
+          { account_id: gl.liab, debit: fee, credit: 0 },
+          { account_id: gl.fee, debit: 0, credit: fee },
+        ] as any,
+        _branch_id: acct.branch_id,
+        _source_module: "savings",
+        _source_ref: acct.id,
+        _idempotency_key: `savings:close-fee:${acct.id}`,
+      });
+    }
+    if (balAfterFee > 0 && gl.cash && gl.liab) {
+      await supabase.rpc("post_entry", {
+        _entry_date: today,
+        _reference: `SAV-CLOSE-${acct.account_no}`,
+        _description: `Savings closure payout · ${acct.account_no}`,
+        _lines: [
+          { account_id: gl.liab, debit: balAfterFee, credit: 0 },
+          { account_id: gl.cash, debit: 0, credit: balAfterFee },
+        ] as any,
+        _branch_id: acct.branch_id,
+        _source_module: "savings",
+        _source_ref: acct.id,
+        _idempotency_key: `savings:close:${acct.id}`,
+      });
+    }
+
     const { data: closed, error: cerr } = await (supabase as any)
       .from("savings_account")
       .update({
@@ -325,6 +464,7 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
     if (cerr) throw new Error(cerr.message);
     return closed;
   });
+
 
 export const listAccountTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
