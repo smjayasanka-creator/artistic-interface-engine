@@ -30,8 +30,8 @@ export const listAuditLog = createServerFn({ method: "POST" })
       _company_id: companyId,
       _limit: data.limit ?? 100,
       _offset: data.offset ?? 0,
-      _entity_type: data.entity_type ?? null,
-      _action_prefix: data.action_prefix ?? null,
+      _entity_type: data.entity_type ?? (undefined as any),
+      _action_prefix: data.action_prefix ?? (undefined as any),
     });
     if (error) throw new Error(error.message);
     return { rows: rows ?? [], company_id: companyId };
