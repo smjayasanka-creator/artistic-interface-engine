@@ -1,0 +1,109 @@
+import { createFileRoute } from "@tanstack/react-router";
+
+/**
+ * Domain-event dispatcher worker.
+ *
+ * Called by pg_cron (or any scheduler) at high frequency (e.g. every minute).
+ * Claims a batch of pending events with FOR UPDATE SKIP LOCKED, dispatches
+ * each one, and marks it as delivered or records the failure so it can be
+ * retried with exponential backoff.
+ *
+ * Dispatch strategy: if a company has a `webhook_url` in api_key metadata
+ * (channel='webhooks'), POST the event there. Otherwise log-only (still
+ * marked dispatched — safe because domain_event is the audit source of
+ * truth and downstream consumers can replay from it).
+ */
+export const Route = createFileRoute("/api/public/hooks/dispatch-domain-events")({
+  server: {
+    handlers: {
+      POST: async () => {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        const { data: events, error } = await supabaseAdmin.rpc(
+          "claim_pending_domain_events",
+          { _limit: 100 },
+        );
+
+        if (error) {
+          return Response.json(
+            { ok: false, error: error.message },
+            { status: 500 },
+          );
+        }
+
+        const claimed = events ?? [];
+        let delivered = 0;
+        let failed = 0;
+
+        for (const ev of claimed) {
+          try {
+            // Look up an active webhook endpoint for this company (optional).
+            let webhookUrl: string | null = null;
+            if (ev.company_id) {
+              const { data: hook } = await supabaseAdmin
+                .from("api_key")
+                .select("metadata")
+                .eq("company_id", ev.company_id)
+                .eq("channel", "webhooks")
+                .eq("is_active", true)
+                .limit(1)
+                .maybeSingle();
+              const meta = (hook?.metadata ?? null) as Record<string, unknown> | null;
+              const url = meta && typeof meta["webhook_url"] === "string" ? (meta["webhook_url"] as string) : null;
+              if (url && /^https?:\/\//i.test(url)) webhookUrl = url;
+            }
+
+            if (webhookUrl) {
+              const res = await fetch(webhookUrl, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Event-Id": ev.id,
+                  "X-Event-Type": ev.event_type,
+                  "X-Event-Domain": ev.domain,
+                },
+                body: JSON.stringify({
+                  id: ev.id,
+                  company_id: ev.company_id,
+                  domain: ev.domain,
+                  event_type: ev.event_type,
+                  aggregate_type: ev.aggregate_type,
+                  aggregate_id: ev.aggregate_id,
+                  payload: ev.payload,
+                  metadata: ev.metadata,
+                  occurred_at: ev.created_at,
+                }),
+                signal: AbortSignal.timeout(10_000),
+              });
+              if (!res.ok) {
+                throw new Error(`webhook ${res.status}: ${(await res.text()).slice(0, 500)}`);
+              }
+            } else {
+              // No subscriber — safe to mark dispatched (event stays in ledger).
+              console.log(
+                `[domain-event] no subscriber for company=${ev.company_id} ev=${ev.domain}.${ev.event_type} id=${ev.id}`,
+              );
+            }
+
+            await supabaseAdmin.rpc("mark_domain_event_dispatched", { _id: ev.id });
+            delivered++;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            await supabaseAdmin.rpc("mark_domain_event_failed", {
+              _id: ev.id,
+              _error: msg.slice(0, 1000),
+            });
+            failed++;
+          }
+        }
+
+        return Response.json({
+          ok: true,
+          claimed: claimed.length,
+          delivered,
+          failed,
+        });
+      },
+    },
+  },
+});
