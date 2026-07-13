@@ -5,6 +5,8 @@ import {
   parseJsonBody, validateAndSend, logAndReturnAuthError,
   checkIdempotency, withIdempotencyEnvelope, errJson, ERRORS, requireHeader,
 } from "@/lib/api-schemas.server";
+import { postApiChannelEntry } from "@/lib/api-ledger.server";
+
 
 const ENDPOINT = "/api/public/v1/transactions/outbound";
 const CHANNEL = "transactions";
@@ -37,6 +39,12 @@ export const Route = createFileRoute("/api/public/v1/transactions/outbound")({
           idempotency_key: parsed.data.idempotency_key,
           submitted_at: new Date().toISOString(),
         };
+        await postApiChannelEntry({
+          company_id: auth.key.company_id, direction: "outbound",
+          amount: parsed.data.amount, reference,
+          description: `Outbound ${parsed.data.currency} to ${parsed.data.destination.name}`,
+          source_module: "transactions", idempotency_key: idemHeader.value,
+        });
         await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "outbound",
           endpoint: ENDPOINT, method: "POST", reference, status_code: 202,
           request: withIdempotencyEnvelope(parsed.data, idemHeader.value), response });
