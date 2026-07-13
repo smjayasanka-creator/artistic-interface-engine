@@ -707,13 +707,16 @@ export type Database = {
           attempt_count: number
           company_id: string | null
           created_at: string
+          dispatch_attempts: number
           dispatched_at: string | null
           domain: string
           event_type: string
           id: string
           idempotency_key: string | null
+          last_dispatch_error: string | null
           last_error: string | null
           metadata: Json
+          next_attempt_at: string
           occurred_at: string
           payload: Json
           status: Database["public"]["Enums"]["domain_event_status"]
@@ -725,13 +728,16 @@ export type Database = {
           attempt_count?: number
           company_id?: string | null
           created_at?: string
+          dispatch_attempts?: number
           dispatched_at?: string | null
           domain: string
           event_type: string
           id?: string
           idempotency_key?: string | null
+          last_dispatch_error?: string | null
           last_error?: string | null
           metadata?: Json
+          next_attempt_at?: string
           occurred_at?: string
           payload?: Json
           status?: Database["public"]["Enums"]["domain_event_status"]
@@ -743,13 +749,16 @@ export type Database = {
           attempt_count?: number
           company_id?: string | null
           created_at?: string
+          dispatch_attempts?: number
           dispatched_at?: string | null
           domain?: string
           event_type?: string
           id?: string
           idempotency_key?: string | null
+          last_dispatch_error?: string | null
           last_error?: string | null
           metadata?: Json
+          next_attempt_at?: string
           occurred_at?: string
           payload?: Json
           status?: Database["public"]["Enums"]["domain_event_status"]
@@ -2774,6 +2783,36 @@ export type Database = {
       }
     }
     Functions: {
+      claim_pending_domain_events: {
+        Args: { _limit?: number }
+        Returns: {
+          actor_user_id: string | null
+          aggregate_id: string
+          aggregate_type: string
+          attempt_count: number
+          company_id: string | null
+          created_at: string
+          dispatch_attempts: number
+          dispatched_at: string | null
+          domain: string
+          event_type: string
+          id: string
+          idempotency_key: string | null
+          last_dispatch_error: string | null
+          last_error: string | null
+          metadata: Json
+          next_attempt_at: string
+          occurred_at: string
+          payload: Json
+          status: Database["public"]["Enums"]["domain_event_status"]
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "domain_event"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       current_company_id: { Args: never; Returns: string }
       current_staff_branch: { Args: never; Returns: string }
       current_staff_id: { Args: never; Returns: string }
@@ -2801,6 +2840,14 @@ export type Database = {
       is_company_admin: { Args: { _company_id: string }; Returns: boolean }
       is_company_member: { Args: { _company_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      mark_domain_event_dispatched: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      mark_domain_event_failed: {
+        Args: { _error: string; _id: string }
+        Returns: undefined
+      }
       next_fd_certificate_no: { Args: { _company_id: string }; Returns: string }
       next_savings_account_no: {
         Args: { _company_id: string }
