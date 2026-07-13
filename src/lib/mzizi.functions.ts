@@ -1049,7 +1049,7 @@ export const updateClient = createServerFn({ method: "POST" })
       const ln = patch.last_name ?? existing?.last_name ?? "";
       patch.full_name = `${fn} ${ln}`.trim();
     }
-    const { data: updated, error } = await supabase.from("client").update(patch).eq("id", id).select().single();
+    const { data: updated, error } = await supabase.from("client").update(patch as any).eq("id", id).select().single();
     if (error) throw error;
     return updated;
   });
