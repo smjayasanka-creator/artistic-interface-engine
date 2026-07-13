@@ -2,6 +2,29 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// ─────────── Ledger kernel helper ───────────
+// Resolves GL account ids from savings_product (preferred) or falls back
+// to standard chart-of-accounts codes: 1000 cash, 2100 deposits liability,
+// 4100 fee income, 5100 interest expense.
+async function resolveSavingsAccounts(supabase: any, product: any) {
+  const need: Record<string, { fromProduct: string | null; code: string }> = {
+    cash: { fromProduct: product?.cash_account_id ?? null, code: "1000" },
+    liab: { fromProduct: product?.deposit_liability_account_id ?? null, code: "2100" },
+    fee: { fromProduct: product?.fee_income_account_id ?? null, code: "4100" },
+    intr: { fromProduct: product?.interest_expense_account_id ?? null, code: "5100" },
+  };
+  const missingCodes = Object.values(need).filter((n) => !n.fromProduct).map((n) => n.code);
+  let byCode: Record<string, string> = {};
+  if (missingCodes.length) {
+    const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", missingCodes);
+    byCode = Object.fromEntries((accts ?? []).map((a: any) => [a.code, a.id]));
+  }
+  const resolved: Record<string, string | null> = {};
+  for (const [k, v] of Object.entries(need)) resolved[k] = v.fromProduct ?? byCode[v.code] ?? null;
+  return resolved as { cash: string | null; liab: string | null; fee: string | null; intr: string | null };
+}
+
+
 // ─────────── Products ───────────
 export const listSavingsProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
