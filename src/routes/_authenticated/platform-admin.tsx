@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/platform-admin")({
   component: PlatformAdmin,
 });
 
-type Tab = "overview" | "companies" | "plans" | "hardening" | "architecture";
+type Tab = "overview" | "companies" | "plans" | "jobs" | "hardening" | "architecture";
 
 const STATUS_TONE: Record<string, string> = {
   trialing: "bg-sky-500/10 text-sky-700 border-sky-500/30",
