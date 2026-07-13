@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { HandCoins, Banknote, Send, ArrowRight, PiggyBank, Wallet } from "lucide-react";
+import { HandCoins, Banknote, Send, ArrowRight, PiggyBank, Wallet, Smartphone, Landmark, FileCheck2, Lock } from "lucide-react";
 import { Card } from "@/components/mzizi/Card";
+
 
 export const Route = createFileRoute("/_authenticated/transactions/")({
   component: TransactionsIndex,
@@ -36,6 +37,30 @@ const TILES = [
     label: "Deposit Withdrawal",
     icon: Wallet,
     accent: "from-rose-500/15 to-rose-500/0 text-rose-600",
+  },
+  {
+    to: "/transactions/cash-wallet",
+    label: "Cash ↔ Wallet Transfer",
+    icon: Smartphone,
+    accent: "from-violet-500/15 to-violet-500/0 text-violet-600",
+  },
+  {
+    to: "/transactions/cash-bank",
+    label: "Cash ↔ Bank",
+    icon: Landmark,
+    accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600",
+  },
+  {
+    to: "/transactions/cheque-bank",
+    label: "Cheque → Bank",
+    icon: FileCheck2,
+    accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600",
+  },
+  {
+    to: "/transactions/close-cashier",
+    label: "Close Cashier (Day End)",
+    icon: Lock,
+    accent: "from-slate-500/15 to-slate-500/0 text-slate-600",
   },
 ] as const;
 

@@ -35,6 +35,10 @@ import { Route as AuthenticatedTransactionsPaymentsRouteImport } from './routes/
 import { Route as AuthenticatedTransactionsDisbursementRouteImport } from './routes/_authenticated/transactions.disbursement'
 import { Route as AuthenticatedTransactionsDepositWithdrawalRouteImport } from './routes/_authenticated/transactions.deposit-withdrawal'
 import { Route as AuthenticatedTransactionsDepositReceiptRouteImport } from './routes/_authenticated/transactions.deposit-receipt'
+import { Route as AuthenticatedTransactionsCloseCashierRouteImport } from './routes/_authenticated/transactions.close-cashier'
+import { Route as AuthenticatedTransactionsChequeBankRouteImport } from './routes/_authenticated/transactions.cheque-bank'
+import { Route as AuthenticatedTransactionsCashWalletRouteImport } from './routes/_authenticated/transactions.cash-wallet'
+import { Route as AuthenticatedTransactionsCashBankRouteImport } from './routes/_authenticated/transactions.cash-bank'
 import { Route as AuthenticatedSavingsPassbookRouteImport } from './routes/_authenticated/savings.passbook'
 import { Route as AuthenticatedSavingsNewRouteImport } from './routes/_authenticated/savings.new'
 import { Route as AuthenticatedSavingsCloseRouteImport } from './routes/_authenticated/savings.close'
@@ -207,6 +211,30 @@ const AuthenticatedTransactionsDepositReceiptRoute =
   AuthenticatedTransactionsDepositReceiptRouteImport.update({
     id: '/deposit-receipt',
     path: '/deposit-receipt',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
+const AuthenticatedTransactionsCloseCashierRoute =
+  AuthenticatedTransactionsCloseCashierRouteImport.update({
+    id: '/close-cashier',
+    path: '/close-cashier',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
+const AuthenticatedTransactionsChequeBankRoute =
+  AuthenticatedTransactionsChequeBankRouteImport.update({
+    id: '/cheque-bank',
+    path: '/cheque-bank',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
+const AuthenticatedTransactionsCashWalletRoute =
+  AuthenticatedTransactionsCashWalletRouteImport.update({
+    id: '/cash-wallet',
+    path: '/cash-wallet',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
+const AuthenticatedTransactionsCashBankRoute =
+  AuthenticatedTransactionsCashBankRouteImport.update({
+    id: '/cash-bank',
+    path: '/cash-bank',
     getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedSavingsPassbookRoute =
@@ -419,6 +447,10 @@ export interface FileRoutesByFullPath {
   '/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
+  '/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
+  '/transactions/cheque-bank': typeof AuthenticatedTransactionsChequeBankRoute
+  '/transactions/close-cashier': typeof AuthenticatedTransactionsCloseCashierRoute
   '/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
   '/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -473,6 +505,10 @@ export interface FileRoutesByTo {
   '/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
+  '/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
+  '/transactions/cheque-bank': typeof AuthenticatedTransactionsChequeBankRoute
+  '/transactions/close-cashier': typeof AuthenticatedTransactionsCloseCashierRoute
   '/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
   '/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -533,6 +569,10 @@ export interface FileRoutesById {
   '/_authenticated/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/_authenticated/savings/new': typeof AuthenticatedSavingsNewRoute
   '/_authenticated/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/_authenticated/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
+  '/_authenticated/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
+  '/_authenticated/transactions/cheque-bank': typeof AuthenticatedTransactionsChequeBankRoute
+  '/_authenticated/transactions/close-cashier': typeof AuthenticatedTransactionsCloseCashierRoute
   '/_authenticated/transactions/deposit-receipt': typeof AuthenticatedTransactionsDepositReceiptRoute
   '/_authenticated/transactions/deposit-withdrawal': typeof AuthenticatedTransactionsDepositWithdrawalRoute
   '/_authenticated/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
@@ -593,6 +633,10 @@ export interface FileRouteTypes {
     | '/savings/close'
     | '/savings/new'
     | '/savings/passbook'
+    | '/transactions/cash-bank'
+    | '/transactions/cash-wallet'
+    | '/transactions/cheque-bank'
+    | '/transactions/close-cashier'
     | '/transactions/deposit-receipt'
     | '/transactions/deposit-withdrawal'
     | '/transactions/disbursement'
@@ -647,6 +691,10 @@ export interface FileRouteTypes {
     | '/savings/close'
     | '/savings/new'
     | '/savings/passbook'
+    | '/transactions/cash-bank'
+    | '/transactions/cash-wallet'
+    | '/transactions/cheque-bank'
+    | '/transactions/close-cashier'
     | '/transactions/deposit-receipt'
     | '/transactions/deposit-withdrawal'
     | '/transactions/disbursement'
@@ -706,6 +754,10 @@ export interface FileRouteTypes {
     | '/_authenticated/savings/close'
     | '/_authenticated/savings/new'
     | '/_authenticated/savings/passbook'
+    | '/_authenticated/transactions/cash-bank'
+    | '/_authenticated/transactions/cash-wallet'
+    | '/_authenticated/transactions/cheque-bank'
+    | '/_authenticated/transactions/close-cashier'
     | '/_authenticated/transactions/deposit-receipt'
     | '/_authenticated/transactions/deposit-withdrawal'
     | '/_authenticated/transactions/disbursement'
@@ -926,6 +978,34 @@ declare module '@tanstack/react-router' {
       path: '/deposit-receipt'
       fullPath: '/transactions/deposit-receipt'
       preLoaderRoute: typeof AuthenticatedTransactionsDepositReceiptRouteImport
+      parentRoute: typeof AuthenticatedTransactionsRoute
+    }
+    '/_authenticated/transactions/close-cashier': {
+      id: '/_authenticated/transactions/close-cashier'
+      path: '/close-cashier'
+      fullPath: '/transactions/close-cashier'
+      preLoaderRoute: typeof AuthenticatedTransactionsCloseCashierRouteImport
+      parentRoute: typeof AuthenticatedTransactionsRoute
+    }
+    '/_authenticated/transactions/cheque-bank': {
+      id: '/_authenticated/transactions/cheque-bank'
+      path: '/cheque-bank'
+      fullPath: '/transactions/cheque-bank'
+      preLoaderRoute: typeof AuthenticatedTransactionsChequeBankRouteImport
+      parentRoute: typeof AuthenticatedTransactionsRoute
+    }
+    '/_authenticated/transactions/cash-wallet': {
+      id: '/_authenticated/transactions/cash-wallet'
+      path: '/cash-wallet'
+      fullPath: '/transactions/cash-wallet'
+      preLoaderRoute: typeof AuthenticatedTransactionsCashWalletRouteImport
+      parentRoute: typeof AuthenticatedTransactionsRoute
+    }
+    '/_authenticated/transactions/cash-bank': {
+      id: '/_authenticated/transactions/cash-bank'
+      path: '/cash-bank'
+      fullPath: '/transactions/cash-bank'
+      preLoaderRoute: typeof AuthenticatedTransactionsCashBankRouteImport
       parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/savings/passbook': {
@@ -1180,6 +1260,10 @@ const AuthenticatedSavingsRouteWithChildren =
   AuthenticatedSavingsRoute._addFileChildren(AuthenticatedSavingsRouteChildren)
 
 interface AuthenticatedTransactionsRouteChildren {
+  AuthenticatedTransactionsCashBankRoute: typeof AuthenticatedTransactionsCashBankRoute
+  AuthenticatedTransactionsCashWalletRoute: typeof AuthenticatedTransactionsCashWalletRoute
+  AuthenticatedTransactionsChequeBankRoute: typeof AuthenticatedTransactionsChequeBankRoute
+  AuthenticatedTransactionsCloseCashierRoute: typeof AuthenticatedTransactionsCloseCashierRoute
   AuthenticatedTransactionsDepositReceiptRoute: typeof AuthenticatedTransactionsDepositReceiptRoute
   AuthenticatedTransactionsDepositWithdrawalRoute: typeof AuthenticatedTransactionsDepositWithdrawalRoute
   AuthenticatedTransactionsDisbursementRoute: typeof AuthenticatedTransactionsDisbursementRoute
@@ -1190,6 +1274,14 @@ interface AuthenticatedTransactionsRouteChildren {
 
 const AuthenticatedTransactionsRouteChildren: AuthenticatedTransactionsRouteChildren =
   {
+    AuthenticatedTransactionsCashBankRoute:
+      AuthenticatedTransactionsCashBankRoute,
+    AuthenticatedTransactionsCashWalletRoute:
+      AuthenticatedTransactionsCashWalletRoute,
+    AuthenticatedTransactionsChequeBankRoute:
+      AuthenticatedTransactionsChequeBankRoute,
+    AuthenticatedTransactionsCloseCashierRoute:
+      AuthenticatedTransactionsCloseCashierRoute,
     AuthenticatedTransactionsDepositReceiptRoute:
       AuthenticatedTransactionsDepositReceiptRoute,
     AuthenticatedTransactionsDepositWithdrawalRoute:
