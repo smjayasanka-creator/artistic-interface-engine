@@ -232,14 +232,16 @@ export const getClient = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: client } = await supabase
       .from("client")
-      .select("id, full_name, phone, national_id, status, risk_grade, avatar_color, joined_on, group:group_id(id, name)")
+      .select(
+        "id, full_name, first_name, last_name, phone, phone_country_code, national_id, email, address, gn_division, divisional_secretariat, district, province, date_of_birth, gender, occupation, monthly_income, next_of_kin_name, next_of_kin_phone, photo_url, geo_lat, geo_lng, is_introducer, status, risk_grade, avatar_color, joined_on, group:group_id(id, name)",
+      )
       .eq("id", data.id)
       .maybeSingle();
     if (!client) throw new Error("Client not found");
 
     const { data: loans } = await supabase
       .from("loan")
-      .select("id, status, principal, term_months, annual_rate_pct, frequency, disbursed_at, product:product_id(name)")
+      .select("id, status, principal, term_months, annual_rate_pct, frequency, disbursed_at, created_at, product:product_id(name)")
       .eq("client_id", data.id)
       .order("created_at", { ascending: false });
 
@@ -263,41 +265,103 @@ export const getClient = createServerFn({ method: "GET" })
       repaid = Number(o?.principal_repaid ?? 0);
     }
 
-    const { data: repayments } = await supabase
-      .from("repayment")
-      .select("id, amount, channel, received_at, loan_id")
-      .in("loan_id", (loans ?? []).map((l) => l.id).length ? (loans ?? []).map((l) => l.id) : ["00000000-0000-0000-0000-000000000000"])
-      .order("received_at", { ascending: false })
-      .limit(6);
+    const loanIds = (loans ?? []).map((l) => l.id);
+    const { data: repayments } = loanIds.length
+      ? await supabase
+          .from("repayment")
+          .select("id, amount, channel, received_at, loan_id")
+          .in("loan_id", loanIds)
+          .order("received_at", { ascending: false })
+          .limit(100)
+      : { data: [] as any[] };
 
-    const totalOut = (loans ?? []).length
-      ? (await supabase.from("v_loan_outstanding").select("outstanding_principal").in("loan_id", (loans ?? []).map((l) => l.id))).data
+    const totalOut = loanIds.length
+      ? (await supabase.from("v_loan_outstanding").select("outstanding_principal").in("loan_id", loanIds)).data
           ?.reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0) ?? 0
       : 0;
     const activeLoans = (loans ?? []).filter((l) => l.status === "disbursed" || l.status === "active").length;
 
+    const { data: savings } = await supabase
+      .from("savings_account")
+      .select("id, account_no, status, balance, available_balance, interest_accrued, opened_on, last_txn_at, product:product_id(name)")
+      .eq("client_id", data.id)
+      .order("opened_on", { ascending: false });
+
+    const savingsIds = (savings ?? []).map((s) => s.id);
+    const { data: savingsTxns } = savingsIds.length
+      ? await supabase
+          .from("savings_transaction")
+          .select("id, account_id, txn_date, txn_type, channel, amount, running_balance, reference, narration, created_at")
+          .in("account_id", savingsIds)
+          .order("txn_date", { ascending: false })
+          .limit(100)
+      : { data: [] as any[] };
+
+    const { data: fds } = await supabase
+      .from("fixed_deposit")
+      .select("id, certificate_no, status, principal, rate_at_booking, tenure_months, payout_option, value_date, maturity_date, product:product_id(name)")
+      .eq("client_id", data.id)
+      .order("value_date", { ascending: false });
+
+    const fdIds = (fds ?? []).map((f) => f.id);
+    const { data: fdTxns } = fdIds.length
+      ? await supabase
+          .from("fd_transaction")
+          .select("id, deposit_id, type, amount, txn_date, reference, created_at")
+          .in("deposit_id", fdIds)
+          .order("txn_date", { ascending: false })
+          .limit(100)
+      : { data: [] as any[] };
+
+    const { data: bankAccounts } = await supabase
+      .from("client_bank_account")
+      .select("id, bank_name, branch_name, account_no, account_name, swift_code, is_primary")
+      .eq("client_id", data.id);
+
+    const savingsBalance = (savings ?? []).reduce((s, a) => s + Number(a.balance ?? 0), 0);
+    const fdBalance = (fds ?? [])
+      .filter((f) => f.status === "active" || f.status === "approved")
+      .reduce((s, f) => s + Number(f.principal ?? 0), 0);
+
+    // Documents from storage bucket
+    let documents: Array<{ name: string; path: string; size: number; updated_at: string | null }> = [];
+    try {
+      const { data: docList } = await supabase.storage.from("client-documents").list(data.id, { limit: 50 });
+      documents = (docList ?? []).map((d) => ({
+        name: d.name,
+        path: `${data.id}/${d.name}`,
+        size: (d.metadata as any)?.size ?? 0,
+        updated_at: d.updated_at ?? d.created_at ?? null,
+      }));
+    } catch {
+      documents = [];
+    }
+
     return {
       client,
       loans: loans ?? [],
-      active: active
-        ? {
-            ...active,
-            schedule,
-            outstanding,
-            repaid,
-          }
-        : null,
+      active: active ? { ...active, schedule, outstanding, repaid } : null,
       repayments: repayments ?? [],
+      savings: savings ?? [],
+      savingsTxns: savingsTxns ?? [],
+      fds: fds ?? [],
+      fdTxns: fdTxns ?? [],
+      bankAccounts: bankAccounts ?? [],
+      documents,
       stats: {
         outstanding: totalOut,
-        savings: 0,
+        savings: savingsBalance,
+        fdBalance,
         activeLoans,
+        activeSavings: (savings ?? []).filter((s) => s.status === "active").length,
+        activeFds: (fds ?? []).filter((f) => f.status === "active" || f.status === "approved").length,
         onTimeRate: schedule.length
           ? Math.round((schedule.filter((s) => s.state === "paid").length / schedule.length) * 100)
           : 100,
       },
     };
   });
+
 
 export const getLoans = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
