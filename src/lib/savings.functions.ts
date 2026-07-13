@@ -375,7 +375,7 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
 
     const { data: acct, error } = await (supabase as any)
       .from("savings_account")
-      .select("id, balance, status, product:product_id(closure_fee)")
+      .select("id, account_no, branch_id, balance, status, product:product_id(closure_fee, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)")
       .eq("id", data.account_id)
       .single();
     if (error) throw new Error(error.message);
@@ -414,6 +414,40 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
     }
     if (rows.length) await (supabase as any).from("savings_transaction").insert(rows);
 
+    // Ledger postings via kernel
+    const gl = await resolveSavingsAccounts(supabase, acct.product);
+    const today = new Date().toISOString().slice(0, 10);
+    if (fee > 0 && gl.liab && gl.fee) {
+      await supabase.rpc("post_entry", {
+        _entry_date: today,
+        _reference: `SAV-CLOSE-FEE-${acct.account_no}`,
+        _description: `Savings closure fee · ${acct.account_no}`,
+        _lines: [
+          { account_id: gl.liab, debit: fee, credit: 0 },
+          { account_id: gl.fee, debit: 0, credit: fee },
+        ] as any,
+        _branch_id: acct.branch_id,
+        _source_module: "savings",
+        _source_ref: acct.id,
+        _idempotency_key: `savings:close-fee:${acct.id}`,
+      });
+    }
+    if (balAfterFee > 0 && gl.cash && gl.liab) {
+      await supabase.rpc("post_entry", {
+        _entry_date: today,
+        _reference: `SAV-CLOSE-${acct.account_no}`,
+        _description: `Savings closure payout · ${acct.account_no}`,
+        _lines: [
+          { account_id: gl.liab, debit: balAfterFee, credit: 0 },
+          { account_id: gl.cash, debit: 0, credit: balAfterFee },
+        ] as any,
+        _branch_id: acct.branch_id,
+        _source_module: "savings",
+        _source_ref: acct.id,
+        _idempotency_key: `savings:close:${acct.id}`,
+      });
+    }
+
     const { data: closed, error: cerr } = await (supabase as any)
       .from("savings_account")
       .update({
@@ -430,6 +464,7 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
     if (cerr) throw new Error(cerr.message);
     return closed;
   });
+
 
 export const listAccountTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
