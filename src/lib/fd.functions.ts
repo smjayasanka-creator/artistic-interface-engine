@@ -178,7 +178,7 @@ export const listFixedDeposits = createServerFn({ method: "GET" })
     let q = supabase
       .from("fixed_deposit")
       .select(
-        "id,certificate_no,status,principal,rate_at_booking,tenure_months,payout_option,value_date,maturity_date,client:client_id(id,full_name),product:product_id(id,code,name)",
+        "id,certificate_no,status,principal,rate_at_booking,tenure_months,payout_option,value_date,maturity_date,client!fixed_deposit_client_id_fkey(id,full_name),product:product_id(id,code,name)",
       )
       .order("created_at", { ascending: false });
     if (data.status) q = q.eq("status", data.status as "pending" | "active" | "matured" | "prematurely_closed" | "renewed");
@@ -200,7 +200,7 @@ export const listActiveDeposits = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await supabase
       .from("fixed_deposit")
-      .select("id,certificate_no,principal,client:client_id(id,full_name),product:product_id(id,code,name)")
+      .select("id,certificate_no,principal,client!fixed_deposit_client_id_fkey(id,full_name),product:product_id(id,code,name)")
       .eq("status", "active")
       .order("certificate_no");
     if (error) throw error;
@@ -317,7 +317,7 @@ export const getFixedDeposit = createServerFn({ method: "GET" })
         supabase
           .from("fixed_deposit")
           .select(
-            "*, client:client_id(id,full_name,phone,national_id), product:product_id(id,code,name,penalty_type,penalty_value,wht_rate), branch:branch_id(id,code,name), settlement:settlement_account(id,code,name)",
+            "*, client!fixed_deposit_client_id_fkey(id,full_name,phone,national_id), product:product_id(id,code,name,penalty_type,penalty_value,wht_rate), branch:branch_id(id,code,name), settlement:settlement_account(id,code,name)",
           )
           .eq("id", data.id)
           .maybeSingle(),
@@ -606,7 +606,7 @@ export const listMaturingDeposits = createServerFn({ method: "GET" })
     const { data: rows } = await supabase
       .from("fixed_deposit")
       .select(
-        "id,certificate_no,principal,rate_at_booking,tenure_months,maturity_date,payout_option,maturity_instruction,client:client_id(id,full_name),product:product_id(id,code,name)",
+        "id,certificate_no,principal,rate_at_booking,tenure_months,maturity_date,payout_option,maturity_instruction,client!fixed_deposit_client_id_fkey(id,full_name),product:product_id(id,code,name)",
       )
       .eq("status", "active")
       .lte("maturity_date", end)
