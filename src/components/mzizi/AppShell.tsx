@@ -23,7 +23,7 @@ const NAV: NavEntry[] = [
       { to: "/approvals", label: "Approvals", icon: CheckSquare },
       { to: "/savings", label: "Savings", icon: Landmark },
       { to: "/fd", label: "Deposits", icon: PiggyBank },
-      { to: "/alco-rates", label: "ALCO rates", icon: LineChart },
+      
       { to: "/accounts", label: "Accounts", icon: BookOpen },
       { to: "/reports", label: "Reports", icon: LineChart },
       
