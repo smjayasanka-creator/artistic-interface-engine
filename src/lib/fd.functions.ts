@@ -365,7 +365,7 @@ const createDepositInput = z.object({
 
 export const createFixedDeposit = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: z.infer<typeof createDepositInput>) => createDepositInput.parse(i))
+  .inputValidator((i: z.input<typeof createDepositInput>) => createDepositInput.parse(i))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { data: cid } = await supabase.rpc("current_company_id");
