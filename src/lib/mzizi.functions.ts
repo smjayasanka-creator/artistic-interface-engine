@@ -1039,7 +1039,7 @@ export const approveLoan = createServerFn({ method: "POST" })
     }));
     if (rows.length) await supabase.from("loan_installment").insert(rows);
 
-    // Journal entry: DR Loans receivable / CR Cash — use product-configured accounts if present
+    // Journal entry: DR Loans receivable / CR Cash — routed through the ledger kernel (post_entry)
     const { data: product } = await supabase
       .from("loan_product")
       .select("principal_account_id, cash_account_id")
@@ -1054,24 +1054,21 @@ export const approveLoan = createServerFn({ method: "POST" })
     }
     if (!arId || !cashId) throw new Error("Chart of accounts missing — configure product accounts");
     const ref = "DSB-" + Math.floor(1000 + Math.random() * 9000);
-    const { data: entry, error: entryErr } = await supabase
-      .from("journal_entry")
-      .insert({
-        reference: ref,
-        branch_id: loan.branch_id,
-        loan_id: loan.id,
-        posted_by: staff.id,
-        description: `Loan disbursement ${ref}`,
-      })
-      .select()
-      .single();
-    if (entryErr) throw entryErr;
-    const { error: postErr } = await supabase.from("posting").insert([
-      { entry_id: entry.id, account_id: arId, debit: loan.principal, credit: 0 },
-      { entry_id: entry.id, account_id: cashId, debit: 0, credit: loan.principal },
-    ]);
+    const { error: postErr } = await supabase.rpc("post_entry", {
+      _entry_date: now.slice(0, 10),
+      _reference: ref,
+      _description: `Loan disbursement ${ref}`,
+      _lines: [
+        { account_id: arId, debit: Number(loan.principal), credit: 0 },
+        { account_id: cashId, debit: 0, credit: Number(loan.principal) },
+      ] as any,
+      _branch_id: loan.branch_id,
+      _source_module: "loans",
+      _source_ref: loan.id,
+      _idempotency_key: `loans:disburse:${loan.id}`,
+      _loan_id: loan.id,
+    });
     if (postErr) throw postErr;
-
 
     return { ok: true, reference: ref };
   });
