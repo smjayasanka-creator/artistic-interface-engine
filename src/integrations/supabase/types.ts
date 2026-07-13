@@ -744,16 +744,22 @@ export type Database = {
           allow_at_maturity: boolean
           allow_monthly: boolean
           auto_renewal_default: Database["public"]["Enums"]["fd_maturity_instruction"]
+          capital_account_id: string | null
           code: string
           company_id: string
           created_at: string
           id: string
+          interest_expense_account_id: string | null
+          interest_payable_account_id: string | null
+          introducer_commission_account_id: string | null
+          marketing_incentive_account_id: string | null
           max_amount: number | null
           min_amount: number
           name: string
           penalty_type: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value: number
           updated_at: string
+          wht_payable_account_id: string | null
           wht_rate: number
         }
         Insert: {
@@ -761,16 +767,22 @@ export type Database = {
           allow_at_maturity?: boolean
           allow_monthly?: boolean
           auto_renewal_default?: Database["public"]["Enums"]["fd_maturity_instruction"]
+          capital_account_id?: string | null
           code: string
           company_id: string
           created_at?: string
           id?: string
+          interest_expense_account_id?: string | null
+          interest_payable_account_id?: string | null
+          introducer_commission_account_id?: string | null
+          marketing_incentive_account_id?: string | null
           max_amount?: number | null
           min_amount?: number
           name: string
           penalty_type?: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value?: number
           updated_at?: string
+          wht_payable_account_id?: string | null
           wht_rate?: number
         }
         Update: {
@@ -778,24 +790,72 @@ export type Database = {
           allow_at_maturity?: boolean
           allow_monthly?: boolean
           auto_renewal_default?: Database["public"]["Enums"]["fd_maturity_instruction"]
+          capital_account_id?: string | null
           code?: string
           company_id?: string
           created_at?: string
           id?: string
+          interest_expense_account_id?: string | null
+          interest_payable_account_id?: string | null
+          introducer_commission_account_id?: string | null
+          marketing_incentive_account_id?: string | null
           max_amount?: number | null
           min_amount?: number
           name?: string
           penalty_type?: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value?: number
           updated_at?: string
+          wht_payable_account_id?: string | null
           wht_rate?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fd_product_capital_account_id_fkey"
+            columns: ["capital_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fd_product_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_product_interest_expense_account_id_fkey"
+            columns: ["interest_expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_product_interest_payable_account_id_fkey"
+            columns: ["interest_payable_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_product_introducer_commission_account_id_fkey"
+            columns: ["introducer_commission_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_product_marketing_incentive_account_id_fkey"
+            columns: ["marketing_incentive_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_product_wht_payable_account_id_fkey"
+            columns: ["wht_payable_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
             referencedColumns: ["id"]
           },
         ]
