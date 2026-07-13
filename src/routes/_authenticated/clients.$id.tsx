@@ -141,7 +141,23 @@ function Client360() {
         </div>
       </div>
 
+      {/* Tab panels */}
+      {tab === "overview" && (
+        <OverviewPanel active={active} repayments={repayments} savingsTxns={savingsTxns} fdTxns={fdTxns} />
+      )}
+      {tab === "loans" && <LoansPanel loans={loans} active={active} />}
+      {tab === "savings" && <SavingsPanel savings={savings} savingsTxns={savingsTxns} />}
+      {tab === "fd" && <FdPanel fds={fds} fdTxns={fdTxns} />}
+      {tab === "transactions" && (
+        <TransactionsPanel repayments={repayments} savingsTxns={savingsTxns} fdTxns={fdTxns} loans={loans} savings={savings} fds={fds} />
+      )}
+      {tab === "documents" && <DocumentsPanel documents={documents} clientId={client.id} />}
+      {tab === "profile" && <ProfilePanel client={client} bankAccounts={bankAccounts} />}
+    </div>
+  );
+}
 
+function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="bg-card px-5 py-4">
       <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">{label}</div>
@@ -150,6 +166,7 @@ function Client360() {
     </div>
   );
 }
+
 
 function SectionTitle({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
   return (
