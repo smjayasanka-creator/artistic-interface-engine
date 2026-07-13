@@ -220,6 +220,19 @@ function NewClientPage() {
         photo_url,
         geo_lat: geo?.lat ?? null,
         geo_lng: geo?.lng ?? null,
+        is_introducer: isIntroducer,
+        default_commission_pct: isIntroducer && commissionPct !== "" ? Number(commissionPct) : null,
+        default_commission_amount: isIntroducer && commissionAmount !== "" ? Number(commissionAmount) : null,
+        bank_accounts: banks
+          .filter((b) => b.bank_name.trim() && b.account_no.trim() && b.account_name.trim())
+          .map((b) => ({
+            bank_name: b.bank_name.trim(),
+            branch_name: b.branch_name.trim() || null,
+            account_no: b.account_no.trim(),
+            account_name: b.account_name.trim(),
+            swift_code: b.swift_code.trim() || null,
+            is_primary: b.is_primary,
+          })),
       },
     });
   }
