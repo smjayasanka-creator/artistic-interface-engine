@@ -586,6 +586,29 @@ export const approveFixedDeposit = createServerFn({ method: "POST" })
       created_by: userId,
     });
 
+    // Ledger posting via kernel — DR Cash / CR FD Liability
+    const { data: fdProd } = await supabase
+      .from("fd_product")
+      .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+      .eq("id", fd.product_id)
+      .maybeSingle();
+    const gl = await resolveFdAccounts(supabase, fdProd);
+    if (gl.cash && gl.liab && Number(fd.principal) > 0) {
+      await supabase.rpc("post_entry", {
+        _entry_date: fd.value_date,
+        _reference: `FD-OPEN-${fd.certificate_no}`,
+        _description: `FD opening · ${fd.certificate_no}`,
+        _lines: [
+          { account_id: gl.cash, debit: Number(fd.principal), credit: 0 },
+          { account_id: gl.liab, debit: 0, credit: Number(fd.principal) },
+        ] as any,
+        _branch_id: fd.branch_id,
+        _source_module: "fd",
+        _source_ref: fd.id,
+        _idempotency_key: `fd:open:${fd.id}`,
+      });
+    }
+
     return { ok: true };
   });
 
