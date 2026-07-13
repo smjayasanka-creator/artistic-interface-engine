@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { StatusBadge } from "@/components/mzizi/Badge";
+import { ClientSearchBar } from "@/components/mzizi/ClientSearchBar";
 import { money, shortDate, relTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -70,25 +71,27 @@ function Client360() {
 
   return (
     <div className="animate-fadein flex flex-col gap-4">
+      <ClientSearchBar />
+
       <Link to="/clients" className="text-xs text-primary hover:underline w-fit">← Back to clients</Link>
 
       {/* Google-Material style header */}
       <Card padded={false} className="overflow-hidden">
         <div
-          className="h-24 relative"
+          className="h-20 relative"
           style={{
             background: `linear-gradient(135deg, ${client.avatar_color ?? "#0f766e"} 0%, color-mix(in oklab, ${client.avatar_color ?? "#0f766e"} 60%, #0b1220) 100%)`,
           }}
         />
-        <div className="px-6 pb-5 -mt-10 flex flex-col sm:flex-row sm:items-end gap-4">
-          <div className="ring-4 ring-card rounded-full bg-card">
+        <div className="px-6 pb-5 pt-3 flex flex-col sm:flex-row sm:items-start gap-4">
+          <div className="-mt-14 ring-4 ring-card rounded-full bg-card shrink-0 w-fit">
             {client.photo_url ? (
               <img src={client.photo_url} alt={client.full_name} className="w-20 h-20 rounded-full object-cover" />
             ) : (
               <Avatar name={client.full_name} color={client.avatar_color} size={80} />
             )}
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 sm:pt-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-semibold truncate">{client.full_name}</h1>
               <StatusBadge status={client.status} />
@@ -98,7 +101,7 @@ function Client360() {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-4 text-[12px] text-muted-foreground mt-1 flex-wrap">
+            <div className="flex items-center gap-4 text-[12px] text-muted-foreground mt-1.5 flex-wrap">
               <button
                 type="button"
                 onClick={() => copy(client.id, "Customer code")}
@@ -123,7 +126,7 @@ function Client360() {
               <span className="inline-flex items-center gap-1"><Calendar size={12} /> Since {shortDate(client.joined_on)}</span>
             </div>
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex gap-2 shrink-0 sm:pt-1 flex-wrap">
             <Link to="/collections/new" search={{ loanId: active?.id }} className="border border-border-strong px-3.5 py-2 rounded-full text-[12.5px] font-medium hover:border-input">
               Record repayment
             </Link>
