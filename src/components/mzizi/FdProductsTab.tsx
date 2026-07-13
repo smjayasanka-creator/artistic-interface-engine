@@ -264,6 +264,36 @@ function ProductModal({
   const qc = useQueryClient();
   const upsertFn = useServerFn(upsertFdRateTier);
   const deleteFn = useServerFn(deleteFdRateTier);
+  const glListFn = useServerFn(getGlAccounts);
+  const { data: glAccounts } = useQuery({
+    queryKey: ["gl-accounts-fd-product"],
+    queryFn: () => glListFn(),
+  });
+  const glOptions = ((glAccounts as any[]) ?? [])
+    .filter((a) => a.is_active !== false)
+    .sort((a, b) => a.code.localeCompare(b.code));
+  const glSelect = (
+    key:
+      | "capital_account_id"
+      | "interest_payable_account_id"
+      | "interest_expense_account_id"
+      | "wht_payable_account_id"
+      | "introducer_commission_account_id"
+      | "marketing_incentive_account_id",
+  ) => (
+    <select
+      className={selectCls}
+      value={v[key] ?? ""}
+      onChange={(e) => setV({ ...v, [key]: e.target.value || null })}
+    >
+      <option value="">— Select account —</option>
+      {glOptions.map((a) => (
+        <option key={a.id} value={a.id}>
+          {a.code} · {a.name}
+        </option>
+      ))}
+    </select>
+  );
 
   const upsertM = useMutation({
     mutationFn: (tier: {
