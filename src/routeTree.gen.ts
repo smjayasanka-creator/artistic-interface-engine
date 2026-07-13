@@ -20,6 +20,7 @@ import { Route as AuthenticatedPlatformAdminRouteImport } from './routes/_authen
 import { Route as AuthenticatedLedgerRouteImport } from './routes/_authenticated/ledger'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCollectionsRouteImport } from './routes/_authenticated/collections'
+import { Route as AuthenticatedAuditLogRouteImport } from './routes/_authenticated/audit-log'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedApiRouteImport } from './routes/_authenticated/api'
 import { Route as AuthenticatedAlcoRatesRouteImport } from './routes/_authenticated/alco-rates'
@@ -130,6 +131,11 @@ const AuthenticatedCollectionsRoute =
     path: '/collections',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAuditLogRoute = AuthenticatedAuditLogRouteImport.update({
+  id: '/audit-log',
+  path: '/audit-log',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
   id: '/approvals',
   path: '/approvals',
@@ -433,6 +439,7 @@ export interface FileRoutesByFullPath {
   '/alco-rates': typeof AuthenticatedAlcoRatesRoute
   '/api': typeof AuthenticatedApiRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
+  '/audit-log': typeof AuthenticatedAuditLogRoute
   '/collections': typeof AuthenticatedCollectionsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ledger': typeof AuthenticatedLedgerRoute
@@ -497,6 +504,7 @@ export interface FileRoutesByTo {
   '/alco-rates': typeof AuthenticatedAlcoRatesRoute
   '/api': typeof AuthenticatedApiRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
+  '/audit-log': typeof AuthenticatedAuditLogRoute
   '/collections': typeof AuthenticatedCollectionsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ledger': typeof AuthenticatedLedgerRoute
@@ -559,6 +567,7 @@ export interface FileRoutesById {
   '/_authenticated/alco-rates': typeof AuthenticatedAlcoRatesRoute
   '/_authenticated/api': typeof AuthenticatedApiRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
+  '/_authenticated/audit-log': typeof AuthenticatedAuditLogRoute
   '/_authenticated/collections': typeof AuthenticatedCollectionsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/ledger': typeof AuthenticatedLedgerRoute
@@ -625,6 +634,7 @@ export interface FileRouteTypes {
     | '/alco-rates'
     | '/api'
     | '/approvals'
+    | '/audit-log'
     | '/collections'
     | '/dashboard'
     | '/ledger'
@@ -689,6 +699,7 @@ export interface FileRouteTypes {
     | '/alco-rates'
     | '/api'
     | '/approvals'
+    | '/audit-log'
     | '/collections'
     | '/dashboard'
     | '/ledger'
@@ -750,6 +761,7 @@ export interface FileRouteTypes {
     | '/_authenticated/alco-rates'
     | '/_authenticated/api'
     | '/_authenticated/approvals'
+    | '/_authenticated/audit-log'
     | '/_authenticated/collections'
     | '/_authenticated/dashboard'
     | '/_authenticated/ledger'
@@ -899,6 +911,13 @@ declare module '@tanstack/react-router' {
       path: '/collections'
       fullPath: '/collections'
       preLoaderRoute: typeof AuthenticatedCollectionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audit-log': {
+      id: '/_authenticated/audit-log'
+      path: '/audit-log'
+      fullPath: '/audit-log'
+      preLoaderRoute: typeof AuthenticatedAuditLogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/approvals': {
@@ -1380,6 +1399,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlcoRatesRoute: typeof AuthenticatedAlcoRatesRoute
   AuthenticatedApiRoute: typeof AuthenticatedApiRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
+  AuthenticatedAuditLogRoute: typeof AuthenticatedAuditLogRoute
   AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLedgerRoute: typeof AuthenticatedLedgerRoute
@@ -1416,6 +1436,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAlcoRatesRoute: AuthenticatedAlcoRatesRoute,
   AuthenticatedApiRoute: AuthenticatedApiRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
+  AuthenticatedAuditLogRoute: AuthenticatedAuditLogRoute,
   AuthenticatedCollectionsRoute: AuthenticatedCollectionsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLedgerRoute: AuthenticatedLedgerRoute,
