@@ -2,7 +2,7 @@ import { Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect } from "react";
-import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug, Landmark } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug, Landmark, ScrollText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
 import { setActiveCurrency, getActiveCurrency } from "@/lib/format";
@@ -29,6 +29,7 @@ const NAV: NavEntry[] = [
       
       { to: "/workflows", label: "Work flow", icon: Workflow },
       { to: "/api", label: "API", icon: Plug },
+      { to: "/audit-log", label: "Audit log", icon: ScrollText },
       { to: "/admin", label: "Administration", icon: Settings },
     ],
   },
