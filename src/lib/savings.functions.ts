@@ -192,8 +192,44 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
       performed_by: staff?.id ?? null,
     });
     await (supabase as any).from("savings_transaction").insert(txnRows);
+
+    // Ledger postings via kernel (best-effort — skip silently if COA not configured)
+    const gl = await resolveSavingsAccounts(supabase, product);
+    const today = new Date().toISOString().slice(0, 10);
+    const fee = Number(product.opening_fee ?? 0);
+    if (gl.cash && gl.liab && Number(data.opening_deposit) > 0) {
+      await supabase.rpc("post_entry", {
+        _entry_date: today,
+        _reference: `SAV-OPEN-${acct.account_no}`,
+        _description: `Savings opening deposit · ${acct.account_no}`,
+        _lines: [
+          { account_id: gl.cash, debit: Number(data.opening_deposit), credit: 0 },
+          { account_id: gl.liab, debit: 0, credit: Number(data.opening_deposit) },
+        ] as any,
+        _branch_id: data.branch_id,
+        _source_module: "savings",
+        _source_ref: acct.id,
+        _idempotency_key: `savings:open:${acct.id}`,
+      });
+    }
+    if (fee > 0 && gl.liab && gl.fee) {
+      await supabase.rpc("post_entry", {
+        _entry_date: today,
+        _reference: `SAV-FEE-${acct.account_no}`,
+        _description: `Savings opening fee · ${acct.account_no}`,
+        _lines: [
+          { account_id: gl.liab, debit: fee, credit: 0 },
+          { account_id: gl.fee, debit: 0, credit: fee },
+        ] as any,
+        _branch_id: data.branch_id,
+        _source_module: "savings",
+        _source_ref: acct.id,
+        _idempotency_key: `savings:open-fee:${acct.id}`,
+      });
+    }
     return acct;
   });
+
 
 export const postSavingsTransaction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
