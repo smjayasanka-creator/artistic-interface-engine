@@ -157,3 +157,18 @@ export const listCronJobs = createServerFn({ method: "GET" })
       last_return_message: string | null;
     }>;
   });
+
+export const setCronJobActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { jobid: number; active: boolean }) =>
+    z.object({ jobid: z.number().int().positive(), active: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertPlatformAdmin(context.supabase, context.userId);
+    const { error } = await context.supabase.rpc("set_cron_job_active", {
+      _jobid: data.jobid,
+      _active: data.active,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
