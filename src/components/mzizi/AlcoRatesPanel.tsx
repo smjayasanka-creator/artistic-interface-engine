@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -12,10 +11,6 @@ import {
   listAlcoRates, submitAlcoProposal, listAlcoProposals, applyAlcoProposal, cancelAlcoProposal,
 } from "@/lib/alco.functions";
 import { shortDate } from "@/lib/format";
-
-export const Route = createFileRoute("/_authenticated/alco-rates")({
-  component: AlcoRatesPage,
-});
 
 type Row = {
   id: string;
@@ -36,7 +31,7 @@ function toNum(s: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function AlcoRatesPage() {
+export function AlcoRatesPanel() {
   const qc = useQueryClient();
   const listFn = useServerFn(listAlcoRates);
   const submitFn = useServerFn(submitAlcoProposal);
@@ -120,7 +115,6 @@ function AlcoRatesPage() {
 
   function applyBulk() {
     if (!rows) return;
-    // CSV columns: code,standard_rate,maximum_rate,cbsl_max_rate  (header optional)
     const lines = csv.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     if (lines.length === 0) return toast.error("Empty CSV");
     const byCode = new Map(rows.map((r: Row) => [r.code.toLowerCase(), r]));
@@ -141,10 +135,10 @@ function AlcoRatesPage() {
     toast.success(`Loaded ${ok} row(s)${skipped ? `, skipped ${skipped}` : ""}`);
   }
 
-  if (isLoading) return <div className="text-sm text-muted-foreground">Loading…</div>;
+  if (isLoading) return <div className="text-sm text-muted-foreground">Loading ALCO rates…</div>;
 
   return (
-    <div className="animate-fadein flex flex-col gap-5">
+    <div className="flex flex-col gap-5">
       <Card>
         <div className="flex items-center justify-between mb-3">
           <div>

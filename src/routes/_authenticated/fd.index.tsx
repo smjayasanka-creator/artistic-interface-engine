@@ -2,13 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Plus, Download } from "lucide-react";
+import { Plus, Download, PiggyBank, LineChart, ArrowRight, CalendarClock } from "lucide-react";
 import { listFixedDeposits, getFdSummary, listFdProducts } from "@/lib/fd.functions";
 import { Card } from "@/components/mzizi/Card";
 import { Kpi } from "@/components/mzizi/Kpi";
+import { AlcoRatesPanel } from "@/components/mzizi/AlcoRatesPanel";
 import { btnPrimaryCls, inputCls, selectCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
 import { money, getActiveCurrency } from "@/lib/format";
+
 
 export const Route = createFileRoute("/_authenticated/fd/")({
   component: FdRegister,
@@ -98,6 +100,37 @@ function FdRegister() {
         <Kpi label="Maturing this month" value={`${summary?.maturing_count ?? 0}`} delta={money(summary?.maturing_this_month ?? 0)} />
       </div>
 
+      <div className="grid gap-3 md:grid-cols-3">
+        {[
+          { to: "/fd/new", icon: PiggyBank, title: "New Deposit", desc: "Book a new fixed deposit certificate", accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600" },
+          { to: "/fd", icon: CalendarClock, title: "Maturity Register", desc: "Track deposits maturing soon", accent: "from-sky-500/15 to-sky-500/0 text-sky-600" },
+          { to: "#alco", icon: LineChart, title: "ALCO Rates", desc: "Standard, maximum & CBSL cap per product", accent: "from-violet-500/15 to-violet-500/0 text-violet-600" },
+        ].map((c) => {
+          const Icon = c.icon;
+          const inner = (
+            <Card className="p-3.5 hover:border-primary/40 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${c.accent}`}>
+                  <Icon size={18} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-[14px] truncate">{c.title}</div>
+                  <div className="text-[11.5px] text-muted-foreground truncate">{c.desc}</div>
+                </div>
+                <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Card>
+          );
+          return c.to.startsWith("#") ? (
+            <a key={c.to} href={c.to} className="group">{inner}</a>
+          ) : (
+            <Link key={c.to} to={c.to} className="group">{inner}</Link>
+          );
+        })}
+      </div>
+
+
+
 
       <Card>
         <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -178,6 +211,11 @@ function FdRegister() {
           </table>
         </div>
       </Card>
+
+      <div id="alco" className="scroll-mt-20">
+        <AlcoRatesPanel />
+      </div>
     </div>
+
   );
 }
