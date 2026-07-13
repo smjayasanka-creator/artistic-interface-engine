@@ -1384,9 +1384,12 @@ export type Database = {
           description: string | null
           entry_date: string
           id: string
+          idempotency_key: string | null
           loan_id: string | null
           posted_by: string | null
           reference: string
+          source_module: string | null
+          source_ref: string | null
         }
         Insert: {
           branch_id: string
@@ -1394,9 +1397,12 @@ export type Database = {
           description?: string | null
           entry_date?: string
           id?: string
+          idempotency_key?: string | null
           loan_id?: string | null
           posted_by?: string | null
           reference: string
+          source_module?: string | null
+          source_ref?: string | null
         }
         Update: {
           branch_id?: string
@@ -1404,9 +1410,12 @@ export type Database = {
           description?: string | null
           entry_date?: string
           id?: string
+          idempotency_key?: string | null
           loan_id?: string | null
           posted_by?: string | null
           reference?: string
+          source_module?: string | null
+          source_ref?: string | null
         }
         Relationships: [
           {
@@ -2725,6 +2734,20 @@ export type Database = {
       next_fd_certificate_no: { Args: { _company_id: string }; Returns: string }
       next_savings_account_no: {
         Args: { _company_id: string }
+        Returns: string
+      }
+      post_entry: {
+        Args: {
+          _branch_id?: string
+          _description: string
+          _entry_date: string
+          _idempotency_key?: string
+          _lines: Json
+          _loan_id?: string
+          _reference: string
+          _source_module?: string
+          _source_ref?: string
+        }
         Returns: string
       }
     }
