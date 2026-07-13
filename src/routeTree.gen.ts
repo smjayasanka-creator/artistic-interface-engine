@@ -64,6 +64,7 @@ import { Route as AuthenticatedAccountsBankReconciliationRouteImport } from './r
 import { Route as AuthenticatedAccountsPaymentsIndexRouteImport } from './routes/_authenticated/accounts.payments.index'
 import { Route as AuthenticatedAccountsJournalIndexRouteImport } from './routes/_authenticated/accounts.journal.index'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
+import { Route as ApiPublicHooksFdAccrueRouteImport } from './routes/api/public/hooks/fd-accrue'
 import { Route as ApiPublicHooksDispatchDomainEventsRouteImport } from './routes/api/public/hooks/dispatch-domain-events'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
@@ -380,6 +381,11 @@ const ApiPublicV1HealthRoute = ApiPublicV1HealthRouteImport.update({
   path: '/api/public/v1/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksFdAccrueRoute = ApiPublicHooksFdAccrueRouteImport.update({
+  id: '/api/public/hooks/fd-accrue',
+  path: '/api/public/hooks/fd-accrue',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksDispatchDomainEventsRoute =
   ApiPublicHooksDispatchDomainEventsRouteImport.update({
     id: '/api/public/hooks/dispatch-domain-events',
@@ -487,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
+  '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
   '/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
@@ -548,6 +555,7 @@ export interface FileRoutesByTo {
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
+  '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/accounts/journal': typeof AuthenticatedAccountsJournalIndexRoute
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsIndexRoute
@@ -615,6 +623,7 @@ export interface FileRoutesById {
   '/_authenticated/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/_authenticated/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
+  '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/_authenticated/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
   '/_authenticated/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
@@ -682,6 +691,7 @@ export interface FileRouteTypes {
     | '/accounts/journal/new'
     | '/accounts/payments/new'
     | '/api/public/hooks/dispatch-domain-events'
+    | '/api/public/hooks/fd-accrue'
     | '/api/public/v1/health'
     | '/accounts/journal/'
     | '/accounts/payments/'
@@ -743,6 +753,7 @@ export interface FileRouteTypes {
     | '/accounts/journal/new'
     | '/accounts/payments/new'
     | '/api/public/hooks/dispatch-domain-events'
+    | '/api/public/hooks/fd-accrue'
     | '/api/public/v1/health'
     | '/accounts/journal'
     | '/accounts/payments'
@@ -809,6 +820,7 @@ export interface FileRouteTypes {
     | '/_authenticated/accounts/journal/new'
     | '/_authenticated/accounts/payments/new'
     | '/api/public/hooks/dispatch-domain-events'
+    | '/api/public/hooks/fd-accrue'
     | '/api/public/v1/health'
     | '/_authenticated/accounts/journal/'
     | '/_authenticated/accounts/payments/'
@@ -825,6 +837,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicHooksDispatchDomainEventsRoute: typeof ApiPublicHooksDispatchDomainEventsRoute
+  ApiPublicHooksFdAccrueRoute: typeof ApiPublicHooksFdAccrueRoute
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
   ApiPublicV1AtmAuthorizeRoute: typeof ApiPublicV1AtmAuthorizeRoute
   ApiPublicV1CeftTransferRoute: typeof ApiPublicV1CeftTransferRoute
@@ -1221,6 +1234,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/fd-accrue': {
+      id: '/api/public/hooks/fd-accrue'
+      path: '/api/public/hooks/fd-accrue'
+      fullPath: '/api/public/hooks/fd-accrue'
+      preLoaderRoute: typeof ApiPublicHooksFdAccrueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/dispatch-domain-events': {
       id: '/api/public/hooks/dispatch-domain-events'
       path: '/api/public/hooks/dispatch-domain-events'
@@ -1480,6 +1500,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiPublicHooksDispatchDomainEventsRoute:
     ApiPublicHooksDispatchDomainEventsRoute,
+  ApiPublicHooksFdAccrueRoute: ApiPublicHooksFdAccrueRoute,
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
   ApiPublicV1AtmAuthorizeRoute: ApiPublicV1AtmAuthorizeRoute,
   ApiPublicV1CeftTransferRoute: ApiPublicV1CeftTransferRoute,
