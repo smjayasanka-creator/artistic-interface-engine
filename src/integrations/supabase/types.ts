@@ -2820,6 +2820,21 @@ export type Database = {
         }
         Returns: string
       }
+      post_entry_system: {
+        Args: {
+          _branch_id?: string
+          _company_id: string
+          _description: string
+          _entry_date: string
+          _idempotency_key?: string
+          _lines: Json
+          _loan_id?: string
+          _reference: string
+          _source_module?: string
+          _source_ref?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       account_type: "asset" | "liability" | "equity" | "income" | "expense"
