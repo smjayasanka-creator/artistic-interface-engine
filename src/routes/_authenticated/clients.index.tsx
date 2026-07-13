@@ -98,7 +98,7 @@ function ClientsList() {
              style={{ gridTemplateColumns: "2fr 1.3fr 1fr .7fr 1.1fr .9fr" }}>
           <div>Client</div><div>Group</div><div>Status</div><div>Loans</div><div>Outstanding</div><div>Risk</div>
         </div>
-        {(data ?? []).map((c: any) => (
+        {shown.map((c: any) => (
           <Link
             key={c.id}
             to="/clients/$id"
@@ -110,7 +110,7 @@ function ClientsList() {
               <Avatar name={c.full_name} color={c.avatar_color} />
               <div>
                 <div>{c.full_name}</div>
-                <div className="text-[11px] text-faint font-normal">{c.phone ?? "—"}</div>
+                <div className="text-[11px] text-faint font-normal">{c.phone ?? "—"} · <span className="font-mono">{c.id.slice(0, 8).toUpperCase()}</span></div>
               </div>
             </div>
             <div className="text-secondary-foreground">{c.group?.name ?? "—"}</div>
@@ -120,7 +120,8 @@ function ClientsList() {
             <div><RiskBadge risk={c.risk_grade} /></div>
           </Link>
         ))}
-        {(data ?? []).length === 0 && <div className="text-center text-faint text-sm py-10">No clients yet. Create your first via "New client".</div>}
+        {shown.length === 0 && <div className="text-center text-faint text-sm py-10">{code ? "No customer matches that code." : "No clients yet. Create your first via \"New client\"."}</div>}
+
       </div>
     </div>
   );
