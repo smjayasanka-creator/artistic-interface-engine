@@ -2926,6 +2926,20 @@ export type Database = {
           metadata: Json
         }[]
       }
+      list_cron_jobs: {
+        Args: never
+        Returns: {
+          active: boolean
+          command: string
+          jobid: number
+          jobname: string
+          last_end: string
+          last_return_message: string
+          last_start: string
+          last_status: string
+          schedule: string
+        }[]
+      }
       mark_domain_event_dispatched: {
         Args: { _id: string }
         Returns: undefined
