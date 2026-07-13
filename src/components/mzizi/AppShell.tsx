@@ -58,6 +58,10 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/transactions/disbursement")) return { title: "Disbursement", sub: "Release approved loans" };
   if (pathname.startsWith("/transactions/deposit-receipt")) return { title: "Deposit Receipt", sub: "Record money received into a deposit" };
   if (pathname.startsWith("/transactions/deposit-withdrawal")) return { title: "Deposit Withdrawal", sub: "Record money paid out from a deposit" };
+  if (pathname.startsWith("/transactions/cash-wallet")) return { title: "Cash ↔ Wallet Transfer", sub: "Move cash to or from mobile wallets" };
+  if (pathname.startsWith("/transactions/cash-bank")) return { title: "Cash ↔ Bank", sub: "Bank deposits and cash withdrawals" };
+  if (pathname.startsWith("/transactions/cheque-bank")) return { title: "Cheque → Bank", sub: "Deposit and clear cheques" };
+  if (pathname.startsWith("/transactions/close-cashier")) return { title: "Close Cashier", sub: "Day-end denomination count" };
   if (pathname.startsWith("/transactions")) return { title: "Transactions", sub: "Money movement across the workspace" };
   if (pathname.startsWith("/savings/new")) return { title: "New Savings", sub: "Open a savings account" };
   if (pathname.startsWith("/savings/close")) return { title: "Close Savings Account", sub: "Payout & closure" };
