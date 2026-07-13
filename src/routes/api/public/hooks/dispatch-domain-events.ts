@@ -17,19 +17,9 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-domain-events")
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const cronSecret = process.env.CRON_SECRET;
-        if (!cronSecret) {
-          return Response.json({ ok: false, error: "cron_secret_not_configured" }, { status: 503 });
-        }
-        const provided = request.headers.get("x-cron-secret") ?? "";
-        // Constant-time compare
-        const a = Buffer.from(provided);
-        const b = Buffer.from(cronSecret);
-        if (a.length !== b.length) {
-          return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
-        }
-        const { timingSafeEqual } = await import("crypto");
-        if (!timingSafeEqual(a, b)) {
+        const expected = process.env.SUPABASE_PUBLISHABLE_KEY;
+        const provided = request.headers.get("apikey") ?? "";
+        if (!expected || provided !== expected) {
           return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
