@@ -2,13 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Plus, Download } from "lucide-react";
+import { Plus, Download, PiggyBank, LineChart, ArrowRight, CalendarClock } from "lucide-react";
 import { listFixedDeposits, getFdSummary, listFdProducts } from "@/lib/fd.functions";
 import { Card } from "@/components/mzizi/Card";
 import { Kpi } from "@/components/mzizi/Kpi";
+import { AlcoRatesPanel } from "@/components/mzizi/AlcoRatesPanel";
 import { btnPrimaryCls, inputCls, selectCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
 import { money, getActiveCurrency } from "@/lib/format";
+
 
 export const Route = createFileRoute("/_authenticated/fd/")({
   component: FdRegister,
