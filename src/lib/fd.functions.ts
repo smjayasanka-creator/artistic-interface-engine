@@ -4,6 +4,29 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { serverNow, serverToday } from "@/lib/clock-server";
 import { buildSchedule, dailyAccrual, addMonths, daysBetween, interestForPeriod } from "@/lib/fd-schedule";
 
+// ─────────── Ledger kernel helper ───────────
+// Resolves GL account ids from fd_product (preferred) or falls back to
+// standard chart-of-accounts codes: 1000 cash, 2200 FD liability,
+// 5200 interest expense, 2300 WHT liability.
+async function resolveFdAccounts(supabase: any, product: any) {
+  const need: Record<string, { fromProduct: string | null; code: string }> = {
+    cash: { fromProduct: product?.cash_account_id ?? null, code: "1000" },
+    liab: { fromProduct: product?.deposit_liability_account_id ?? null, code: "2200" },
+    intr: { fromProduct: product?.interest_expense_account_id ?? null, code: "5200" },
+    wht:  { fromProduct: product?.wht_liability_account_id ?? null, code: "2300" },
+  };
+  const missing = Object.values(need).filter((n) => !n.fromProduct).map((n) => n.code);
+  let byCode: Record<string, string> = {};
+  if (missing.length) {
+    const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", missing);
+    byCode = Object.fromEntries((accts ?? []).map((a: any) => [a.code, a.id]));
+  }
+  const out: Record<string, string | null> = {};
+  for (const [k, v] of Object.entries(need)) out[k] = v.fromProduct ?? byCode[v.code] ?? null;
+  return out as { cash: string | null; liab: string | null; intr: string | null; wht: string | null };
+}
+
+
 // ──────────────────────────────────────────────────────────────────────────
 // PRODUCTS
 // ──────────────────────────────────────────────────────────────────────────
