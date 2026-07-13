@@ -35,6 +35,12 @@ const productInput = z.object({
   wht_rate: z.number().min(0).max(100),
   auto_renewal_default: z.enum(["payout", "renew_principal", "renew_principal_interest"]),
   active: z.boolean(),
+  capital_account_id: z.string().uuid().nullable().optional(),
+  interest_payable_account_id: z.string().uuid().nullable().optional(),
+  interest_expense_account_id: z.string().uuid().nullable().optional(),
+  wht_payable_account_id: z.string().uuid().nullable().optional(),
+  introducer_commission_account_id: z.string().uuid().nullable().optional(),
+  marketing_incentive_account_id: z.string().uuid().nullable().optional(),
 });
 
 export const createFdProduct = createServerFn({ method: "POST" })
