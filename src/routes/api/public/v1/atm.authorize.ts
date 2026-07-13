@@ -46,6 +46,14 @@ export const Route = createFileRoute("/api/public/v1/atm/authorize")({
           currency: parsed.data.currency,
           processed_at: new Date().toISOString(),
         };
+        if (parsed.data.transaction_type === "withdrawal" && parsed.data.amount > 0) {
+          await postApiChannelEntry({
+            company_id: auth.key.company_id, direction: "outbound",
+            amount: parsed.data.amount, reference,
+            description: `ATM withdrawal · terminal ${parsed.data.terminal_id} · stan ${parsed.data.stan}`,
+            source_module: "atm", idempotency_key: idem.value,
+          });
+        }
         await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
           endpoint: ENDPOINT, method: "POST", reference, status_code: 200,
           request: withIdempotencyEnvelope(parsed.data, idem.value), response });
