@@ -41,10 +41,18 @@ export const Route = createFileRoute("/api/public/v1/transactions/inbound")({
           amount: parsed.data.amount,
           currency: parsed.data.currency,
         };
+        await postApiChannelEntry({
+          company_id: auth.key.company_id, direction: "inbound",
+          amount: parsed.data.amount, reference,
+          description: `Inbound ${parsed.data.currency} from ${parsed.data.counterparty.name}`,
+          source_module: "transactions", idempotency_key: idem ?? reference,
+          entry_date: parsed.data.value_date,
+        });
         await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
           endpoint: ENDPOINT, method: "POST", reference, status_code: 202,
           request: withIdempotencyEnvelope(parsed.data, idem), response });
         return validateAndSend(TransactionsInboundResponse, response, 202);
+
       },
     },
   },
