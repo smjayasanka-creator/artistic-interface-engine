@@ -138,3 +138,22 @@ export const upsertCompanySubscription = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const listCronJobs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertPlatformAdmin(context.supabase, context.userId);
+    const { data, error } = await context.supabase.rpc("list_cron_jobs");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Array<{
+      jobid: number;
+      jobname: string;
+      schedule: string;
+      command: string;
+      active: boolean;
+      last_start: string | null;
+      last_end: string | null;
+      last_status: string | null;
+      last_return_message: string | null;
+    }>;
+  });
