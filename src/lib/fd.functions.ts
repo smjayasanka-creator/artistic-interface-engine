@@ -833,8 +833,34 @@ export const processMaturity = createServerFn({ method: "POST" })
         reference: fd.certificate_no,
         created_by: userId,
       });
+
+      // Ledger posting via kernel — DR FD Liability + Interest Expense / CR Cash
+      const { data: fdProdM } = await supabase
+        .from("fd_product")
+        .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+        .eq("id", fd.product_id)
+        .maybeSingle();
+      const glm = await resolveFdAccounts(supabase, fdProdM);
+      if (glm.cash && glm.liab && glm.intr && settlement > 0) {
+        await supabase.rpc("post_entry", {
+          _entry_date: onDate,
+          _reference: `FD-MAT-${fd.certificate_no}`,
+          _description: `FD maturity payout · ${fd.certificate_no}`,
+          _lines: [
+            { account_id: glm.liab, debit: Number(fd.principal), credit: 0 },
+            ...(owedNet > 0 ? [{ account_id: glm.intr, debit: owedNet, credit: 0 }] : []),
+            { account_id: glm.cash, debit: 0, credit: settlement },
+          ] as any,
+          _branch_id: fd.branch_id,
+          _source_module: "fd",
+          _source_ref: fd.id,
+          _idempotency_key: `fd:maturity:${fd.id}`,
+        });
+      }
+
       return { ok: true, action: "payout", settlement };
     }
+
 
     // Renewals
     const newPrincipal =
