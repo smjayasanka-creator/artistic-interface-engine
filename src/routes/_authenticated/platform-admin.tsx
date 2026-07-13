@@ -104,8 +104,10 @@ function PlatformAdmin() {
       {tab === "companies" && <CompaniesTab />}
       {tab === "plans" && <PlansTab />}
       {tab === "jobs" && <JobsTab />}
+      {tab === "processes" && <ProcessDiagrams />}
       {tab === "hardening" && <HardeningChecklist />}
       {tab === "architecture" && <ArchitectureView />}
+
     </div>
   );
 }
