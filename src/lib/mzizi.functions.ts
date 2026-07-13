@@ -819,6 +819,17 @@ export const createClient = createServerFn({ method: "POST" })
       geo_lng?: number | null;
       email?: string;
       group_id?: string | null;
+      is_introducer?: boolean;
+      default_commission_pct?: number | null;
+      default_commission_amount?: number | null;
+      bank_accounts?: Array<{
+        bank_name: string;
+        branch_name?: string | null;
+        account_no: string;
+        account_name: string;
+        swift_code?: string | null;
+        is_primary?: boolean;
+      }>;
     }) =>
       (() => {
         const schema = z.object({
@@ -839,6 +850,21 @@ export const createClient = createServerFn({ method: "POST" })
           geo_lng: z.number().min(-180).max(180).nullable().optional(),
           email: z.string().trim().email().max(255).optional().or(z.literal("")),
           group_id: z.string().uuid().nullable().optional(),
+          is_introducer: z.boolean().optional(),
+          default_commission_pct: z.number().min(0).max(100).nullable().optional(),
+          default_commission_amount: z.number().min(0).nullable().optional(),
+          bank_accounts: z
+            .array(
+              z.object({
+                bank_name: z.string().trim().min(1).max(120),
+                branch_name: z.string().trim().max(120).nullable().optional(),
+                account_no: z.string().trim().min(1).max(60),
+                account_name: z.string().trim().min(1).max(120),
+                swift_code: z.string().trim().max(30).nullable().optional(),
+                is_primary: z.boolean().optional(),
+              }),
+            )
+            .optional(),
         });
         const r = schema.safeParse(i);
         if (!r.success) {
@@ -880,12 +906,31 @@ export const createClient = createServerFn({ method: "POST" })
         group_id: data.group_id ?? null,
         status: "pending_kyc",
         avatar_color: color,
+        is_introducer: data.is_introducer ?? false,
+        default_commission_pct: data.default_commission_pct ?? null,
+        default_commission_amount: data.default_commission_amount ?? null,
       })
       .select()
       .single();
     if (error) throw error;
+
+    if (data.bank_accounts && data.bank_accounts.length > 0) {
+      const rows = data.bank_accounts.map((b, i) => ({
+        client_id: created.id,
+        bank_name: b.bank_name,
+        branch_name: b.branch_name ?? null,
+        account_no: b.account_no,
+        account_name: b.account_name,
+        swift_code: b.swift_code ?? null,
+        is_primary: b.is_primary ?? i === 0,
+      }));
+      const { error: bErr } = await supabase.from("client_bank_account").insert(rows);
+      if (bErr) throw bErr;
+    }
+
     return created;
   });
+
 
 export const submitApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
