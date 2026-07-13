@@ -193,6 +193,8 @@ export type Database = {
           branch_id: string
           created_at: string
           date_of_birth: string | null
+          default_commission_amount: number | null
+          default_commission_pct: number | null
           district: string | null
           divisional_secretariat: string | null
           email: string | null
@@ -204,6 +206,7 @@ export type Database = {
           gn_division: string | null
           group_id: string | null
           id: string
+          is_introducer: boolean
           joined_on: string | null
           last_name: string | null
           monthly_income: number | null
@@ -225,6 +228,8 @@ export type Database = {
           branch_id: string
           created_at?: string
           date_of_birth?: string | null
+          default_commission_amount?: number | null
+          default_commission_pct?: number | null
           district?: string | null
           divisional_secretariat?: string | null
           email?: string | null
@@ -236,6 +241,7 @@ export type Database = {
           gn_division?: string | null
           group_id?: string | null
           id?: string
+          is_introducer?: boolean
           joined_on?: string | null
           last_name?: string | null
           monthly_income?: number | null
@@ -257,6 +263,8 @@ export type Database = {
           branch_id?: string
           created_at?: string
           date_of_birth?: string | null
+          default_commission_amount?: number | null
+          default_commission_pct?: number | null
           district?: string | null
           divisional_secretariat?: string | null
           email?: string | null
@@ -268,6 +276,7 @@ export type Database = {
           gn_division?: string | null
           group_id?: string | null
           id?: string
+          is_introducer?: boolean
           joined_on?: string | null
           last_name?: string | null
           monthly_income?: number | null
@@ -303,6 +312,53 @@ export type Database = {
             columns: ["officer_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_bank_account: {
+        Row: {
+          account_name: string
+          account_no: string
+          bank_name: string
+          branch_name: string | null
+          client_id: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          swift_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          account_no: string
+          bank_name: string
+          branch_name?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          swift_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          account_no?: string
+          bank_name?: string
+          branch_name?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          swift_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_bank_account_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
             referencedColumns: ["id"]
           },
         ]
@@ -613,6 +669,7 @@ export type Database = {
       }
       fd_nominee: {
         Row: {
+          client_id: string | null
           deposit_id: string
           id: string
           name: string
@@ -621,6 +678,7 @@ export type Database = {
           relationship: string | null
         }
         Insert: {
+          client_id?: string | null
           deposit_id: string
           id?: string
           name: string
@@ -629,6 +687,7 @@ export type Database = {
           relationship?: string | null
         }
         Update: {
+          client_id?: string | null
           deposit_id?: string
           id?: string
           name?: string
@@ -637,6 +696,13 @@ export type Database = {
           relationship?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fd_nominee_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fd_nominee_deposit_id_fkey"
             columns: ["deposit_id"]
@@ -825,10 +891,20 @@ export type Database = {
           company_id: string
           created_at: string
           created_by: string | null
+          dispatch_option: Database["public"]["Enums"]["fd_dispatch_option"]
           id: string
+          interest_payment_mode: Database["public"]["Enums"]["fd_interest_payment_mode"]
+          interest_savings_account_id: string | null
+          introducer_commission_amount: number | null
+          introducer_commission_payment_mode:
+            | Database["public"]["Enums"]["introducer_commission_mode"]
+            | null
+          introducer_id: string | null
+          marketing_officer_id: string | null
           maturity_date: string
           maturity_instruction: Database["public"]["Enums"]["fd_maturity_instruction"]
           parent_fd_id: string | null
+          payout_bank_account_id: string | null
           payout_option: Database["public"]["Enums"]["fd_payout_option"]
           principal: number
           product_id: string
@@ -851,10 +927,20 @@ export type Database = {
           company_id: string
           created_at?: string
           created_by?: string | null
+          dispatch_option?: Database["public"]["Enums"]["fd_dispatch_option"]
           id?: string
+          interest_payment_mode?: Database["public"]["Enums"]["fd_interest_payment_mode"]
+          interest_savings_account_id?: string | null
+          introducer_commission_amount?: number | null
+          introducer_commission_payment_mode?:
+            | Database["public"]["Enums"]["introducer_commission_mode"]
+            | null
+          introducer_id?: string | null
+          marketing_officer_id?: string | null
           maturity_date: string
           maturity_instruction: Database["public"]["Enums"]["fd_maturity_instruction"]
           parent_fd_id?: string | null
+          payout_bank_account_id?: string | null
           payout_option: Database["public"]["Enums"]["fd_payout_option"]
           principal: number
           product_id: string
@@ -877,10 +963,20 @@ export type Database = {
           company_id?: string
           created_at?: string
           created_by?: string | null
+          dispatch_option?: Database["public"]["Enums"]["fd_dispatch_option"]
           id?: string
+          interest_payment_mode?: Database["public"]["Enums"]["fd_interest_payment_mode"]
+          interest_savings_account_id?: string | null
+          introducer_commission_amount?: number | null
+          introducer_commission_payment_mode?:
+            | Database["public"]["Enums"]["introducer_commission_mode"]
+            | null
+          introducer_id?: string | null
+          marketing_officer_id?: string | null
           maturity_date?: string
           maturity_instruction?: Database["public"]["Enums"]["fd_maturity_instruction"]
           parent_fd_id?: string | null
+          payout_bank_account_id?: string | null
           payout_option?: Database["public"]["Enums"]["fd_payout_option"]
           principal?: number
           product_id?: string
@@ -915,10 +1011,38 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fixed_deposit_interest_savings_account_id_fkey"
+            columns: ["interest_savings_account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_deposit_introducer_id_fkey"
+            columns: ["introducer_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_deposit_marketing_officer_id_fkey"
+            columns: ["marketing_officer_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fixed_deposit_parent_fd_id_fkey"
             columns: ["parent_fd_id"]
             isOneToOne: false
             referencedRelation: "fixed_deposit"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_deposit_payout_bank_account_id_fkey"
+            columns: ["payout_bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "client_bank_account"
             referencedColumns: ["id"]
           },
           {
@@ -2358,6 +2482,8 @@ export type Database = {
         | "dormant"
         | "blacklisted"
         | "exited"
+      fd_dispatch_option: "post" | "branch" | "digital"
+      fd_interest_payment_mode: "bank_transfer" | "credit_savings"
       fd_maturity_instruction:
         | "payout"
         | "renew_principal"
@@ -2386,6 +2512,7 @@ export type Database = {
         | "overdue"
         | "waived"
       interest_method: "flat" | "declining_balance"
+      introducer_commission_mode: "cash" | "bank_transfer" | "credit_savings"
       loan_status:
         | "draft"
         | "submitted"
@@ -2570,6 +2697,8 @@ export const Constants = {
         "blacklisted",
         "exited",
       ],
+      fd_dispatch_option: ["post", "branch", "digital"],
+      fd_interest_payment_mode: ["bank_transfer", "credit_savings"],
       fd_maturity_instruction: [
         "payout",
         "renew_principal",
@@ -2602,6 +2731,7 @@ export const Constants = {
         "waived",
       ],
       interest_method: ["flat", "declining_balance"],
+      introducer_commission_mode: ["cash", "bank_transfer", "credit_savings"],
       loan_status: [
         "draft",
         "submitted",

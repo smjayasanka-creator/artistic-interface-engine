@@ -86,6 +86,14 @@ function NewClientPage() {
   const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
 
+  const [isIntroducer, setIsIntroducer] = useState(false);
+  const [commissionPct, setCommissionPct] = useState<number | "">("");
+  const [commissionAmount, setCommissionAmount] = useState<number | "">("");
+
+  type BankAcct = { bank_name: string; branch_name: string; account_no: string; account_name: string; swift_code: string; is_primary: boolean };
+  const [banks, setBanks] = useState<BankAcct[]>([]);
+
+
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -212,6 +220,19 @@ function NewClientPage() {
         photo_url,
         geo_lat: geo?.lat ?? null,
         geo_lng: geo?.lng ?? null,
+        is_introducer: isIntroducer,
+        default_commission_pct: isIntroducer && commissionPct !== "" ? Number(commissionPct) : null,
+        default_commission_amount: isIntroducer && commissionAmount !== "" ? Number(commissionAmount) : null,
+        bank_accounts: banks
+          .filter((b) => b.bank_name.trim() && b.account_no.trim() && b.account_name.trim())
+          .map((b) => ({
+            bank_name: b.bank_name.trim(),
+            branch_name: b.branch_name.trim() || null,
+            account_no: b.account_no.trim(),
+            account_name: b.account_name.trim(),
+            swift_code: b.swift_code.trim() || null,
+            is_primary: b.is_primary,
+          })),
       },
     });
   }
@@ -349,6 +370,70 @@ function NewClientPage() {
             )}
           </div>
         </Card>
+
+        <Card className="p-6">
+          <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Bank accounts</h2>
+          <p className="text-xs text-muted-foreground mb-3">Add bank accounts used for FD pay-out or interest transfer. Mark one as primary.</p>
+          <div className="flex flex-col gap-2">
+            {banks.map((b, i) => (
+              <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                <input placeholder="Bank name" className={inputCls + " col-span-3"} value={b.bank_name} onChange={(e) => setBanks(banks.map((x, j) => j === i ? { ...x, bank_name: e.target.value } : x))} />
+                <input placeholder="Branch" className={inputCls + " col-span-2"} value={b.branch_name} onChange={(e) => setBanks(banks.map((x, j) => j === i ? { ...x, branch_name: e.target.value } : x))} />
+                <input placeholder="Account no" className={inputCls + " col-span-2 font-mono"} value={b.account_no} onChange={(e) => setBanks(banks.map((x, j) => j === i ? { ...x, account_no: e.target.value } : x))} />
+                <input placeholder="Account name" className={inputCls + " col-span-3"} value={b.account_name} onChange={(e) => setBanks(banks.map((x, j) => j === i ? { ...x, account_name: e.target.value } : x))} />
+                <label className="col-span-1 flex items-center gap-1 text-[11px]">
+                  <input type="radio" name="primary_bank" checked={b.is_primary} onChange={() => setBanks(banks.map((x, j) => ({ ...x, is_primary: j === i })))} />
+                  Primary
+                </label>
+                <button type="button" className="col-span-1 text-destructive hover:text-destructive/80 flex justify-center" onClick={() => setBanks(banks.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className={btnSecondaryCls + " self-start"}
+              onClick={() => setBanks([...banks, { bank_name: "", branch_name: "", account_no: "", account_name: "", swift_code: "", is_primary: banks.length === 0 }])}
+            >
+              + Add bank account
+            </button>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Introducer settings</h2>
+          <label className="flex items-center gap-2 text-sm mb-3">
+            <input type="checkbox" checked={isIntroducer} onChange={(e) => setIsIntroducer(e.target.checked)} />
+            This customer can be selected as an introducer on FD / loan bookings
+          </label>
+          {isIntroducer && (
+            <FormGrid>
+              <FormField label="Default commission %" span={3}>
+                <input
+                  type="number"
+                  step="0.001"
+                  className={inputCls + " font-mono"}
+                  value={commissionPct}
+                  onChange={(e) => setCommissionPct(e.target.value === "" ? "" : Number(e.target.value))}
+                />
+              </FormField>
+              <FormField label="Default commission amount" span={3}>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={inputCls + " font-mono"}
+                  value={commissionAmount}
+                  onChange={(e) => setCommissionAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                />
+              </FormField>
+              <FormField label="" span={6}>
+                <span className="text-[11px] text-muted-foreground">Amount takes precedence over percentage when both are set. Either can be overridden per booking.</span>
+              </FormField>
+            </FormGrid>
+          )}
+        </Card>
+
+
 
         <FormActions>
           {submitted && !isValid && (
