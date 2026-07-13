@@ -211,6 +211,11 @@ function FdRegister() {
           </table>
         </div>
       </Card>
+
+      <div id="alco" className="scroll-mt-20">
+        <AlcoRatesPanel />
+      </div>
     </div>
+
   );
 }
