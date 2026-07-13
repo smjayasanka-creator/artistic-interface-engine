@@ -77,6 +77,7 @@ function PlatformAdmin() {
             ["overview", "Overview"],
             ["companies", "Companies"],
             ["plans", "Plans"],
+            ["jobs", "Jobs"],
             ["hardening", "Hardening"],
             ["architecture", "Architecture"],
           ] as const
