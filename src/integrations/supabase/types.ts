@@ -241,6 +241,62 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_role: string | null
+          actor_user_id: string | null
+          after_data: Json | null
+          before_data: Json | null
+          company_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: unknown
+          metadata: Json
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          company_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          company_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch: {
         Row: {
           branch_prefix: string | null
@@ -2816,6 +2872,18 @@ export type Database = {
       current_company_id: { Args: never; Returns: string }
       current_staff_branch: { Args: never; Returns: string }
       current_staff_id: { Args: never; Returns: string }
+      emit_audit: {
+        Args: {
+          _action: string
+          _after?: Json
+          _before?: Json
+          _company_id: string
+          _entity_id: string
+          _entity_type: string
+          _metadata?: Json
+        }
+        Returns: string
+      }
       emit_domain_event: {
         Args: {
           _aggregate_id: string
