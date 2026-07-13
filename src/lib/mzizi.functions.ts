@@ -995,6 +995,68 @@ export const createClient = createServerFn({ method: "POST" })
     return created;
   });
 
+export const updateClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      id: string;
+      first_name?: string;
+      last_name?: string;
+      phone?: string;
+      email?: string | null;
+      address?: string | null;
+      gn_division?: string | null;
+      divisional_secretariat?: string | null;
+      district?: string | null;
+      province?: string | null;
+      date_of_birth?: string | null;
+      gender?: "male" | "female" | "other" | null;
+      occupation?: string | null;
+      monthly_income?: number | null;
+    }) =>
+      (() => {
+        const schema = z.object({
+          id: z.string().uuid(),
+          first_name: z.string().trim().min(1).max(60).optional(),
+          last_name: z.string().trim().min(1).max(60).optional(),
+          phone: z.string().trim().min(6).max(30).optional(),
+          email: z.string().trim().email().max(255).nullable().optional().or(z.literal("")),
+          address: z.string().trim().max(200).nullable().optional(),
+          gn_division: z.string().trim().max(80).nullable().optional(),
+          divisional_secretariat: z.string().trim().max(80).nullable().optional(),
+          district: z.string().trim().max(80).nullable().optional(),
+          province: z.string().trim().max(80).nullable().optional(),
+          date_of_birth: z.string().nullable().optional(),
+          gender: z.enum(["male", "female", "other"]).nullable().optional(),
+          occupation: z.string().trim().max(120).nullable().optional(),
+          monthly_income: z.number().min(0).nullable().optional(),
+        });
+        const r = schema.safeParse(i);
+        if (!r.success) throw new Error(r.error.issues.map((iss) => iss.message).join(" · "));
+        return r.data;
+      })(),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { id, ...rest } = data;
+    const patch: Record<string, any> = {};
+    for (const [k, v] of Object.entries(rest)) {
+      if (v !== undefined) patch[k] = v === "" ? null : v;
+    }
+    if (patch.first_name || patch.last_name) {
+      const { data: existing } = await supabase.from("client").select("first_name, last_name").eq("id", id).single();
+      const fn = patch.first_name ?? existing?.first_name ?? "";
+      const ln = patch.last_name ?? existing?.last_name ?? "";
+      patch.full_name = `${fn} ${ln}`.trim();
+    }
+    const { data: updated, error } = await supabase.from("client").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return updated;
+  });
+
+
+
+
 
 export const submitApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
