@@ -208,6 +208,12 @@ export function FdProductsTab() {
                       wht_rate: Number(product.wht_rate),
                       auto_renewal_default: product.auto_renewal_default,
                       active: product.active,
+                      capital_account_id: (product as any).capital_account_id ?? null,
+                      interest_payable_account_id: (product as any).interest_payable_account_id ?? null,
+                      interest_expense_account_id: (product as any).interest_expense_account_id ?? null,
+                      wht_payable_account_id: (product as any).wht_payable_account_id ?? null,
+                      introducer_commission_account_id: (product as any).introducer_commission_account_id ?? null,
+                      marketing_incentive_account_id: (product as any).marketing_incentive_account_id ?? null,
                     },
                     rateTiers: product.rate_tiers,
                   })
