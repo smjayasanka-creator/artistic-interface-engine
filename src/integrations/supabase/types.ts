@@ -918,10 +918,12 @@ export type Database = {
           allow_monthly: boolean
           auto_renewal_default: Database["public"]["Enums"]["fd_maturity_instruction"]
           capital_account_id: string | null
+          cash_account_id: string | null
           cbsl_max_rate: number | null
           code: string
           company_id: string
           created_at: string
+          deposit_liability_account_id: string | null
           id: string
           interest_expense_account_id: string | null
           interest_payable_account_id: string | null
@@ -935,6 +937,7 @@ export type Database = {
           penalty_value: number
           standard_rate: number | null
           updated_at: string
+          wht_liability_account_id: string | null
           wht_payable_account_id: string | null
           wht_rate: number
         }
@@ -944,10 +947,12 @@ export type Database = {
           allow_monthly?: boolean
           auto_renewal_default?: Database["public"]["Enums"]["fd_maturity_instruction"]
           capital_account_id?: string | null
+          cash_account_id?: string | null
           cbsl_max_rate?: number | null
           code: string
           company_id: string
           created_at?: string
+          deposit_liability_account_id?: string | null
           id?: string
           interest_expense_account_id?: string | null
           interest_payable_account_id?: string | null
@@ -961,6 +966,7 @@ export type Database = {
           penalty_value?: number
           standard_rate?: number | null
           updated_at?: string
+          wht_liability_account_id?: string | null
           wht_payable_account_id?: string | null
           wht_rate?: number
         }
@@ -970,10 +976,12 @@ export type Database = {
           allow_monthly?: boolean
           auto_renewal_default?: Database["public"]["Enums"]["fd_maturity_instruction"]
           capital_account_id?: string | null
+          cash_account_id?: string | null
           cbsl_max_rate?: number | null
           code?: string
           company_id?: string
           created_at?: string
+          deposit_liability_account_id?: string | null
           id?: string
           interest_expense_account_id?: string | null
           interest_payable_account_id?: string | null
@@ -987,6 +995,7 @@ export type Database = {
           penalty_value?: number
           standard_rate?: number | null
           updated_at?: string
+          wht_liability_account_id?: string | null
           wht_payable_account_id?: string | null
           wht_rate?: number
         }
@@ -999,10 +1008,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fd_product_cash_account_id_fkey"
+            columns: ["cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fd_product_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_product_deposit_liability_account_id_fkey"
+            columns: ["deposit_liability_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
             referencedColumns: ["id"]
           },
           {
@@ -1029,6 +1052,13 @@ export type Database = {
           {
             foreignKeyName: "fd_product_marketing_incentive_account_id_fkey"
             columns: ["marketing_incentive_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_product_wht_liability_account_id_fkey"
+            columns: ["wht_liability_account_id"]
             isOneToOne: false
             referencedRelation: "gl_account"
             referencedColumns: ["id"]

@@ -4,6 +4,29 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { serverNow, serverToday } from "@/lib/clock-server";
 import { buildSchedule, dailyAccrual, addMonths, daysBetween, interestForPeriod } from "@/lib/fd-schedule";
 
+// ─────────── Ledger kernel helper ───────────
+// Resolves GL account ids from fd_product (preferred) or falls back to
+// standard chart-of-accounts codes: 1000 cash, 2200 FD liability,
+// 5200 interest expense, 2300 WHT liability.
+async function resolveFdAccounts(supabase: any, product: any) {
+  const need: Record<string, { fromProduct: string | null; code: string }> = {
+    cash: { fromProduct: product?.cash_account_id ?? null, code: "1000" },
+    liab: { fromProduct: product?.deposit_liability_account_id ?? null, code: "2200" },
+    intr: { fromProduct: product?.interest_expense_account_id ?? null, code: "5200" },
+    wht:  { fromProduct: product?.wht_liability_account_id ?? null, code: "2300" },
+  };
+  const missing = Object.values(need).filter((n) => !n.fromProduct).map((n) => n.code);
+  let byCode: Record<string, string> = {};
+  if (missing.length) {
+    const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", missing);
+    byCode = Object.fromEntries((accts ?? []).map((a: any) => [a.code, a.id]));
+  }
+  const out: Record<string, string | null> = {};
+  for (const [k, v] of Object.entries(need)) out[k] = v.fromProduct ?? byCode[v.code] ?? null;
+  return out as { cash: string | null; liab: string | null; intr: string | null; wht: string | null };
+}
+
+
 // ──────────────────────────────────────────────────────────────────────────
 // PRODUCTS
 // ──────────────────────────────────────────────────────────────────────────
@@ -563,6 +586,29 @@ export const approveFixedDeposit = createServerFn({ method: "POST" })
       created_by: userId,
     });
 
+    // Ledger posting via kernel — DR Cash / CR FD Liability
+    const { data: fdProd } = await supabase
+      .from("fd_product")
+      .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+      .eq("id", fd.product_id)
+      .maybeSingle();
+    const gl = await resolveFdAccounts(supabase, fdProd);
+    if (gl.cash && gl.liab && Number(fd.principal) > 0) {
+      await supabase.rpc("post_entry", {
+        _entry_date: fd.value_date,
+        _reference: `FD-OPEN-${fd.certificate_no}`,
+        _description: `FD opening · ${fd.certificate_no}`,
+        _lines: [
+          { account_id: gl.cash, debit: Number(fd.principal), credit: 0 },
+          { account_id: gl.liab, debit: 0, credit: Number(fd.principal) },
+        ] as any,
+        _branch_id: fd.branch_id,
+        _source_module: "fd",
+        _source_ref: fd.id,
+        _idempotency_key: `fd:open:${fd.id}`,
+      });
+    }
+
     return { ok: true };
   });
 
@@ -681,6 +727,33 @@ export const closePrematurely = createServerFn({ method: "POST" })
       created_by: userId,
     });
 
+    // Ledger posting via kernel — DR FD Liability + Interest Expense / CR Cash
+    const { data: fdProd2 } = await supabase
+      .from("fd_product")
+      .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+      .eq("id", r.fd.product_id)
+      .maybeSingle();
+    const glp = await resolveFdAccounts(supabase, fdProd2);
+    if (glp.cash && glp.liab && glp.intr && r.settlement > 0) {
+      const principal = Number(r.fd.principal);
+      const interestPart = Math.max(0, r.settlement - principal + r.excessPaid);
+      await supabase.rpc("post_entry", {
+        _entry_date: data.on_date,
+        _reference: `FD-CLOSE-${r.fd.certificate_no}`,
+        _description: `FD premature closure · ${r.fd.certificate_no}`,
+        _lines: [
+          { account_id: glp.liab, debit: principal, credit: 0 },
+          ...(interestPart > 0 ? [{ account_id: glp.intr, debit: interestPart, credit: 0 }] : []),
+          { account_id: glp.cash, debit: 0, credit: r.settlement },
+          ...(r.excessPaid > 0 ? [{ account_id: glp.intr, debit: 0, credit: r.excessPaid }] : []),
+        ] as any,
+        _branch_id: r.fd.branch_id,
+        _source_module: "fd",
+        _source_ref: r.fd.id,
+        _idempotency_key: `fd:close:${r.fd.id}`,
+      });
+    }
+
     return { ok: true, settlement: r.settlement };
   });
 
@@ -760,8 +833,34 @@ export const processMaturity = createServerFn({ method: "POST" })
         reference: fd.certificate_no,
         created_by: userId,
       });
+
+      // Ledger posting via kernel — DR FD Liability + Interest Expense / CR Cash
+      const { data: fdProdM } = await supabase
+        .from("fd_product")
+        .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+        .eq("id", fd.product_id)
+        .maybeSingle();
+      const glm = await resolveFdAccounts(supabase, fdProdM);
+      if (glm.cash && glm.liab && glm.intr && settlement > 0) {
+        await supabase.rpc("post_entry", {
+          _entry_date: onDate,
+          _reference: `FD-MAT-${fd.certificate_no}`,
+          _description: `FD maturity payout · ${fd.certificate_no}`,
+          _lines: [
+            { account_id: glm.liab, debit: Number(fd.principal), credit: 0 },
+            ...(owedNet > 0 ? [{ account_id: glm.intr, debit: owedNet, credit: 0 }] : []),
+            { account_id: glm.cash, debit: 0, credit: settlement },
+          ] as any,
+          _branch_id: fd.branch_id,
+          _source_module: "fd",
+          _source_ref: fd.id,
+          _idempotency_key: `fd:maturity:${fd.id}`,
+        });
+      }
+
       return { ok: true, action: "payout", settlement };
     }
+
 
     // Renewals
     const newPrincipal =
@@ -891,14 +990,14 @@ export const runFdInterestPayouts = createServerFn({ method: "POST" })
     const today = serverToday();
     const { data: due } = await supabase
       .from("fd_interest_schedule")
-      .select("id,deposit_id,net_interest,due_date")
+      .select("id,deposit_id,gross_interest,wht_amount,net_interest,due_date")
       .eq("paid", false)
       .lte("due_date", today);
     let paid = 0;
     for (const row of due ?? []) {
       const { data: fd } = await supabase
         .from("fixed_deposit")
-        .select("status,certificate_no,payout_option")
+        .select("id,status,certificate_no,payout_option,branch_id,product_id")
         .eq("id", row.deposit_id)
         .maybeSingle();
       if (!fd || fd.status !== "active" || fd.payout_option !== "monthly") continue;
@@ -911,7 +1010,36 @@ export const runFdInterestPayouts = createServerFn({ method: "POST" })
         reference: `${fd.certificate_no} interest`,
         created_by: userId,
       });
+
+      // Ledger posting via kernel — DR Interest Expense / CR Cash (net) + CR WHT Liability
+      const { data: fdProdI } = await supabase
+        .from("fd_product")
+        .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+        .eq("id", fd.product_id)
+        .maybeSingle();
+      const gli = await resolveFdAccounts(supabase, fdProdI);
+      const gross = Number(row.gross_interest);
+      const wht = Number(row.wht_amount ?? 0);
+      const net = Number(row.net_interest);
+      if (gli.cash && gli.intr && gross > 0) {
+        await supabase.rpc("post_entry", {
+          _entry_date: today,
+          _reference: `FD-INT-${fd.certificate_no}-${row.id.slice(0, 8)}`,
+          _description: `FD interest payout · ${fd.certificate_no}`,
+          _lines: [
+            { account_id: gli.intr, debit: gross, credit: 0 },
+            { account_id: gli.cash, debit: 0, credit: net },
+            ...(wht > 0 && gli.wht ? [{ account_id: gli.wht, debit: 0, credit: wht }] : []),
+          ] as any,
+          _branch_id: fd.branch_id,
+          _source_module: "fd",
+          _source_ref: fd.id,
+          _idempotency_key: `fd:interest:${row.id}`,
+        });
+      }
+
       paid++;
     }
     return { paid };
+
   });
