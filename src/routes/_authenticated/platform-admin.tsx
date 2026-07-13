@@ -22,12 +22,14 @@ import {
 import { HardeningChecklist } from "@/components/mzizi/HardeningChecklist";
 import { ArchitectureExplorer } from "@/components/mzizi/ArchitectureExplorer";
 import { ServiceBoundaries } from "@/components/mzizi/ServiceBoundaries";
+import { ProcessDiagrams } from "@/components/mzizi/ProcessDiagrams";
 
 export const Route = createFileRoute("/_authenticated/platform-admin")({
   component: PlatformAdmin,
 });
 
-type Tab = "overview" | "companies" | "plans" | "jobs" | "hardening" | "architecture";
+type Tab = "overview" | "companies" | "plans" | "jobs" | "processes" | "hardening" | "architecture";
+
 
 const STATUS_TONE: Record<string, string> = {
   trialing: "bg-sky-500/10 text-sky-700 border-sky-500/30",
@@ -79,8 +81,10 @@ function PlatformAdmin() {
             ["companies", "Companies"],
             ["plans", "Plans"],
             ["jobs", "Jobs"],
+            ["processes", "Processes"],
             ["hardening", "Hardening"],
             ["architecture", "Architecture"],
+
           ] as const
         ).map(([id, label]) => (
           <button
@@ -100,8 +104,10 @@ function PlatformAdmin() {
       {tab === "companies" && <CompaniesTab />}
       {tab === "plans" && <PlansTab />}
       {tab === "jobs" && <JobsTab />}
+      {tab === "processes" && <ProcessDiagrams />}
       {tab === "hardening" && <HardeningChecklist />}
       {tab === "architecture" && <ArchitectureView />}
+
     </div>
   );
 }
