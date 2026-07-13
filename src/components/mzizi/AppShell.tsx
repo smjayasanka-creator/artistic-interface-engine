@@ -18,7 +18,7 @@ const NAV: NavEntry[] = [
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/transactions", label: "Transaction", icon: ArrowLeftRight },
-      { to: "/clients", label: "Customers", icon: Users },
+      { to: "/clients", label: "Clients", icon: Users },
       { to: "/loans", label: "Loans", icon: Wallet },
       { to: "/approvals", label: "Approvals", icon: CheckSquare },
       { to: "/savings", label: "Savings", icon: Landmark },
