@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/clients/$id")({
   component: Client360,
 });
 
-type TabKey = "overview" | "loans" | "savings" | "fd" | "transactions" | "documents" | "profile";
+type TabKey = "overview" | "loans" | "savings" | "fd" | "transactions" | "documents";
 
 function Client360() {
   const { id } = Route.useParams();
@@ -63,7 +63,6 @@ function Client360() {
     { key: "fd", label: "Fixed Deposits", icon: Landmark, count: fds.length },
     { key: "transactions", label: "Transactions", icon: ReceiptText, count: repayments.length + savingsTxns.length + fdTxns.length },
     { key: "documents", label: "Documents", icon: FileText, count: documents.length },
-    { key: "profile", label: "Profile", icon: IdCard },
   ];
 
   function copy(value: string, label: string) {
@@ -90,7 +89,7 @@ function Client360() {
             </button>
             <button
               type="button"
-              onClick={() => setTab("profile")}
+              onClick={() => setTab("overview")}
               className="border border-border-strong px-2.5 py-1 rounded-full text-[11.5px] font-medium hover:border-input inline-flex items-center gap-1"
             >
               <Pencil size={11} /> Edit
@@ -143,7 +142,15 @@ function Client360() {
 
       {/* Tab panels */}
       {tab === "overview" && (
-        <OverviewPanel active={active} repayments={repayments} savingsTxns={savingsTxns} fdTxns={fdTxns} />
+        <OverviewPanel
+          active={active}
+          repayments={repayments}
+          savingsTxns={savingsTxns}
+          fdTxns={fdTxns}
+          stats={stats}
+          client={client}
+          bankAccounts={bankAccounts}
+        />
       )}
       {tab === "loans" && <LoansPanel loans={loans} active={active} />}
       {tab === "savings" && <SavingsPanel savings={savings} savingsTxns={savingsTxns} />}
@@ -152,7 +159,6 @@ function Client360() {
         <TransactionsPanel repayments={repayments} savingsTxns={savingsTxns} fdTxns={fdTxns} loans={loans} savings={savings} fds={fds} />
       )}
       {tab === "documents" && <DocumentsPanel documents={documents} clientId={client.id} />}
-      {tab === "profile" && <ProfilePanel client={client} bankAccounts={bankAccounts} />}
     </div>
   );
 }
@@ -177,7 +183,7 @@ function SectionTitle({ children, right }: { children: React.ReactNode; right?: 
   );
 }
 
-function OverviewPanel({ active, repayments, savingsTxns, fdTxns }: any) {
+function OverviewPanel({ active, repayments, savingsTxns, fdTxns, stats, client, bankAccounts }: any) {
   const combined = useMemo(() => {
     const rows: { kind: string; when: string; label: string; amount: number }[] = [
       ...repayments.map((r: any) => ({ kind: "Loan repayment", when: r.received_at, label: r.channel ?? "—", amount: Number(r.amount) })),
@@ -185,85 +191,141 @@ function OverviewPanel({ active, repayments, savingsTxns, fdTxns }: any) {
       ...fdTxns.map((f: any) => ({ kind: `FD ${f.type}`, when: f.txn_date, label: f.reference ?? "—", amount: Number(f.amount) })),
     ];
     rows.sort((a, b) => (a.when < b.when ? 1 : -1));
-    return rows.slice(0, 10);
+    return rows.slice(0, 8);
   }, [repayments, savingsTxns, fdTxns]);
 
   return (
-    <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
-      <Card>
-        {active ? (
-          <>
-            <SectionTitle>Active loan · {active.product?.name}</SectionTitle>
-            <div className="text-[12px] text-muted-foreground mb-2">
-              {money(active.principal)} · {active.term_months} months · {active.frequency}
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden mb-2">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${active.principal > 0 ? (active.repaid / Number(active.principal)) * 100 : 0}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[11.5px] text-muted-foreground mb-4">
-              <span>{money(active.repaid)} repaid</span>
-              <span>{money(active.outstanding)} outstanding</span>
-            </div>
-            <SectionTitle>Upcoming installments</SectionTitle>
-            <div className="divide-y divide-row-divider">
-              {(active.schedule ?? []).slice(0, 6).map((i: any) => {
-                const paid = i.state === "paid";
-                const due = i.state === "due" || i.state === "overdue" || i.state === "partial";
-                return (
-                  <div key={i.seq} className="flex items-center gap-3 py-2 text-[12.5px]">
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold"
-                      style={{
-                        background: paid ? "var(--status-active-bg)" : due ? "var(--status-pending-bg)" : "var(--muted)",
-                        color: paid ? "var(--status-active-fg)" : due ? "var(--status-pending-fg)" : "var(--faint)",
-                      }}
-                    >
-                      {paid ? "✓" : due ? "!" : i.seq}
-                    </div>
-                    <div className="flex-1">Installment {i.seq} · {shortDate(i.due_date)}</div>
-                    <div className="font-mono">{money(Number(i.principal_due) + Number(i.interest_due))}</div>
-                    <div className="w-16 text-right text-[10.5px] font-semibold capitalize" style={{ color: paid ? "var(--primary)" : due ? "var(--status-pending-fg)" : "var(--faint)" }}>
-                      {i.state}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <>
-            <SectionTitle>No active loan</SectionTitle>
-            <div className="text-sm text-muted-foreground">
-              This member has no disbursed loans. Start an application via{" "}
-              <Link to="/loans/new" className="text-primary">New loan</Link>.
-            </div>
-          </>
-        )}
-      </Card>
-
-      <Card>
-        <SectionTitle>Recent activity</SectionTitle>
-        {combined.length === 0 ? (
-          <div className="text-sm text-muted-foreground">No activity yet.</div>
-        ) : (
-          <div className="relative pl-5">
-            <div className="absolute left-1 top-1 bottom-1 w-0.5 bg-border" />
-            {combined.map((r, i) => (
-              <div key={i} className="relative pb-4 last:pb-0">
-                <div className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-card border-2 border-primary" />
-                <div className="text-[12.5px] font-medium flex justify-between gap-2">
-                  <span className="truncate">{r.kind}</span>
-                  <span className="font-mono">{money(r.amount)}</span>
-                </div>
-                <div className="text-[11px] text-faint mt-0.5">{r.label} · {relTime(r.when)}</div>
-              </div>
-            ))}
+    <div className="grid gap-4 md:grid-cols-[1.6fr_1fr]">
+      {/* LEFT: KPIs + active loan + recent activity */}
+      <div className="flex flex-col gap-4 min-w-0">
+        <Card padded={false}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border">
+            <Kpi label="Outstanding loans" value={money(stats.outstanding)} sub={`${stats.activeLoans} active`} />
+            <Kpi label="Savings balance" value={money(stats.savings)} sub={`${stats.activeSavings} account${stats.activeSavings === 1 ? "" : "s"}`} />
+            <Kpi label="Fixed deposits" value={money(stats.fdBalance)} sub={`${stats.activeFds} active`} />
+            <Kpi label="On-time rate" value={`${stats.onTimeRate}%`} sub="Loan repayments" />
           </div>
-        )}
-      </Card>
+        </Card>
+
+        <Card>
+          {active ? (
+            <>
+              <SectionTitle>Active loan · {active.product?.name}</SectionTitle>
+              <div className="text-[12px] text-muted-foreground mb-2">
+                {money(active.principal)} · {active.term_months} months · {active.frequency}
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden mb-2">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${active.principal > 0 ? (active.repaid / Number(active.principal)) * 100 : 0}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[11.5px] text-muted-foreground mb-4">
+                <span>{money(active.repaid)} repaid</span>
+                <span>{money(active.outstanding)} outstanding</span>
+              </div>
+              <SectionTitle>Upcoming installments</SectionTitle>
+              <div className="divide-y divide-row-divider">
+                {(active.schedule ?? []).slice(0, 6).map((i: any) => {
+                  const paid = i.state === "paid";
+                  const due = i.state === "due" || i.state === "overdue" || i.state === "partial";
+                  return (
+                    <div key={i.seq} className="flex items-center gap-3 py-2 text-[12.5px]">
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                        style={{
+                          background: paid ? "var(--status-active-bg)" : due ? "var(--status-pending-bg)" : "var(--muted)",
+                          color: paid ? "var(--status-active-fg)" : due ? "var(--status-pending-fg)" : "var(--faint)",
+                        }}
+                      >
+                        {paid ? "✓" : due ? "!" : i.seq}
+                      </div>
+                      <div className="flex-1">Installment {i.seq} · {shortDate(i.due_date)}</div>
+                      <div className="font-mono">{money(Number(i.principal_due) + Number(i.interest_due))}</div>
+                      <div className="w-16 text-right text-[10.5px] font-semibold capitalize" style={{ color: paid ? "var(--primary)" : due ? "var(--status-pending-fg)" : "var(--faint)" }}>
+                        {i.state}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <>
+              <SectionTitle>No active loan</SectionTitle>
+              <div className="text-sm text-muted-foreground">
+                This member has no disbursed loans. Start an application via{" "}
+                <Link to="/loans/new" className="text-primary">New loan</Link>.
+              </div>
+            </>
+          )}
+        </Card>
+
+        <Card>
+          <SectionTitle>Recent activity</SectionTitle>
+          {combined.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No activity yet.</div>
+          ) : (
+            <div className="relative pl-5">
+              <div className="absolute left-1 top-1 bottom-1 w-0.5 bg-border" />
+              {combined.map((r, i) => (
+                <div key={i} className="relative pb-4 last:pb-0">
+                  <div className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-card border-2 border-primary" />
+                  <div className="text-[12.5px] font-medium flex justify-between gap-2">
+                    <span className="truncate">{r.kind}</span>
+                    <span className="font-mono">{money(r.amount)}</span>
+                  </div>
+                  <div className="text-[11px] text-faint mt-0.5">{r.label} · {relTime(r.when)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* RIGHT: profile info, single-line rows top to bottom */}
+      <div className="flex flex-col gap-4 min-w-0">
+        <Card>
+          <SectionTitle>Personal</SectionTitle>
+          <Field label="Full name" value={client.full_name} />
+          <Field label="Date of birth" value={client.date_of_birth ? shortDate(client.date_of_birth) : "—"} />
+          <Field label="Gender" value={client.gender ?? "—"} />
+          <Field label="Occupation" value={client.occupation ?? "—"} />
+          <Field label="Monthly income" value={client.monthly_income ? money(Number(client.monthly_income), true) : "—"} mono />
+          <Field label="Risk grade" value={client.risk_grade ?? "—"} />
+          <Field label="NIC" value={client.national_id ?? "—"} icon={<IdCard size={12} />} />
+        </Card>
+        <Card>
+          <SectionTitle>Contact</SectionTitle>
+          <Field label="Phone" value={client.phone ?? "—"} icon={<Phone size={12} />} />
+          <Field label="Email" value={client.email ?? "—"} icon={<Mail size={12} />} />
+          <Field label="Address" value={client.address ?? "—"} icon={<MapPin size={12} />} />
+          <Field label="GN Division" value={client.gn_division ?? "—"} />
+          <Field label="DS Division" value={client.divisional_secretariat ?? "—"} />
+          <Field label="District / Province" value={`${client.district ?? "—"} · ${client.province ?? "—"}`} />
+        </Card>
+        <Card>
+          <SectionTitle>Bank accounts</SectionTitle>
+          {bankAccounts.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No bank accounts on file.</div>
+          ) : (
+            <div className="divide-y divide-row-divider">
+              {bankAccounts.map((b: any) => (
+                <div key={b.id} className="py-2 text-[12.5px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium truncate">
+                      {b.bank_name}{b.branch_name ? ` · ${b.branch_name}` : ""}
+                      {b.is_primary && <span className="ml-2 text-[10px] uppercase tracking-wider rounded-full bg-primary/10 text-primary px-2 py-0.5">Primary</span>}
+                    </span>
+                    <span className="font-mono">{b.account_no}</span>
+                  </div>
+                  <div className="text-[11px] text-faint">{b.account_name}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }
