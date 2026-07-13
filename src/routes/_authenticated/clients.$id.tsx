@@ -71,24 +71,26 @@ function Client360() {
 
   return (
     <div className="animate-fadein flex flex-col gap-4">
-      <ClientSearchBar />
+      <div className="w-full max-w-md">
+        <ClientSearchBar />
+      </div>
 
       <Link to="/clients" className="text-xs text-primary hover:underline w-fit">← Back to clients</Link>
 
       {/* Google-Material style header */}
       <Card padded={false} className="overflow-hidden">
         <div
-          className="h-20 relative"
+          className="h-28 relative"
           style={{
             background: `linear-gradient(135deg, ${client.avatar_color ?? "#0f766e"} 0%, color-mix(in oklab, ${client.avatar_color ?? "#0f766e"} 60%, #0b1220) 100%)`,
           }}
         />
         <div className="px-6 pb-5 pt-3 flex flex-col sm:flex-row sm:items-start gap-4">
-          <div className="-mt-14 ring-4 ring-card rounded-full bg-card shrink-0 w-fit">
+          <div className="-mt-16 relative z-10 ring-4 ring-card rounded-full bg-card shrink-0 w-fit">
             {client.photo_url ? (
-              <img src={client.photo_url} alt={client.full_name} className="w-20 h-20 rounded-full object-cover" />
+              <img src={client.photo_url} alt={client.full_name} className="w-24 h-24 rounded-full object-cover" />
             ) : (
-              <Avatar name={client.full_name} color={client.avatar_color} size={80} />
+              <Avatar name={client.full_name} color={client.avatar_color} size={96} />
             )}
           </div>
           <div className="flex-1 min-w-0 sm:pt-1">
