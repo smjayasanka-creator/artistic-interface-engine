@@ -64,6 +64,7 @@ import { Route as AuthenticatedAccountsBankReconciliationRouteImport } from './r
 import { Route as AuthenticatedAccountsPaymentsIndexRouteImport } from './routes/_authenticated/accounts.payments.index'
 import { Route as AuthenticatedAccountsJournalIndexRouteImport } from './routes/_authenticated/accounts.journal.index'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
+import { Route as ApiPublicHooksFdMatureRouteImport } from './routes/api/public/hooks/fd-mature'
 import { Route as ApiPublicHooksFdAccrueRouteImport } from './routes/api/public/hooks/fd-accrue'
 import { Route as ApiPublicHooksDispatchDomainEventsRouteImport } from './routes/api/public/hooks/dispatch-domain-events'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
@@ -381,6 +382,11 @@ const ApiPublicV1HealthRoute = ApiPublicV1HealthRouteImport.update({
   path: '/api/public/v1/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksFdMatureRoute = ApiPublicHooksFdMatureRouteImport.update({
+  id: '/api/public/hooks/fd-mature',
+  path: '/api/public/hooks/fd-mature',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksFdAccrueRoute = ApiPublicHooksFdAccrueRouteImport.update({
   id: '/api/public/hooks/fd-accrue',
   path: '/api/public/hooks/fd-accrue',
@@ -494,6 +500,7 @@ export interface FileRoutesByFullPath {
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
+  '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
   '/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
@@ -556,6 +563,7 @@ export interface FileRoutesByTo {
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
+  '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/accounts/journal': typeof AuthenticatedAccountsJournalIndexRoute
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsIndexRoute
@@ -624,6 +632,7 @@ export interface FileRoutesById {
   '/_authenticated/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
+  '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/_authenticated/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
   '/_authenticated/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
@@ -692,6 +701,7 @@ export interface FileRouteTypes {
     | '/accounts/payments/new'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/fd-accrue'
+    | '/api/public/hooks/fd-mature'
     | '/api/public/v1/health'
     | '/accounts/journal/'
     | '/accounts/payments/'
@@ -754,6 +764,7 @@ export interface FileRouteTypes {
     | '/accounts/payments/new'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/fd-accrue'
+    | '/api/public/hooks/fd-mature'
     | '/api/public/v1/health'
     | '/accounts/journal'
     | '/accounts/payments'
@@ -821,6 +832,7 @@ export interface FileRouteTypes {
     | '/_authenticated/accounts/payments/new'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/fd-accrue'
+    | '/api/public/hooks/fd-mature'
     | '/api/public/v1/health'
     | '/_authenticated/accounts/journal/'
     | '/_authenticated/accounts/payments/'
@@ -838,6 +850,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiPublicHooksDispatchDomainEventsRoute: typeof ApiPublicHooksDispatchDomainEventsRoute
   ApiPublicHooksFdAccrueRoute: typeof ApiPublicHooksFdAccrueRoute
+  ApiPublicHooksFdMatureRoute: typeof ApiPublicHooksFdMatureRoute
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
   ApiPublicV1AtmAuthorizeRoute: typeof ApiPublicV1AtmAuthorizeRoute
   ApiPublicV1CeftTransferRoute: typeof ApiPublicV1CeftTransferRoute
@@ -1234,6 +1247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/fd-mature': {
+      id: '/api/public/hooks/fd-mature'
+      path: '/api/public/hooks/fd-mature'
+      fullPath: '/api/public/hooks/fd-mature'
+      preLoaderRoute: typeof ApiPublicHooksFdMatureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/fd-accrue': {
       id: '/api/public/hooks/fd-accrue'
       path: '/api/public/hooks/fd-accrue'
@@ -1501,6 +1521,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksDispatchDomainEventsRoute:
     ApiPublicHooksDispatchDomainEventsRoute,
   ApiPublicHooksFdAccrueRoute: ApiPublicHooksFdAccrueRoute,
+  ApiPublicHooksFdMatureRoute: ApiPublicHooksFdMatureRoute,
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
   ApiPublicV1AtmAuthorizeRoute: ApiPublicV1AtmAuthorizeRoute,
   ApiPublicV1CeftTransferRoute: ApiPublicV1CeftTransferRoute,
