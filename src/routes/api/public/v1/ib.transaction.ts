@@ -48,6 +48,17 @@ export const Route = createFileRoute("/api/public/v1/ib/transaction")({
           new_balance: 122400,
           currency: parsed.data.currency,
         };
+        // deposits/repayments bring money in; transfers/bill payments send money out
+        const ibDir =
+          parsed.data.action === "deposit_topup" || parsed.data.action === "loan_repayment"
+            ? "inbound"
+            : "outbound";
+        await postApiChannelEntry({
+          company_id: auth.key.company_id, direction: ibDir,
+          amount: parsed.data.amount, reference,
+          description: `IB ${parsed.data.action} · ${parsed.data.customer_id}`,
+          source_module: "ib", idempotency_key: idem.value,
+        });
         await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
           endpoint: ENDPOINT, method: "POST", reference, status_code: 200,
           request: withIdempotencyEnvelope(parsed.data, idem.value), response });
