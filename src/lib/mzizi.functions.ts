@@ -320,7 +320,7 @@ export const getClient = createServerFn({ method: "GET" })
 
     const savingsBalance = (savings ?? []).reduce((s, a) => s + Number(a.balance ?? 0), 0);
     const fdBalance = (fds ?? [])
-      .filter((f) => f.status === "active" || f.status === "approved")
+      .filter((f) => f.status === "active")
       .reduce((s, f) => s + Number(f.principal ?? 0), 0);
 
     // Documents from storage bucket
@@ -354,7 +354,7 @@ export const getClient = createServerFn({ method: "GET" })
         fdBalance,
         activeLoans,
         activeSavings: (savings ?? []).filter((s) => s.status === "active").length,
-        activeFds: (fds ?? []).filter((f) => f.status === "active" || f.status === "approved").length,
+        activeFds: (fds ?? []).filter((f) => f.status === "active").length,
         onTimeRate: schedule.length
           ? Math.round((schedule.filter((s) => s.state === "paid").length / schedule.length) * 100)
           : 100,
