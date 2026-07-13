@@ -425,6 +425,20 @@ function ProductModal({
             </FormField>
           </FormGrid>
 
+          <div>
+            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">
+              GL account mapping
+            </div>
+            <FormGrid>
+              <FormField label="Capital account" span={6}>{glSelect("capital_account_id")}</FormField>
+              <FormField label="Interest payable account" span={6}>{glSelect("interest_payable_account_id")}</FormField>
+              <FormField label="Interest expense account" span={6}>{glSelect("interest_expense_account_id")}</FormField>
+              <FormField label="WHT payable account" span={6}>{glSelect("wht_payable_account_id")}</FormField>
+              <FormField label="Introducer commission account" span={6}>{glSelect("introducer_commission_account_id")}</FormField>
+              <FormField label="Marketing incentive account" span={6}>{glSelect("marketing_incentive_account_id")}</FormField>
+            </FormGrid>
+          </div>
+
           {productId && (
             <div>
               <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">Rate tiers</div>
