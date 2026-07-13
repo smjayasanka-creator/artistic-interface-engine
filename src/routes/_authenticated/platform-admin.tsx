@@ -18,12 +18,13 @@ import {
   upsertCompanySubscription,
 } from "@/lib/platform-admin.functions";
 import { HardeningChecklist } from "@/components/mzizi/HardeningChecklist";
+import { ArchitectureExplorer } from "@/components/mzizi/ArchitectureExplorer";
 
 export const Route = createFileRoute("/_authenticated/platform-admin")({
   component: PlatformAdmin,
 });
 
-type Tab = "overview" | "companies" | "plans" | "hardening";
+type Tab = "overview" | "companies" | "plans" | "hardening" | "architecture";
 
 const STATUS_TONE: Record<string, string> = {
   trialing: "bg-sky-500/10 text-sky-700 border-sky-500/30",
@@ -75,6 +76,7 @@ function PlatformAdmin() {
             ["companies", "Companies"],
             ["plans", "Plans"],
             ["hardening", "Hardening"],
+            ["architecture", "Architecture"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -94,6 +96,7 @@ function PlatformAdmin() {
       {tab === "companies" && <CompaniesTab />}
       {tab === "plans" && <PlansTab />}
       {tab === "hardening" && <HardeningChecklist />}
+      {tab === "architecture" && <ArchitectureExplorer />}
     </div>
   );
 }
