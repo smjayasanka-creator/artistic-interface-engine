@@ -2982,6 +2982,10 @@ export type Database = {
         }
         Returns: string
       }
+      set_cron_job_active: {
+        Args: { _active: boolean; _jobid: number }
+        Returns: undefined
+      }
     }
     Enums: {
       account_type: "asset" | "liability" | "equity" | "income" | "expense"
