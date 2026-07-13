@@ -17,6 +17,7 @@ import {
   ArrowUpRight,
   Copy,
   Download,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getClient } from "@/lib/mzizi.functions";
