@@ -35,26 +35,12 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-domain-events")
         let delivered = 0;
         let failed = 0;
 
+        const envWebhook = process.env.DOMAIN_EVENT_WEBHOOK_URL;
+
         for (const ev of claimed) {
           try {
-            // Look up an active webhook endpoint for this company (optional).
-            let webhookUrl: string | null = null;
-            if (ev.company_id) {
-              const { data: hook } = await supabaseAdmin
-                .from("api_key")
-                .select("metadata")
-                .eq("company_id", ev.company_id)
-                .eq("channel", "webhooks")
-                .eq("is_active", true)
-                .limit(1)
-                .maybeSingle();
-              const meta = (hook?.metadata ?? null) as Record<string, unknown> | null;
-              const url = meta && typeof meta["webhook_url"] === "string" ? (meta["webhook_url"] as string) : null;
-              if (url && /^https?:\/\//i.test(url)) webhookUrl = url;
-            }
-
-            if (webhookUrl) {
-              const res = await fetch(webhookUrl, {
+            if (envWebhook && /^https?:\/\//i.test(envWebhook)) {
+              const res = await fetch(envWebhook, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -79,9 +65,9 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-domain-events")
                 throw new Error(`webhook ${res.status}: ${(await res.text()).slice(0, 500)}`);
               }
             } else {
-              // No subscriber — safe to mark dispatched (event stays in ledger).
+              // No subscriber configured — event stays in ledger as source of truth.
               console.log(
-                `[domain-event] no subscriber for company=${ev.company_id} ev=${ev.domain}.${ev.event_type} id=${ev.id}`,
+                `[domain-event] no subscriber; marking dispatched company=${ev.company_id} ev=${ev.domain}.${ev.event_type} id=${ev.id}`,
               );
             }
 
