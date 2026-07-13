@@ -441,11 +441,21 @@ function PlansTab() {
 }
 
 function JobsTab() {
+  const qc = useQueryClient();
   const fn = useServerFn(listCronJobs);
+  const toggleFn = useServerFn(setCronJobActive);
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["cron-jobs"],
     queryFn: () => fn(),
     refetchInterval: 30_000,
+  });
+  const toggle = useMutation({
+    mutationFn: (v: { jobid: number; active: boolean }) => toggleFn({ data: v }),
+    onSuccess: (_r, v) => {
+      toast.success(v.active ? "Job resumed" : "Job paused");
+      qc.invalidateQueries({ queryKey: ["cron-jobs"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to update job"),
   });
   const rows = data ?? [];
   return (
@@ -462,7 +472,7 @@ function JobsTab() {
       <Card padded={false}>
         <div
           className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-b border-border bg-secondary/40"
-          style={{ gridTemplateColumns: "1.6fr 0.8fr 0.6fr 1.2fr 0.8fr 1.6fr" }}
+          style={{ gridTemplateColumns: "1.4fr 0.8fr 0.6fr 1.2fr 0.8fr 1.4fr 0.8fr" }}
         >
           <div>Job</div>
           <div>Schedule</div>
@@ -470,6 +480,7 @@ function JobsTab() {
           <div>Last run</div>
           <div>Status</div>
           <div>Message</div>
+          <div className="text-right">Actions</div>
         </div>
         {isLoading && <div className="text-center text-faint text-sm py-8">Loading…</div>}
         {!isLoading && rows.length === 0 && (
@@ -482,7 +493,7 @@ function JobsTab() {
             <div
               key={j.jobid}
               className="grid items-start text-[12.5px] py-2.5 px-5 border-b border-row-divider"
-              style={{ gridTemplateColumns: "1.6fr 0.8fr 0.6fr 1.2fr 0.8fr 1.6fr" }}
+              style={{ gridTemplateColumns: "1.4fr 0.8fr 0.6fr 1.2fr 0.8fr 1.4fr 0.8fr" }}
             >
               <div className="font-medium truncate" title={j.jobname}>{j.jobname}</div>
               <div className="font-mono text-faint">{j.schedule}</div>
@@ -509,6 +520,15 @@ function JobsTab() {
               </div>
               <div className="font-mono text-[11.5px] text-faint truncate" title={j.last_return_message ?? ""}>
                 {j.last_return_message ?? "—"}
+              </div>
+              <div className="text-right">
+                <button
+                  className={btnSecondaryCls}
+                  disabled={toggle.isPending}
+                  onClick={() => toggle.mutate({ jobid: j.jobid, active: !j.active })}
+                >
+                  {j.active ? "Pause" : "Resume"}
+                </button>
               </div>
             </div>
           );
