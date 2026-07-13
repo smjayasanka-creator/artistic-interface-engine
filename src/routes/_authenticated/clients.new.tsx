@@ -86,6 +86,14 @@ function NewClientPage() {
   const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
 
+  const [isIntroducer, setIsIntroducer] = useState(false);
+  const [commissionPct, setCommissionPct] = useState<number | "">("");
+  const [commissionAmount, setCommissionAmount] = useState<number | "">("");
+
+  type BankAcct = { bank_name: string; branch_name: string; account_no: string; account_name: string; swift_code: string; is_primary: boolean };
+  const [banks, setBanks] = useState<BankAcct[]>([]);
+
+
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
