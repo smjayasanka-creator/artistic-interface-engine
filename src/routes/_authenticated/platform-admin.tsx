@@ -16,6 +16,7 @@ import {
   getPlatformOverview,
   listSubscriptionPlans,
   upsertCompanySubscription,
+  listCronJobs,
 } from "@/lib/platform-admin.functions";
 import { HardeningChecklist } from "@/components/mzizi/HardeningChecklist";
 import { ArchitectureExplorer } from "@/components/mzizi/ArchitectureExplorer";
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/platform-admin")({
   component: PlatformAdmin,
 });
 
-type Tab = "overview" | "companies" | "plans" | "hardening" | "architecture";
+type Tab = "overview" | "companies" | "plans" | "jobs" | "hardening" | "architecture";
 
 const STATUS_TONE: Record<string, string> = {
   trialing: "bg-sky-500/10 text-sky-700 border-sky-500/30",
@@ -76,6 +77,7 @@ function PlatformAdmin() {
             ["overview", "Overview"],
             ["companies", "Companies"],
             ["plans", "Plans"],
+            ["jobs", "Jobs"],
             ["hardening", "Hardening"],
             ["architecture", "Architecture"],
           ] as const
@@ -96,6 +98,7 @@ function PlatformAdmin() {
       {tab === "overview" && <OverviewTab />}
       {tab === "companies" && <CompaniesTab />}
       {tab === "plans" && <PlansTab />}
+      {tab === "jobs" && <JobsTab />}
       {tab === "hardening" && <HardeningChecklist />}
       {tab === "architecture" && <ArchitectureView />}
     </div>
@@ -432,6 +435,84 @@ function PlansTab() {
           </div>
         </Card>
       ))}
+    </div>
+  );
+}
+
+function JobsTab() {
+  const fn = useServerFn(listCronJobs);
+  const { data, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ["cron-jobs"],
+    queryFn: () => fn(),
+    refetchInterval: 30_000,
+  });
+  const rows = data ?? [];
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-[13px] font-semibold">Scheduled background jobs</div>
+          <div className="text-[12px] text-muted-foreground">Live status of every pg_cron job — most recent run per job.</div>
+        </div>
+        <button onClick={() => refetch()} className={btnSecondaryCls} disabled={isFetching}>
+          {isFetching ? "Refreshing…" : "Refresh"}
+        </button>
+      </div>
+      <Card padded={false}>
+        <div
+          className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-b border-border bg-secondary/40"
+          style={{ gridTemplateColumns: "1.6fr 0.8fr 0.6fr 1.2fr 0.8fr 1.6fr" }}
+        >
+          <div>Job</div>
+          <div>Schedule</div>
+          <div>Active</div>
+          <div>Last run</div>
+          <div>Status</div>
+          <div>Message</div>
+        </div>
+        {isLoading && <div className="text-center text-faint text-sm py-8">Loading…</div>}
+        {!isLoading && rows.length === 0 && (
+          <div className="text-center text-faint text-sm py-8">No scheduled jobs yet.</div>
+        )}
+        {rows.map((j) => {
+          const ok = (j.last_status ?? "").toLowerCase() === "succeeded";
+          const failed = (j.last_status ?? "").toLowerCase() === "failed";
+          return (
+            <div
+              key={j.jobid}
+              className="grid items-start text-[12.5px] py-2.5 px-5 border-b border-row-divider"
+              style={{ gridTemplateColumns: "1.6fr 0.8fr 0.6fr 1.2fr 0.8fr 1.6fr" }}
+            >
+              <div className="font-medium truncate" title={j.jobname}>{j.jobname}</div>
+              <div className="font-mono text-faint">{j.schedule}</div>
+              <div>
+                <Badge className={j.active ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" : "bg-muted text-muted-foreground border-border"}>
+                  {j.active ? "yes" : "paused"}
+                </Badge>
+              </div>
+              <div className="font-mono text-faint">
+                {j.last_start ? new Date(j.last_start).toLocaleString() : "—"}
+              </div>
+              <div>
+                {j.last_status ? (
+                  <Badge className={cn(
+                    ok && "bg-emerald-500/10 text-emerald-700 border-emerald-500/30",
+                    failed && "bg-rose-500/10 text-rose-700 border-rose-500/30",
+                    !ok && !failed && "bg-amber-500/10 text-amber-700 border-amber-500/30",
+                  )}>
+                    {j.last_status}
+                  </Badge>
+                ) : (
+                  <span className="text-faint">—</span>
+                )}
+              </div>
+              <div className="font-mono text-[11.5px] text-faint truncate" title={j.last_return_message ?? ""}>
+                {j.last_return_message ?? "—"}
+              </div>
+            </div>
+          );
+        })}
+      </Card>
     </div>
   );
 }
