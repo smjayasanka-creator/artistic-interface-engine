@@ -129,6 +129,13 @@ function Client360() {
             </div>
           </div>
           <div className="flex gap-2 shrink-0 sm:pt-1 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setTab("profile")}
+              className="border border-border-strong px-3.5 py-2 rounded-full text-[12.5px] font-medium hover:border-input inline-flex items-center gap-1"
+            >
+              <Pencil size={12} /> Edit details
+            </button>
             <Link to="/collections/new" search={{ loanId: active?.id }} className="border border-border-strong px-3.5 py-2 rounded-full text-[12.5px] font-medium hover:border-input">
               Record repayment
             </Link>
