@@ -14,6 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
+      alco_rate_proposal: {
+        Row: {
+          applied_at: string | null
+          applied_by: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+          workflow_instance_id: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_by?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          workflow_instance_id?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          applied_by?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          workflow_instance_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alco_rate_proposal_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alco_rate_proposal_workflow_instance_id_fkey"
+            columns: ["workflow_instance_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_instance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alco_rate_proposal_item: {
+        Row: {
+          created_at: string
+          id: string
+          new_cbsl_max_rate: number | null
+          new_maximum_rate: number | null
+          new_standard_rate: number | null
+          old_cbsl_max_rate: number | null
+          old_maximum_rate: number | null
+          old_standard_rate: number | null
+          product_id: string
+          proposal_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          new_cbsl_max_rate?: number | null
+          new_maximum_rate?: number | null
+          new_standard_rate?: number | null
+          old_cbsl_max_rate?: number | null
+          old_maximum_rate?: number | null
+          old_standard_rate?: number | null
+          product_id: string
+          proposal_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          new_cbsl_max_rate?: number | null
+          new_maximum_rate?: number | null
+          new_standard_rate?: number | null
+          old_cbsl_max_rate?: number | null
+          old_maximum_rate?: number | null
+          old_standard_rate?: number | null
+          product_id?: string
+          proposal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alco_rate_proposal_item_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "fd_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alco_rate_proposal_item_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "alco_rate_proposal"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_key: {
         Row: {
           company_id: string
@@ -745,6 +853,7 @@ export type Database = {
           allow_monthly: boolean
           auto_renewal_default: Database["public"]["Enums"]["fd_maturity_instruction"]
           capital_account_id: string | null
+          cbsl_max_rate: number | null
           code: string
           company_id: string
           created_at: string
@@ -754,10 +863,12 @@ export type Database = {
           introducer_commission_account_id: string | null
           marketing_incentive_account_id: string | null
           max_amount: number | null
+          maximum_rate: number | null
           min_amount: number
           name: string
           penalty_type: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value: number
+          standard_rate: number | null
           updated_at: string
           wht_payable_account_id: string | null
           wht_rate: number
@@ -768,6 +879,7 @@ export type Database = {
           allow_monthly?: boolean
           auto_renewal_default?: Database["public"]["Enums"]["fd_maturity_instruction"]
           capital_account_id?: string | null
+          cbsl_max_rate?: number | null
           code: string
           company_id: string
           created_at?: string
@@ -777,10 +889,12 @@ export type Database = {
           introducer_commission_account_id?: string | null
           marketing_incentive_account_id?: string | null
           max_amount?: number | null
+          maximum_rate?: number | null
           min_amount?: number
           name: string
           penalty_type?: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value?: number
+          standard_rate?: number | null
           updated_at?: string
           wht_payable_account_id?: string | null
           wht_rate?: number
@@ -791,6 +905,7 @@ export type Database = {
           allow_monthly?: boolean
           auto_renewal_default?: Database["public"]["Enums"]["fd_maturity_instruction"]
           capital_account_id?: string | null
+          cbsl_max_rate?: number | null
           code?: string
           company_id?: string
           created_at?: string
@@ -800,10 +915,12 @@ export type Database = {
           introducer_commission_account_id?: string | null
           marketing_incentive_account_id?: string | null
           max_amount?: number | null
+          maximum_rate?: number | null
           min_amount?: number
           name?: string
           penalty_type?: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value?: number
+          standard_rate?: number | null
           updated_at?: string
           wht_payable_account_id?: string | null
           wht_rate?: number

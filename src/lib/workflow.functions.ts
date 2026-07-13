@@ -19,6 +19,7 @@ export const CANONICAL_TX_TYPES: { code: string; label: string }[] = [
   { code: "fd_maturity", label: "FD maturity payout" },
   { code: "journal_entry", label: "Journal entry" },
   { code: "payment", label: "Payment" },
+  { code: "alco_rate_change", label: "ALCO deposit rate change" },
 ];
 
 const stepSchema = z.object({

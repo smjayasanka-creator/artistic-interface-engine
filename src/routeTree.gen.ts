@@ -22,6 +22,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCollectionsRouteImport } from './routes/_authenticated/collections'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedApiRouteImport } from './routes/_authenticated/api'
+import { Route as AuthenticatedAlcoRatesRouteImport } from './routes/_authenticated/alco-rates'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedTransactionsIndexRouteImport } from './routes/_authenticated/transactions.index'
 import { Route as AuthenticatedSavingsIndexRouteImport } from './routes/_authenticated/savings.index'
@@ -136,6 +137,11 @@ const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
 const AuthenticatedApiRoute = AuthenticatedApiRouteImport.update({
   id: '/api',
   path: '/api',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAlcoRatesRoute = AuthenticatedAlcoRatesRouteImport.update({
+  id: '/alco-rates',
+  path: '/alco-rates',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -417,6 +423,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/alco-rates': typeof AuthenticatedAlcoRatesRoute
   '/api': typeof AuthenticatedApiRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/collections': typeof AuthenticatedCollectionsRouteWithChildren
@@ -479,6 +486,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/alco-rates': typeof AuthenticatedAlcoRatesRoute
   '/api': typeof AuthenticatedApiRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/collections': typeof AuthenticatedCollectionsRouteWithChildren
@@ -539,6 +547,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/alco-rates': typeof AuthenticatedAlcoRatesRoute
   '/_authenticated/api': typeof AuthenticatedApiRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/collections': typeof AuthenticatedCollectionsRouteWithChildren
@@ -603,6 +612,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/alco-rates'
     | '/api'
     | '/approvals'
     | '/collections'
@@ -665,6 +675,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/alco-rates'
     | '/api'
     | '/approvals'
     | '/collections'
@@ -724,6 +735,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/_authenticated/alco-rates'
     | '/_authenticated/api'
     | '/_authenticated/approvals'
     | '/_authenticated/collections'
@@ -887,6 +899,13 @@ declare module '@tanstack/react-router' {
       path: '/api'
       fullPath: '/api'
       preLoaderRoute: typeof AuthenticatedApiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/alco-rates': {
+      id: '/_authenticated/alco-rates'
+      path: '/alco-rates'
+      fullPath: '/alco-rates'
+      preLoaderRoute: typeof AuthenticatedAlcoRatesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -1337,6 +1356,7 @@ const AuthenticatedAccountsPaymentsRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAlcoRatesRoute: typeof AuthenticatedAlcoRatesRoute
   AuthenticatedApiRoute: typeof AuthenticatedApiRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRouteWithChildren
@@ -1372,6 +1392,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAlcoRatesRoute: AuthenticatedAlcoRatesRoute,
   AuthenticatedApiRoute: AuthenticatedApiRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedCollectionsRoute: AuthenticatedCollectionsRouteWithChildren,
