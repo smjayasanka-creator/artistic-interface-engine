@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { StatusBadge } from "@/components/mzizi/Badge";
+import { ClientSearchBar } from "@/components/mzizi/ClientSearchBar";
 import { money, shortDate, relTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
