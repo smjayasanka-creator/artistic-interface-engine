@@ -257,47 +257,6 @@ function NewFd() {
               </span>
             )}
           </FormField>
-          <FormField label="Interest payout" required span={4}>
-            <select
-              className={selectCls}
-              value={payoutOption}
-              onChange={(e) => setPayoutOption(e.target.value as "monthly" | "at_maturity")}
-            >
-              {product?.allow_monthly && <option value="monthly">Monthly</option>}
-              {product?.allow_at_maturity && <option value="at_maturity">At maturity</option>}
-              {!product && (
-                <>
-                  <option value="at_maturity">At maturity</option>
-                  <option value="monthly">Monthly</option>
-                </>
-              )}
-            </select>
-          </FormField>
-          <FormField label="Maturity instruction" required span={4}>
-            <select
-              className={selectCls}
-              value={maturityInstr}
-              onChange={(e) => setMaturityInstr(e.target.value as typeof maturityInstr)}
-            >
-              <option value="payout">Pay out</option>
-              <option value="renew_principal">Renew principal only</option>
-              <option value="renew_principal_interest">Renew principal + interest</option>
-            </select>
-          </FormField>
-
-          <FormField label="Certificate dispatch" required span={4}>
-            <select className={selectCls} value={dispatchOption} onChange={(e) => setDispatchOption(e.target.value as typeof dispatchOption)}>
-              <option value="branch">Collect from branch</option>
-              <option value="post">Post</option>
-              <option value="digital">Digital certificate</option>
-            </select>
-          </FormField>
-          <FormField label="Interest payment mode" required span={4}>
-            <select className={selectCls} value={interestMode} onChange={(e) => setInterestMode(e.target.value as typeof interestMode)}>
-              <option value="credit_savings">Credit to SDF account</option>
-              <option value="bank_transfer">Bank transfer</option>
-            </select>
-          </FormField>
           <FormField label="Marketing officer" span={4}>
             <select className={selectCls} value={marketingOfficer} onChange={(e) => setMarketingOfficer(e.target.value)}>
               <option value="">— none —</option>
@@ -308,42 +267,6 @@ function NewFd() {
               ))}
             </select>
           </FormField>
-
-          {needBankAccount && (
-            <FormField label={maturityInstr === "payout" ? "Pay-out bank account" : "Bank account (interest transfer)"} required span={6}>
-              <select className={selectCls} value={payoutBankAcct} onChange={(e) => setPayoutBankAcct(e.target.value)} disabled={!clientId}>
-                <option value="">{clientId ? "Select bank account…" : "Select customer first"}</option>
-                {(clientBanks ?? []).map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.bank_name} · {b.account_no} · {b.account_name}
-                    {b.is_primary ? " (primary)" : ""}
-                  </option>
-                ))}
-              </select>
-              {clientId && (clientBanks?.length ?? 0) === 0 && (
-                <span className="text-[11px] text-destructive mt-1">
-                  No bank accounts on file — add one on the customer profile.
-                </span>
-              )}
-            </FormField>
-          )}
-          {needSavingsAccount && (
-            <FormField label="SDF savings account" required span={6}>
-              <select className={selectCls} value={interestSavingsAcct} onChange={(e) => setInterestSavingsAcct(e.target.value)} disabled={!clientId}>
-                <option value="">{clientId ? "Select savings account…" : "Select customer first"}</option>
-                {(clientSavings ?? []).map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.account_no} · {(s.product as { name?: string } | null)?.name ?? "Savings"}
-                  </option>
-                ))}
-              </select>
-              {clientId && (clientSavings?.length ?? 0) === 0 && (
-                <span className="text-[11px] text-destructive mt-1">
-                  No active savings accounts — open one first.
-                </span>
-              )}
-            </FormField>
-          )}
 
           <FormField label="Settlement GL account" span={12}>
             <select className={selectCls} value={settlement} onChange={(e) => setSettlement(e.target.value)}>
@@ -356,6 +279,113 @@ function NewFd() {
             </select>
           </FormField>
         </FormGrid>
+
+        {/* Maturity instruction */}
+        <div className="mt-6 border-t border-border pt-4">
+          <div className="text-[13px] font-semibold mb-2">Maturity instruction</div>
+          <FormGrid>
+            <FormField label="On maturity" required span={6}>
+              <select
+                className={selectCls}
+                value={maturityInstr}
+                onChange={(e) => setMaturityInstr(e.target.value as typeof maturityInstr)}
+              >
+                <option value="payout">Pay out</option>
+                <option value="renew_principal">Renew principal only</option>
+                <option value="renew_principal_interest">Renew principal + interest</option>
+              </select>
+            </FormField>
+            <FormField label="Certificate dispatch" required span={6}>
+              <select className={selectCls} value={dispatchOption} onChange={(e) => setDispatchOption(e.target.value as typeof dispatchOption)}>
+                <option value="branch">Collect from branch</option>
+                <option value="post">Post</option>
+                <option value="digital">Digital certificate</option>
+              </select>
+            </FormField>
+            {maturityInstr === "payout" && (
+              <FormField label="Pay-out bank account" required span={12}>
+                <select className={selectCls} value={payoutBankAcct} onChange={(e) => setPayoutBankAcct(e.target.value)} disabled={!clientId}>
+                  <option value="">{clientId ? "Select bank account…" : "Select customer first"}</option>
+                  {(clientBanks ?? []).map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.bank_name} · {b.account_no} · {b.account_name}
+                      {b.is_primary ? " (primary)" : ""}
+                    </option>
+                  ))}
+                </select>
+                {clientId && (clientBanks?.length ?? 0) === 0 && (
+                  <span className="text-[11px] text-destructive mt-1">
+                    No bank accounts on file — add one on the customer profile.
+                  </span>
+                )}
+              </FormField>
+            )}
+          </FormGrid>
+        </div>
+
+        {/* Interest payout */}
+        <div className="mt-6 border-t border-border pt-4">
+          <div className="text-[13px] font-semibold mb-2">Interest payout</div>
+          <FormGrid>
+            <FormField label="Frequency" required span={6}>
+              <select
+                className={selectCls}
+                value={payoutOption}
+                onChange={(e) => setPayoutOption(e.target.value as "monthly" | "at_maturity")}
+              >
+                {product?.allow_monthly && <option value="monthly">Monthly</option>}
+                {product?.allow_at_maturity && <option value="at_maturity">At maturity</option>}
+                {!product && (
+                  <>
+                    <option value="at_maturity">At maturity</option>
+                    <option value="monthly">Monthly</option>
+                  </>
+                )}
+              </select>
+            </FormField>
+            <FormField label="Payment mode" required span={6}>
+              <select className={selectCls} value={interestMode} onChange={(e) => setInterestMode(e.target.value as typeof interestMode)}>
+                <option value="credit_savings">Credit to SDF account</option>
+                <option value="bank_transfer">Bank transfer</option>
+              </select>
+            </FormField>
+            {interestMode === "bank_transfer" && (
+              <FormField label="Bank account (interest transfer)" required span={12}>
+                <select className={selectCls} value={payoutBankAcct} onChange={(e) => setPayoutBankAcct(e.target.value)} disabled={!clientId}>
+                  <option value="">{clientId ? "Select bank account…" : "Select customer first"}</option>
+                  {(clientBanks ?? []).map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.bank_name} · {b.account_no} · {b.account_name}
+                      {b.is_primary ? " (primary)" : ""}
+                    </option>
+                  ))}
+                </select>
+                {clientId && (clientBanks?.length ?? 0) === 0 && (
+                  <span className="text-[11px] text-destructive mt-1">
+                    No bank accounts on file — add one on the customer profile.
+                  </span>
+                )}
+              </FormField>
+            )}
+            {interestMode === "credit_savings" && (
+              <FormField label="SDF savings account" required span={12}>
+                <select className={selectCls} value={interestSavingsAcct} onChange={(e) => setInterestSavingsAcct(e.target.value)} disabled={!clientId}>
+                  <option value="">{clientId ? "Select savings account…" : "Select customer first"}</option>
+                  {(clientSavings ?? []).map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.account_no} · {(s.product as { name?: string } | null)?.name ?? "Savings"}
+                    </option>
+                  ))}
+                </select>
+                {clientId && (clientSavings?.length ?? 0) === 0 && (
+                  <span className="text-[11px] text-destructive mt-1">
+                    No active savings accounts — open one first.
+                  </span>
+                )}
+              </FormField>
+            )}
+          </FormGrid>
+        </div>
 
         {/* Introducer */}
         <div className="mt-6 border-t border-border pt-4">
