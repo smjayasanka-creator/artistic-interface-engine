@@ -699,6 +699,71 @@ export type Database = {
           },
         ]
       }
+      domain_event: {
+        Row: {
+          actor_user_id: string | null
+          aggregate_id: string
+          aggregate_type: string
+          attempt_count: number
+          company_id: string | null
+          created_at: string
+          dispatched_at: string | null
+          domain: string
+          event_type: string
+          id: string
+          idempotency_key: string | null
+          last_error: string | null
+          metadata: Json
+          occurred_at: string
+          payload: Json
+          status: Database["public"]["Enums"]["domain_event_status"]
+        }
+        Insert: {
+          actor_user_id?: string | null
+          aggregate_id: string
+          aggregate_type: string
+          attempt_count?: number
+          company_id?: string | null
+          created_at?: string
+          dispatched_at?: string | null
+          domain: string
+          event_type: string
+          id?: string
+          idempotency_key?: string | null
+          last_error?: string | null
+          metadata?: Json
+          occurred_at?: string
+          payload?: Json
+          status?: Database["public"]["Enums"]["domain_event_status"]
+        }
+        Update: {
+          actor_user_id?: string | null
+          aggregate_id?: string
+          aggregate_type?: string
+          attempt_count?: number
+          company_id?: string | null
+          created_at?: string
+          dispatched_at?: string | null
+          domain?: string
+          event_type?: string
+          id?: string
+          idempotency_key?: string | null
+          last_error?: string | null
+          metadata?: Json
+          occurred_at?: string
+          payload?: Json
+          status?: Database["public"]["Enums"]["domain_event_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_event_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fd_accrual: {
         Row: {
           accrual_date: string
@@ -2633,6 +2698,19 @@ export type Database = {
       current_company_id: { Args: never; Returns: string }
       current_staff_branch: { Args: never; Returns: string }
       current_staff_id: { Args: never; Returns: string }
+      emit_domain_event: {
+        Args: {
+          _aggregate_id: string
+          _aggregate_type: string
+          _company_id: string
+          _domain: string
+          _event_type: string
+          _idempotency_key?: string
+          _metadata?: Json
+          _payload?: Json
+        }
+        Returns: string
+      }
       hardening_autocheck: { Args: never; Returns: Json }
       has_role: {
         Args: {
@@ -2659,6 +2737,7 @@ export type Database = {
         | "dormant"
         | "blacklisted"
         | "exited"
+      domain_event_status: "pending" | "dispatched" | "failed" | "skipped"
       fd_dispatch_option: "post" | "branch" | "digital"
       fd_interest_payment_mode: "bank_transfer" | "credit_savings"
       fd_maturity_instruction:
@@ -2874,6 +2953,7 @@ export const Constants = {
         "blacklisted",
         "exited",
       ],
+      domain_event_status: ["pending", "dispatched", "failed", "skipped"],
       fd_dispatch_option: ["post", "branch", "digital"],
       fd_interest_payment_mode: ["bank_transfer", "credit_savings"],
       fd_maturity_instruction: [
