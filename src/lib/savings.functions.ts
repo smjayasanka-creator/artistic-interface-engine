@@ -257,7 +257,7 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
 
     const { data: acct, error } = await (supabase as any)
       .from("savings_account")
-      .select("id, balance, available_balance, status, product:product_id(min_balance)")
+      .select("id, account_no, branch_id, balance, available_balance, status, product:product_id(min_balance, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)")
       .eq("id", data.account_id)
       .single();
     if (error) throw new Error(error.message);
@@ -296,8 +296,54 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
       .from("savings_account")
       .update({ balance: newBal, available_balance: newBal, last_txn_at: new Date().toISOString() })
       .eq("id", data.account_id);
+
+    // Ledger posting via kernel
+    const gl = await resolveSavingsAccounts(supabase, acct.product);
+    const amt = Math.abs(data.amount);
+    const today = new Date().toISOString().slice(0, 10);
+    let lines: Array<{ account_id: string; debit: number; credit: number }> | null = null;
+    let refPrefix = "";
+    if (data.txn_type === "deposit" && gl.cash && gl.liab) {
+      refPrefix = "SAV-DEP";
+      lines = [
+        { account_id: gl.cash, debit: amt, credit: 0 },
+        { account_id: gl.liab, debit: 0, credit: amt },
+      ];
+    } else if (data.txn_type === "withdrawal" && gl.cash && gl.liab) {
+      refPrefix = "SAV-WD";
+      lines = [
+        { account_id: gl.liab, debit: amt, credit: 0 },
+        { account_id: gl.cash, debit: 0, credit: amt },
+      ];
+    } else if (data.txn_type === "fee" && gl.liab && gl.fee) {
+      refPrefix = "SAV-FEE";
+      lines = [
+        { account_id: gl.liab, debit: amt, credit: 0 },
+        { account_id: gl.fee, debit: 0, credit: amt },
+      ];
+    } else if (data.txn_type === "interest" && gl.liab && gl.intr) {
+      refPrefix = "SAV-INT";
+      lines = [
+        { account_id: gl.intr, debit: amt, credit: 0 },
+        { account_id: gl.liab, debit: 0, credit: amt },
+      ];
+    }
+    if (lines) {
+      const idem = data.idempotency_key ?? `savings:${data.txn_type}:${txn.id}`;
+      await supabase.rpc("post_entry", {
+        _entry_date: today,
+        _reference: `${refPrefix}-${acct.account_no}`,
+        _description: data.narration ?? `${data.txn_type} · ${acct.account_no}`,
+        _lines: lines as any,
+        _branch_id: acct.branch_id,
+        _source_module: "savings",
+        _source_ref: txn.id,
+        _idempotency_key: `savings:txn:${idem}`,
+      });
+    }
     return txn;
   });
+
 
 export const closeSavingsAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
