@@ -11,6 +11,7 @@
 // Renewals reuse the same product/tenure at today's published rate tier.
 
 import { createFileRoute } from "@tanstack/react-router";
+import { buildSchedule } from "@/lib/fd-schedule";
 
 export const Route = createFileRoute("/api/public/hooks/fd-mature")({
   server: {
