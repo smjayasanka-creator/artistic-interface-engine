@@ -990,14 +990,14 @@ export const runFdInterestPayouts = createServerFn({ method: "POST" })
     const today = serverToday();
     const { data: due } = await supabase
       .from("fd_interest_schedule")
-      .select("id,deposit_id,net_interest,due_date")
+      .select("id,deposit_id,gross_interest,wht_amount,net_interest,due_date")
       .eq("paid", false)
       .lte("due_date", today);
     let paid = 0;
     for (const row of due ?? []) {
       const { data: fd } = await supabase
         .from("fixed_deposit")
-        .select("status,certificate_no,payout_option")
+        .select("id,status,certificate_no,payout_option,branch_id,product_id")
         .eq("id", row.deposit_id)
         .maybeSingle();
       if (!fd || fd.status !== "active" || fd.payout_option !== "monthly") continue;
@@ -1010,7 +1010,36 @@ export const runFdInterestPayouts = createServerFn({ method: "POST" })
         reference: `${fd.certificate_no} interest`,
         created_by: userId,
       });
+
+      // Ledger posting via kernel — DR Interest Expense / CR Cash (net) + CR WHT Liability
+      const { data: fdProdI } = await supabase
+        .from("fd_product")
+        .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+        .eq("id", fd.product_id)
+        .maybeSingle();
+      const gli = await resolveFdAccounts(supabase, fdProdI);
+      const gross = Number(row.gross_interest);
+      const wht = Number(row.wht_amount ?? 0);
+      const net = Number(row.net_interest);
+      if (gli.cash && gli.intr && gross > 0) {
+        await supabase.rpc("post_entry", {
+          _entry_date: today,
+          _reference: `FD-INT-${fd.certificate_no}-${row.id.slice(0, 8)}`,
+          _description: `FD interest payout · ${fd.certificate_no}`,
+          _lines: [
+            { account_id: gli.intr, debit: gross, credit: 0 },
+            { account_id: gli.cash, debit: 0, credit: net },
+            ...(wht > 0 && gli.wht ? [{ account_id: gli.wht, debit: 0, credit: wht }] : []),
+          ] as any,
+          _branch_id: fd.branch_id,
+          _source_module: "fd",
+          _source_ref: fd.id,
+          _idempotency_key: `fd:interest:${row.id}`,
+        });
+      }
+
       paid++;
     }
     return { paid };
+
   });
