@@ -64,6 +64,12 @@ const EMPTY = {
   wht_rate: 5,
   auto_renewal_default: "payout" as MaturityInstr,
   active: true,
+  capital_account_id: null as string | null,
+  interest_payable_account_id: null as string | null,
+  interest_expense_account_id: null as string | null,
+  wht_payable_account_id: null as string | null,
+  introducer_commission_account_id: null as string | null,
+  marketing_incentive_account_id: null as string | null,
 };
 
 const GRID_COLS = "0.5fr 1.4fr 0.95fr 0.75fr 0.45fr 0.85fr 0.55fr 0.4fr";
