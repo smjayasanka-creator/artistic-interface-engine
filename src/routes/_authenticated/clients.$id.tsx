@@ -21,7 +21,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getClient } from "@/lib/mzizi.functions";
+import { getClient, updateClient } from "@/lib/mzizi.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
