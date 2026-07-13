@@ -97,7 +97,7 @@ function PlatformAdmin() {
       {tab === "companies" && <CompaniesTab />}
       {tab === "plans" && <PlansTab />}
       {tab === "hardening" && <HardeningChecklist />}
-      {tab === "architecture" && <ArchitectureExplorer />}
+      {tab === "architecture" && <ArchitectureView />}
     </div>
   );
 }
