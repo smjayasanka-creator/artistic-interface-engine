@@ -39,8 +39,15 @@ export const Route = createFileRoute("/api/public/v1/ceft/transfer")({
           session_id: parsed.data.session_id,
           cleared_at: null,
         };
+        const dir = parsed.data.transaction_type === "credit" ? "outbound" : "inbound";
+        await postApiChannelEntry({
+          company_id: auth.key.company_id, direction: dir,
+          amount: parsed.data.amount, reference,
+          description: `CEFT ${parsed.data.transaction_type} · session ${parsed.data.session_id}`,
+          source_module: "ceft", idempotency_key: idem ?? reference,
+        });
         await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL,
-          direction: parsed.data.transaction_type === "credit" ? "outbound" : "inbound",
+          direction: dir,
           endpoint: ENDPOINT, method: "POST", reference, status_code: 202,
           request: withIdempotencyEnvelope(parsed.data, idem), response });
         return validateAndSend(CeftResponse, response, 202);
