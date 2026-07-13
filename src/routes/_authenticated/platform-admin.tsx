@@ -98,6 +98,7 @@ function PlatformAdmin() {
       {tab === "overview" && <OverviewTab />}
       {tab === "companies" && <CompaniesTab />}
       {tab === "plans" && <PlansTab />}
+      {tab === "jobs" && <JobsTab />}
       {tab === "hardening" && <HardeningChecklist />}
       {tab === "architecture" && <ArchitectureView />}
     </div>
