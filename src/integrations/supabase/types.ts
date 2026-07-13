@@ -2175,13 +2175,17 @@ export type Database = {
       savings_product: {
         Row: {
           active: boolean
+          cash_account_id: string | null
           closure_fee: number
           code: string
           company_id: string
           created_at: string
           currency: string
+          deposit_liability_account_id: string | null
           dormancy_days: number
+          fee_income_account_id: string | null
           id: string
+          interest_expense_account_id: string | null
           interest_rate_pct: number
           min_balance: number
           min_opening_balance: number
@@ -2193,13 +2197,17 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          cash_account_id?: string | null
           closure_fee?: number
           code: string
           company_id: string
           created_at?: string
           currency?: string
+          deposit_liability_account_id?: string | null
           dormancy_days?: number
+          fee_income_account_id?: string | null
           id?: string
+          interest_expense_account_id?: string | null
           interest_rate_pct?: number
           min_balance?: number
           min_opening_balance?: number
@@ -2211,13 +2219,17 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          cash_account_id?: string | null
           closure_fee?: number
           code?: string
           company_id?: string
           created_at?: string
           currency?: string
+          deposit_liability_account_id?: string | null
           dormancy_days?: number
+          fee_income_account_id?: string | null
           id?: string
+          interest_expense_account_id?: string | null
           interest_rate_pct?: number
           min_balance?: number
           min_opening_balance?: number
@@ -2229,10 +2241,38 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "savings_product_cash_account_id_fkey"
+            columns: ["cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "savings_product_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_product_deposit_liability_account_id_fkey"
+            columns: ["deposit_liability_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_product_fee_income_account_id_fkey"
+            columns: ["fee_income_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_product_interest_expense_account_id_fkey"
+            columns: ["interest_expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
             referencedColumns: ["id"]
           },
         ]
