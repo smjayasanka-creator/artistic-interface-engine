@@ -5,6 +5,8 @@ import {
   parseJsonBody, validateAndSend, logAndReturnAuthError,
   checkIdempotency, withIdempotencyEnvelope, errJson, ERRORS, requireHeader,
 } from "@/lib/api-schemas.server";
+import { postApiChannelEntry } from "@/lib/api-ledger.server";
+
 
 const ENDPOINT = "/api/public/v1/transactions/outbound";
 const CHANNEL = "transactions";
