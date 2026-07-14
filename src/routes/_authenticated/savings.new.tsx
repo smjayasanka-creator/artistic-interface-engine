@@ -30,6 +30,14 @@ const CHANNELS = [
   { v: "other", l: "Other" },
 ];
 
+const SEGMENTS = [
+  { value: "normal", label: "Normal Savings" },
+  { value: "minor", label: "Minor Savings" },
+  { value: "senior", label: "Senior Savings" },
+  { value: "fixed", label: "Fixed Savings" },
+  { value: "transaction", label: "Transaction Account" },
+] as const;
+
 function NewSavings() {
   const navigate = useNavigate();
   const clientFn = useServerFn(getClients);
