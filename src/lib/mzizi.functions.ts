@@ -1500,6 +1500,7 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       interest_income_account_id?: string | null;
       fee_income_account_id?: string | null;
       required_documents?: string[];
+      segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
 
       z
