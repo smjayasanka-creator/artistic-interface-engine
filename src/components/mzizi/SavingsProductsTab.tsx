@@ -74,7 +74,7 @@ const EMPTY = {
   interest_expense_account_id: null as string | null,
 };
 
-const GRID_COLS = "0.6fr 1.35fr 0.85fr 0.5fr 0.65fr 0.75fr 0.55fr 0.45fr 0.4fr";
+const GRID_COLS = "0.6fr 1.5fr 0.95fr 0.5fr 0.85fr 0.6fr 0.5fr 0.45fr";
 
 
 export function SavingsProductsTab() {
