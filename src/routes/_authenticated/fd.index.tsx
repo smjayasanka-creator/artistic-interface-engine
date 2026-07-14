@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
-import { Plus, Download, PiggyBank, LineChart, ArrowRight, CalendarClock } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Download, PiggyBank, LineChart, ArrowRight, CalendarClock, Loader2 } from "lucide-react";
 import { listFixedDeposits, getFdSummary, listFdProducts } from "@/lib/fd.functions";
 import { Card } from "@/components/mzizi/Card";
 import { Kpi } from "@/components/mzizi/Kpi";
+import { TablePagination } from "@/components/mzizi/TablePagination";
 
 import { btnPrimaryCls, inputCls, selectCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
@@ -32,13 +33,17 @@ function FdRegister() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  useEffect(() => { setPage(1); }, [status, productId, from, to, pageSize]);
 
   const listFn = useServerFn(listFixedDeposits);
   const sumFn = useServerFn(getFdSummary);
   const prodFn = useServerFn(listFdProducts);
 
-  const { data: deposits } = useQuery({
-    queryKey: ["fd-list", status, productId, from, to],
+  const { data: pageData, isFetching, isPlaceholderData } = useQuery({
+    queryKey: ["fd-list", status, productId, from, to, page, pageSize],
     queryFn: () =>
       listFn({
         data: {
@@ -46,17 +51,23 @@ function FdRegister() {
           product_id: productId || undefined,
           from: from || undefined,
           to: to || undefined,
+          page,
+          pageSize,
         },
       }),
+    placeholderData: keepPreviousData,
   });
   const { data: summary } = useQuery({ queryKey: ["fd-summary"], queryFn: () => sumFn() });
   const { data: products } = useQuery({ queryKey: ["fd-products"], queryFn: () => prodFn() });
 
+  const deposits = pageData?.rows ?? [];
+  const totalCount = pageData?.totalCount ?? 0;
+
   const filtered = useMemo(() => {
-    if (!q) return deposits ?? [];
+    if (!q) return deposits;
     const s = q.toLowerCase();
-    return (deposits ?? []).filter(
-      (d) =>
+    return deposits.filter(
+      (d: any) =>
         d.certificate_no.toLowerCase().includes(s) ||
         d.client?.full_name?.toLowerCase().includes(s) ||
         d.product?.name?.toLowerCase().includes(s),
@@ -153,7 +164,8 @@ function FdRegister() {
           </select>
           <input type="date" className={inputCls + " w-40"} value={from} onChange={(e) => setFrom(e.target.value)} title="Maturity from" />
           <input type="date" className={inputCls + " w-40"} value={to} onChange={(e) => setTo(e.target.value)} title="Maturity to" />
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex items-center gap-2">
+            {isFetching && <Loader2 size={13} className="animate-spin text-faint" />}
             <button className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-input hover:bg-muted" onClick={exportCsv}>
               <Download size={14} /> Export CSV
             </button>
@@ -163,7 +175,7 @@ function FdRegister() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className={cn("overflow-x-auto", isPlaceholderData && "opacity-60 transition-opacity")}>
           <table className="w-full text-[12.5px]">
             <thead>
               <tr className="text-left text-faint font-semibold border-b border-border">
@@ -179,7 +191,7 @@ function FdRegister() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((d) => (
+              {filtered.map((d: any) => (
                 <tr key={d.id} className="border-b border-border/50 hover:bg-muted/40">
                   <td className="py-2 pr-3 font-mono">
                     <Link to="/fd/$id" params={{ id: d.id }} className="text-primary hover:underline">
@@ -210,6 +222,14 @@ function FdRegister() {
             </tbody>
           </table>
         </div>
+        <TablePagination
+          page={page}
+          pageSize={pageSize}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
+          label="deposits"
+        />
       </Card>
     </div>
 

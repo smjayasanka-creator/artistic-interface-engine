@@ -192,31 +192,37 @@ export const lookupFdRate = createServerFn({ method: "POST" })
 
 export const listFixedDeposits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { status?: string; product_id?: string; from?: string; to?: string }) =>
+  .inputValidator((i: { status?: string; product_id?: string; from?: string; to?: string; page?: number; pageSize?: number }) =>
     z
       .object({
         status: z.string().optional(),
         product_id: z.string().uuid().optional(),
         from: z.string().optional(),
         to: z.string().optional(),
+        page: z.number().int().min(1).default(1),
+        pageSize: z.number().int().min(1).max(200).default(25),
       })
-      .parse(i),
+      .parse({ ...i, page: i.page ?? 1, pageSize: i.pageSize ?? 25 }),
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
     let q = supabase
       .from("fixed_deposit")
       .select(
         "id,certificate_no,status,principal,rate_at_booking,tenure_months,payout_option,value_date,maturity_date,client!fixed_deposit_client_id_fkey(id,full_name),product:product_id(id,code,name)",
+        { count: "exact" },
       )
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(from, to);
     if (data.status) q = q.eq("status", data.status as "pending" | "active" | "matured" | "prematurely_closed" | "renewed");
     if (data.product_id) q = q.eq("product_id", data.product_id);
     if (data.from) q = q.gte("maturity_date", data.from);
     if (data.to) q = q.lte("maturity_date", data.to);
-    const { data: rows, error } = await q;
+    const { data: rows, count, error } = await q;
     if (error) throw error;
-    return rows ?? [];
+    return { rows: rows ?? [], totalCount: count ?? 0 };
   });
 
 // ──────────────────────────────────────────────────────────────────────────

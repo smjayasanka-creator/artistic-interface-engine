@@ -365,13 +365,23 @@ export const getClient = createServerFn({ method: "GET" })
 
 export const getLoans = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i: { page?: number; pageSize?: number } = {}) => ({
+    page: Math.max(1, Number(i.page ?? 1)),
+    pageSize: Math.min(200, Math.max(1, Number(i.pageSize ?? 25))),
+  }))
+  .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: loans } = await supabase
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
+    const { data: loans, count } = await supabase
       .from("loan")
-      .select("id, principal, status, disbursed_at, client:client_id(id, full_name, avatar_color), product:product_id(name)")
+      .select(
+        "id, principal, status, disbursed_at, client:client_id(id, full_name, avatar_color), product:product_id(name)",
+        { count: "exact" },
+      )
       .in("status", ["disbursed", "active", "closed"])
-      .order("disbursed_at", { ascending: false });
+      .order("disbursed_at", { ascending: false })
+      .range(from, to);
     const ids = (loans ?? []).map((l) => l.id);
     const { data: outs } = ids.length
       ? await supabase.from("v_loan_outstanding").select("loan_id, outstanding_principal, principal_repaid").in("loan_id", ids)
@@ -388,7 +398,7 @@ export const getLoans = createServerFn({ method: "GET" })
     const nextMap = new Map<string, any>();
     for (const r of nextDue ?? []) if (!nextMap.has(r.loan_id)) nextMap.set(r.loan_id, r);
 
-    return (loans ?? []).map((l) => {
+    const rows = (loans ?? []).map((l) => {
       const o = outMap.get(l.id);
       const out = Number(o?.outstanding_principal ?? 0);
       const rep = Number(o?.principal_repaid ?? 0);
@@ -403,6 +413,7 @@ export const getLoans = createServerFn({ method: "GET" })
         overdue,
       };
     });
+    return { rows, totalCount: count ?? 0 };
   });
 
 export const getGroups = createServerFn({ method: "GET" })

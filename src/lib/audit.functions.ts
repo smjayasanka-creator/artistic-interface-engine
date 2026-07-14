@@ -24,7 +24,7 @@ export const listAuditLog = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
     const companyId = (staff?.branch as any)?.company_id as string | undefined;
-    if (!companyId) return { rows: [], company_id: null };
+    if (!companyId) return { rows: [], company_id: null, totalCount: 0 };
 
     const { data: rows, error } = await supabase.rpc("list_audit_log", {
       _company_id: companyId,
@@ -34,5 +34,15 @@ export const listAuditLog = createServerFn({ method: "POST" })
       _action_prefix: data.action_prefix ?? (undefined as any),
     });
     if (error) throw new Error(error.message);
-    return { rows: rows ?? [], company_id: companyId };
+
+    // Total count for pagination (same filters, ignoring limit/offset)
+    let countQ = supabase
+      .from("audit_log")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId);
+    if (data.entity_type) countQ = countQ.eq("entity_type", data.entity_type);
+    if (data.action_prefix) countQ = countQ.ilike("action", `${data.action_prefix}%`);
+    const { count } = await countQ;
+
+    return { rows: rows ?? [], company_id: companyId, totalCount: count ?? 0 };
   });
