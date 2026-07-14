@@ -104,7 +104,7 @@ function FdRegister() {
         {[
           { to: "/fd/new", icon: PiggyBank, title: "New Deposit", desc: "Book a new fixed deposit certificate", accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600" },
           { to: "/fd", icon: CalendarClock, title: "Maturity Register", desc: "Track deposits maturing soon", accent: "from-sky-500/15 to-sky-500/0 text-sky-600" },
-          { to: "#alco", icon: LineChart, title: "ALCO Rates", desc: "Standard, maximum & CBSL cap per product", accent: "from-violet-500/15 to-violet-500/0 text-violet-600" },
+          { to: "/admin", icon: LineChart, title: "ALCO Rates", desc: "Manage deposit rates in Administration", accent: "from-violet-500/15 to-violet-500/0 text-violet-600" },
         ].map((c) => {
           const Icon = c.icon;
           const inner = (
