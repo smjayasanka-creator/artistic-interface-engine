@@ -130,7 +130,6 @@ export function SavingsProductsTab() {
         <div>Name</div>
         <div>Segment</div>
         <div>Ccy</div>
-        <div>Interest</div>
         <div>Min opening</div>
         <div>Passbook</div>
         <div className="text-right">Status</div>
@@ -147,7 +146,6 @@ export function SavingsProductsTab() {
           <div className="truncate" title={p.name}>{p.name}</div>
           <div className="text-[11px] text-muted-foreground truncate">{segmentLabel(p.segment)}</div>
           <div className="font-mono text-[11px]">{p.currency}</div>
-          <div className="font-mono text-[11px]">{Number(p.interest_rate_pct)}% p.a.</div>
           <div className="text-muted-foreground">{money(p.min_opening_balance)}</div>
           <div className="text-muted-foreground">
             {p.passbook_required ? `Yes${p.passbook_series_prefix ? ` · ${p.passbook_series_prefix}` : ""}` : "No"}
