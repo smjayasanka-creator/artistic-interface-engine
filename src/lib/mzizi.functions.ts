@@ -1155,7 +1155,7 @@ export const approveLoan = createServerFn({ method: "POST" })
     }
     const { data: loan } = await supabase
       .from("loan")
-      .select("id, principal, term_months, annual_rate_pct, frequency, branch_id, status, product_id")
+      .select("id, principal, term_months, annual_rate_pct, frequency, branch_id, status, product_id, schedule_type, schedule_overrides")
       .eq("id", data.loan_id)
       .maybeSingle();
     if (!loan) throw new Error("Loan not found");
@@ -1172,12 +1172,25 @@ export const approveLoan = createServerFn({ method: "POST" })
       })
       .eq("id", loan.id);
 
-    const schedule = generateSchedule({
-      principal: Number(loan.principal),
-      annualRatePct: Number(loan.annual_rate_pct),
-      termMonths: loan.term_months,
-      frequency: loan.frequency as Frequency,
-    });
+    const isStructured = loan.schedule_type === "structured" && loan.schedule_overrides;
+    const overridesRaw = (loan.schedule_overrides ?? {}) as Record<string, number>;
+    const overrides: Record<number, number> = {};
+    for (const k of Object.keys(overridesRaw)) overrides[Number(k)] = Number(overridesRaw[k]);
+
+    const schedule = isStructured
+      ? generateStructuredSchedule({
+          principal: Number(loan.principal),
+          annualRatePct: Number(loan.annual_rate_pct),
+          termMonths: loan.term_months,
+          frequency: loan.frequency as Frequency,
+          overrides,
+        })
+      : generateSchedule({
+          principal: Number(loan.principal),
+          annualRatePct: Number(loan.annual_rate_pct),
+          termMonths: loan.term_months,
+          frequency: loan.frequency as Frequency,
+        });
     const rows = schedule.rows.map((r) => ({
       loan_id: loan.id,
       seq: r.seq,
@@ -1185,6 +1198,7 @@ export const approveLoan = createServerFn({ method: "POST" })
       principal_due: r.principal,
       interest_due: r.interest,
       state: "upcoming" as const,
+      is_manual: !!r.isManual,
     }));
     if (rows.length) await supabase.from("loan_installment").insert(rows);
 
