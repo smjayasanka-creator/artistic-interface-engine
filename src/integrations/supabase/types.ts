@@ -1715,6 +1715,73 @@ export type Database = {
           },
         ]
       }
+      loan_alco_rate: {
+        Row: {
+          active: boolean
+          company_id: string
+          created_at: string
+          equipment_vehicle: string | null
+          id: string
+          max_period_months: number
+          max_rate: number
+          min_period_months: number
+          min_rate: number
+          product_id: string
+          security_type_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          company_id: string
+          created_at?: string
+          equipment_vehicle?: string | null
+          id?: string
+          max_period_months: number
+          max_rate: number
+          min_period_months: number
+          min_rate: number
+          product_id: string
+          security_type_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          company_id?: string
+          created_at?: string
+          equipment_vehicle?: string | null
+          id?: string
+          max_period_months?: number
+          max_rate?: number
+          min_period_months?: number
+          min_rate?: number
+          product_id?: string
+          security_type_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_alco_rate_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_alco_rate_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "loan_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_alco_rate_security_type_id_fkey"
+            columns: ["security_type_id"]
+            isOneToOne: false
+            referencedRelation: "security_type"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_installment: {
         Row: {
           due_date: string
