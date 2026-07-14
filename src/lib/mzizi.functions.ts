@@ -1120,6 +1120,15 @@ export const declineLoan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { loan_id: string }) => z.object({ loan_id: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: staffRow } = await supabase
+      .from("staff")
+      .select("id, role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!staffRow || !["admin", "branch_manager"].includes(staffRow.role as string)) {
+      throw new Error("Only branch managers or admins can decline loans");
+    }
     const { error } = await context.supabase.from("loan").update({ status: "rejected" }).eq("id", data.loan_id);
     if (error) throw error;
     return { ok: true };
@@ -1130,8 +1139,11 @@ export const approveLoan = createServerFn({ method: "POST" })
   .inputValidator((i: { loan_id: string }) => z.object({ loan_id: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: staff } = await supabase.from("staff").select("id, branch_id").eq("user_id", context.userId).maybeSingle();
+    const { data: staff } = await supabase.from("staff").select("id, branch_id, role").eq("user_id", context.userId).maybeSingle();
     if (!staff) throw new Error("No staff profile");
+    if (!["admin", "branch_manager"].includes(staff.role as string)) {
+      throw new Error("Only branch managers or admins can approve and disburse loans");
+    }
     const { data: loan } = await supabase
       .from("loan")
       .select("id, principal, term_months, annual_rate_pct, frequency, branch_id, status, product_id")
