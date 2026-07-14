@@ -737,6 +737,13 @@ function NewLoan() {
                         purpose: purpose || undefined,
                         annual_rate_pct: rateNum,
                         frequency,
+                        schedule_type: scheduleType,
+                        schedule_overrides:
+                          scheduleType === "structured"
+                            ? Object.fromEntries(
+                                Object.entries(overrides).map(([k, v]) => [String(k), Number(v)]),
+                              )
+                            : undefined,
                       },
                     })
                   }
