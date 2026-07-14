@@ -1551,6 +1551,7 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
         interest_income_account_id: data.interest_income_account_id ?? null,
         fee_income_account_id: data.fee_income_account_id ?? null,
         required_documents: data.required_documents ?? [],
+        ...(data.segment ? { segment: data.segment } : {}),
       } as never)
       .eq("id", data.id);
 
