@@ -58,6 +58,7 @@ function NewSavings() {
     queryFn: () => prodFn(),
   });
 
+  const [segment, setSegment] = useState<string>("normal");
   const [clientId, setClientId] = useState("");
   const [branchId, setBranchId] = useState("");
   const [productId, setProductId] = useState("");
