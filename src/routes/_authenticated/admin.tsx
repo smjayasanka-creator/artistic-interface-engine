@@ -136,6 +136,7 @@ function Admin() {
       {tab === "fd_products" && <FdProductsTab />}
       {tab === "savings_products" && <SavingsProductsTab />}
       {tab === "savings_charges" && <SavingsChargesTab />}
+      {tab === "alco_rates" && <AlcoRatesPanel />}
       {tab === "accounts" && <AccountsTab />}
       {tab === "security_types" && <SecurityTypesTab />}
       {tab === "delegation" && <DelegationAuthorityTab />}
