@@ -74,7 +74,7 @@ const EMPTY = {
   interest_expense_account_id: null as string | null,
 };
 
-const GRID_COLS = "0.6fr 1.35fr 0.85fr 0.5fr 0.65fr 0.75fr 0.55fr 0.45fr 0.4fr";
+const GRID_COLS = "0.6fr 1.5fr 0.95fr 0.5fr 0.85fr 0.6fr 0.5fr 0.45fr";
 
 
 export function SavingsProductsTab() {
@@ -130,7 +130,6 @@ export function SavingsProductsTab() {
         <div>Name</div>
         <div>Segment</div>
         <div>Ccy</div>
-        <div>Interest</div>
         <div>Min opening</div>
         <div>Passbook</div>
         <div className="text-right">Status</div>
@@ -147,7 +146,6 @@ export function SavingsProductsTab() {
           <div className="truncate" title={p.name}>{p.name}</div>
           <div className="text-[11px] text-muted-foreground truncate">{segmentLabel(p.segment)}</div>
           <div className="font-mono text-[11px]">{p.currency}</div>
-          <div className="font-mono text-[11px]">{Number(p.interest_rate_pct)}% p.a.</div>
           <div className="text-muted-foreground">{money(p.min_opening_balance)}</div>
           <div className="text-muted-foreground">
             {p.passbook_required ? `Yes${p.passbook_series_prefix ? ` · ${p.passbook_series_prefix}` : ""}` : "No"}
@@ -241,7 +239,6 @@ function ProductModal({
   const glSelect = (
     key:
       | "deposit_liability_account_id"
-      | "fee_income_account_id"
       | "interest_expense_account_id",
   ) => (
     <select
@@ -323,17 +320,11 @@ function ProductModal({
             </FormField>
 
 
-            <FormField label="Interest rate % p.a." required span={4}>
-              <input
-                type="number"
-                step="0.01"
-                min={0}
-                className={inputCls}
-                value={v.interest_rate_pct}
-                onChange={(e) => setV({ ...v, interest_rate_pct: Number(e.target.value) })}
-              />
-            </FormField>
-            <FormField label="Minimum opening balance" required span={4}>
+            <FormField
+              label="Minimum opening balance"
+              required
+              span={6}
+            >
               <input
                 type="number"
                 min={0}
@@ -342,7 +333,7 @@ function ProductModal({
                 onChange={(e) => setV({ ...v, min_opening_balance: Number(e.target.value) })}
               />
             </FormField>
-            <FormField label="Minimum running balance" span={4}>
+            <FormField label="Minimum running balance" span={6}>
               <input
                 type="number"
                 min={0}
@@ -352,24 +343,6 @@ function ProductModal({
               />
             </FormField>
 
-            <FormField label="Opening fee" span={4}>
-              <input
-                type="number"
-                min={0}
-                className={inputCls}
-                value={v.opening_fee}
-                onChange={(e) => setV({ ...v, opening_fee: Number(e.target.value) })}
-              />
-            </FormField>
-            <FormField label="Closure fee" span={4}>
-              <input
-                type="number"
-                min={0}
-                className={inputCls}
-                value={v.closure_fee}
-                onChange={(e) => setV({ ...v, closure_fee: Number(e.target.value) })}
-              />
-            </FormField>
             <FormField label="Dormancy days" span={4} hint="Days of inactivity before account is marked dormant">
               <input
                 type="number"
@@ -419,11 +392,10 @@ function ProductModal({
             </div>
             <p className="text-[11.5px] text-muted-foreground -mt-1 mb-2">
               Optional overrides. Leave blank to use the default chart-of-accounts codes (2100 deposit
-              liability, 4100 fee income, 5100 interest expense). Cash / bank GL is selected at the transaction point.
+              liability, 5100 interest expense). Interest rates are managed from the ALCO rates card. Cash / bank GL is selected at the transaction point.
             </p>
             <FormGrid>
               <FormField label="Deposit liability account" span={6}>{glSelect("deposit_liability_account_id")}</FormField>
-              <FormField label="Fee income account" span={6}>{glSelect("fee_income_account_id")}</FormField>
               <FormField label="Interest expense account" span={6}>{glSelect("interest_expense_account_id")}</FormField>
             </FormGrid>
           </div>
