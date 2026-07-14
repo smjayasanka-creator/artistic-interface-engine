@@ -38,12 +38,13 @@ import { TimeTravelTab } from "@/components/mzizi/TimeTravelTab";
 import { SecurityTypesTab } from "@/components/mzizi/SecurityTypesTab";
 import { DelegationAuthorityTab } from "@/components/mzizi/DelegationAuthorityTab";
 import { AlcoRatesPanel } from "@/components/mzizi/AlcoRatesPanel";
+import { LoanAlcoRatesPanel } from "@/components/mzizi/LoanAlcoRatesPanel";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "accounts" | "security_types" | "delegation" | "time_travel";
+type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "time_travel";
 type Mode = "list" | "create" | "edit";
 type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
 const LOAN_SEGMENTS: { value: LoanSegment; label: string }[] = [
