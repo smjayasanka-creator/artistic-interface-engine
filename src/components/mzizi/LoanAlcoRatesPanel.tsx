@@ -342,14 +342,14 @@ export function LoanAlcoRatesPanel() {
         <div className="mb-4 rounded-md border border-border p-3 bg-muted/30">
           <div className="text-[12px] font-semibold mb-1">Paste CSV / Excel rows</div>
           <div className="text-[11px] text-muted-foreground mb-2">
-            Columns: <code>product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months</code> (header optional).
-            Each row becomes a new entry — you may repeat the same product for different equipment.
+            Columns: <code>product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months,effective_from</code> (header optional; <code>effective_from</code> optional, defaults to now).
+            Each row becomes a new version — the previous active rate is automatically closed.
           </div>
           <textarea
             value={csv}
             onChange={(e) => setCsv(e.target.value)}
             rows={6}
-            placeholder={"product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months\nLeasing,Vehicle,Toyota Hilux,12,18,3,60"}
+            placeholder={"product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months,effective_from\nLeasing,Vehicle,Toyota Hilux,12,18,3,60,2026-07-15T09:00"}
             className={inputCls + " font-mono text-[12px]"}
           />
           <div className="flex justify-end gap-2 mt-2">
@@ -364,14 +364,15 @@ export function LoanAlcoRatesPanel() {
           <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="text-left px-3 py-2">Product</th>
-              <th className="text-left px-2 py-2 w-40">Security type</th>
-              <th className="text-left px-2 py-2 w-44">Equipment / Vehicle</th>
-              <th className="text-right px-2 py-2 w-24">Min rate %</th>
-              <th className="text-right px-2 py-2 w-24">Max rate %</th>
-              <th className="text-right px-2 py-2 w-24">Min period</th>
-              <th className="text-right px-2 py-2 w-24">Max period</th>
-              <th className="text-center px-2 py-2 w-14">Active</th>
-              <th className="text-center px-2 py-2 w-20">Actions</th>
+              <th className="text-left px-2 py-2 w-36">Security type</th>
+              <th className="text-left px-2 py-2 w-40">Equipment / Vehicle</th>
+              <th className="text-right px-2 py-2 w-20">Min rate %</th>
+              <th className="text-right px-2 py-2 w-20">Max rate %</th>
+              <th className="text-right px-2 py-2 w-20">Min period</th>
+              <th className="text-right px-2 py-2 w-20">Max period</th>
+              <th className="text-left px-2 py-2 w-44">Effective from</th>
+              <th className="text-center px-2 py-2 w-12">Active</th>
+              <th className="text-center px-2 py-2 w-24">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
