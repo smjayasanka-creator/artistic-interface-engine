@@ -863,6 +863,7 @@ function ProductsTab() {
     interestAcct: "",
     feeAcct: "",
     requiredDocs: [] as string[],
+    segment: "micro" as LoanSegment,
   };
 
   const [form, setForm] = useState(emptyForm);
