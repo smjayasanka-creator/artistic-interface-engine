@@ -6,7 +6,7 @@ import { Plus, Download, PiggyBank, LineChart, ArrowRight, CalendarClock } from 
 import { listFixedDeposits, getFdSummary, listFdProducts } from "@/lib/fd.functions";
 import { Card } from "@/components/mzizi/Card";
 import { Kpi } from "@/components/mzizi/Kpi";
-import { AlcoRatesPanel } from "@/components/mzizi/AlcoRatesPanel";
+
 import { btnPrimaryCls, inputCls, selectCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
 import { money, getActiveCurrency } from "@/lib/format";
