@@ -61,6 +61,7 @@ export const upsertSavingsProduct = createServerFn({ method: "POST" })
       deposit_liability_account_id?: string | null;
       fee_income_account_id?: string | null;
       interest_expense_account_id?: string | null;
+      segment?: "normal" | "minor" | "senior" | "fixed" | "transaction";
     }) => i,
   )
   .handler(async ({ context, data }) => {
