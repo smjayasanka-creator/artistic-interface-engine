@@ -939,8 +939,66 @@ export const createClient = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: staff } = await supabase.from("staff").select("id, branch_id").eq("user_id", context.userId).maybeSingle();
+    const { data: staff } = await supabase
+      .from("staff")
+      .select("id, branch_id, branch:branch_id(company_id)")
+      .eq("user_id", context.userId)
+      .maybeSingle();
     if (!staff) throw new Error("No staff profile");
+    const companyId = (staff as any)?.branch?.company_id ?? null;
+
+    // 1) Call Instafin FIRST — do not touch local DB unless it succeeds.
+    const { instafinCreatePerson, InstafinError } = await import("./instafin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let externalPersonId: string | null = null;
+    let externalClientId: string | null = null;
+    try {
+      const call = await instafinCreatePerson({
+        first_name: data.first_name,
+        last_name: data.last_name,
+        phone_country_code: data.phone_country_code,
+        phone: data.phone,
+        date_of_birth: data.date_of_birth,
+        email: data.email || null,
+        address: data.address,
+        gn_division: data.gn_division,
+        divisional_secretariat: data.divisional_secretariat,
+        district: data.district,
+        province: data.province,
+      });
+      externalPersonId = (call.result?.ID as string) ?? null;
+      externalClientId =
+        call.result?.clientID != null ? String(call.result.clientID) : null;
+      await supabaseAdmin.from("api_transaction_log").insert({
+        company_id: companyId,
+        channel: "instafin",
+        direction: "outbound",
+        endpoint: "/submit/instafin.CreatePerson",
+        method: "POST",
+        status_code: call.status,
+        reference: externalPersonId,
+        request: call.requestBody as any,
+        response: call.responseBody as any,
+      });
+    } catch (e) {
+      const err = e as InstanceType<typeof InstafinError> | Error;
+      const status = (err as any).status ?? 0;
+      const body = (err as any).body ?? null;
+      await supabaseAdmin.from("api_transaction_log").insert({
+        company_id: companyId,
+        channel: "instafin",
+        direction: "outbound",
+        endpoint: "/submit/instafin.CreatePerson",
+        method: "POST",
+        status_code: status,
+        request: null,
+        response: body as any,
+        error: err.message,
+      });
+      throw new Error(err.message);
+    }
+
+    // 2) Instafin succeeded — persist locally.
     const colors = ["#0f766e", "#0369a1", "#7c3aed", "#c2410c", "#b45309", "#065f46", "#9333ea", "#be185d"];
     const color = colors[Math.floor(Math.random() * colors.length)];
     const fullName = `${data.first_name} ${data.last_name}`.trim();
@@ -973,10 +1031,16 @@ export const createClient = createServerFn({ method: "POST" })
         is_introducer: data.is_introducer ?? false,
         default_commission_pct: data.default_commission_pct ?? null,
         default_commission_amount: data.default_commission_amount ?? null,
-      })
+        external_person_id: externalPersonId,
+        external_client_id: externalClientId,
+      } as any)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      throw new Error(
+        `Client created in Instafin (${externalPersonId ?? "unknown ID"}) but local save failed: ${error.message}. Contact an admin.`,
+      );
+    }
 
     if (data.bank_accounts && data.bank_accounts.length > 0) {
       const rows = data.bank_accounts.map((b, i) => ({
