@@ -145,6 +145,7 @@ export function SavingsProductsTab() {
         >
           <div className="font-mono font-medium text-[11.5px]">{p.code}</div>
           <div className="truncate" title={p.name}>{p.name}</div>
+          <div className="text-[11px] text-muted-foreground truncate">{segmentLabel(p.segment)}</div>
           <div className="font-mono text-[11px]">{p.currency}</div>
           <div className="font-mono text-[11px]">{Number(p.interest_rate_pct)}% p.a.</div>
           <div className="text-muted-foreground">{money(p.min_opening_balance)}</div>
