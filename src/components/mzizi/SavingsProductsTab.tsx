@@ -320,17 +320,11 @@ function ProductModal({
             </FormField>
 
 
-            <FormField label="Interest rate % p.a." required span={4}>
-              <input
-                type="number"
-                step="0.01"
-                min={0}
-                className={inputCls}
-                value={v.interest_rate_pct}
-                onChange={(e) => setV({ ...v, interest_rate_pct: Number(e.target.value) })}
-              />
-            </FormField>
-            <FormField label="Minimum opening balance" required span={4}>
+            <FormField
+              label="Minimum opening balance"
+              required
+              span={6}
+            >
               <input
                 type="number"
                 min={0}
@@ -339,7 +333,7 @@ function ProductModal({
                 onChange={(e) => setV({ ...v, min_opening_balance: Number(e.target.value) })}
               />
             </FormField>
-            <FormField label="Minimum running balance" span={4}>
+            <FormField label="Minimum running balance" span={6}>
               <input
                 type="number"
                 min={0}
@@ -349,24 +343,6 @@ function ProductModal({
               />
             </FormField>
 
-            <FormField label="Opening fee" span={4}>
-              <input
-                type="number"
-                min={0}
-                className={inputCls}
-                value={v.opening_fee}
-                onChange={(e) => setV({ ...v, opening_fee: Number(e.target.value) })}
-              />
-            </FormField>
-            <FormField label="Closure fee" span={4}>
-              <input
-                type="number"
-                min={0}
-                className={inputCls}
-                value={v.closure_fee}
-                onChange={(e) => setV({ ...v, closure_fee: Number(e.target.value) })}
-              />
-            </FormField>
             <FormField label="Dormancy days" span={4} hint="Days of inactivity before account is marked dormant">
               <input
                 type="number"
