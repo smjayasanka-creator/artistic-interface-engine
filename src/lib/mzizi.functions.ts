@@ -1523,6 +1523,7 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
           interest_income_account_id: z.string().uuid().nullable().optional(),
           fee_income_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
+          segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
         })
 
         .parse(i),
