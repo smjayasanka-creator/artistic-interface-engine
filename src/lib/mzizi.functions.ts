@@ -1071,6 +1071,8 @@ export const submitApplication = createServerFn({ method: "POST" })
       purpose?: string;
       annual_rate_pct?: number;
       frequency?: "daily" | "weekly" | "biweekly" | "monthly";
+      schedule_type?: "normal" | "structured";
+      schedule_overrides?: Record<string, number>;
     }) =>
       z
         .object({
@@ -1081,6 +1083,8 @@ export const submitApplication = createServerFn({ method: "POST" })
           purpose: z.string().optional(),
           annual_rate_pct: z.number().positive().max(200).optional(),
           frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]).optional(),
+          schedule_type: z.enum(["normal", "structured"]).optional(),
+          schedule_overrides: z.record(z.string(), z.number()).optional(),
         })
         .parse(i),
   )
@@ -1109,6 +1113,11 @@ export const submitApplication = createServerFn({ method: "POST" })
         purpose: data.purpose,
         status: "submitted",
         submitted_at: new Date().toISOString(),
+        schedule_type: data.schedule_type ?? "normal",
+        schedule_overrides:
+          data.schedule_type === "structured" && data.schedule_overrides
+            ? (data.schedule_overrides as unknown as object)
+            : null,
       })
       .select()
       .single();
