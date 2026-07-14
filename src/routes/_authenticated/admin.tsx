@@ -45,6 +45,17 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "accounts" | "security_types" | "delegation" | "time_travel";
 type Mode = "list" | "create" | "edit";
+type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
+const LOAN_SEGMENTS: { value: LoanSegment; label: string }[] = [
+  { value: "micro", label: "Micro" },
+  { value: "sme", label: "SME" },
+  { value: "leasing", label: "Leasing" },
+  { value: "housing", label: "Housing" },
+  { value: "society", label: "Society" },
+  { value: "cashback", label: "Cash Back" },
+  { value: "gold", label: "Gold Loan" },
+];
+const loanSegmentLabel = (s: string) => LOAN_SEGMENTS.find((x) => x.value === s)?.label ?? s;
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
 type StaffRole = (typeof STAFF_ROLES)[number];
