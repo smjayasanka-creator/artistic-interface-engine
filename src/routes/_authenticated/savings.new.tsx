@@ -67,6 +67,10 @@ function NewSavings() {
   const [externalRef, setExternalRef] = useState("");
   const [narration, setNarration] = useState("");
 
+  const filteredProducts = useMemo(
+    () => (products ?? []).filter((p: any) => p.active !== false && (p.segment ?? "normal") === segment),
+    [products, segment],
+  );
   const product = useMemo(
     () => (products ?? []).find((p: any) => p.id === productId),
     [products, productId],
