@@ -182,29 +182,40 @@ export function generateStructuredSchedule(opts: {
       });
     }
   } else {
-    // Declining balance
+    // Declining balance — solve for a SINGLE level payment X applied to every
+    // auto row so all auto rentals are equal. Balance recurrence:
+    // b_i = b_{i-1}·(1+r) − p_i, with b_n = 0
+    // ⇒ Σ p_i·(1+r)^(n−i) = P·(1+r)^n.
+    const growth = (k: number) => Math.pow(1 + periodRate, k);
+    let manualFV = 0;
+    let autoCoeff = 0;
+    for (let i = 1; i <= n; i++) {
+      const w = growth(n - i);
+      if (manualSeqs.has(i)) manualFV += (overrides[i] ?? 0) * w;
+      else autoCoeff += w;
+    }
+    const autoCount = n - manualSeqs.size;
+    const targetFV = principal * growth(n);
+    let autoPayment = 0;
+    if (autoCount > 0) {
+      autoPayment = (targetFV - manualFV) / autoCoeff;
+      if (autoPayment < 0) {
+        warnings.push("Manual rentals exceed the loan requirement; auto rentals would be negative.");
+      }
+    } else if (Math.abs(manualFV - targetFV) > 0.01) {
+      warnings.push("Manual rentals do not fully amortize the loan.");
+    }
+
     let balance = principal;
     for (let i = 1; i <= n; i++) {
       const isManual = manualSeqs.has(i);
       const interest = balance * periodRate;
-      let principalPart: number;
-      if (isManual) {
-        principalPart = overrides[i] - interest;
-        if (principalPart < 0) {
-          warnings.push(`Row ${i}: rental below interest — shortfall capitalized.`);
-        }
-      } else {
-        // Level payment over remaining periods on current balance
-        const remaining = n - i + 1;
-        let payment: number;
-        if (periodRate > 0) {
-          payment = (balance * periodRate) / (1 - Math.pow(1 + periodRate, -remaining));
-        } else {
-          payment = balance / remaining;
-        }
-        principalPart = payment - interest;
+      const payment = isManual ? overrides[i] : autoPayment;
+      let principalPart = payment - interest;
+      if (isManual && principalPart < 0) {
+        warnings.push(`Row ${i}: rental below interest — shortfall capitalized.`);
       }
-      if (i === n) principalPart = balance; // final row absorbs remainder
+      if (i === n) principalPart = balance; // final row absorbs rounding
       balance = balance - principalPart;
       rows.push({
         seq: i,
