@@ -246,11 +246,16 @@ export function LoanAlcoRatesPanel() {
     const added: Draft[] = [];
     for (const line of lines) {
       const parts = line.split(/\t|,|;/).map((x) => x.trim());
-      const [prodName, secName, equipment, minR, maxR, minP, maxP] = parts;
+      const [prodName, secName, equipment, minR, maxR, minP, maxP, effFrom] = parts;
       if (!prodName || prodName.toLowerCase() === "product") { skipped++; continue; }
       const p: any = byProdName.get(prodName.toLowerCase());
       if (!p) { skipped++; continue; }
       const sec: any = secName ? bySecName.get(secName.toLowerCase()) : null;
+      let effLocal = nowLocal();
+      if (effFrom) {
+        const d = new Date(effFrom);
+        if (!isNaN(d.getTime())) effLocal = toLocalInput(d.toISOString());
+      }
       added.push({
         key: `new-${crypto.randomUUID()}`,
         product_id: p.id,
@@ -261,6 +266,8 @@ export function LoanAlcoRatesPanel() {
         min_period_months: minP ?? "",
         max_period_months: maxP ?? "",
         active: true,
+        effective_from: effLocal,
+        note: "",
         _new: true,
       });
       ok++;
