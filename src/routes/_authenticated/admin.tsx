@@ -150,6 +150,7 @@ function Admin() {
       {tab === "savings_products" && <SavingsProductsTab />}
       {tab === "savings_charges" && <SavingsChargesTab />}
       {tab === "alco_rates" && <AlcoRatesPanel />}
+      {tab === "loan_alco_rates" && <LoanAlcoRatesPanel />}
       {tab === "accounts" && <AccountsTab />}
       {tab === "security_types" && <SecurityTypesTab />}
       {tab === "delegation" && <DelegationAuthorityTab />}
