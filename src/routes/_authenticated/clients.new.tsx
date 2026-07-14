@@ -214,15 +214,15 @@ function NewClientPage() {
     );
   }
 
-  async function uploadPhoto(): Promise<string | null> {
+  async function uploadPhoto(clientId: string): Promise<string | null> {
     if (!photoFile) return null;
     setUploading(true);
     try {
       const ext = photoFile.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `${crypto.randomUUID()}.${ext}`;
+      const path = `${clientId}/photo-${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("client-photos")
-        .upload(path, photoFile, { upsert: false, contentType: photoFile.type });
+        .upload(path, photoFile, { upsert: true, contentType: photoFile.type });
       if (error) throw error;
       const { data } = supabase.storage.from("client-photos").getPublicUrl(path);
       return data.publicUrl;
@@ -257,13 +257,6 @@ function NewClientPage() {
       setTab("documents");
       return;
     }
-    let photo_url: string | null = null;
-    try {
-      photo_url = await uploadPhoto();
-    } catch (err: any) {
-      toast.error(`Photo upload failed: ${err.message}`);
-      return;
-    }
     post.mutate(
       {
         data: {
@@ -280,7 +273,7 @@ function NewClientPage() {
           divisional_secretariat: form.divisional_secretariat,
           district: form.district,
           province: form.province,
-          photo_url,
+          photo_url: null,
           geo_lat: geo?.lat ?? null,
           geo_lng: geo?.lng ?? null,
           is_introducer: isIntroducer,
@@ -300,6 +293,14 @@ function NewClientPage() {
       },
       {
         onSuccess: async (c: any) => {
+          try {
+            const photoUrl = await uploadPhoto(c.id);
+            if (photoUrl) {
+              await supabase.from("client").update({ photo_url: photoUrl }).eq("id", c.id);
+            }
+          } catch (err: any) {
+            toast.error(`Client saved but photo upload failed: ${err.message}`);
+          }
           try {
             await uploadDocs(c.id);
           } catch (err: any) {
