@@ -38,7 +38,6 @@ type ProductRow = {
   passbook_required: boolean;
   passbook_series_prefix: string | null;
   active: boolean;
-  cash_account_id: string | null;
   deposit_liability_account_id: string | null;
   fee_income_account_id: string | null;
   interest_expense_account_id: string | null;
