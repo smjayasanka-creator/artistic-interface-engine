@@ -989,8 +989,15 @@ function ProductsTab() {
         <FormHeader title={isEdit ? "Edit loan product" : "New loan product"} onBack={reset} />
         <form onSubmit={submit} className="flex flex-col gap-4 mt-4 text-[12.5px]">
           <FormGrid>
-            <FormField label="Product name" required span={6}>
+            <FormField label="Product name" required span={4}>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Kilimo Boost" className={inputCls} required />
+            </FormField>
+            <FormField label="Segment" required span={2}>
+              <select value={form.segment} onChange={(e) => setForm({ ...form, segment: e.target.value as LoanSegment })} className={selectCls}>
+                {LOAN_SEGMENTS.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
             </FormField>
             <FormField label="Processing fee (%)" span={2}>
               <input type="number" step="0.01" value={form.processingFee} onChange={(e) => setForm({ ...form, processingFee: e.target.value })} className={inputCls + " font-mono"} />
