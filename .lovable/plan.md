@@ -1,17 +1,30 @@
 ## Change
 
-Remove the **Cash / Bank account** mapping from the savings product form. Cash GL selection will happen at transaction time (deposit/withdrawal), not at product setup.
+Add a **segment** classification to savings products: **Normal Savings**, **Minor Savings**, **Senior Savings**, **Fixed Savings**, **Transaction Account**. When creating a savings account, the user picks a segment first, then only sees products in that segment.
 
-## Scope
+## Backend
 
-**Frontend only** — `src/components/mzizi/SavingsProductsTab.tsx`:
-- Remove the `cash_account_id` field from the `EMPTY` defaults and the edit-modal state hydration.
-- Remove the "Cash / Bank account" `FormField` from the GL mapping section (keep Deposit liability, Fee income, Interest expense).
-- Update the helper text under "GL account mapping" to drop the "1000 cash" reference.
-- Drop `cash_account_id` from the `ProductRow` type used in this component.
+Migration on `savings_product`:
+- Add `segment text not null default 'normal'` with a check constraint restricting to `normal | minor | senior | fixed | transaction`.
+- Backfill existing rows to `'normal'`.
+- Index `(company_id, segment, active)`.
+
+Server functions (`src/lib/savings.functions.ts`):
+- `listSavingsProducts` — include `segment` in the returned columns.
+- `upsertSavingsProduct` — accept `segment` in the Zod input validator (default `'normal'`) and persist it.
+
+## Frontend
+
+**Savings products form** (`src/components/mzizi/SavingsProductsTab.tsx`):
+- Add a required **Segment** dropdown to the product modal.
+- Show segment as a column in the product list.
+
+**New savings account page** (`src/routes/_authenticated/savings.new.tsx`):
+- Add a **Segment** selector above the product picker.
+- Filter the product dropdown to active products matching the selected segment.
+- Segment is derived from the chosen product — nothing new is written to `savings_account`.
 
 ## Not changing
 
-- DB column `savings_product.cash_account_id` stays (harmless, keeps existing data). Existing values are simply no longer editable from this form.
-- Server function `upsertSavingsProduct` is untouched — omitted field just won't be sent/updated.
-- Transaction-time cash account resolution is already handled elsewhere and is not modified here.
+- `savings_account` schema, GL mapping, and transactions are untouched.
+- Existing products default to "Normal Savings" and can be reclassified via the edit form.
