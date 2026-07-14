@@ -1393,6 +1393,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       interest_income_account_id?: string | null;
       fee_income_account_id?: string | null;
       required_documents?: string[];
+      segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
 
       z
@@ -1415,7 +1416,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
           interest_income_account_id: z.string().uuid().nullable().optional(),
           fee_income_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
-
+          segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
         })
         .refine((v) => v.max_term_months >= v.min_term_months, {
           message: "Max term must be >= min term",
