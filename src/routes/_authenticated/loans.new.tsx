@@ -199,6 +199,16 @@ function NewLoan() {
 
   const schedule = useMemo(() => {
     if (!principalNum || !rateNum || !term) return null;
+    if (scheduleType === "structured") {
+      return generateStructuredSchedule({
+        principal: principalNum,
+        annualRatePct: rateNum,
+        termMonths: term,
+        frequency,
+        method,
+        overrides,
+      });
+    }
     return generateSchedule({
       principal: principalNum,
       annualRatePct: rateNum,
@@ -206,7 +216,7 @@ function NewLoan() {
       frequency,
       method,
     });
-  }, [principalNum, rateNum, term, frequency, method]);
+  }, [principalNum, rateNum, term, frequency, method, scheduleType, overrides]);
 
   const termOptions = useMemo(() => {
     const lo = product?.min_term_months ?? 1;
