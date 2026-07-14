@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
 import { FdProductsTab } from "@/components/mzizi/FdProductsTab";
 import { SavingsProductsTab } from "@/components/mzizi/SavingsProductsTab";
+import { SavingsChargesTab } from "@/components/mzizi/SavingsChargesTab";
 import { TimeTravelTab } from "@/components/mzizi/TimeTravelTab";
 import { SecurityTypesTab } from "@/components/mzizi/SecurityTypesTab";
 import { DelegationAuthorityTab } from "@/components/mzizi/DelegationAuthorityTab";
