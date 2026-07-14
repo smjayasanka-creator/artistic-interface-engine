@@ -214,15 +214,15 @@ function NewClientPage() {
     );
   }
 
-  async function uploadPhoto(): Promise<string | null> {
+  async function uploadPhoto(clientId: string): Promise<string | null> {
     if (!photoFile) return null;
     setUploading(true);
     try {
       const ext = photoFile.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `${crypto.randomUUID()}.${ext}`;
+      const path = `${clientId}/photo-${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("client-photos")
-        .upload(path, photoFile, { upsert: false, contentType: photoFile.type });
+        .upload(path, photoFile, { upsert: true, contentType: photoFile.type });
       if (error) throw error;
       const { data } = supabase.storage.from("client-photos").getPublicUrl(path);
       return data.publicUrl;
