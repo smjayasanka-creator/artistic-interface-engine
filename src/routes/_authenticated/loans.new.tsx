@@ -19,7 +19,7 @@ import {
 import { money, shortDate, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-import { generateSchedule, FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
+import { generateSchedule, generateStructuredSchedule, FREQ_META, type Frequency, type InterestMethod, type ScheduleType } from "@/lib/loan-schedule";
 
 type UploadedDoc = { path: string; name: string; size: number };
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
