@@ -38,7 +38,6 @@ type ProductRow = {
   passbook_required: boolean;
   passbook_series_prefix: string | null;
   active: boolean;
-  cash_account_id: string | null;
   deposit_liability_account_id: string | null;
   fee_income_account_id: string | null;
   interest_expense_account_id: string | null;
@@ -57,7 +56,6 @@ const EMPTY = {
   passbook_required: false,
   passbook_series_prefix: null as string | null,
   active: true,
-  cash_account_id: null as string | null,
   deposit_liability_account_id: null as string | null,
   fee_income_account_id: null as string | null,
   interest_expense_account_id: null as string | null,
@@ -169,7 +167,6 @@ export function SavingsProductsTab() {
                     passbook_required: p.passbook_required,
                     passbook_series_prefix: p.passbook_series_prefix,
                     active: p.active,
-                    cash_account_id: p.cash_account_id,
                     deposit_liability_account_id: p.deposit_liability_account_id,
                     fee_income_account_id: p.fee_income_account_id,
                     interest_expense_account_id: p.interest_expense_account_id,
@@ -226,7 +223,6 @@ function ProductModal({
 
   const glSelect = (
     key:
-      | "cash_account_id"
       | "deposit_liability_account_id"
       | "fee_income_account_id"
       | "interest_expense_account_id",
@@ -393,11 +389,10 @@ function ProductModal({
               GL account mapping
             </div>
             <p className="text-[11.5px] text-muted-foreground -mt-1 mb-2">
-              Optional overrides. Leave blank to use the default chart-of-accounts codes (1000 cash, 2100 deposit
-              liability, 4100 fee income, 5100 interest expense).
+              Optional overrides. Leave blank to use the default chart-of-accounts codes (2100 deposit
+              liability, 4100 fee income, 5100 interest expense). Cash / bank GL is selected at the transaction point.
             </p>
             <FormGrid>
-              <FormField label="Cash / Bank account" span={6}>{glSelect("cash_account_id")}</FormField>
               <FormField label="Deposit liability account" span={6}>{glSelect("deposit_liability_account_id")}</FormField>
               <FormField label="Fee income account" span={6}>{glSelect("fee_income_account_id")}</FormField>
               <FormField label="Interest expense account" span={6}>{glSelect("interest_expense_account_id")}</FormField>
