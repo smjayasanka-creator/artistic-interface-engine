@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Plus, FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight, Loader2 } from "lucide-react";
 import { getLoans } from "@/lib/mzizi.functions";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { Card } from "@/components/mzizi/Card";
+import { TablePagination } from "@/components/mzizi/TablePagination";
 import { money, shortDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/loans/")({
   component: LoansList,
