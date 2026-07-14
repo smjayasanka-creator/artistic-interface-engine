@@ -157,7 +157,9 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
             is_introducer: parsed.data.is_introducer ?? false,
             default_commission_pct: parsed.data.default_commission_pct ?? null,
             default_commission_amount: parsed.data.default_commission_amount ?? null,
-          })
+            external_person_id: externalPersonId,
+            external_client_id: externalClientId,
+          } as any)
           .select("id, full_name, phone, national_id, branch_id, status, created_at")
           .single();
 
