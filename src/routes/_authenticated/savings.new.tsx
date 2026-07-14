@@ -129,20 +129,38 @@ function NewSavings() {
               ))}
             </select>
           </FormField>
-          <FormField label="Savings Product" required span={3}>
+          <FormField label="Segment" required span={3}>
+            <select
+              className={selectCls}
+              value={segment}
+              onChange={(e) => {
+                setSegment(e.target.value);
+                setProductId("");
+              }}
+            >
+              {SEGMENTS.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField
+            label="Savings Product"
+            required
+            span={3}
+            hint={filteredProducts.length === 0 ? "No active products in this segment" : undefined}
+          >
             <select
               className={selectCls}
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
+              disabled={filteredProducts.length === 0}
             >
               <option value="">Select product…</option>
-              {(products ?? [])
-                .filter((p: any) => p.active !== false)
-                .map((p: any) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.interest_rate_pct}% p.a.)
-                  </option>
-                ))}
+              {filteredProducts.map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.interest_rate_pct}% p.a.)
+                </option>
+              ))}
             </select>
           </FormField>
 
