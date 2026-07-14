@@ -1795,6 +1795,7 @@ export type Database = {
           principal_account_id: string | null
           processing_fee_pct: number
           required_documents: string[]
+          segment: string
           termination_fee: number
           termination_fee_pct: number
         }
@@ -1817,6 +1818,7 @@ export type Database = {
           principal_account_id?: string | null
           processing_fee_pct?: number
           required_documents?: string[]
+          segment?: string
           termination_fee?: number
           termination_fee_pct?: number
         }
@@ -1839,6 +1841,7 @@ export type Database = {
           principal_account_id?: string | null
           processing_fee_pct?: number
           required_documents?: string[]
+          segment?: string
           termination_fee?: number
           termination_fee_pct?: number
         }
