@@ -24,6 +24,17 @@ import { cn } from "@/lib/utils";
 
 const CURRENCIES = ["KES", "UGX", "TZS", "RWF", "LKR", "USD", "EUR", "GBP"] as const;
 
+type Segment = "normal" | "minor" | "senior" | "fixed" | "transaction";
+
+const SEGMENTS: { value: Segment; label: string }[] = [
+  { value: "normal", label: "Normal Savings" },
+  { value: "minor", label: "Minor Savings" },
+  { value: "senior", label: "Senior Savings" },
+  { value: "fixed", label: "Fixed Savings" },
+  { value: "transaction", label: "Transaction Account" },
+];
+const segmentLabel = (s: string) => SEGMENTS.find((x) => x.value === s)?.label ?? s;
+
 type ProductRow = {
   id: string;
   code: string;
@@ -38,6 +49,7 @@ type ProductRow = {
   passbook_required: boolean;
   passbook_series_prefix: string | null;
   active: boolean;
+  segment: Segment;
   deposit_liability_account_id: string | null;
   fee_income_account_id: string | null;
   interest_expense_account_id: string | null;
@@ -56,12 +68,14 @@ const EMPTY = {
   passbook_required: false,
   passbook_series_prefix: null as string | null,
   active: true,
+  segment: "normal" as Segment,
   deposit_liability_account_id: null as string | null,
   fee_income_account_id: null as string | null,
   interest_expense_account_id: null as string | null,
 };
 
-const GRID_COLS = "0.6fr 1.5fr 0.55fr 0.7fr 0.8fr 0.6fr 0.5fr 0.4fr";
+const GRID_COLS = "0.6fr 1.35fr 0.85fr 0.5fr 0.65fr 0.75fr 0.55fr 0.45fr 0.4fr";
+
 
 export function SavingsProductsTab() {
   const qc = useQueryClient();
