@@ -928,6 +928,7 @@ function ProductsTab() {
       interestAcct: p.interest_income_account_id ?? "",
       feeAcct: p.fee_income_account_id ?? "",
       requiredDocs: Array.isArray(p.required_documents) ? [...p.required_documents] : [],
+      segment: ((p.segment as LoanSegment) ?? "micro"),
     });
 
     setEditingId(p.id);
