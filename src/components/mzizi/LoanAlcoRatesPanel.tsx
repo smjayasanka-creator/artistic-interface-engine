@@ -24,11 +24,14 @@ type RateRow = {
   min_period_months: number;
   max_period_months: number;
   active: boolean;
+  effective_from: string;
+  effective_to: string | null;
+  note: string | null;
 };
 
 type Draft = {
   key: string;              // stable client-side key
-  rate_id?: string;         // DB id if existing
+  rate_id?: string;         // DB id of the current active version
   product_id: string;
   security_type_id: string;
   equipment_vehicle: string;
@@ -37,8 +40,25 @@ type Draft = {
   min_period_months: string;
   max_period_months: string;
   active: boolean;
+  effective_from: string;   // ISO string bound to <input type="datetime-local">
+  note: string;
   _new?: boolean;
 };
+
+// Format ISO string for <input type="datetime-local"> (yyyy-MM-ddTHH:mm)
+function toLocalInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function fromLocalInput(local: string): string {
+  if (!local) return new Date().toISOString();
+  return new Date(local).toISOString();
+}
+function nowLocal(): string {
+  return toLocalInput(new Date().toISOString());
+}
 
 function rowToDraft(r: RateRow): Draft {
   return {
@@ -52,6 +72,8 @@ function rowToDraft(r: RateRow): Draft {
     min_period_months: String(r.min_period_months),
     max_period_months: String(r.max_period_months),
     active: r.active,
+    effective_from: toLocalInput(r.effective_from),
+    note: r.note ?? "",
   };
 }
 
@@ -66,6 +88,8 @@ function blankDraft(product_id: string): Draft {
     min_period_months: "",
     max_period_months: "",
     active: true,
+    effective_from: nowLocal(),
+    note: "",
     _new: true,
   };
 }
@@ -78,7 +102,9 @@ function draftEqualToRow(d: Draft, r?: RateRow) {
     && d.max_rate === String(r.max_rate)
     && d.min_period_months === String(r.min_period_months)
     && d.max_period_months === String(r.max_period_months)
-    && d.active === r.active;
+    && d.active === r.active
+    && d.note === (r.note ?? "")
+    && d.effective_from === toLocalInput(r.effective_from);
 }
 
 export function LoanAlcoRatesPanel() {
