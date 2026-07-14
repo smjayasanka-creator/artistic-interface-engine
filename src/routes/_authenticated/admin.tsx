@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck } from "lucide-react";
+import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck, LineChart } from "lucide-react";
 import {
   getAdmin,
   getAllLoanProducts,
@@ -37,12 +37,13 @@ import { SavingsChargesTab } from "@/components/mzizi/SavingsChargesTab";
 import { TimeTravelTab } from "@/components/mzizi/TimeTravelTab";
 import { SecurityTypesTab } from "@/components/mzizi/SecurityTypesTab";
 import { DelegationAuthorityTab } from "@/components/mzizi/DelegationAuthorityTab";
+import { AlcoRatesPanel } from "@/components/mzizi/AlcoRatesPanel";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "savings_products" | "savings_charges" | "accounts" | "security_types" | "delegation" | "time_travel";
+type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "accounts" | "security_types" | "delegation" | "time_travel";
 type Mode = "list" | "create" | "edit";
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
@@ -74,6 +75,7 @@ const SECTIONS: Section[] = [
   { id: "fd_products", label: "FD products",       desc: "Fixed deposit tenors & rates",                     icon: PiggyBank, accent: "from-teal-500/15 to-teal-500/0 text-teal-600" },
   { id: "savings_products", label: "Savings products", desc: "Passbook accounts, interest & fees",           icon: Coins,     accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600" },
   { id: "savings_charges",  label: "Savings charges",  desc: "Fees applied to savings products",             icon: Coins,     accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600" },
+  { id: "alco_rates",  label: "ALCO rates",        desc: "Deposit product rate proposals & approvals",       icon: LineChart, accent: "from-orange-500/15 to-orange-500/0 text-orange-600" },
   { id: "accounts",    label: "Chart of accounts", desc: "General ledger accounts & posting rules",          icon: BookOpen,  accent: "from-violet-500/15 to-violet-500/0 text-violet-600" },
   { id: "security_types", label: "Security types",  desc: "Collateral kinds (vehicle, property, gold …)",     icon: Shield,      accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600" },
   { id: "delegation",  label: "Delegation authority", desc: "Approval bands: LTV, amount & rate ranges",     icon: ShieldCheck, accent: "from-rose-500/15 to-rose-500/0 text-rose-600" },
@@ -134,6 +136,7 @@ function Admin() {
       {tab === "fd_products" && <FdProductsTab />}
       {tab === "savings_products" && <SavingsProductsTab />}
       {tab === "savings_charges" && <SavingsChargesTab />}
+      {tab === "alco_rates" && <AlcoRatesPanel />}
       {tab === "accounts" && <AccountsTab />}
       {tab === "security_types" && <SecurityTypesTab />}
       {tab === "delegation" && <DelegationAuthorityTab />}
