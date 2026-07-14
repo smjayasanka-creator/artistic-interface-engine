@@ -972,6 +972,7 @@ function ProductsTab() {
       interest_income_account_id: form.interestAcct || null,
       fee_income_account_id: form.feeAcct || null,
       required_documents: form.requiredDocs.map((s) => s.trim()).filter(Boolean),
+      segment: form.segment,
     };
 
     if (mode === "edit" && editingId) {
