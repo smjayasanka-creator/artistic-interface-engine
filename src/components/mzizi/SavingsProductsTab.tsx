@@ -239,7 +239,6 @@ function ProductModal({
   const glSelect = (
     key:
       | "deposit_liability_account_id"
-      | "fee_income_account_id"
       | "interest_expense_account_id",
   ) => (
     <select
