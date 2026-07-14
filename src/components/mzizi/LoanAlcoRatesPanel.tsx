@@ -280,7 +280,7 @@ export function LoanAlcoRatesPanel() {
   }
 
   function downloadTemplate() {
-    const header = "product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months";
+    const header = "product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months,effective_from";
     const csvRows = (rates as RateRow[] ?? []).map((r) => {
       const sec = r.security_type_id ? activeSecTypes.find((s: any) => s.id === r.security_type_id) : null;
       return [
@@ -291,6 +291,7 @@ export function LoanAlcoRatesPanel() {
         r.max_rate ?? "",
         r.min_period_months ?? "",
         r.max_period_months ?? "",
+        r.effective_from ?? "",
       ].join(",");
     });
     const csvText = [header, ...csvRows].join("\n");
@@ -302,6 +303,21 @@ export function LoanAlcoRatesPanel() {
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  // History drawer state
+  const historyFn = useServerFn(listLoanAlcoRateHistory);
+  const [historyFor, setHistoryFor] = useState<Draft | null>(null);
+  const { data: historyRows, isFetching: historyLoading } = useQuery({
+    queryKey: ["loan-alco", "history", historyFor?.product_id, historyFor?.security_type_id, historyFor?.equipment_vehicle],
+    queryFn: () => historyFn({
+      data: {
+        product_id: historyFor!.product_id,
+        security_type_id: historyFor!.security_type_id || null,
+        equipment_vehicle: historyFor!.equipment_vehicle.trim() || null,
+      },
+    }),
+    enabled: !!historyFor,
+  });
 
   if (isLoading) return <div className="text-sm text-muted-foreground">Loading loan ALCO rates…</div>;
 
