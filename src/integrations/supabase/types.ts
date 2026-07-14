@@ -362,6 +362,8 @@ export type Database = {
           district: string | null
           divisional_secretariat: string | null
           email: string | null
+          external_client_id: string | null
+          external_person_id: string | null
           first_name: string | null
           full_name: string
           gender: string | null
@@ -397,6 +399,8 @@ export type Database = {
           district?: string | null
           divisional_secretariat?: string | null
           email?: string | null
+          external_client_id?: string | null
+          external_person_id?: string | null
           first_name?: string | null
           full_name: string
           gender?: string | null
@@ -432,6 +436,8 @@ export type Database = {
           district?: string | null
           divisional_secretariat?: string | null
           email?: string | null
+          external_client_id?: string | null
+          external_person_id?: string | null
           first_name?: string | null
           full_name?: string
           gender?: string | null

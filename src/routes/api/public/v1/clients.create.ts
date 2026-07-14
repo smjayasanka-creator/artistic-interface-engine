@@ -85,6 +85,46 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
           }
         }
 
+        // Call Instafin first; only persist locally on success.
+        const { instafinCreatePerson, InstafinError } = await import("@/lib/instafin.server");
+        let externalPersonId: string | null = null;
+        let externalClientId: string | null = null;
+        try {
+          const call = await instafinCreatePerson({
+            first_name: parsed.data.first_name,
+            last_name: parsed.data.last_name,
+            phone_country_code: parsed.data.phone_country_code,
+            phone: parsed.data.phone,
+            date_of_birth: parsed.data.date_of_birth,
+            email: parsed.data.email ?? null,
+            address: parsed.data.address,
+            gn_division: parsed.data.gn_division,
+            divisional_secretariat: parsed.data.divisional_secretariat,
+            district: parsed.data.district,
+            province: parsed.data.province,
+          });
+          externalPersonId = (call.result?.ID as string) ?? null;
+          externalClientId = call.result?.clientID != null ? String(call.result.clientID) : null;
+          await supabaseAdmin.from("api_transaction_log").insert({
+            company_id: auth.key.company_id, api_key_id: auth.key.id,
+            channel: "instafin", direction: "outbound",
+            endpoint: "/submit/instafin.CreatePerson", method: "POST",
+            status_code: call.status, reference: externalPersonId,
+            request: call.requestBody as any, response: call.responseBody as any,
+          });
+        } catch (e) {
+          const err = e as InstanceType<typeof InstafinError> | Error;
+          const status = (err as any).status ?? 0;
+          await supabaseAdmin.from("api_transaction_log").insert({
+            company_id: auth.key.company_id, api_key_id: auth.key.id,
+            channel: "instafin", direction: "outbound",
+            endpoint: "/submit/instafin.CreatePerson", method: "POST",
+            status_code: status, response: (err as any).body ?? null,
+            error: err.message,
+          });
+          return errJson({ code: 502, error: "instafin_failed", message: err.message });
+        }
+
         const fullName = `${parsed.data.first_name} ${parsed.data.last_name}`.trim();
         const fullPhone = `${parsed.data.phone_country_code}${parsed.data.phone}`;
         const color = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
@@ -117,7 +157,9 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
             is_introducer: parsed.data.is_introducer ?? false,
             default_commission_pct: parsed.data.default_commission_pct ?? null,
             default_commission_amount: parsed.data.default_commission_amount ?? null,
-          })
+            external_person_id: externalPersonId,
+            external_client_id: externalClientId,
+          } as any)
           .select("id, full_name, phone, national_id, branch_id, status, created_at")
           .single();
 
