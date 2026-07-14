@@ -2247,6 +2247,90 @@ export type Database = {
           },
         ]
       }
+      savings_charge: {
+        Row: {
+          active: boolean
+          amount: number
+          company_id: string
+          created_at: string
+          frequency: Database["public"]["Enums"]["savings_charge_frequency"]
+          id: string
+          income_account_id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          company_id: string
+          created_at?: string
+          frequency?: Database["public"]["Enums"]["savings_charge_frequency"]
+          id?: string
+          income_account_id: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          company_id?: string
+          created_at?: string
+          frequency?: Database["public"]["Enums"]["savings_charge_frequency"]
+          id?: string
+          income_account_id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_charge_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_charge_income_account_id_fkey"
+            columns: ["income_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_charge_product: {
+        Row: {
+          charge_id: string
+          created_at: string
+          product_id: string
+        }
+        Insert: {
+          charge_id: string
+          created_at?: string
+          product_id: string
+        }
+        Update: {
+          charge_id?: string
+          created_at?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_charge_product_charge_id_fkey"
+            columns: ["charge_id"]
+            isOneToOne: false
+            referencedRelation: "savings_charge"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_charge_product_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "savings_product"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       savings_number_seq: {
         Row: {
           company_id: string
@@ -3063,6 +3147,7 @@ export type Database = {
         | "mobile"
         | "api"
         | "other"
+      savings_charge_frequency: "one_time" | "monthly" | "annual"
       savings_txn_type:
         | "deposit"
         | "withdrawal"
@@ -3286,6 +3371,7 @@ export const Constants = {
         "api",
         "other",
       ],
+      savings_charge_frequency: ["one_time", "monthly", "annual"],
       savings_txn_type: [
         "deposit",
         "withdrawal",

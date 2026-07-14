@@ -92,6 +92,104 @@ export const toggleSavingsProduct = createServerFn({ method: "POST" })
   });
 
 
+// ─────────── Charges ───────────
+export const listSavingsCharges = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) return [];
+    const { data: charges, error } = await (supabase as any)
+      .from("savings_charge")
+      .select("id, name, amount, frequency, income_account_id, active, created_at")
+      .eq("company_id", cid)
+      .order("name");
+    if (error) throw new Error(error.message);
+    const ids = (charges ?? []).map((c: any) => c.id);
+    let links: any[] = [];
+    if (ids.length) {
+      const { data: lk } = await (supabase as any)
+        .from("savings_charge_product")
+        .select("charge_id, product_id")
+        .in("charge_id", ids);
+      links = lk ?? [];
+    }
+    const byCharge = new Map<string, string[]>();
+    for (const l of links) {
+      const arr = byCharge.get(l.charge_id) ?? [];
+      arr.push(l.product_id);
+      byCharge.set(l.charge_id, arr);
+    }
+    return (charges ?? []).map((c: any) => ({ ...c, product_ids: byCharge.get(c.id) ?? [] }));
+  });
+
+export const upsertSavingsCharge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      id?: string;
+      name: string;
+      amount: number;
+      frequency: "one_time" | "monthly" | "annual";
+      income_account_id: string;
+      active?: boolean;
+      product_ids: string[];
+    }) => i,
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No company");
+    const row = {
+      id: data.id,
+      company_id: cid,
+      name: data.name,
+      amount: data.amount,
+      frequency: data.frequency,
+      income_account_id: data.income_account_id,
+      active: data.active ?? true,
+    };
+    const { data: out, error } = await (supabase as any)
+      .from("savings_charge")
+      .upsert(row)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+
+    // Reset product links
+    await (supabase as any).from("savings_charge_product").delete().eq("charge_id", out.id);
+    if (data.product_ids.length) {
+      const rows = data.product_ids.map((pid) => ({ charge_id: out.id, product_id: pid }));
+      const { error: linkErr } = await (supabase as any).from("savings_charge_product").insert(rows);
+      if (linkErr) throw new Error(linkErr.message);
+    }
+    return out;
+  });
+
+export const toggleSavingsCharge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; active: boolean }) => i)
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { error } = await (supabase as any)
+      .from("savings_charge")
+      .update({ active: data.active })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteSavingsCharge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string }) => i)
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { error } = await (supabase as any).from("savings_charge").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+
 // ─────────── Accounts ───────────
 export const listSavingsAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
