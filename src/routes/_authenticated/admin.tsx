@@ -37,6 +37,7 @@ import { SavingsChargesTab } from "@/components/mzizi/SavingsChargesTab";
 import { TimeTravelTab } from "@/components/mzizi/TimeTravelTab";
 import { SecurityTypesTab } from "@/components/mzizi/SecurityTypesTab";
 import { DelegationAuthorityTab } from "@/components/mzizi/DelegationAuthorityTab";
+import { AlcoRatesPanel } from "@/components/mzizi/AlcoRatesPanel";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
