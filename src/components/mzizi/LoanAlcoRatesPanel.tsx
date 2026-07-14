@@ -1,13 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Upload, Send } from "lucide-react";
+import { Upload, Send, Plus, Trash2 } from "lucide-react";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
-  FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls,
+  FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls, btnGhostCls,
 } from "@/components/mzizi/FormGrid";
-import { listLoanAlcoRates, upsertLoanAlcoRate } from "@/lib/loan-alco.functions";
+import {
+  listLoanAlcoRates, upsertLoanAlcoRate, deleteLoanAlcoRate,
+} from "@/lib/loan-alco.functions";
 import { getAllLoanProducts } from "@/lib/mzizi.functions";
 import { listSecurityTypes } from "@/lib/security.functions";
 
@@ -24,7 +26,9 @@ type RateRow = {
 };
 
 type Draft = {
-  rate_id?: string;
+  key: string;              // stable client-side key
+  rate_id?: string;         // DB id if existing
+  product_id: string;
   security_type_id: string;
   equipment_vehicle: string;
   min_rate: string;
@@ -32,35 +36,55 @@ type Draft = {
   min_period_months: string;
   max_period_months: string;
   active: boolean;
+  _new?: boolean;
 };
 
-function toDraft(r?: RateRow): Draft {
+function rowToDraft(r: RateRow): Draft {
   return {
-    rate_id: r?.id,
-    security_type_id: r?.security_type_id ?? "",
-    equipment_vehicle: r?.equipment_vehicle ?? "",
-    min_rate: r ? String(r.min_rate) : "",
-    max_rate: r ? String(r.max_rate) : "",
-    min_period_months: r ? String(r.min_period_months) : "",
-    max_period_months: r ? String(r.max_period_months) : "",
-    active: r?.active ?? true,
+    key: r.id,
+    rate_id: r.id,
+    product_id: r.product_id,
+    security_type_id: r.security_type_id ?? "",
+    equipment_vehicle: r.equipment_vehicle ?? "",
+    min_rate: String(r.min_rate),
+    max_rate: String(r.max_rate),
+    min_period_months: String(r.min_period_months),
+    max_period_months: String(r.max_period_months),
+    active: r.active,
   };
 }
 
-function draftEqual(a: Draft, b: Draft) {
-  return a.security_type_id === b.security_type_id
-    && a.equipment_vehicle === b.equipment_vehicle
-    && a.min_rate === b.min_rate
-    && a.max_rate === b.max_rate
-    && a.min_period_months === b.min_period_months
-    && a.max_period_months === b.max_period_months
-    && a.active === b.active;
+function blankDraft(product_id: string): Draft {
+  return {
+    key: `new-${crypto.randomUUID()}`,
+    product_id,
+    security_type_id: "",
+    equipment_vehicle: "",
+    min_rate: "",
+    max_rate: "",
+    min_period_months: "",
+    max_period_months: "",
+    active: true,
+    _new: true,
+  };
+}
+
+function draftEqualToRow(d: Draft, r?: RateRow) {
+  if (!r) return false;
+  return d.security_type_id === (r.security_type_id ?? "")
+    && d.equipment_vehicle === (r.equipment_vehicle ?? "")
+    && d.min_rate === String(r.min_rate)
+    && d.max_rate === String(r.max_rate)
+    && d.min_period_months === String(r.min_period_months)
+    && d.max_period_months === String(r.max_period_months)
+    && d.active === r.active;
 }
 
 export function LoanAlcoRatesPanel() {
   const qc = useQueryClient();
   const listFn = useServerFn(listLoanAlcoRates);
   const upsertFn = useServerFn(upsertLoanAlcoRate);
+  const deleteFn = useServerFn(deleteLoanAlcoRate);
   const productsFn = useServerFn(getAllLoanProducts);
   const secTypesFn = useServerFn(listSecurityTypes);
 
@@ -77,74 +101,122 @@ export function LoanAlcoRatesPanel() {
     [secTypes],
   );
 
-  const rateByProduct = useMemo(() => {
+  const ratesById = useMemo(() => {
     const m = new Map<string, RateRow>();
-    for (const r of (rates ?? []) as RateRow[]) {
-      if (!m.has(r.product_id)) m.set(r.product_id, r);
-    }
+    for (const r of (rates ?? []) as RateRow[]) m.set(r.id, r);
     return m;
   }, [rates]);
 
-  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  // Rows state: initialized from DB, augmented by user-added blank rows.
+  const [rows, setRows] = useState<Draft[]>([]);
+
+  // Sync DB rows into state (preserve local edits + new rows).
+  useEffect(() => {
+    if (!rates) return;
+    setRows((prev) => {
+      const prevById = new Map(prev.filter((r) => r.rate_id).map((r) => [r.rate_id!, r]));
+      const newRows = prev.filter((r) => r._new);
+      const dbRows = (rates as RateRow[]).map((r) => {
+        const existing = prevById.get(r.id);
+        // If user has edited this row, keep their edits; else refresh from DB.
+        if (existing && !draftEqualToRow(existing, r)) return existing;
+        return rowToDraft(r);
+      });
+      // Order: DB rows first (by product, then created order preserved), then new rows.
+      return [...dbRows, ...newRows];
+    });
+  }, [rates]);
+
   const [bulkOpen, setBulkOpen] = useState(false);
   const [csv, setCsv] = useState("");
 
-  const getDraft = (productId: string): Draft => drafts[productId] ?? toDraft(rateByProduct.get(productId));
+  const productName = (id: string) => activeProducts.find((p: any) => p.id === id)?.name ?? "—";
 
-  const changed = useMemo(() => {
-    return activeProducts.flatMap((p: any) => {
-      const cur = drafts[p.id];
-      if (!cur) return [];
-      const base = toDraft(rateByProduct.get(p.id));
-      return draftEqual(cur, base) ? [] : [{ product: p, draft: cur }];
+  // Group rows for display: for each active product, list its rows in order.
+  const grouped = useMemo(() => {
+    return activeProducts.map((p: any) => ({
+      product: p,
+      rows: rows.filter((r) => r.product_id === p.id),
+    }));
+  }, [activeProducts, rows]);
+
+  const changedRows = useMemo(() => {
+    return rows.filter((r) => {
+      if (r._new) {
+        // include new rows only if any field filled
+        return r.min_rate || r.max_rate || r.min_period_months || r.max_period_months
+          || r.security_type_id || r.equipment_vehicle;
+      }
+      return !draftEqualToRow(r, r.rate_id ? ratesById.get(r.rate_id) : undefined);
     });
-  }, [drafts, activeProducts, rateByProduct]);
+  }, [rows, ratesById]);
 
   const save = useMutation({
     mutationFn: async () => {
       const results: string[] = [];
-      for (const { product, draft } of changed) {
-        const minR = Number(draft.min_rate);
-        const maxR = Number(draft.max_rate);
-        const minP = Number(draft.min_period_months);
-        const maxP = Number(draft.max_period_months);
+      for (const d of changedRows) {
+        const minR = Number(d.min_rate);
+        const maxR = Number(d.max_rate);
+        const minP = Number(d.min_period_months);
+        const maxP = Number(d.max_period_months);
+        const label = `${productName(d.product_id)}${d.equipment_vehicle ? ` / ${d.equipment_vehicle}` : ""}`;
         if (![minR, maxR, minP, maxP].every((n) => Number.isFinite(n))) {
-          throw new Error(`${product.name}: rates and periods must be numbers`);
+          throw new Error(`${label}: rates and periods must be numbers`);
         }
-        if (maxR < minR) throw new Error(`${product.name}: max rate must be ≥ min rate`);
-        if (maxP < minP) throw new Error(`${product.name}: max period must be ≥ min period`);
+        if (maxR < minR) throw new Error(`${label}: max rate must be ≥ min rate`);
+        if (maxP < minP) throw new Error(`${label}: max period must be ≥ min period`);
         await upsertFn({
           data: {
-            id: draft.rate_id,
-            product_id: product.id,
-            security_type_id: draft.security_type_id || null,
-            equipment_vehicle: draft.equipment_vehicle.trim() || null,
+            id: d.rate_id,
+            product_id: d.product_id,
+            security_type_id: d.security_type_id || null,
+            equipment_vehicle: d.equipment_vehicle.trim() || null,
             min_rate: minR,
             max_rate: maxR,
             min_period_months: minP,
             max_period_months: maxP,
-            active: draft.active,
+            active: d.active,
           },
         });
-        results.push(product.name);
+        results.push(label);
       }
       return results;
     },
     onSuccess: (res) => {
-      toast.success(`Saved ${res.length} product rate row(s)`);
-      setDrafts({});
+      toast.success(`Saved ${res.length} row(s)`);
       qc.invalidateQueries({ queryKey: ["loan-alco"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const remove = useMutation({
+    mutationFn: async (row: Draft) => {
+      if (row.rate_id) await deleteFn({ data: { id: row.rate_id } });
+      return row.key;
+    },
+    onSuccess: (key) => {
+      setRows((prev) => prev.filter((r) => r.key !== key));
+      qc.invalidateQueries({ queryKey: ["loan-alco"] });
+      toast.success("Row removed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function updateRow(key: string, patch: Partial<Draft>) {
+    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  }
+
+  function addRow(productId: string) {
+    setRows((prev) => [...prev, blankDraft(productId)]);
+  }
 
   function applyBulk() {
     const lines = csv.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     if (lines.length === 0) return toast.error("Empty CSV");
     const byProdName = new Map(activeProducts.map((p: any) => [String(p.name).toLowerCase(), p]));
     const bySecName = new Map(activeSecTypes.map((s: any) => [String(s.name).toLowerCase(), s]));
-    const next: Record<string, Draft> = { ...drafts };
     let ok = 0, skipped = 0;
+    const added: Draft[] = [];
     for (const line of lines) {
       const parts = line.split(/\t|,|;/).map((x) => x.trim());
       const [prodName, secName, equipment, minR, maxR, minP, maxP] = parts;
@@ -152,20 +224,21 @@ export function LoanAlcoRatesPanel() {
       const p: any = byProdName.get(prodName.toLowerCase());
       if (!p) { skipped++; continue; }
       const sec: any = secName ? bySecName.get(secName.toLowerCase()) : null;
-      const existing = rateByProduct.get(p.id);
-      next[p.id] = {
-        rate_id: existing?.id,
+      added.push({
+        key: `new-${crypto.randomUUID()}`,
+        product_id: p.id,
         security_type_id: sec?.id ?? "",
         equipment_vehicle: equipment ?? "",
         min_rate: minR ?? "",
         max_rate: maxR ?? "",
         min_period_months: minP ?? "",
         max_period_months: maxP ?? "",
-        active: existing?.active ?? true,
-      };
+        active: true,
+        _new: true,
+      });
       ok++;
     }
-    setDrafts(next);
+    setRows((prev) => [...prev, ...added]);
     setBulkOpen(false);
     setCsv("");
     toast.success(`Loaded ${ok} row(s)${skipped ? `, skipped ${skipped}` : ""}`);
@@ -173,20 +246,19 @@ export function LoanAlcoRatesPanel() {
 
   function downloadTemplate() {
     const header = "product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months";
-    const rows = activeProducts.map((p: any) => {
-      const r = rateByProduct.get(p.id);
-      const sec = r?.security_type_id ? activeSecTypes.find((s: any) => s.id === r.security_type_id) : null;
+    const csvRows = (rates as RateRow[] ?? []).map((r) => {
+      const sec = r.security_type_id ? activeSecTypes.find((s: any) => s.id === r.security_type_id) : null;
       return [
-        p.name,
+        productName(r.product_id),
         (sec as any)?.name ?? "",
-        r?.equipment_vehicle ?? "",
-        r?.min_rate ?? "",
-        r?.max_rate ?? "",
-        r?.min_period_months ?? "",
-        r?.max_period_months ?? "",
+        r.equipment_vehicle ?? "",
+        r.min_rate ?? "",
+        r.max_rate ?? "",
+        r.min_period_months ?? "",
+        r.max_period_months ?? "",
       ].join(",");
     });
-    const csvText = [header, ...rows].join("\n");
+    const csvText = [header, ...csvRows].join("\n");
     const blob = new Blob([csvText], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -204,13 +276,11 @@ export function LoanAlcoRatesPanel() {
         <div>
           <CardTitle>ALCO rates — Loan products</CardTitle>
           <p className="text-[12px] text-muted-foreground">
-            Interest rate bands per loan product. Optionally scope by security type and equipment/vehicle. Edit inline and save.
+            Interest rate bands per loan product. Add multiple rows per product for different security types or equipment/vehicles.
           </p>
         </div>
         <div className="flex gap-2">
-          <button className={btnSecondaryCls} onClick={downloadTemplate}>
-            Download CSV
-          </button>
+          <button className={btnSecondaryCls} onClick={downloadTemplate}>Download CSV</button>
           <button className={btnSecondaryCls} onClick={() => setBulkOpen((v) => !v)}>
             <Upload size={14} className="mr-1.5" /> Bulk upload
           </button>
@@ -222,13 +292,13 @@ export function LoanAlcoRatesPanel() {
           <div className="text-[12px] font-semibold mb-1">Paste CSV / Excel rows</div>
           <div className="text-[11px] text-muted-foreground mb-2">
             Columns: <code>product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months</code> (header optional).
-            Product name must match exactly. Security type is optional. Copy-paste from Excel works.
+            Each row becomes a new entry — you may repeat the same product for different equipment.
           </div>
           <textarea
             value={csv}
             onChange={(e) => setCsv(e.target.value)}
             rows={6}
-            placeholder={"product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months\nMicro Loan,,,,12,18,3,12"}
+            placeholder={"product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months\nLeasing,Vehicle,Toyota Hilux,12,18,3,60"}
             className={inputCls + " font-mono text-[12px]"}
           />
           <div className="flex justify-end gap-2 mt-2">
@@ -250,58 +320,93 @@ export function LoanAlcoRatesPanel() {
               <th className="text-right px-2 py-2 w-24">Min period</th>
               <th className="text-right px-2 py-2 w-24">Max period</th>
               <th className="text-center px-2 py-2 w-14">Active</th>
-              <th className="text-center px-2 py-2 w-10">Δ</th>
+              <th className="text-center px-2 py-2 w-20">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {activeProducts.map((p: any) => {
-              const d = getDraft(p.id);
-              const isChanged = changed.some((c) => c.product.id === p.id);
-              const upd = (patch: Partial<Draft>) =>
-                setDrafts((prev) => ({ ...prev, [p.id]: { ...getDraft(p.id), ...patch } }));
+            {grouped.map(({ product: p, rows: prodRows }) => {
+              const list = prodRows.length > 0 ? prodRows : [];
               return (
-                <tr key={p.id} className={isChanged ? "bg-amber-500/5" : ""}>
-                  <td className="px-3 py-1.5">
-                    <div className="font-semibold">{p.name}</div>
-                    <div className="text-[11px] text-muted-foreground">{p.segment ?? ""}</div>
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <select className={selectCls + " py-1"} value={d.security_type_id}
-                      onChange={(e) => upd({ security_type_id: e.target.value })}>
-                      <option value="">— Any —</option>
-                      {activeSecTypes.map((s: any) => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input className={inputCls + " py-1"} value={d.equipment_vehicle}
-                      onChange={(e) => upd({ equipment_vehicle: e.target.value })} />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input type="number" step="0.001" min="0" className={inputCls + " text-right font-mono py-1"}
-                      value={d.min_rate} onChange={(e) => upd({ min_rate: e.target.value })} />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input type="number" step="0.001" min="0" className={inputCls + " text-right font-mono py-1"}
-                      value={d.max_rate} onChange={(e) => upd({ max_rate: e.target.value })} />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input type="number" step="1" min="0" className={inputCls + " text-right font-mono py-1"}
-                      value={d.min_period_months} onChange={(e) => upd({ min_period_months: e.target.value })} />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input type="number" step="1" min="0" className={inputCls + " text-right font-mono py-1"}
-                      value={d.max_period_months} onChange={(e) => upd({ max_period_months: e.target.value })} />
-                  </td>
-                  <td className="px-2 py-1.5 text-center">
-                    <input type="checkbox" checked={d.active}
-                      onChange={(e) => upd({ active: e.target.checked })} />
-                  </td>
-                  <td className="px-2 py-1.5 text-center">
-                    {isChanged ? <span className="text-amber-600 font-bold">●</span> : <span className="text-muted-foreground">–</span>}
-                  </td>
-                </tr>
+                <>
+                  {list.map((d, idx) => {
+                    const base = d.rate_id ? ratesById.get(d.rate_id) : undefined;
+                    const isChanged = d._new
+                      ? changedRows.some((c) => c.key === d.key)
+                      : !draftEqualToRow(d, base);
+                    return (
+                      <tr key={d.key} className={isChanged ? "bg-amber-500/5" : ""}>
+                        <td className="px-3 py-1.5">
+                          {idx === 0 ? (
+                            <>
+                              <div className="font-semibold">{p.name}</div>
+                              <div className="text-[11px] text-muted-foreground">{p.segment ?? ""}</div>
+                            </>
+                          ) : (
+                            <div className="text-[11px] text-muted-foreground pl-2">↳ {p.name}</div>
+                          )}
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <select className={selectCls + " py-1"} value={d.security_type_id}
+                            onChange={(e) => updateRow(d.key, { security_type_id: e.target.value })}>
+                            <option value="">— Any —</option>
+                            {activeSecTypes.map((s: any) => (
+                              <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input className={inputCls + " py-1"} value={d.equipment_vehicle}
+                            onChange={(e) => updateRow(d.key, { equipment_vehicle: e.target.value })} />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input type="number" step="0.001" min="0" className={inputCls + " text-right font-mono py-1"}
+                            value={d.min_rate} onChange={(e) => updateRow(d.key, { min_rate: e.target.value })} />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input type="number" step="0.001" min="0" className={inputCls + " text-right font-mono py-1"}
+                            value={d.max_rate} onChange={(e) => updateRow(d.key, { max_rate: e.target.value })} />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input type="number" step="1" min="0" className={inputCls + " text-right font-mono py-1"}
+                            value={d.min_period_months} onChange={(e) => updateRow(d.key, { min_period_months: e.target.value })} />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input type="number" step="1" min="0" className={inputCls + " text-right font-mono py-1"}
+                            value={d.max_period_months} onChange={(e) => updateRow(d.key, { max_period_months: e.target.value })} />
+                        </td>
+                        <td className="px-2 py-1.5 text-center">
+                          <input type="checkbox" checked={d.active}
+                            onChange={(e) => updateRow(d.key, { active: e.target.checked })} />
+                        </td>
+                        <td className="px-2 py-1.5 text-center">
+                          <button
+                            className="text-destructive hover:bg-destructive/10 rounded p-1"
+                            title="Remove row"
+                            onClick={() => {
+                              if (d._new) {
+                                setRows((prev) => prev.filter((r) => r.key !== d.key));
+                              } else if (confirm("Delete this rate row?")) {
+                                remove.mutate(d);
+                              }
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  <tr key={`${p.id}-add`} className="bg-muted/20">
+                    <td className="px-3 py-1" colSpan={9}>
+                      <button
+                        className={btnGhostCls + " h-7 text-[12px]"}
+                        onClick={() => addRow(p.id)}
+                      >
+                        <Plus size={12} className="mr-1" /> Add row for {p.name}
+                      </button>
+                    </td>
+                  </tr>
+                </>
               );
             })}
             {activeProducts.length === 0 && (
@@ -313,11 +418,11 @@ export function LoanAlcoRatesPanel() {
 
       <FormActions align="between">
         <div className="text-[12px] text-muted-foreground">
-          {changed.length === 0 ? "No changes" : `${changed.length} product(s) changed`}
+          {changedRows.length === 0 ? "No changes" : `${changedRows.length} row(s) changed`}
         </div>
         <button
           className={btnPrimaryCls}
-          disabled={changed.length === 0 || save.isPending}
+          disabled={changedRows.length === 0 || save.isPending}
           onClick={() => save.mutate()}
         >
           <Send size={14} className="mr-1.5" />
