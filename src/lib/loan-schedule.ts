@@ -1,5 +1,6 @@
 export type Frequency = "daily" | "weekly" | "biweekly" | "monthly";
 export type InterestMethod = "flat" | "declining_balance";
+export type ScheduleType = "normal" | "structured";
 
 export interface ScheduleRow {
   seq: number;
@@ -8,6 +9,7 @@ export interface ScheduleRow {
   interest: number;
   payment: number;
   balance: number;
+  isManual?: boolean;
 }
 
 export interface ScheduleSummary {
