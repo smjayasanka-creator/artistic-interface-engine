@@ -194,7 +194,6 @@ export function LoanAlcoRatesPanel() {
         if (maxP < minP) throw new Error(`${label}: max period must be ≥ min period`);
         await upsertFn({
           data: {
-            id: d.rate_id,
             product_id: d.product_id,
             security_type_id: d.security_type_id || null,
             equipment_vehicle: d.equipment_vehicle.trim() || null,
@@ -202,6 +201,8 @@ export function LoanAlcoRatesPanel() {
             max_rate: maxR,
             min_period_months: minP,
             max_period_months: maxP,
+            effective_from: fromLocalInput(d.effective_from),
+            note: d.note.trim() || null,
             active: d.active,
           },
         });
