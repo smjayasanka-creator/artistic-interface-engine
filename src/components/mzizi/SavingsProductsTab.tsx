@@ -310,6 +310,18 @@ function ProductModal({
                 ))}
               </select>
             </FormField>
+            <FormField label="Segment" required span={12} hint="Determines which product category this account belongs to">
+              <select
+                className={selectCls}
+                value={v.segment}
+                onChange={(e) => setV({ ...v, segment: e.target.value as Segment })}
+              >
+                {SEGMENTS.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </FormField>
+
 
             <FormField label="Interest rate % p.a." required span={4}>
               <input
