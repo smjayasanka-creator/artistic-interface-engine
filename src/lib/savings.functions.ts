@@ -57,6 +57,10 @@ export const upsertSavingsProduct = createServerFn({ method: "POST" })
       passbook_series_prefix?: string | null;
       dormancy_days?: number;
       active?: boolean;
+      cash_account_id?: string | null;
+      deposit_liability_account_id?: string | null;
+      fee_income_account_id?: string | null;
+      interest_expense_account_id?: string | null;
     }) => i,
   )
   .handler(async ({ context, data }) => {
@@ -72,6 +76,20 @@ export const upsertSavingsProduct = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return out;
   });
+
+export const toggleSavingsProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; active: boolean }) => i)
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { error } = await (supabase as any)
+      .from("savings_product")
+      .update({ active: data.active })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 
 // ─────────── Accounts ───────────
 export const listSavingsAccounts = createServerFn({ method: "GET" })
