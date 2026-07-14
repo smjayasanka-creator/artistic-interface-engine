@@ -68,7 +68,15 @@ const TILES = [
 
 function LoansList() {
   const fn = useServerFn(getLoans);
-  const { data } = useQuery({ queryKey: ["loans"], queryFn: () => fn() });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const { data, isFetching, isPlaceholderData } = useQuery({
+    queryKey: ["loans", page, pageSize],
+    queryFn: () => fn({ data: { page, pageSize } }),
+    placeholderData: keepPreviousData,
+  });
+  const rows = data?.rows ?? [];
+  const totalCount = data?.totalCount ?? 0;
 
   return (
     <div className="animate-fadein space-y-6">
@@ -98,7 +106,10 @@ function LoansList() {
       <div className="flex items-center justify-between pt-2">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Loan portfolio</h2>
-          <p className="text-[12.5px] text-faint mt-0.5">Disbursed loans and repayment status</p>
+          <p className="text-[12.5px] text-faint mt-0.5 flex items-center gap-2">
+            Disbursed loans and repayment status
+            {isFetching && <Loader2 size={12} className="animate-spin" />}
+          </p>
         </div>
         <Link
           to="/loans/new"
@@ -108,12 +119,12 @@ function LoansList() {
           New application
         </Link>
       </div>
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className={cn("bg-card border border-border rounded-xl overflow-hidden", isPlaceholderData && "opacity-60 transition-opacity")}>
         <div className="grid gap-4 text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-b border-border bg-secondary/40"
              style={{ gridTemplateColumns: "1.7fr 1.4fr 1fr 1fr 1.4fr 1fr" }}>
           <div>Borrower</div><div>Product</div><div>Principal</div><div>Outstanding</div><div>Repaid</div><div>Next due</div>
         </div>
-        {(data ?? []).map((l: any) => (
+        {rows.map((l: any) => (
           <Link
             key={l.id}
             to="/clients/$id"
@@ -139,8 +150,16 @@ function LoansList() {
             </div>
           </Link>
         ))}
-        {(data ?? []).length === 0 && <div className="text-center text-faint text-sm py-10">No disbursed loans yet.</div>}
+        {rows.length === 0 && <div className="text-center text-faint text-sm py-10">No disbursed loans yet.</div>}
       </div>
+      <TablePagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
+        label="loans"
+      />
     </div>
   );
 }
