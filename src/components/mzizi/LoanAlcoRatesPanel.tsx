@@ -426,31 +426,139 @@ export function LoanAlcoRatesPanel() {
                           <input type="number" step="1" min="0" className={inputCls + " text-right font-mono py-1"}
                             value={d.max_period_months} onChange={(e) => updateRow(d.key, { max_period_months: e.target.value })} />
                         </td>
+                        <td className="px-2 py-1.5">
+                          <input
+                            type="datetime-local"
+                            className={inputCls + " py-1 text-[11.5px]"}
+                            value={d.effective_from}
+                            onChange={(e) => updateRow(d.key, { effective_from: e.target.value })}
+                            title="When this rate takes effect for new business"
+                          />
+                        </td>
                         <td className="px-2 py-1.5 text-center">
                           <input type="checkbox" checked={d.active}
                             onChange={(e) => updateRow(d.key, { active: e.target.checked })} />
                         </td>
-                        <td className="px-2 py-1.5 text-center">
-                          <button
-                            className="text-destructive hover:bg-destructive/10 rounded p-1"
-                            title="Remove row"
-                            onClick={() => {
-                              if (d._new) {
-                                setRows((prev) => prev.filter((r) => r.key !== d.key));
-                              } else if (confirm("Delete this rate row?")) {
-                                remove.mutate(d);
-                              }
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                        <td className="px-2 py-1.5">
+                          <div className="flex items-center justify-center gap-1">
+                            {!d._new && (
+                              <button
+                                className="text-muted-foreground hover:bg-muted rounded p-1"
+                                title="View version history"
+                                onClick={() => setHistoryFor(d)}
+                              >
+                                <History size={14} />
+                              </button>
+                            )}
+                            <button
+                              className="text-destructive hover:bg-destructive/10 rounded p-1"
+                              title={d._new ? "Remove row" : "Close (retire) this active version"}
+                              onClick={() => {
+                                if (d._new) {
+                                  setRows((prev) => prev.filter((r) => r.key !== d.key));
+                                } else if (confirm("Close (retire) this active rate version? History is preserved.")) {
+                                  remove.mutate(d);
+                                }
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
                   })}
                   <tr key={`${p.id}-add`} className="bg-muted/20">
-                    <td className="px-3 py-1" colSpan={9}>
+                    <td className="px-3 py-1" colSpan={10}>
                       <button
+                        className={btnGhostCls + " h-7 text-[12px]"}
+                        onClick={() => addRow(p.id)}
+                      >
+                        <Plus size={12} className="mr-1" /> Add row for {p.name}
+                      </button>
+                    </td>
+                  </tr>
+                </>
+              );
+            })}
+            {activeProducts.length === 0 && (
+              <tr><td colSpan={10} className="px-3 py-6 text-center text-muted-foreground">No active loan products.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <FormActions align="between">
+        <div className="text-[12px] text-muted-foreground">
+          {changedRows.length === 0
+            ? "No changes — edits create a new version and close the previous one"
+            : `${changedRows.length} row(s) will be versioned`}
+        </div>
+        <button
+          className={btnPrimaryCls}
+          disabled={changedRows.length === 0 || save.isPending}
+          onClick={() => save.mutate()}
+        >
+          <Send size={14} className="mr-1.5" />
+          {save.isPending ? "Saving…" : "Save new version(s)"}
+        </button>
+      </FormActions>
+
+      <Modal open={!!historyFor} onClose={() => setHistoryFor(null)} title="Rate version history" width={720}>
+        {historyFor && (
+          <div>
+            <div className="text-[12px] text-muted-foreground mb-3">
+              <span className="font-semibold text-foreground">{productName(historyFor.product_id)}</span>
+              {historyFor.security_type_id && (
+                <> · {activeSecTypes.find((s: any) => s.id === historyFor.security_type_id)?.name}</>
+              )}
+              {historyFor.equipment_vehicle && <> · {historyFor.equipment_vehicle}</>}
+            </div>
+            {historyLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
+            {!historyLoading && (
+              <div className="overflow-auto rounded-md border border-border max-h-[60vh]">
+                <table className="w-full text-[12px]">
+                  <thead className="bg-muted/40 text-[10.5px] uppercase tracking-wider text-muted-foreground">
+                    <tr>
+                      <th className="text-left px-2 py-1.5">Effective from</th>
+                      <th className="text-left px-2 py-1.5">Effective to</th>
+                      <th className="text-right px-2 py-1.5">Min %</th>
+                      <th className="text-right px-2 py-1.5">Max %</th>
+                      <th className="text-right px-2 py-1.5">Min mo</th>
+                      <th className="text-right px-2 py-1.5">Max mo</th>
+                      <th className="text-left px-2 py-1.5">Note</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {(historyRows ?? []).map((h: any) => (
+                      <tr key={h.id} className={h.effective_to === null ? "bg-emerald-500/5" : ""}>
+                        <td className="px-2 py-1.5 whitespace-nowrap">{new Date(h.effective_from).toLocaleString()}</td>
+                        <td className="px-2 py-1.5 whitespace-nowrap">
+                          {h.effective_to ? new Date(h.effective_to).toLocaleString() : <span className="text-emerald-600 font-medium">Active</span>}
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-mono">{h.min_rate}</td>
+                        <td className="px-2 py-1.5 text-right font-mono">{h.max_rate}</td>
+                        <td className="px-2 py-1.5 text-right font-mono">{h.min_period_months}</td>
+                        <td className="px-2 py-1.5 text-right font-mono">{h.max_period_months}</td>
+                        <td className="px-2 py-1.5 text-muted-foreground">{h.note ?? ""}</td>
+                      </tr>
+                    ))}
+                    {(historyRows ?? []).length === 0 && (
+                      <tr><td colSpan={7} className="px-2 py-4 text-center text-muted-foreground">No history.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="flex justify-end mt-3">
+              <button className={btnSecondaryCls} onClick={() => setHistoryFor(null)}>Close</button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </Card>
+  );
+}
                         className={btnGhostCls + " h-7 text-[12px]"}
                         onClick={() => addRow(p.id)}
                       >
