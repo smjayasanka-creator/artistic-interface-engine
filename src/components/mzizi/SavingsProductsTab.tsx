@@ -128,6 +128,7 @@ export function SavingsProductsTab() {
       >
         <div>Code</div>
         <div>Name</div>
+        <div>Segment</div>
         <div>Ccy</div>
         <div>Interest</div>
         <div>Min opening</div>
