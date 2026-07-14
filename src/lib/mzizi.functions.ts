@@ -968,7 +968,7 @@ export const createClient = createServerFn({ method: "POST" })
         geo_lat: data.geo_lat ?? null,
         geo_lng: data.geo_lng ?? null,
         group_id: data.group_id ?? null,
-        status: "pending_kyc",
+        status: "active",
         avatar_color: color,
         is_introducer: data.is_introducer ?? false,
         default_commission_pct: data.default_commission_pct ?? null,
