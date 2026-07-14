@@ -56,7 +56,6 @@ const EMPTY = {
   passbook_required: false,
   passbook_series_prefix: null as string | null,
   active: true,
-  cash_account_id: null as string | null,
   deposit_liability_account_id: null as string | null,
   fee_income_account_id: null as string | null,
   interest_expense_account_id: null as string | null,
