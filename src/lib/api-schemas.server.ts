@@ -208,6 +208,54 @@ export const CribResponse = z.object({
   report_url: z.string().url(),
 });
 
+// Clients · create
+export const ClientCreateRequest = z.object({
+  first_name: z.string().trim().min(1).max(60),
+  last_name: z.string().trim().min(1).max(60),
+  phone_country_code: z.string().trim().min(1).max(6),
+  phone: z.string().trim().min(6).max(20),
+  national_id: z.string().trim().min(4).max(30),
+  date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  gender: z.enum(["male", "female", "other"]),
+  address: z.string().trim().min(3).max(200),
+  gn_division: z.string().trim().min(1).max(80),
+  divisional_secretariat: z.string().trim().min(1).max(80),
+  district: z.string().trim().min(1).max(80),
+  province: z.string().trim().min(1).max(80),
+  email: z.string().trim().email().max(255).optional(),
+  photo_url: z.string().trim().url().max(500).optional(),
+  geo_lat: z.number().min(-90).max(90).optional(),
+  geo_lng: z.number().min(-180).max(180).optional(),
+  branch_id: z.string().uuid().optional(),
+  group_id: z.string().uuid().optional(),
+  is_introducer: z.boolean().optional(),
+  default_commission_pct: z.number().min(0).max(100).optional(),
+  default_commission_amount: z.number().min(0).optional(),
+  bank_accounts: z
+    .array(
+      z.object({
+        bank_name: z.string().trim().min(1).max(120),
+        branch_name: z.string().trim().max(120).optional(),
+        account_no: z.string().trim().min(1).max(60),
+        account_name: z.string().trim().min(1).max(120),
+        swift_code: z.string().trim().max(30).optional(),
+        is_primary: z.boolean().optional(),
+      }),
+    )
+    .max(10)
+    .optional(),
+});
+export const ClientCreateResponse = z.object({
+  status: z.literal("created"),
+  client_id: z.string().uuid(),
+  full_name: z.string(),
+  phone: z.string(),
+  national_id: z.string(),
+  branch_id: z.string().uuid(),
+  status_code: z.string(),
+  created_at: IsoDateTime,
+});
+
 // Health
 export const HealthResponse = z.object({
   status: z.literal("ok"),

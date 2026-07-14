@@ -27,9 +27,12 @@ const SCOPES: { id: string; label: string; hint: string }[] = [
   { id: "atm", label: "ATM authorization", hint: "ISO-8583 style ATM transaction messages" },
   { id: "internet_banking", label: "Internet Banking", hint: "Customer-facing digital channel" },
   { id: "crib", label: "CRIB credit bureau", hint: "Credit information reporting bureau" },
+  { id: "clients.create", label: "Create clients", hint: "Onboard customers programmatically from an origination channel" },
 ];
 
 const ENDPOINTS = [
+  { channel: "Clients · Create", method: "POST", path: "/api/public/v1/clients/create", scope: "clients.create",
+    desc: "Onboard a new client (KYC record + optional bank accounts). Idempotency key optional but recommended." },
   { channel: "Transactions · Inbound", method: "POST", path: "/api/public/v1/transactions/inbound", scope: "transactions.inbound",
     desc: "Third parties post credits/debits into a customer account. Returns an internal reference for reconciliation." },
   { channel: "Transactions · Outbound", method: "POST", path: "/api/public/v1/transactions/outbound", scope: "transactions.outbound",
