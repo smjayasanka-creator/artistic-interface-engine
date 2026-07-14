@@ -1118,6 +1118,7 @@ function ProductsTab() {
             <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: p.color ?? "#0f766e" }} />
             <span className="truncate">{p.name}</span>
           </div>
+          <div className="text-[11px] text-muted-foreground truncate">{loanSegmentLabel(p.segment ?? "micro")}</div>
           <div className="font-mono text-[11.5px]">{p.annual_rate_pct}%</div>
           <div className="font-mono text-[11px] text-muted-foreground">{p.min_term_months}–{p.max_term_months} mo</div>
           <div className="font-mono text-[11px] text-muted-foreground truncate">
