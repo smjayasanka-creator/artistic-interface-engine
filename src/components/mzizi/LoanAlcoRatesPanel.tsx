@@ -559,36 +559,3 @@ export function LoanAlcoRatesPanel() {
     </Card>
   );
 }
-                        className={btnGhostCls + " h-7 text-[12px]"}
-                        onClick={() => addRow(p.id)}
-                      >
-                        <Plus size={12} className="mr-1" /> Add row for {p.name}
-                      </button>
-                    </td>
-                  </tr>
-                </>
-              );
-            })}
-            {activeProducts.length === 0 && (
-              <tr><td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">No active loan products.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <FormActions align="between">
-        <div className="text-[12px] text-muted-foreground">
-          {changedRows.length === 0 ? "No changes" : `${changedRows.length} row(s) changed`}
-        </div>
-        <button
-          className={btnPrimaryCls}
-          disabled={changedRows.length === 0 || save.isPending}
-          onClick={() => save.mutate()}
-        >
-          <Send size={14} className="mr-1.5" />
-          {save.isPending ? "Saving…" : "Save changes"}
-        </button>
-      </FormActions>
-    </Card>
-  );
-}
