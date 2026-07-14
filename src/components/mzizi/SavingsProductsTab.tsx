@@ -167,7 +167,6 @@ export function SavingsProductsTab() {
                     passbook_required: p.passbook_required,
                     passbook_series_prefix: p.passbook_series_prefix,
                     active: p.active,
-                    cash_account_id: p.cash_account_id,
                     deposit_liability_account_id: p.deposit_liability_account_id,
                     fee_income_account_id: p.fee_income_account_id,
                     interest_expense_account_id: p.interest_expense_account_id,
