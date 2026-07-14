@@ -1090,7 +1090,7 @@ function ProductsTab() {
     );
   }
 
-  const GRID = "1.4fr .55fr .8fr 1fr .8fr .55fr .45fr .4fr";
+  const GRID = "1.2fr .7fr .55fr .75fr .9fr .7fr .55fr .45fr .4fr";
   return (
     <Card padded={false}>
       <ListHeader title="Loan products" count={products?.length ?? 0} onNew={() => setMode("create")} newLabel="New product" />
@@ -1099,6 +1099,7 @@ function ProductsTab() {
         style={{ gridTemplateColumns: GRID }}
       >
         <div>Name</div>
+        <div>Segment</div>
         <div>Rate</div>
         <div>Term</div>
         <div>Principal</div>
