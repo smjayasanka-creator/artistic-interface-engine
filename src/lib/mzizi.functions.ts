@@ -1116,7 +1116,7 @@ export const submitApplication = createServerFn({ method: "POST" })
         schedule_type: data.schedule_type ?? "normal",
         schedule_overrides:
           data.schedule_type === "structured" && data.schedule_overrides
-            ? (data.schedule_overrides as unknown as object)
+            ? (data.schedule_overrides as Record<string, number>)
             : null,
       })
       .select()
