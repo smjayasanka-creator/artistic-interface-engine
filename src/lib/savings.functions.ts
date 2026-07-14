@@ -193,45 +193,21 @@ export const deleteSavingsCharge = createServerFn({ method: "POST" })
 // ─────────── Accounts ───────────
 export const listSavingsAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: {
-    status?: "active" | "dormant" | "frozen" | "closed" | "all";
-    page?: number;
-    pageSize?: number;
-  } = {}) => ({
-    status: i.status,
-    page: Math.max(1, Number(i.page ?? 1)),
-    pageSize: Math.min(200, Math.max(1, Number(i.pageSize ?? 25))),
-  }))
+  .inputValidator((i: { status?: "active" | "dormant" | "frozen" | "closed" | "all" }) => i)
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { data: cid } = await supabase.rpc("current_company_id");
-    if (!cid) return { rows: [], totalCount: 0, totalBalance: 0, activeCount: 0 };
-    const from = (data.page - 1) * data.pageSize;
-    const to = from + data.pageSize - 1;
+    if (!cid) return [];
     let q = (supabase as any)
       .from("savings_account")
       .select(
         "id, account_no, status, balance, available_balance, currency, opened_on, closed_on, external_ref, client:client_id(id, full_name, phone), branch:branch_id(id, name), product:product_id(id, name, code, passbook_required, passbook_series_prefix)",
-        { count: "exact" },
       )
       .eq("company_id", cid)
-      .order("opened_on", { ascending: false })
-      .range(from, to);
+      .order("opened_on", { ascending: false });
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
-    const { data: rows, count } = await q;
-
-    // Portfolio totals (independent of pagination)
-    const { data: totals } = await (supabase as any)
-      .from("savings_account")
-      .select("status, balance")
-      .eq("company_id", cid);
-    const totalBalance = (totals ?? []).reduce(
-      (s: number, r: any) => (r.status === "active" ? s + Number(r.balance ?? 0) : s),
-      0,
-    );
-    const activeCount = (totals ?? []).filter((r: any) => r.status === "active").length;
-
-    return { rows: rows ?? [], totalCount: count ?? 0, totalBalance, activeCount };
+    const { data: rows } = await q;
+    return rows ?? [];
   });
 
 export const createSavingsAccount = createServerFn({ method: "POST" })
