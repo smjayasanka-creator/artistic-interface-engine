@@ -94,6 +94,8 @@ function NewLoan() {
   const [rate, setRate] = useState<number | "">("");
   const [frequency, setFrequency] = useState<Frequency>("monthly");
   const [method, setMethod] = useState<InterestMethod>("flat");
+  const [scheduleType, setScheduleType] = useState<ScheduleType>("normal");
+  const [overrides, setOverrides] = useState<Record<number, number>>({});
   const [purpose, setPurpose] = useState("");
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDoc>>({});
