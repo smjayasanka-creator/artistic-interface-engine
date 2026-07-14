@@ -130,6 +130,7 @@ function Admin() {
       {tab === "staff" && <StaffTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "fd_products" && <FdProductsTab />}
+      {tab === "savings_products" && <SavingsProductsTab />}
       {tab === "accounts" && <AccountsTab />}
       {tab === "security_types" && <SecurityTypesTab />}
       {tab === "delegation" && <DelegationAuthorityTab />}
