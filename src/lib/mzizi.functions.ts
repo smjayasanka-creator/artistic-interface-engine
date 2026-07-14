@@ -1393,6 +1393,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       interest_income_account_id?: string | null;
       fee_income_account_id?: string | null;
       required_documents?: string[];
+      segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
 
       z
@@ -1415,7 +1416,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
           interest_income_account_id: z.string().uuid().nullable().optional(),
           fee_income_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
-
+          segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
         })
         .refine((v) => v.max_term_months >= v.min_term_months, {
           message: "Max term must be >= min term",
@@ -1452,6 +1453,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
         interest_income_account_id: data.interest_income_account_id ?? null,
         fee_income_account_id: data.fee_income_account_id ?? null,
         required_documents: data.required_documents ?? [],
+        segment: data.segment ?? "micro",
       } as never)
 
       .select()
@@ -1498,6 +1500,7 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       interest_income_account_id?: string | null;
       fee_income_account_id?: string | null;
       required_documents?: string[];
+      segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
 
       z
@@ -1520,6 +1523,7 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
           interest_income_account_id: z.string().uuid().nullable().optional(),
           fee_income_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
+          segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
         })
 
         .parse(i),
@@ -1547,6 +1551,7 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
         interest_income_account_id: data.interest_income_account_id ?? null,
         fee_income_account_id: data.fee_income_account_id ?? null,
         required_documents: data.required_documents ?? [],
+        ...(data.segment ? { segment: data.segment } : {}),
       } as never)
       .eq("id", data.id);
 

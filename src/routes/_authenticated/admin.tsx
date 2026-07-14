@@ -45,6 +45,17 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "accounts" | "security_types" | "delegation" | "time_travel";
 type Mode = "list" | "create" | "edit";
+type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
+const LOAN_SEGMENTS: { value: LoanSegment; label: string }[] = [
+  { value: "micro", label: "Micro" },
+  { value: "sme", label: "SME" },
+  { value: "leasing", label: "Leasing" },
+  { value: "housing", label: "Housing" },
+  { value: "society", label: "Society" },
+  { value: "cashback", label: "Cash Back" },
+  { value: "gold", label: "Gold Loan" },
+];
+const loanSegmentLabel = (s: string) => LOAN_SEGMENTS.find((x) => x.value === s)?.label ?? s;
 
 const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
 type StaffRole = (typeof STAFF_ROLES)[number];
@@ -863,6 +874,7 @@ function ProductsTab() {
     interestAcct: "",
     feeAcct: "",
     requiredDocs: [] as string[],
+    segment: "micro" as LoanSegment,
   };
 
   const [form, setForm] = useState(emptyForm);
@@ -927,6 +939,7 @@ function ProductsTab() {
       interestAcct: p.interest_income_account_id ?? "",
       feeAcct: p.fee_income_account_id ?? "",
       requiredDocs: Array.isArray(p.required_documents) ? [...p.required_documents] : [],
+      segment: ((p.segment as LoanSegment) ?? "micro"),
     });
 
     setEditingId(p.id);
@@ -959,6 +972,7 @@ function ProductsTab() {
       interest_income_account_id: form.interestAcct || null,
       fee_income_account_id: form.feeAcct || null,
       required_documents: form.requiredDocs.map((s) => s.trim()).filter(Boolean),
+      segment: form.segment,
     };
 
     if (mode === "edit" && editingId) {
@@ -975,8 +989,15 @@ function ProductsTab() {
         <FormHeader title={isEdit ? "Edit loan product" : "New loan product"} onBack={reset} />
         <form onSubmit={submit} className="flex flex-col gap-4 mt-4 text-[12.5px]">
           <FormGrid>
-            <FormField label="Product name" required span={6}>
+            <FormField label="Product name" required span={4}>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Kilimo Boost" className={inputCls} required />
+            </FormField>
+            <FormField label="Segment" required span={2}>
+              <select value={form.segment} onChange={(e) => setForm({ ...form, segment: e.target.value as LoanSegment })} className={selectCls}>
+                {LOAN_SEGMENTS.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
             </FormField>
             <FormField label="Processing fee (%)" span={2}>
               <input type="number" step="0.01" value={form.processingFee} onChange={(e) => setForm({ ...form, processingFee: e.target.value })} className={inputCls + " font-mono"} />
@@ -1069,7 +1090,7 @@ function ProductsTab() {
     );
   }
 
-  const GRID = "1.4fr .55fr .8fr 1fr .8fr .55fr .45fr .4fr";
+  const GRID = "1.2fr .7fr .55fr .75fr .9fr .7fr .55fr .45fr .4fr";
   return (
     <Card padded={false}>
       <ListHeader title="Loan products" count={products?.length ?? 0} onNew={() => setMode("create")} newLabel="New product" />
@@ -1078,6 +1099,7 @@ function ProductsTab() {
         style={{ gridTemplateColumns: GRID }}
       >
         <div>Name</div>
+        <div>Segment</div>
         <div>Rate</div>
         <div>Term</div>
         <div>Principal</div>
@@ -1096,6 +1118,7 @@ function ProductsTab() {
             <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: p.color ?? "#0f766e" }} />
             <span className="truncate">{p.name}</span>
           </div>
+          <div className="text-[11px] text-muted-foreground truncate">{loanSegmentLabel(p.segment ?? "micro")}</div>
           <div className="font-mono text-[11.5px]">{p.annual_rate_pct}%</div>
           <div className="font-mono text-[11px] text-muted-foreground">{p.min_term_months}–{p.max_term_months} mo</div>
           <div className="font-mono text-[11px] text-muted-foreground truncate">
