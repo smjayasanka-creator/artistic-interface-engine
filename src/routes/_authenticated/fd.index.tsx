@@ -164,7 +164,8 @@ function FdRegister() {
           </select>
           <input type="date" className={inputCls + " w-40"} value={from} onChange={(e) => setFrom(e.target.value)} title="Maturity from" />
           <input type="date" className={inputCls + " w-40"} value={to} onChange={(e) => setTo(e.target.value)} title="Maturity to" />
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex items-center gap-2">
+            {isFetching && <Loader2 size={13} className="animate-spin text-faint" />}
             <button className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-input hover:bg-muted" onClick={exportCsv}>
               <Download size={14} /> Export CSV
             </button>
@@ -174,7 +175,7 @@ function FdRegister() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className={cn("overflow-x-auto", isPlaceholderData && "opacity-60 transition-opacity")}>
           <table className="w-full text-[12.5px]">
             <thead>
               <tr className="text-left text-faint font-semibold border-b border-border">
@@ -190,7 +191,7 @@ function FdRegister() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((d) => (
+              {filtered.map((d: any) => (
                 <tr key={d.id} className="border-b border-border/50 hover:bg-muted/40">
                   <td className="py-2 pr-3 font-mono">
                     <Link to="/fd/$id" params={{ id: d.id }} className="text-primary hover:underline">
@@ -221,6 +222,14 @@ function FdRegister() {
             </tbody>
           </table>
         </div>
+        <TablePagination
+          page={page}
+          pageSize={pageSize}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
+          label="deposits"
+        />
       </Card>
     </div>
 
