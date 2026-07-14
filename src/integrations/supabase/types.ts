@@ -1147,28 +1147,37 @@ export type Database = {
         Row: {
           annual_rate: number
           created_at: string
+          created_by: string | null
           effective_from: string
           effective_to: string | null
           id: string
+          note: string | null
           product_id: string
+          superseded_by: string | null
           tenure_months: number
         }
         Insert: {
           annual_rate: number
           created_at?: string
-          effective_from: string
+          created_by?: string | null
+          effective_from?: string
           effective_to?: string | null
           id?: string
+          note?: string | null
           product_id: string
+          superseded_by?: string | null
           tenure_months: number
         }
         Update: {
           annual_rate?: number
           created_at?: string
+          created_by?: string | null
           effective_from?: string
           effective_to?: string | null
           id?: string
+          note?: string | null
           product_id?: string
+          superseded_by?: string | null
           tenure_months?: number
         }
         Relationships: [
@@ -1177,6 +1186,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "fd_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_rate_tier_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "fd_rate_tier"
             referencedColumns: ["id"]
           },
         ]
@@ -1720,42 +1736,57 @@ export type Database = {
           active: boolean
           company_id: string
           created_at: string
+          created_by: string | null
+          effective_from: string
+          effective_to: string | null
           equipment_vehicle: string | null
           id: string
           max_period_months: number
           max_rate: number
           min_period_months: number
           min_rate: number
+          note: string | null
           product_id: string
           security_type_id: string | null
+          superseded_by: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
           company_id: string
           created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
           equipment_vehicle?: string | null
           id?: string
           max_period_months: number
           max_rate: number
           min_period_months: number
           min_rate: number
+          note?: string | null
           product_id: string
           security_type_id?: string | null
+          superseded_by?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
           company_id?: string
           created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
           equipment_vehicle?: string | null
           id?: string
           max_period_months?: number
           max_rate?: number
           min_period_months?: number
           min_rate?: number
+          note?: string | null
           product_id?: string
           security_type_id?: string | null
+          superseded_by?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1778,6 +1809,13 @@ export type Database = {
             columns: ["security_type_id"]
             isOneToOne: false
             referencedRelation: "security_type"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_alco_rate_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "loan_alco_rate"
             referencedColumns: ["id"]
           },
         ]
@@ -2322,6 +2360,79 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "savings_product"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_alco_rate: {
+        Row: {
+          active: boolean
+          annual_rate: number
+          company_id: string
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          max_balance: number | null
+          min_balance: number
+          note: string | null
+          product_id: string
+          superseded_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          annual_rate: number
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          max_balance?: number | null
+          min_balance?: number
+          note?: string | null
+          product_id: string
+          superseded_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          annual_rate?: number
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          max_balance?: number | null
+          min_balance?: number
+          note?: string | null
+          product_id?: string
+          superseded_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_alco_rate_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_alco_rate_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "savings_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_alco_rate_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "savings_alco_rate"
             referencedColumns: ["id"]
           },
         ]
@@ -3157,6 +3268,43 @@ export type Database = {
       set_cron_job_active: {
         Args: { _active: boolean; _jobid: number }
         Returns: undefined
+      }
+      upsert_fd_rate_tier_version: {
+        Args: {
+          _annual_rate: number
+          _effective_from?: string
+          _note?: string
+          _product_id: string
+          _tenure_months: number
+        }
+        Returns: string
+      }
+      upsert_loan_alco_rate_version: {
+        Args: {
+          _active?: boolean
+          _effective_from?: string
+          _equipment_vehicle: string
+          _max_period_months: number
+          _max_rate: number
+          _min_period_months: number
+          _min_rate: number
+          _note?: string
+          _product_id: string
+          _security_type_id: string
+        }
+        Returns: string
+      }
+      upsert_savings_alco_rate_version: {
+        Args: {
+          _active?: boolean
+          _annual_rate: number
+          _effective_from?: string
+          _max_balance: number
+          _min_balance: number
+          _note?: string
+          _product_id: string
+        }
+        Returns: string
       }
     }
     Enums: {
