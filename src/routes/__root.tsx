@@ -71,6 +71,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Mzizi Core — Microfinance Operations Console" },
       { name: "twitter:description", content: "Loan-officer operations console for microfinance: KYC, group lending, loan origination, collections, and a double-entry ledger." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/21124b89-60e0-4709-a0df-fc59b7dd2d1b/id-preview-f5db7a02--d849c3df-d501-4116-9e99-19a87f7ae45e.lovable.app-1784037927447.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/21124b89-60e0-4709-a0df-fc59b7dd2d1b/id-preview-f5db7a02--d849c3df-d501-4116-9e99-19a87f7ae45e.lovable.app-1784037927447.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
