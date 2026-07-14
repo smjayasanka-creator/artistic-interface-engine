@@ -140,7 +140,12 @@ function NewLoan() {
     setUploadingDoc(doc);
     try {
       const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";
-      const path = `applications/${clientId || "unassigned"}/${productId || "no-product"}/${slugifyDoc(doc)}-${Date.now()}.${ext}`;
+      if (!clientId) {
+        toast.error("Select a client before uploading documents");
+        setUploadingDoc(null);
+        return;
+      }
+      const path = `${clientId}/${productId || "no-product"}/${slugifyDoc(doc)}-${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("loan-documents").upload(path, file, {
         upsert: true,
         contentType: file.type || undefined,
