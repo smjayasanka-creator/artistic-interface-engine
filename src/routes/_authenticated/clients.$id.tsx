@@ -42,7 +42,7 @@ function Client360() {
     queryKey: ["client", id],
     queryFn: () => fn({ data: { id } }),
   });
-  const [tab, setTab] = useState<TabKey>("transactions");
+  const [tab, setTab] = useState<TabKey>("overview");
 
   if (isLoading || !data) {
     return (
