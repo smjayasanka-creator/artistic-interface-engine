@@ -17,16 +17,16 @@ const NAV: NavEntry[] = [
     section: "Workspace",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/transactions", label: "Transaction", icon: ArrowLeftRight },
       { to: "/clients", label: "Clients", icon: Users },
+      { to: "/transactions", label: "Transaction", icon: ArrowLeftRight },
       { to: "/loans", label: "Loans", icon: Wallet },
       { to: "/approvals", label: "Approvals", icon: CheckSquare },
       { to: "/savings", label: "Savings", icon: Landmark },
       { to: "/fd", label: "Deposits", icon: PiggyBank },
-      
+
       { to: "/accounts", label: "Accounts", icon: BookOpen },
       { to: "/reports", label: "Reports", icon: LineChart },
-      
+
       { to: "/workflows", label: "Work flow", icon: Workflow },
       { to: "/api", label: "API", icon: Plug },
       { to: "/audit-log", label: "Audit log", icon: ScrollText },
