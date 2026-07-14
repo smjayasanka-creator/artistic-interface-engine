@@ -37,14 +37,14 @@ export const upsertLoanAlcoRate = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { data: newId, error } = await supabase.rpc("upsert_loan_alco_rate_version", {
       _product_id: data.product_id,
-      _security_type_id: data.security_type_id ?? null,
-      _equipment_vehicle: data.equipment_vehicle ?? null,
+      _security_type_id: (data.security_type_id ?? null) as unknown as string,
+      _equipment_vehicle: (data.equipment_vehicle ?? null) as unknown as string,
       _min_rate: data.min_rate,
       _max_rate: data.max_rate,
       _min_period_months: data.min_period_months,
       _max_period_months: data.max_period_months,
       _effective_from: data.effective_from ?? new Date().toISOString(),
-      _note: data.note ?? null,
+      _note: (data.note ?? null) as unknown as string | undefined,
       _active: data.active ?? true,
     });
     if (error) throw error;
