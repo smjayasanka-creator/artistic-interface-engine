@@ -9,6 +9,7 @@ const SCOPES = [
   "atm",
   "internet_banking",
   "crib",
+  "clients.create",
 ] as const;
 
 async function sha256Hex(input: string): Promise<string> {
