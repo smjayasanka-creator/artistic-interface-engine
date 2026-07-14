@@ -146,10 +146,10 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
           status: "created" as const,
           client_id: created.id,
           full_name: created.full_name,
-          phone: created.phone,
-          national_id: created.national_id,
+          phone: created.phone ?? fullPhone,
+          national_id: created.national_id ?? parsed.data.national_id,
           branch_id: created.branch_id,
-          status_code: created.status,
+          status_code: created.status ?? "active",
           created_at: new Date(created.created_at as any).toISOString(),
         };
 

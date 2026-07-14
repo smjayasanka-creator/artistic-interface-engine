@@ -72,6 +72,7 @@ import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/ap
 import { Route as ApiPublicV1TransactionsInboundRouteImport } from './routes/api/public/v1/transactions.inbound'
 import { Route as ApiPublicV1IbTransactionRouteImport } from './routes/api/public/v1/ib.transaction'
 import { Route as ApiPublicV1CribReportRouteImport } from './routes/api/public/v1/crib.report'
+import { Route as ApiPublicV1ClientsCreateRouteImport } from './routes/api/public/v1/clients.create'
 import { Route as ApiPublicV1CeftTransferRouteImport } from './routes/api/public/v1/ceft.transfer'
 import { Route as ApiPublicV1AtmAuthorizeRouteImport } from './routes/api/public/v1/atm.authorize'
 
@@ -427,6 +428,12 @@ const ApiPublicV1CribReportRoute = ApiPublicV1CribReportRouteImport.update({
   path: '/api/public/v1/crib/report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1ClientsCreateRoute =
+  ApiPublicV1ClientsCreateRouteImport.update({
+    id: '/api/public/v1/clients/create',
+    path: '/api/public/v1/clients/create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1CeftTransferRoute = ApiPublicV1CeftTransferRouteImport.update({
   id: '/api/public/v1/ceft/transfer',
   path: '/api/public/v1/ceft/transfer',
@@ -499,6 +506,7 @@ export interface FileRoutesByFullPath {
   '/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
   '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
   '/api/public/v1/ceft/transfer': typeof ApiPublicV1CeftTransferRoute
+  '/api/public/v1/clients/create': typeof ApiPublicV1ClientsCreateRoute
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
@@ -561,6 +569,7 @@ export interface FileRoutesByTo {
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsIndexRoute
   '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
   '/api/public/v1/ceft/transfer': typeof ApiPublicV1CeftTransferRoute
+  '/api/public/v1/clients/create': typeof ApiPublicV1ClientsCreateRoute
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
@@ -629,6 +638,7 @@ export interface FileRoutesById {
   '/_authenticated/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
   '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
   '/api/public/v1/ceft/transfer': typeof ApiPublicV1CeftTransferRoute
+  '/api/public/v1/clients/create': typeof ApiPublicV1ClientsCreateRoute
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
@@ -697,6 +707,7 @@ export interface FileRouteTypes {
     | '/accounts/payments/'
     | '/api/public/v1/atm/authorize'
     | '/api/public/v1/ceft/transfer'
+    | '/api/public/v1/clients/create'
     | '/api/public/v1/crib/report'
     | '/api/public/v1/ib/transaction'
     | '/api/public/v1/transactions/inbound'
@@ -759,6 +770,7 @@ export interface FileRouteTypes {
     | '/accounts/payments'
     | '/api/public/v1/atm/authorize'
     | '/api/public/v1/ceft/transfer'
+    | '/api/public/v1/clients/create'
     | '/api/public/v1/crib/report'
     | '/api/public/v1/ib/transaction'
     | '/api/public/v1/transactions/inbound'
@@ -826,6 +838,7 @@ export interface FileRouteTypes {
     | '/_authenticated/accounts/payments/'
     | '/api/public/v1/atm/authorize'
     | '/api/public/v1/ceft/transfer'
+    | '/api/public/v1/clients/create'
     | '/api/public/v1/crib/report'
     | '/api/public/v1/ib/transaction'
     | '/api/public/v1/transactions/inbound'
@@ -842,6 +855,7 @@ export interface RootRouteChildren {
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
   ApiPublicV1AtmAuthorizeRoute: typeof ApiPublicV1AtmAuthorizeRoute
   ApiPublicV1CeftTransferRoute: typeof ApiPublicV1CeftTransferRoute
+  ApiPublicV1ClientsCreateRoute: typeof ApiPublicV1ClientsCreateRoute
   ApiPublicV1CribReportRoute: typeof ApiPublicV1CribReportRoute
   ApiPublicV1IbTransactionRoute: typeof ApiPublicV1IbTransactionRoute
   ApiPublicV1TransactionsInboundRoute: typeof ApiPublicV1TransactionsInboundRoute
@@ -1291,6 +1305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1CribReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/clients/create': {
+      id: '/api/public/v1/clients/create'
+      path: '/api/public/v1/clients/create'
+      fullPath: '/api/public/v1/clients/create'
+      preLoaderRoute: typeof ApiPublicV1ClientsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/ceft/transfer': {
       id: '/api/public/v1/ceft/transfer'
       path: '/api/public/v1/ceft/transfer'
@@ -1504,6 +1525,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
   ApiPublicV1AtmAuthorizeRoute: ApiPublicV1AtmAuthorizeRoute,
   ApiPublicV1CeftTransferRoute: ApiPublicV1CeftTransferRoute,
+  ApiPublicV1ClientsCreateRoute: ApiPublicV1ClientsCreateRoute,
   ApiPublicV1CribReportRoute: ApiPublicV1CribReportRoute,
   ApiPublicV1IbTransactionRoute: ApiPublicV1IbTransactionRoute,
   ApiPublicV1TransactionsInboundRoute: ApiPublicV1TransactionsInboundRoute,
