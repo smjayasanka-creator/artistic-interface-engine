@@ -30,6 +30,14 @@ const CHANNELS = [
   { v: "other", l: "Other" },
 ];
 
+const SEGMENTS = [
+  { value: "normal", label: "Normal Savings" },
+  { value: "minor", label: "Minor Savings" },
+  { value: "senior", label: "Senior Savings" },
+  { value: "fixed", label: "Fixed Savings" },
+  { value: "transaction", label: "Transaction Account" },
+] as const;
+
 function NewSavings() {
   const navigate = useNavigate();
   const clientFn = useServerFn(getClients);
@@ -50,6 +58,7 @@ function NewSavings() {
     queryFn: () => prodFn(),
   });
 
+  const [segment, setSegment] = useState<string>("normal");
   const [clientId, setClientId] = useState("");
   const [branchId, setBranchId] = useState("");
   const [productId, setProductId] = useState("");
@@ -58,6 +67,10 @@ function NewSavings() {
   const [externalRef, setExternalRef] = useState("");
   const [narration, setNarration] = useState("");
 
+  const filteredProducts = useMemo(
+    () => (products ?? []).filter((p: any) => p.active !== false && (p.segment ?? "normal") === segment),
+    [products, segment],
+  );
   const product = useMemo(
     () => (products ?? []).find((p: any) => p.id === productId),
     [products, productId],
@@ -116,20 +129,38 @@ function NewSavings() {
               ))}
             </select>
           </FormField>
-          <FormField label="Savings Product" required span={3}>
+          <FormField label="Segment" required span={3}>
+            <select
+              className={selectCls}
+              value={segment}
+              onChange={(e) => {
+                setSegment(e.target.value);
+                setProductId("");
+              }}
+            >
+              {SEGMENTS.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField
+            label="Savings Product"
+            required
+            span={3}
+            hint={filteredProducts.length === 0 ? "No active products in this segment" : undefined}
+          >
             <select
               className={selectCls}
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
+              disabled={filteredProducts.length === 0}
             >
               <option value="">Select product…</option>
-              {(products ?? [])
-                .filter((p: any) => p.active !== false)
-                .map((p: any) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.interest_rate_pct}% p.a.)
-                  </option>
-                ))}
+              {filteredProducts.map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.interest_rate_pct}% p.a.)
+                </option>
+              ))}
             </select>
           </FormField>
 

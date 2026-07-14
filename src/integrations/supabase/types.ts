@@ -2294,6 +2294,7 @@ export type Database = {
           opening_fee: number
           passbook_required: boolean
           passbook_series_prefix: string | null
+          segment: string
           updated_at: string
         }
         Insert: {
@@ -2316,6 +2317,7 @@ export type Database = {
           opening_fee?: number
           passbook_required?: boolean
           passbook_series_prefix?: string | null
+          segment?: string
           updated_at?: string
         }
         Update: {
@@ -2338,6 +2340,7 @@ export type Database = {
           opening_fee?: number
           passbook_required?: boolean
           passbook_series_prefix?: string | null
+          segment?: string
           updated_at?: string
         }
         Relationships: [
