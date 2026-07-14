@@ -1629,6 +1629,8 @@ export type Database = {
           principal: number
           product_id: string
           purpose: string | null
+          schedule_overrides: Json | null
+          schedule_type: string
           status: Database["public"]["Enums"]["loan_status"]
           submitted_at: string | null
           term_months: number
@@ -1648,6 +1650,8 @@ export type Database = {
           principal: number
           product_id: string
           purpose?: string | null
+          schedule_overrides?: Json | null
+          schedule_type?: string
           status?: Database["public"]["Enums"]["loan_status"]
           submitted_at?: string | null
           term_months: number
@@ -1667,6 +1671,8 @@ export type Database = {
           principal?: number
           product_id?: string
           purpose?: string | null
+          schedule_overrides?: Json | null
+          schedule_type?: string
           status?: Database["public"]["Enums"]["loan_status"]
           submitted_at?: string | null
           term_months?: number
@@ -1717,6 +1723,7 @@ export type Database = {
           id: string
           interest_due: number
           interest_paid: number
+          is_manual: boolean
           loan_id: string
           principal_due: number
           principal_paid: number
@@ -1730,6 +1737,7 @@ export type Database = {
           id?: string
           interest_due?: number
           interest_paid?: number
+          is_manual?: boolean
           loan_id: string
           principal_due?: number
           principal_paid?: number
@@ -1743,6 +1751,7 @@ export type Database = {
           id?: string
           interest_due?: number
           interest_paid?: number
+          is_manual?: boolean
           loan_id?: string
           principal_due?: number
           principal_paid?: number

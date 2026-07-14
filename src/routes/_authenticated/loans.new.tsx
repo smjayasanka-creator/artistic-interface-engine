@@ -19,7 +19,7 @@ import {
 import { money, shortDate, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-import { generateSchedule, FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
+import { generateSchedule, generateStructuredSchedule, FREQ_META, type Frequency, type InterestMethod, type ScheduleType } from "@/lib/loan-schedule";
 
 type UploadedDoc = { path: string; name: string; size: number };
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -94,6 +94,8 @@ function NewLoan() {
   const [rate, setRate] = useState<number | "">("");
   const [frequency, setFrequency] = useState<Frequency>("monthly");
   const [method, setMethod] = useState<InterestMethod>("flat");
+  const [scheduleType, setScheduleType] = useState<ScheduleType>("normal");
+  const [overrides, setOverrides] = useState<Record<number, number>>({});
   const [purpose, setPurpose] = useState("");
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDoc>>({});
@@ -197,6 +199,16 @@ function NewLoan() {
 
   const schedule = useMemo(() => {
     if (!principalNum || !rateNum || !term) return null;
+    if (scheduleType === "structured") {
+      return generateStructuredSchedule({
+        principal: principalNum,
+        annualRatePct: rateNum,
+        termMonths: term,
+        frequency,
+        method,
+        overrides,
+      });
+    }
     return generateSchedule({
       principal: principalNum,
       annualRatePct: rateNum,
@@ -204,7 +216,7 @@ function NewLoan() {
       frequency,
       method,
     });
-  }, [principalNum, rateNum, term, frequency, method]);
+  }, [principalNum, rateNum, term, frequency, method, scheduleType, overrides]);
 
   const termOptions = useMemo(() => {
     const lo = product?.min_term_months ?? 1;
@@ -404,9 +416,42 @@ function NewLoan() {
                   </select>
                 </FormField>
 
+                <FormField label="Schedule type" span={6} hint="Structured lets you set specific rentals; the rest auto-amortize.">
+                  <select
+                    value={scheduleType}
+                    onChange={(e) => {
+                      setScheduleType(e.target.value as ScheduleType);
+                      if (e.target.value === "normal") setOverrides({});
+                    }}
+                    className={selectCls}
+                  >
+                    <option value="normal">Normal (equal instalments)</option>
+                    <option value="structured">Structured (manual rentals)</option>
+                  </select>
+                </FormField>
+                <FormField label="Manual rows" span={6}>
+                  <input
+                    value={
+                      scheduleType === "structured"
+                        ? `${Object.keys(overrides).length} overridden`
+                        : "—"
+                    }
+                    readOnly
+                    className={readOnlyCls}
+                  />
+                </FormField>
+
                 {outOfRange && (
                   <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2">
                     Values are outside the product's configured range.
+                  </div>
+                )}
+
+                {schedule && (schedule as any).warnings?.length > 0 && (
+                  <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2 space-y-0.5">
+                    {(schedule as any).warnings.map((w: string, i: number) => (
+                      <div key={i}>• {w}</div>
+                    ))}
                   </div>
                 )}
 
@@ -422,13 +467,24 @@ function NewLoan() {
 
               {schedule && (
                 <div className="mt-2">
-                  <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">
-                    Repayment schedule
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
+                      Repayment schedule {scheduleType === "structured" && <span className="ml-2 text-primary normal-case">· editable</span>}
+                    </div>
+                    {scheduleType === "structured" && Object.keys(overrides).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setOverrides({})}
+                        className="text-[11px] text-muted-foreground hover:text-foreground underline"
+                      >
+                        Clear all overrides
+                      </button>
+                    )}
                   </div>
                   <div className="border border-border rounded-lg overflow-hidden max-h-96 overflow-y-auto">
                     <div
                       className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-2 px-3 border-b border-border bg-secondary/40 sticky top-0"
-                      style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1fr 1fr" }}
+                      style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1.2fr 1fr 70px" }}
                     >
                       <div>#</div>
                       <div>Due</div>
@@ -436,21 +492,80 @@ function NewLoan() {
                       <div>Interest</div>
                       <div>Payment</div>
                       <div>Balance</div>
+                      <div>Type</div>
                     </div>
-                    {schedule.rows.map((r) => (
-                      <div
-                        key={r.seq}
-                        className="grid items-center text-[12px] py-1.5 px-3 border-b border-row-divider last:border-b-0"
-                        style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1fr 1fr" }}
-                      >
-                        <div className="font-mono text-muted-foreground">{r.seq}</div>
-                        <div>{shortDate(r.dueDate)}</div>
-                        <div className="font-mono">{money(r.principal, true)}</div>
-                        <div className="font-mono">{money(r.interest, true)}</div>
-                        <div className="font-mono font-semibold">{money(r.payment, true)}</div>
-                        <div className="font-mono text-muted-foreground">{money(r.balance, true)}</div>
-                      </div>
-                    ))}
+                    {schedule.rows.map((r) => {
+                      const editable = scheduleType === "structured";
+                      const isManual = !!r.isManual;
+                      return (
+                        <div
+                          key={r.seq}
+                          className={cn(
+                            "grid items-center text-[12px] py-1.5 px-3 border-b border-row-divider last:border-b-0",
+                            isManual && "bg-primary/5",
+                          )}
+                          style={{ gridTemplateColumns: "40px 1.2fr 1fr 1fr 1.2fr 1fr 70px" }}
+                        >
+                          <div className="font-mono text-muted-foreground">{r.seq}</div>
+                          <div>{shortDate(r.dueDate)}</div>
+                          <div className="font-mono">{money(r.principal, true)}</div>
+                          <div className="font-mono">{money(r.interest, true)}</div>
+                          <div className="font-mono font-semibold">
+                            {editable ? (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={overrides[r.seq] ?? ""}
+                                  placeholder={r.payment.toFixed(2)}
+                                  onChange={(e) => {
+                                    const v = e.target.value;
+                                    setOverrides((prev) => {
+                                      const next = { ...prev };
+                                      if (v === "") delete next[r.seq];
+                                      else next[r.seq] = Number(v);
+                                      return next;
+                                    });
+                                  }}
+                                  className="w-full bg-transparent border border-border rounded px-2 py-0.5 font-mono text-right focus:border-primary outline-none"
+                                />
+                                {overrides[r.seq] !== undefined && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setOverrides((prev) => {
+                                        const next = { ...prev };
+                                        delete next[r.seq];
+                                        return next;
+                                      })
+                                    }
+                                    className="text-muted-foreground hover:text-foreground text-[11px] px-1"
+                                    title="Clear override"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              money(r.payment, true)
+                            )}
+                          </div>
+                          <div className="font-mono text-muted-foreground">{money(r.balance, true)}</div>
+                          <div>
+                            <span
+                              className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded-full border",
+                                isManual
+                                  ? "border-primary/40 bg-primary/10 text-primary"
+                                  : "border-border text-muted-foreground",
+                              )}
+                            >
+                              {isManual ? "Manual" : "Auto"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -622,6 +737,13 @@ function NewLoan() {
                         purpose: purpose || undefined,
                         annual_rate_pct: rateNum,
                         frequency,
+                        schedule_type: scheduleType,
+                        schedule_overrides:
+                          scheduleType === "structured"
+                            ? Object.fromEntries(
+                                Object.entries(overrides).map(([k, v]) => [String(k), Number(v)]),
+                              )
+                            : undefined,
                       },
                     })
                   }
