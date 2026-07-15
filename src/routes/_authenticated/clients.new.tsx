@@ -349,6 +349,7 @@ function NewClientPage() {
         {TABS.map((t) => {
           const active = tab === t.key;
           const showDocBadge = t.key === "documents" && !docsSatisfied;
+          const showRiskBadge = t.key === "risk" && !riskSatisfied;
           return (
             <button
               key={t.key}
@@ -368,6 +369,16 @@ function NewClientPage() {
                 </span>
               )}
               {t.key === "documents" && docsSatisfied && (
+                <span className="text-[10px] rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5">
+                  ready
+                </span>
+              )}
+              {showRiskBadge && (
+                <span className="text-[10px] rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 px-1.5 py-0.5">
+                  {riskMissing.length || "…"} pending
+                </span>
+              )}
+              {t.key === "risk" && riskSatisfied && (
                 <span className="text-[10px] rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5">
                   ready
                 </span>
