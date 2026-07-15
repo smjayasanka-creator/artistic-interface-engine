@@ -606,6 +606,16 @@ function NewClientPage() {
           </>
         )}
 
+        {tab === "screening" && (
+          <CustomerScreeningTab
+            firstName={form.first_name}
+            lastName={form.last_name}
+            nationalId={form.national_id}
+            result={screening}
+            onResult={setScreening}
+          />
+        )}
+
         {tab === "risk" && (
           <Card className="p-6">
             <h2 className="text-sm font-semibold mb-1 text-secondary-foreground uppercase tracking-wider">Initial risk profile</h2>
