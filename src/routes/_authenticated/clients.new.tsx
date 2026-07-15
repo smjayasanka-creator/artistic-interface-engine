@@ -935,7 +935,7 @@ function ScreeningResultCard({
   const Icon = tierMeta.Icon;
 
   return (
-    <Card className="p-6">
+    <div className="mt-6 border-t border-border pt-5">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
           <h2 className="text-sm font-semibold text-secondary-foreground uppercase tracking-wider">
