@@ -138,6 +138,15 @@ function NewClientPage() {
   const [riskAnswers, setRiskAnswers] = useState<RiskAnswer[]>([]);
   const saveRiskFn = useServerFn(saveClientRiskAssessment);
 
+  // Customer screening
+  const [screening, setScreening] = useState<ScreeningResult | null>(null);
+  const screeningDone = screening != null;
+  const screeningHasHit =
+    screening != null &&
+    (screening.direct_matches.length > 0 || screening.fuzzy_matches.length > 0);
+
+
+
   const errors = useMemo(() => {
     const r = clientSchema.safeParse(form);
     if (r.success) return {} as Partial<Record<FieldKey, string>>;
