@@ -1344,6 +1344,7 @@ export type Database = {
           created_by: string | null
           deposit_id: string
           id: string
+          idempotency_key: string | null
           reference: string | null
           txn_date: string
           type: Database["public"]["Enums"]["fd_txn_type"]
@@ -1354,6 +1355,7 @@ export type Database = {
           created_by?: string | null
           deposit_id: string
           id?: string
+          idempotency_key?: string | null
           reference?: string | null
           txn_date: string
           type: Database["public"]["Enums"]["fd_txn_type"]
@@ -1364,6 +1366,7 @@ export type Database = {
           created_by?: string | null
           deposit_id?: string
           id?: string
+          idempotency_key?: string | null
           reference?: string | null
           txn_date?: string
           type?: Database["public"]["Enums"]["fd_txn_type"]
@@ -1392,6 +1395,7 @@ export type Database = {
           created_by: string | null
           dispatch_option: Database["public"]["Enums"]["fd_dispatch_option"]
           id: string
+          idempotency_key: string | null
           interest_payment_mode: Database["public"]["Enums"]["fd_interest_payment_mode"]
           interest_savings_account_id: string | null
           introducer_commission_amount: number | null
@@ -1428,6 +1432,7 @@ export type Database = {
           created_by?: string | null
           dispatch_option?: Database["public"]["Enums"]["fd_dispatch_option"]
           id?: string
+          idempotency_key?: string | null
           interest_payment_mode?: Database["public"]["Enums"]["fd_interest_payment_mode"]
           interest_savings_account_id?: string | null
           introducer_commission_amount?: number | null
@@ -1464,6 +1469,7 @@ export type Database = {
           created_by?: string | null
           dispatch_option?: Database["public"]["Enums"]["fd_dispatch_option"]
           id?: string
+          idempotency_key?: string | null
           interest_payment_mode?: Database["public"]["Enums"]["fd_interest_payment_mode"]
           interest_savings_account_id?: string | null
           introducer_commission_amount?: number | null
@@ -1781,6 +1787,7 @@ export type Database = {
           disbursed_at: string | null
           frequency: Database["public"]["Enums"]["repayment_frequency"]
           id: string
+          idempotency_key: string | null
           officer_id: string | null
           principal: number
           product_id: string
@@ -1802,6 +1809,7 @@ export type Database = {
           disbursed_at?: string | null
           frequency?: Database["public"]["Enums"]["repayment_frequency"]
           id?: string
+          idempotency_key?: string | null
           officer_id?: string | null
           principal: number
           product_id: string
@@ -1823,6 +1831,7 @@ export type Database = {
           disbursed_at?: string | null
           frequency?: Database["public"]["Enums"]["repayment_frequency"]
           id?: string
+          idempotency_key?: string | null
           officer_id?: string | null
           principal?: number
           product_id?: string
@@ -2366,6 +2375,7 @@ export type Database = {
           channel: Database["public"]["Enums"]["payment_channel"]
           entry_id: string
           id: string
+          idempotency_key: string | null
           loan_id: string
           received_at: string
           received_by: string | null
@@ -2375,6 +2385,7 @@ export type Database = {
           channel: Database["public"]["Enums"]["payment_channel"]
           entry_id: string
           id?: string
+          idempotency_key?: string | null
           loan_id: string
           received_at?: string
           received_by?: string | null
@@ -2384,6 +2395,7 @@ export type Database = {
           channel?: Database["public"]["Enums"]["payment_channel"]
           entry_id?: string
           id?: string
+          idempotency_key?: string | null
           loan_id?: string
           received_at?: string
           received_by?: string | null
