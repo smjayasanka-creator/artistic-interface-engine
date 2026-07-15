@@ -17,6 +17,7 @@ type TabKey =
   | "balance"
   | "trial"
   | "ledger"
+  | "recon"
   | "portfolio"
   | "customer";
 
@@ -26,6 +27,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "balance", label: "Balance Sheet" },
   { key: "trial", label: "Trial Balance" },
   { key: "ledger", label: "Ledger" },
+  { key: "recon", label: "Reconciliation" },
   { key: "portfolio", label: "Portfolio" },
   { key: "customer", label: "Customer" },
 ];
