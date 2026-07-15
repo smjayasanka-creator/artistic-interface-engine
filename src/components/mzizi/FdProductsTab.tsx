@@ -57,6 +57,8 @@ const EMPTY = {
   name: "",
   min_amount: 10000,
   max_amount: null as number | null,
+  min_tenure_months: 3,
+  max_tenure_months: 60,
   allow_monthly: true,
   allow_at_maturity: true,
   penalty_type: "rate_reduction" as PenaltyType,
