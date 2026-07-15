@@ -7,6 +7,8 @@ import { z } from "zod";
 import { createClient } from "@/lib/mzizi.functions";
 import { getRiskScheme, saveClientRiskAssessment } from "@/lib/risk.functions";
 import { RiskAssessmentForm, applicableFactors, type RiskAnswer } from "@/components/mzizi/RiskAssessmentForm";
+import { CustomerScreeningTab } from "@/components/mzizi/CustomerScreeningTab";
+import type { ScreeningResult } from "@/lib/screening.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/mzizi/Card";
 import { cn } from "@/lib/utils";
