@@ -280,6 +280,11 @@ function NewClientPage() {
       setTab("documents");
       return;
     }
+    if (!riskSatisfied) {
+      toast.error(`Risk profile incomplete: ${riskMissing.length} factor(s) pending`);
+      setTab("risk");
+      return;
+    }
     post.mutate(
       {
         data: {
