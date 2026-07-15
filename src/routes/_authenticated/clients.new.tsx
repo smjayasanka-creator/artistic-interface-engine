@@ -355,8 +355,38 @@ function NewClientPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitted(true);
+    // Core zod fields (Personal details) live on the Screening tab
+    const screeningFields: FieldKey[] = ["first_name", "last_name", "national_id", "date_of_birth", "gender", "phone_country_code", "phone", "email"];
+    const appFields: FieldKey[] = ["address", "gn_division", "divisional_secretariat", "district", "province"];
+    const hasScreeningErr = screeningFields.some((k) => errors[k]);
+    const hasAppErr = appFields.some((k) => errors[k]);
     if (!isValid) {
       toast.error("Please fix the highlighted fields");
+      setTab(hasScreeningErr ? "screening" : hasAppErr ? "application" : "screening");
+      return;
+    }
+    if (!isAddrComplete(permanentAddr)) {
+      toast.error("Permanent address is required");
+      setTab("application");
+      return;
+    }
+    if (!mailingSameAsPermanent && !isAddrComplete(mailingAddr)) {
+      toast.error("Mailing address is required");
+      setTab("application");
+      return;
+    }
+    if (!maritalStatus) {
+      toast.error("Marital status is required");
+      setTab("application");
+      return;
+    }
+    if (maritalStatus === "married" && !spouseName.trim()) {
+      toast.error("Spouse name is required");
+      setTab("application");
+      return;
+    }
+    if (!nationality.trim()) {
+      toast.error("Nationality is required");
       setTab("application");
       return;
     }
