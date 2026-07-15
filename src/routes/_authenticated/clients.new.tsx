@@ -36,13 +36,22 @@ export const Route = createFileRoute("/_authenticated/clients/new")({
 });
 
 type Gender = "male" | "female" | "other";
-type TabKey = "application" | "risk" | "documents";
+type MaritalStatus = "" | "single" | "married" | "other";
+type TabKey = "screening" | "application" | "risk" | "documents";
 
 const TABS: { key: TabKey; label: string }[] = [
+  { key: "screening", label: "Screening" },
   { key: "application", label: "Application" },
   { key: "risk", label: "Risk profile" },
   { key: "documents", label: "Documents" },
 ];
+
+type AddressBlock = { building_no: string; street1: string; street2: string; town: string };
+const EMPTY_ADDR: AddressBlock = { building_no: "", street1: "", street2: "", town: "" };
+const isAddrComplete = (a: AddressBlock) =>
+  a.building_no.trim() !== "" && a.street1.trim() !== "" && a.town.trim() !== "";
+const fmtAddr = (a: AddressBlock) =>
+  [a.building_no, a.street1, a.street2, a.town].map((s) => s.trim()).filter(Boolean).join(", ");
 
 const REQUIRED_DOCS: { key: "nic" | "billing"; label: string; hint: string }[] = [
   { key: "nic", label: "NIC copy", hint: "Front and back of national ID (JPG, PNG or PDF)" },
@@ -101,7 +110,17 @@ function NewClientPage() {
   const createFn = useServerFn(createClient);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  const [tab, setTab] = useState<TabKey>("application");
+  const [tab, setTab] = useState<TabKey>("screening");
+
+  // New profile fields (UI-only for now; not persisted to backend)
+  const [permanentAddr, setPermanentAddr] = useState<AddressBlock>({ ...EMPTY_ADDR });
+  const [mailingAddr, setMailingAddr] = useState<AddressBlock>({ ...EMPTY_ADDR });
+  const [mailingSameAsPermanent, setMailingSameAsPermanent] = useState(true);
+  const [maritalStatus, setMaritalStatus] = useState<MaritalStatus>("");
+  const [spouseName, setSpouseName] = useState("");
+  const [spouseEmployer, setSpouseEmployer] = useState("");
+  const [dependents, setDependents] = useState<number | "">("");
+  const [nationality, setNationality] = useState("Sri Lankan");
 
   const [form, setForm] = useState<FormState>({
     first_name: "",
@@ -336,8 +355,38 @@ function NewClientPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitted(true);
+    // Core zod fields (Personal details) live on the Screening tab
+    const screeningFields: FieldKey[] = ["first_name", "last_name", "national_id", "date_of_birth", "gender", "phone_country_code", "phone", "email"];
+    const appFields: FieldKey[] = ["address", "gn_division", "divisional_secretariat", "district", "province"];
+    const hasScreeningErr = screeningFields.some((k) => errors[k]);
+    const hasAppErr = appFields.some((k) => errors[k]);
     if (!isValid) {
       toast.error("Please fix the highlighted fields");
+      setTab(hasScreeningErr ? "screening" : hasAppErr ? "application" : "screening");
+      return;
+    }
+    if (!isAddrComplete(permanentAddr)) {
+      toast.error("Permanent address is required");
+      setTab("application");
+      return;
+    }
+    if (!mailingSameAsPermanent && !isAddrComplete(mailingAddr)) {
+      toast.error("Mailing address is required");
+      setTab("application");
+      return;
+    }
+    if (!maritalStatus) {
+      toast.error("Marital status is required");
+      setTab("application");
+      return;
+    }
+    if (maritalStatus === "married" && !spouseName.trim()) {
+      toast.error("Spouse name is required");
+      setTab("application");
+      return;
+    }
+    if (!nationality.trim()) {
+      toast.error("Nationality is required");
       setTab("application");
       return;
     }
@@ -455,7 +504,7 @@ function NewClientPage() {
       </div>
 
       <form onSubmit={submit} noValidate className="flex flex-col gap-5">
-        {tab === "application" && (
+        {tab === "screening" && (
           <>
             <Card className="p-6">
               <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Personal details</h2>
@@ -537,10 +586,97 @@ function NewClientPage() {
                 approvalInstance={approvalInstance}
               />
             )}
+          </>
+        )}
 
+        {tab === "application" && (
+          <>
+            <Card className="p-6">
+              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Personal profile</h2>
+              <FormGrid>
+                <FormField label="Nationality" required span={4}>
+                  <input value={nationality} onChange={(e) => setNationality(e.target.value)} className={inputCls} maxLength={60} />
+                </FormField>
+                <FormField label="Marital status" required span={4}>
+                  <select value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value as MaritalStatus)} className={inputCls}>
+                    <option value="">Select…</option>
+                    <option value="single">Single</option>
+                    <option value="married">Married</option>
+                    <option value="other">Other</option>
+                  </select>
+                </FormField>
+                <FormField label="No. of dependents" span={4}>
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputCls + " font-mono"}
+                    value={dependents}
+                    onChange={(e) => setDependents(e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))}
+                  />
+                </FormField>
+                {maritalStatus === "married" && (
+                  <>
+                    <FormField label="Name of spouse" required span={6}>
+                      <input value={spouseName} onChange={(e) => setSpouseName(e.target.value)} className={inputCls} maxLength={120} />
+                    </FormField>
+                    <FormField label="Spouse employer" span={6}>
+                      <input value={spouseEmployer} onChange={(e) => setSpouseEmployer(e.target.value)} className={inputCls} maxLength={120} />
+                    </FormField>
+                  </>
+                )}
+              </FormGrid>
+            </Card>
 
             <Card className="p-6">
-              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Address</h2>
+              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Permanent address</h2>
+              <FormGrid>
+                <FormField label="Building number" required span={3}>
+                  <input value={permanentAddr.building_no} onChange={(e) => setPermanentAddr({ ...permanentAddr, building_no: e.target.value })} className={inputCls} maxLength={40} />
+                </FormField>
+                <FormField label="Street 1" required span={4}>
+                  <input value={permanentAddr.street1} onChange={(e) => setPermanentAddr({ ...permanentAddr, street1: e.target.value })} className={inputCls} maxLength={80} />
+                </FormField>
+                <FormField label="Street 2" span={4}>
+                  <input value={permanentAddr.street2} onChange={(e) => setPermanentAddr({ ...permanentAddr, street2: e.target.value })} className={inputCls} maxLength={80} />
+                </FormField>
+                <FormField label="Town" required span={3}>
+                  <input value={permanentAddr.town} onChange={(e) => setPermanentAddr({ ...permanentAddr, town: e.target.value })} className={inputCls} maxLength={80} />
+                </FormField>
+              </FormGrid>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-secondary-foreground uppercase tracking-wider">Mailing address</h2>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={mailingSameAsPermanent}
+                    onChange={(e) => setMailingSameAsPermanent(e.target.checked)}
+                  />
+                  Same as permanent address
+                </label>
+              </div>
+              {!mailingSameAsPermanent && (
+                <FormGrid>
+                  <FormField label="Building number" required span={3}>
+                    <input value={mailingAddr.building_no} onChange={(e) => setMailingAddr({ ...mailingAddr, building_no: e.target.value })} className={inputCls} maxLength={40} />
+                  </FormField>
+                  <FormField label="Street 1" required span={4}>
+                    <input value={mailingAddr.street1} onChange={(e) => setMailingAddr({ ...mailingAddr, street1: e.target.value })} className={inputCls} maxLength={80} />
+                  </FormField>
+                  <FormField label="Street 2" span={4}>
+                    <input value={mailingAddr.street2} onChange={(e) => setMailingAddr({ ...mailingAddr, street2: e.target.value })} className={inputCls} maxLength={80} />
+                  </FormField>
+                  <FormField label="Town" required span={3}>
+                    <input value={mailingAddr.town} onChange={(e) => setMailingAddr({ ...mailingAddr, town: e.target.value })} className={inputCls} maxLength={80} />
+                  </FormField>
+                </FormGrid>
+              )}
+            </Card>
+
+            <Card className="p-6">
+              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Address (administrative)</h2>
               <FormGrid>
                 <FormField label="Residential address" required span={12} error={showError("address") ? errors.address : undefined}>
                   <textarea value={form.address} onChange={(e) => set("address", e.target.value)} onBlur={() => blur("address")} rows={2} maxLength={200} className={cls("address")} />
