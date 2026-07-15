@@ -263,7 +263,7 @@ export function UserRolesTab() {
           <CardTitle>Assign staff — {assignRole.name}</CardTitle>
           <p className="text-[12px] text-muted-foreground -mt-1 mb-3">Pick which staff members are granted this role.</p>
           <div className="flex flex-col gap-1.5 max-h-80 overflow-auto border border-border rounded-lg p-2">
-            {(team?.staff ?? []).map((s: any) => (
+            {(team?.members ?? []).map((s: any) => (
               <label key={s.id} className="flex items-center gap-2 text-[12px] px-2 py-1 rounded hover:bg-secondary/50 cursor-pointer">
                 <input
                   type="checkbox"
@@ -281,7 +281,7 @@ export function UserRolesTab() {
                 <span className="text-[10.5px] text-muted-foreground capitalize">{String(s.role ?? "").replace("_", " ")}</span>
               </label>
             ))}
-            {(team?.staff ?? []).length === 0 && <div className="text-[12px] text-muted-foreground text-center py-4">No staff yet.</div>}
+            {(team?.members ?? []).length === 0 && <div className="text-[12px] text-muted-foreground text-center py-4">No staff yet.</div>}
           </div>
           <FormActions>
             <button onClick={() => setAssignRoleId(null)} className={btnSecondaryCls}>Cancel</button>
