@@ -371,6 +371,24 @@ function ProductModal({
                 onChange={(e) => setV({ ...v, wht_rate: Number(e.target.value) })}
               />
             </FormField>
+            <FormField label="Deposit period — min (months)" required span={6}>
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                value={v.min_tenure_months}
+                onChange={(e) => setV({ ...v, min_tenure_months: Number(e.target.value) })}
+              />
+            </FormField>
+            <FormField label="Deposit period — max (months)" required span={6}>
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                value={v.max_tenure_months}
+                onChange={(e) => setV({ ...v, max_tenure_months: Number(e.target.value) })}
+              />
+            </FormField>
             <FormField label="Payout options" span={6}>
               <div className="flex gap-4 text-[13px]">
                 <label className="flex items-center gap-2">
