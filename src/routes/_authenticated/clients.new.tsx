@@ -773,3 +773,161 @@ function NewClientPage() {
     </div>
   );
 }
+
+/* ─────────── Screening result card (inline on Application tab) ─────────── */
+
+type Classification = { tier: ScreeningTier; maxScore: number; hasDirect: boolean } | null;
+
+function ScreeningResultCard({
+  result,
+  classification,
+  config,
+  onRequestApproval,
+  requesting,
+  approvalInstance,
+}: {
+  result: ScreeningResult;
+  classification: Classification;
+  config: { tier1_min_score: number; tier2_min_score: number; auto_escalate_direct: boolean } | null;
+  onRequestApproval: (tier: "tier1" | "tier2") => void;
+  requesting: boolean;
+  approvalInstance: { id: string; tier: ScreeningTier } | null;
+}) {
+  const tier = classification?.tier ?? "clear";
+  const tierMeta =
+    tier === "tier2"
+      ? {
+          Icon: ShieldAlert,
+          text: "Tier 2 escalation required",
+          cls: "border-destructive/40 bg-destructive/10 text-destructive",
+        }
+      : tier === "tier1"
+        ? {
+            Icon: AlertTriangle,
+            text: "Tier 1 review required",
+            cls: "border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300",
+          }
+        : {
+            Icon: CheckCircle2,
+            text: "No approval required — customer is clear",
+            cls: "border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300",
+          };
+  const Icon = tierMeta.Icon;
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <h2 className="text-sm font-semibold text-secondary-foreground uppercase tracking-wider">
+            Screening result
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            {classification
+              ? `Highest fuzzy score ${classification.maxScore.toFixed(1)}${classification.hasDirect ? " · direct match on watch list" : ""}.`
+              : "Loading routing config…"}
+            {config && (
+              <>
+                {" "}Thresholds: Tier 1 ≥ {config.tier1_min_score}, Tier 2 ≥ {config.tier2_min_score}.
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+
+      <div className={cn("flex items-center gap-2 rounded-md border px-3 py-2 text-[12.5px] mb-4", tierMeta.cls)}>
+        <Icon size={14} />
+        {tierMeta.text}
+      </div>
+
+      {tier !== "clear" && (
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-4 py-3">
+          <div className="text-[12px] text-muted-foreground">
+            {approvalInstance
+              ? `Approval request submitted (${approvalInstance.tier === "tier2" ? "Tier 2" : "Tier 1"}). Track it under Approvals.`
+              : `Route this hit to the ${tier === "tier2" ? "Tier 2 escalation" : "Tier 1 review"} workflow.`}
+          </div>
+          {!approvalInstance && (
+            <button
+              type="button"
+              className={btnPrimaryCls}
+              disabled={requesting}
+              onClick={() => onRequestApproval(tier === "tier2" ? "tier2" : "tier1")}
+            >
+              {requesting ? "Requesting…" : "Request approval"}
+            </button>
+          )}
+        </div>
+      )}
+
+      <MatchesSection
+        title="Direct matches"
+        emptyLabel="No direct matches found."
+        matches={result.direct_matches}
+        variant="direct"
+      />
+      <div className="h-3" />
+      <MatchesSection
+        title="Fuzzy matches"
+        emptyLabel="No fuzzy matches found."
+        matches={result.fuzzy_matches}
+        variant="fuzzy"
+      />
+    </Card>
+  );
+}
+
+function MatchesSection({
+  title,
+  emptyLabel,
+  matches,
+  variant,
+}: {
+  title: string;
+  emptyLabel: string;
+  matches: ScreeningMatch[];
+  variant: "direct" | "fuzzy";
+}) {
+  return (
+    <div className="rounded-md border border-border">
+      <div className="px-3 py-2 border-b border-border bg-muted/40 flex items-center justify-between">
+        <span className="text-[12.5px] font-semibold">{title}</span>
+        <span className="text-[11px] text-muted-foreground">
+          {matches.length} result{matches.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      {matches.length === 0 ? (
+        <div className="px-3 py-3 text-[12px] text-muted-foreground">{emptyLabel}</div>
+      ) : (
+        <table className="w-full text-[12.5px]">
+          <thead className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            <tr className="border-b border-border">
+              <th className="text-left font-medium px-3 py-2">List type</th>
+              <th className="text-left font-medium px-3 py-2">Reference</th>
+              {variant === "fuzzy" && (
+                <th className="text-right font-medium px-3 py-2">Score</th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {matches.map((m, i) => (
+              <tr key={i} className="border-b border-border last:border-b-0">
+                <td className="px-3 py-2">
+                  <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-medium">
+                    {m.list_type}
+                  </span>
+                </td>
+                <td className="px-3 py-2 font-mono">{m.ref}</td>
+                {variant === "fuzzy" && (
+                  <td className="px-3 py-2 text-right font-mono">
+                    {typeof m.score === "number" ? `${m.score.toFixed(1)}%` : "—"}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
