@@ -93,6 +93,7 @@ const SECTIONS: Section[] = [
   { id: "accounts",    label: "Chart of accounts", desc: "General ledger accounts & posting rules",          icon: BookOpen,  accent: "from-violet-500/15 to-violet-500/0 text-violet-600" },
   { id: "security_types", label: "Security types",  desc: "Collateral kinds (vehicle, property, gold …)",     icon: Shield,      accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600" },
   { id: "delegation",  label: "Delegation authority", desc: "Approval bands: LTV, amount & rate ranges",     icon: ShieldCheck, accent: "from-rose-500/15 to-rose-500/0 text-rose-600" },
+  { id: "risk_profiling", label: "Risk profiling",   desc: "Customer risk factors, scoring & bands",           icon: ShieldAlert, accent: "from-orange-500/15 to-orange-500/0 text-orange-600" },
   { id: "time_travel", label: "Time travel",       desc: "Simulate a different date for testing (dev only)", icon: Clock,     accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
 ];
 
