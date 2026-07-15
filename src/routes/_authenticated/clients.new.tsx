@@ -992,7 +992,7 @@ function ScreeningResultCard({
         matches={result.fuzzy_matches}
         variant="fuzzy"
       />
-    </Card>
+    </div>
   );
 }
 
