@@ -129,6 +129,12 @@ function NewClientPage() {
   const [geoBusy, setGeoBusy] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
 
+  // Risk profile
+  const fetchScheme = useServerFn(getRiskScheme);
+  const { data: riskScheme } = useQuery({ queryKey: ["risk-scheme"], queryFn: () => fetchScheme() });
+  const [riskAnswers, setRiskAnswers] = useState<RiskAnswer[]>([]);
+  const saveRiskFn = useServerFn(saveClientRiskAssessment);
+
   const errors = useMemo(() => {
     const r = clientSchema.safeParse(form);
     if (r.success) return {} as Partial<Record<FieldKey, string>>;
@@ -145,9 +151,23 @@ function NewClientPage() {
   const missingDocs = REQUIRED_DOCS.filter((d) => !docFiles[d.key]);
   const docsSatisfied = missingDocs.length === 0;
 
+  const applicableRiskFactors = useMemo(
+    () => (riskScheme ? applicableFactors(riskScheme, null) : []),
+    [riskScheme],
+  );
+  const riskMissing = applicableRiskFactors.filter(
+    (f) => !riskAnswers.find((a) => a.factor_id === f.id && a.option_ids.length > 0),
+  );
+  const riskSatisfied = riskScheme != null && riskMissing.length === 0;
+
   const post = useMutation({
     mutationFn: createFn,
-    onSuccess: (c: any) => {
+    onSuccess: async (c: any) => {
+      try {
+        await saveRiskFn({ data: { client_id: c.id, answers: riskAnswers } });
+      } catch (e: any) {
+        toast.error(`Client saved but risk profile failed: ${e.message}`);
+      }
       toast.success("Client registered · pending KYC");
       qc.invalidateQueries();
       navigate({ to: "/clients/$id", params: { id: c.id } });
