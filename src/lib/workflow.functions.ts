@@ -20,6 +20,8 @@ export const CANONICAL_TX_TYPES: { code: string; label: string }[] = [
   { code: "journal_entry", label: "Journal entry" },
   { code: "payment", label: "Payment" },
   { code: "alco_rate_change", label: "ALCO deposit rate change" },
+  { code: "customer_screening_tier1", label: "Customer screening — Tier 1 review" },
+  { code: "customer_screening_tier2", label: "Customer screening — Tier 2 escalation" },
 ];
 
 const stepSchema = z.object({
