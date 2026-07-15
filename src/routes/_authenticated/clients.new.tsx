@@ -36,13 +36,22 @@ export const Route = createFileRoute("/_authenticated/clients/new")({
 });
 
 type Gender = "male" | "female" | "other";
-type TabKey = "application" | "risk" | "documents";
+type MaritalStatus = "" | "single" | "married" | "other";
+type TabKey = "screening" | "application" | "risk" | "documents";
 
 const TABS: { key: TabKey; label: string }[] = [
+  { key: "screening", label: "Screening" },
   { key: "application", label: "Application" },
   { key: "risk", label: "Risk profile" },
   { key: "documents", label: "Documents" },
 ];
+
+type AddressBlock = { building_no: string; street1: string; street2: string; town: string };
+const EMPTY_ADDR: AddressBlock = { building_no: "", street1: "", street2: "", town: "" };
+const isAddrComplete = (a: AddressBlock) =>
+  a.building_no.trim() !== "" && a.street1.trim() !== "" && a.town.trim() !== "";
+const fmtAddr = (a: AddressBlock) =>
+  [a.building_no, a.street1, a.street2, a.town].map((s) => s.trim()).filter(Boolean).join(", ");
 
 const REQUIRED_DOCS: { key: "nic" | "billing"; label: string; hint: string }[] = [
   { key: "nic", label: "NIC copy", hint: "Front and back of national ID (JPG, PNG or PDF)" },
