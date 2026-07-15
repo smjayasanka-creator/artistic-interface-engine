@@ -90,8 +90,8 @@ export const createFdProduct = createServerFn({ method: "POST" })
 
 export const updateFdProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { id: string; patch: Partial<z.infer<typeof productInput>> }) =>
-    z.object({ id: z.string().uuid(), patch: productInput.partial() }).parse(i),
+  .inputValidator((i: { id: string; patch: Partial<z.infer<typeof productInputBase>> }) =>
+    z.object({ id: z.string().uuid(), patch: productInputBase.partial() }).parse(i),
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
