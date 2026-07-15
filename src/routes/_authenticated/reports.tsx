@@ -554,6 +554,26 @@ function ReconciliationTab() {
             </div>
           </Card>
 
+          {data.snapshot && (
+            <Card>
+              <CardTitle
+                subtitle={`Coverage: ${data.snapshot.coverage.branchesClosed}/${data.snapshot.coverage.branchesTotal} branches closed for ${data.snapshot.asOf}${data.snapshot.complete ? "" : " — partial"}`}
+              >
+                EOD snapshot (fast path)
+              </CardTitle>
+              <div className="grid grid-cols-3 gap-4">
+                <MetricCard label="Loans (closing principal)" value={data.snapshot.loans} tone="primary" />
+                <MetricCard label="Savings (closing balance)" value={data.snapshot.savings} tone="primary" />
+                <MetricCard label="FD (closing balance)" value={data.snapshot.fd} tone="primary" />
+              </div>
+              <div className="text-[11.5px] text-muted-foreground mt-3 leading-relaxed">
+                Balances above are read from the day-end snapshot tables written by the EOD close job.
+                Once a branch is closed for a date, its figures here are immutable and used as the
+                system of record — no re-scanning of raw transactions required.
+              </div>
+            </Card>
+          )}
+
           <Card>
             <div className="text-xs text-muted-foreground leading-relaxed">
               <strong>How this works.</strong> Each control account's GL balance is the signed sum of postings on that
@@ -561,7 +581,8 @@ function ReconciliationTab() {
               savings uses <code>savings_transaction</code>, fixed deposits use <code>fd_transaction</code>, and loans
               use <code>v_loan_outstanding</code> for the current snapshot (or disbursed − repayments for a historical
               range). A non-zero difference means a posting was skipped, split incorrectly, or that a sub-ledger row was
-              written outside the ledger kernel.
+              written outside the ledger kernel. When an EOD close has run for the selected date, the snapshot card
+              above shows the locked closing balances.
             </div>
           </Card>
         </>

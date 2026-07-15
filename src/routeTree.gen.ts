@@ -68,6 +68,7 @@ import { Route as AuthenticatedAccountsJournalIndexRouteImport } from './routes/
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
 import { Route as ApiPublicHooksFdMatureRouteImport } from './routes/api/public/hooks/fd-mature'
 import { Route as ApiPublicHooksFdAccrueRouteImport } from './routes/api/public/hooks/fd-accrue'
+import { Route as ApiPublicHooksEodCloseRouteImport } from './routes/api/public/hooks/eod-close'
 import { Route as ApiPublicHooksDispatchDomainEventsRouteImport } from './routes/api/public/hooks/dispatch-domain-events'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
@@ -408,6 +409,11 @@ const ApiPublicHooksFdAccrueRoute = ApiPublicHooksFdAccrueRouteImport.update({
   path: '/api/public/hooks/fd-accrue',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksEodCloseRoute = ApiPublicHooksEodCloseRouteImport.update({
+  id: '/api/public/hooks/eod-close',
+  path: '/api/public/hooks/eod-close',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksDispatchDomainEventsRoute =
   ApiPublicHooksDispatchDomainEventsRouteImport.update({
     id: '/api/public/hooks/dispatch-domain-events',
@@ -523,6 +529,7 @@ export interface FileRoutesByFullPath {
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
+  '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
@@ -589,6 +596,7 @@ export interface FileRoutesByTo {
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
+  '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
@@ -661,6 +669,7 @@ export interface FileRoutesById {
   '/_authenticated/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/_authenticated/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
+  '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
@@ -733,6 +742,7 @@ export interface FileRouteTypes {
     | '/accounts/journal/new'
     | '/accounts/payments/new'
     | '/api/public/hooks/dispatch-domain-events'
+    | '/api/public/hooks/eod-close'
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
     | '/api/public/v1/health'
@@ -799,6 +809,7 @@ export interface FileRouteTypes {
     | '/accounts/journal/new'
     | '/accounts/payments/new'
     | '/api/public/hooks/dispatch-domain-events'
+    | '/api/public/hooks/eod-close'
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
     | '/api/public/v1/health'
@@ -870,6 +881,7 @@ export interface FileRouteTypes {
     | '/_authenticated/accounts/journal/new'
     | '/_authenticated/accounts/payments/new'
     | '/api/public/hooks/dispatch-domain-events'
+    | '/api/public/hooks/eod-close'
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
     | '/api/public/v1/health'
@@ -889,6 +901,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicHooksDispatchDomainEventsRoute: typeof ApiPublicHooksDispatchDomainEventsRoute
+  ApiPublicHooksEodCloseRoute: typeof ApiPublicHooksEodCloseRoute
   ApiPublicHooksFdAccrueRoute: typeof ApiPublicHooksFdAccrueRoute
   ApiPublicHooksFdMatureRoute: typeof ApiPublicHooksFdMatureRoute
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
@@ -1316,6 +1329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFdAccrueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/eod-close': {
+      id: '/api/public/hooks/eod-close'
+      path: '/api/public/hooks/eod-close'
+      fullPath: '/api/public/hooks/eod-close'
+      preLoaderRoute: typeof ApiPublicHooksEodCloseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/dispatch-domain-events': {
       id: '/api/public/hooks/dispatch-domain-events'
       path: '/api/public/hooks/dispatch-domain-events'
@@ -1588,6 +1608,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiPublicHooksDispatchDomainEventsRoute:
     ApiPublicHooksDispatchDomainEventsRoute,
+  ApiPublicHooksEodCloseRoute: ApiPublicHooksEodCloseRoute,
   ApiPublicHooksFdAccrueRoute: ApiPublicHooksFdAccrueRoute,
   ApiPublicHooksFdMatureRoute: ApiPublicHooksFdMatureRoute,
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
