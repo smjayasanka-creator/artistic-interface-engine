@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck, LineChart, ShieldAlert, ScanSearch } from "lucide-react";
+import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck, LineChart, ShieldAlert, ScanSearch, KeyRound, Mail } from "lucide-react";
+import { UserRolesTab } from "@/components/mzizi/UserRolesTab";
 import {
   getAdmin,
   getAllLoanProducts,
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "risk_profiling" | "screening" | "time_travel";
+type Tab = "settings" | "branches" | "staff" | "user_roles" | "products" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "risk_profiling" | "screening" | "time_travel";
 type Mode = "list" | "create" | "edit";
 type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
 const LOAN_SEGMENTS: { value: LoanSegment; label: string }[] = [
@@ -85,6 +86,7 @@ const SECTIONS: Section[] = [
   { id: "settings",    label: "Company settings",  desc: "Workspace defaults, currency & fiscal year",       icon: Settings2, accent: "from-slate-500/15 to-slate-500/0 text-slate-600" },
   { id: "branches",    label: "Branches",          desc: "Locations, regions & operating currency",          icon: Building2, accent: "from-sky-500/15 to-sky-500/0 text-sky-600" },
   { id: "staff",       label: "Staff",             desc: "Employees, roles & invitations",                   icon: Users,     accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600" },
+  { id: "user_roles",  label: "User roles",        desc: "Create custom roles & assign actions",             icon: KeyRound,  accent: "from-purple-500/15 to-purple-500/0 text-purple-600" },
   { id: "products",    label: "Loan products",     desc: "Interest methods, terms & pricing",                icon: Wallet,    accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
   { id: "fd_products", label: "FD products",       desc: "Fixed deposit tenors & rates",                     icon: PiggyBank, accent: "from-teal-500/15 to-teal-500/0 text-teal-600" },
   { id: "savings_products", label: "Savings products", desc: "Passbook accounts, interest & fees",           icon: Coins,     accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600" },
@@ -149,6 +151,7 @@ function Admin() {
       {tab === "settings" && <SettingsTab />}
       {tab === "branches" && <BranchesTab />}
       {tab === "staff" && <StaffTab />}
+      {tab === "user_roles" && <UserRolesTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "fd_products" && <FdProductsTab />}
       {tab === "savings_products" && <SavingsProductsTab />}
@@ -293,7 +296,7 @@ function InviteSection() {
   if (isLoading || !data) return null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5" id="staff-invite-section">
       <Card>
         <CardTitle>Invite staff by email</CardTitle>
         <p className="text-[12px] text-muted-foreground -mt-1 mb-3">
@@ -795,7 +798,25 @@ function StaffTab() {
   return (
     <div className="flex flex-col gap-5">
       <Card padded={false}>
-        <ListHeader title="Staff" count={data.staff.length} onNew={() => setMode("create")} newLabel="New staff" />
+        <div className="px-5 pt-4 pb-3 flex items-center justify-between gap-2 flex-wrap">
+          <div className="text-sm font-semibold">
+            Staff <span className="text-[11px] text-muted-foreground font-normal ml-1">{data.staff.length} total</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMode("create")}
+              className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-[12px] font-semibold hover:bg-primary-hover"
+            >
+              + New staff
+            </button>
+            <button
+              onClick={() => document.getElementById("staff-invite-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="px-3 py-1.5 rounded-md text-[12px] font-semibold border border-border hover:border-primary hover:text-primary flex items-center gap-1.5"
+            >
+              <Mail size={13} /> Invite by email
+            </button>
+          </div>
+        </div>
         <div
           className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
           style={{ gridTemplateColumns: GRID }}
