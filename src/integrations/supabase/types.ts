@@ -758,6 +758,80 @@ export type Database = {
           },
         ]
       }
+      custom_role: {
+        Row: {
+          active: boolean
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_role_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_role_permission: {
+        Row: {
+          created_at: string
+          permission_code: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string
+          permission_code: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string
+          permission_code?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_role_permission_permission_code_fkey"
+            columns: ["permission_code"]
+            isOneToOne: false
+            referencedRelation: "permission"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "custom_role_permission_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "custom_role"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delegation_authority: {
         Row: {
           active: boolean
@@ -2220,6 +2294,33 @@ export type Database = {
           },
         ]
       }
+      permission: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          label: string
+          module: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          label: string
+          module: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          label?: string
+          module?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       posting: {
         Row: {
           account_id: string
@@ -3091,6 +3192,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_custom_role: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          role_id: string
+          staff_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          role_id: string
+          staff_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          role_id?: string
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_custom_role_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "custom_role"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_custom_role_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -3411,6 +3548,10 @@ export type Database = {
         Returns: string
       }
       hardening_autocheck: { Args: never; Returns: Json }
+      has_permission: {
+        Args: { _permission: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
