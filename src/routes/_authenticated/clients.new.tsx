@@ -662,10 +662,13 @@ function NewClientPage() {
           {submitted && isValid && !docsSatisfied && (
             <span className="text-xs text-destructive mr-auto">Attach the required documents</span>
           )}
+          {submitted && isValid && docsSatisfied && !riskSatisfied && (
+            <span className="text-xs text-destructive mr-auto">Complete the risk profile ({riskMissing.length} pending)</span>
+          )}
           <Link to="/clients" className={btnSecondaryCls}>Cancel</Link>
           <button
             type="submit"
-            disabled={post.isPending || uploading || (submitted && (!isValid || !docsSatisfied))}
+            disabled={post.isPending || uploading || (submitted && (!isValid || !docsSatisfied || !riskSatisfied))}
             className={btnPrimaryCls}
           >
             {uploading ? "Uploading photo…" : post.isPending ? "Saving…" : "Register client"}
