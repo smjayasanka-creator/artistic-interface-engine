@@ -31,6 +31,7 @@ import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFdIndexRouteImport } from './routes/_authenticated/fd.index'
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients.index'
 import { Route as AuthenticatedAccountsIndexRouteImport } from './routes/_authenticated/accounts.index'
+import { Route as AuthenticatedTransactionsSavingsWithdrawalRouteImport } from './routes/_authenticated/transactions.savings-withdrawal'
 import { Route as AuthenticatedTransactionsRepaymentRouteImport } from './routes/_authenticated/transactions.repayment'
 import { Route as AuthenticatedTransactionsPaymentsRouteImport } from './routes/_authenticated/transactions.payments'
 import { Route as AuthenticatedTransactionsDisbursementRouteImport } from './routes/_authenticated/transactions.disbursement'
@@ -192,6 +193,12 @@ const AuthenticatedAccountsIndexRoute =
     id: '/accounts/',
     path: '/accounts/',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTransactionsSavingsWithdrawalRoute =
+  AuthenticatedTransactionsSavingsWithdrawalRouteImport.update({
+    id: '/savings-withdrawal',
+    path: '/savings-withdrawal',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedTransactionsRepaymentRoute =
   AuthenticatedTransactionsRepaymentRouteImport.update({
@@ -489,6 +496,7 @@ export interface FileRoutesByFullPath {
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   '/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
   '/fd/': typeof AuthenticatedFdIndexRoute
@@ -552,6 +560,7 @@ export interface FileRoutesByTo {
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   '/accounts': typeof AuthenticatedAccountsIndexRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/fd': typeof AuthenticatedFdIndexRoute
@@ -621,6 +630,7 @@ export interface FileRoutesById {
   '/_authenticated/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/_authenticated/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/_authenticated/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/_authenticated/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   '/_authenticated/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/fd/': typeof AuthenticatedFdIndexRoute
@@ -690,6 +700,7 @@ export interface FileRouteTypes {
     | '/transactions/disbursement'
     | '/transactions/payments'
     | '/transactions/repayment'
+    | '/transactions/savings-withdrawal'
     | '/accounts/'
     | '/clients/'
     | '/fd/'
@@ -753,6 +764,7 @@ export interface FileRouteTypes {
     | '/transactions/disbursement'
     | '/transactions/payments'
     | '/transactions/repayment'
+    | '/transactions/savings-withdrawal'
     | '/accounts'
     | '/clients'
     | '/fd'
@@ -821,6 +833,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions/disbursement'
     | '/_authenticated/transactions/payments'
     | '/_authenticated/transactions/repayment'
+    | '/_authenticated/transactions/savings-withdrawal'
     | '/_authenticated/accounts/'
     | '/_authenticated/clients/'
     | '/_authenticated/fd/'
@@ -1017,6 +1030,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/accounts/'
       preLoaderRoute: typeof AuthenticatedAccountsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/transactions/savings-withdrawal': {
+      id: '/_authenticated/transactions/savings-withdrawal'
+      path: '/savings-withdrawal'
+      fullPath: '/transactions/savings-withdrawal'
+      preLoaderRoute: typeof AuthenticatedTransactionsSavingsWithdrawalRouteImport
+      parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/transactions/repayment': {
       id: '/_authenticated/transactions/repayment'
@@ -1370,6 +1390,7 @@ interface AuthenticatedTransactionsRouteChildren {
   AuthenticatedTransactionsDisbursementRoute: typeof AuthenticatedTransactionsDisbursementRoute
   AuthenticatedTransactionsPaymentsRoute: typeof AuthenticatedTransactionsPaymentsRoute
   AuthenticatedTransactionsRepaymentRoute: typeof AuthenticatedTransactionsRepaymentRoute
+  AuthenticatedTransactionsSavingsWithdrawalRoute: typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   AuthenticatedTransactionsIndexRoute: typeof AuthenticatedTransactionsIndexRoute
 }
 
@@ -1393,6 +1414,8 @@ const AuthenticatedTransactionsRouteChildren: AuthenticatedTransactionsRouteChil
       AuthenticatedTransactionsPaymentsRoute,
     AuthenticatedTransactionsRepaymentRoute:
       AuthenticatedTransactionsRepaymentRoute,
+    AuthenticatedTransactionsSavingsWithdrawalRoute:
+      AuthenticatedTransactionsSavingsWithdrawalRoute,
     AuthenticatedTransactionsIndexRoute: AuthenticatedTransactionsIndexRoute,
   }
 
