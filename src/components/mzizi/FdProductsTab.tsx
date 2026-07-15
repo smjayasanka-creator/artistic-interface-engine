@@ -457,7 +457,7 @@ function ProductModal({
               type="button"
               className={btnPrimaryCls}
               onClick={() => onSubmit(v)}
-              disabled={upsertM.isPending || deleteM.isPending}
+              disabled={false}
             >
               Save
             </button>
