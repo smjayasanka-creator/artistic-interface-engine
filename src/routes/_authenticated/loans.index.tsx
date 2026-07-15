@@ -30,6 +30,13 @@ const TILES = [
     accent: "from-sky-500/15 to-sky-500/0 text-sky-600",
   },
   {
+    to: "/loans/delivery-order",
+    label: "Delivery Order Release",
+    desc: "Issue a DO to the vehicle supplier to release the asset before supplier payment",
+    icon: Truck,
+    accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600",
+  },
+  {
     to: "/loans/reschedule",
     label: "Reschedule / Restructure",
     desc: "Change rental schedule and create a new facility from the settlement balance",
