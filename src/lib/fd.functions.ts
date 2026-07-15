@@ -46,11 +46,13 @@ export const listFdProducts = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-const productInput = z.object({
+const productInputBase = z.object({
   code: z.string().trim().min(2).max(30),
   name: z.string().trim().min(2).max(120),
   min_amount: z.number().nonnegative(),
   max_amount: z.number().positive().nullable().optional(),
+  min_tenure_months: z.number().int().min(1),
+  max_tenure_months: z.number().int().min(1),
   allow_monthly: z.boolean(),
   allow_at_maturity: z.boolean(),
   penalty_type: z.enum(["rate_reduction", "reprice_minus_margin"]),
@@ -65,6 +67,10 @@ const productInput = z.object({
   introducer_commission_account_id: z.string().uuid().nullable().optional(),
   marketing_incentive_account_id: z.string().uuid().nullable().optional(),
 });
+const productInput = productInputBase.refine(
+  (v) => v.max_tenure_months >= v.min_tenure_months,
+  { message: "Max tenure must be ≥ min tenure", path: ["max_tenure_months"] },
+);
 
 export const createFdProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -84,8 +90,8 @@ export const createFdProduct = createServerFn({ method: "POST" })
 
 export const updateFdProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { id: string; patch: Partial<z.infer<typeof productInput>> }) =>
-    z.object({ id: z.string().uuid(), patch: productInput.partial() }).parse(i),
+  .inputValidator((i: { id: string; patch: Partial<z.infer<typeof productInputBase>> }) =>
+    z.object({ id: z.string().uuid(), patch: productInputBase.partial() }).parse(i),
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;

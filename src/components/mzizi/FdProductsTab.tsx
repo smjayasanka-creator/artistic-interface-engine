@@ -57,6 +57,8 @@ const EMPTY = {
   name: "",
   min_amount: 10000,
   max_amount: null as number | null,
+  min_tenure_months: 3,
+  max_tenure_months: 60,
   allow_monthly: true,
   allow_at_maturity: true,
   penalty_type: "rate_reduction" as PenaltyType,
@@ -201,6 +203,8 @@ export function FdProductsTab() {
                       name: product.name,
                       min_amount: Number(product.min_amount),
                       max_amount: product.max_amount == null ? null : Number(product.max_amount),
+                      min_tenure_months: Number((product as any).min_tenure_months ?? 3),
+                      max_tenure_months: Number((product as any).max_tenure_months ?? 60),
                       allow_monthly: product.allow_monthly,
                       allow_at_maturity: product.allow_at_maturity,
                       penalty_type: product.penalty_type,
@@ -365,6 +369,24 @@ function ProductModal({
                 className={inputCls}
                 value={v.wht_rate}
                 onChange={(e) => setV({ ...v, wht_rate: Number(e.target.value) })}
+              />
+            </FormField>
+            <FormField label="Deposit period — min (months)" required span={6}>
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                value={v.min_tenure_months}
+                onChange={(e) => setV({ ...v, min_tenure_months: Number(e.target.value) })}
+              />
+            </FormField>
+            <FormField label="Deposit period — max (months)" required span={6}>
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                value={v.max_tenure_months}
+                onChange={(e) => setV({ ...v, max_tenure_months: Number(e.target.value) })}
               />
             </FormField>
             <FormField label="Payout options" span={6}>

@@ -105,8 +105,13 @@ function NewFd() {
   const product = useMemo(() => products?.find((p) => p.id === productId) ?? null, [products, productId]);
   const availableTenures = useMemo(() => {
     if (!product) return [];
+    const p = product as unknown as { rate_tiers: { tenure_months: number }[]; min_tenure_months?: number; max_tenure_months?: number };
+    const minT = Number(p.min_tenure_months ?? 1);
+    const maxT = Number(p.max_tenure_months ?? 600);
     const set = new Set<number>();
-    for (const t of (product as unknown as { rate_tiers: { tenure_months: number }[] }).rate_tiers) set.add(t.tenure_months);
+    for (const t of p.rate_tiers) {
+      if (t.tenure_months >= minT && t.tenure_months <= maxT) set.add(t.tenure_months);
+    }
     return Array.from(set).sort((a, b) => a - b);
   }, [product]);
 
@@ -238,6 +243,11 @@ function NewFd() {
                 </option>
               ))}
             </select>
+            {product && (
+              <span className="text-[11px] text-muted-foreground mt-1">
+                Allowed: {(product as any).min_tenure_months ?? 1}–{(product as any).max_tenure_months ?? "—"} months
+              </span>
+            )}
           </FormField>
           <FormField label="Applicable rate (%)" span={3}>
             <input className={inputCls + " bg-muted/40 font-mono"} value={rate == null ? "—" : rate.toFixed(3)} readOnly />
