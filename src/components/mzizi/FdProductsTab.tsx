@@ -203,6 +203,8 @@ export function FdProductsTab() {
                       name: product.name,
                       min_amount: Number(product.min_amount),
                       max_amount: product.max_amount == null ? null : Number(product.max_amount),
+                      min_tenure_months: Number((product as any).min_tenure_months ?? 3),
+                      max_tenure_months: Number((product as any).max_tenure_months ?? 60),
                       allow_monthly: product.allow_monthly,
                       allow_at_maturity: product.allow_at_maturity,
                       penalty_type: product.penalty_type,
