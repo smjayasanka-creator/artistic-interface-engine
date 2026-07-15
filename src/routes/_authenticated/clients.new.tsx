@@ -395,6 +395,18 @@ function NewClientPage() {
                   ready
                 </span>
               )}
+              {t.key === "screening" && screeningDone && (
+                <span
+                  className={cn(
+                    "text-[10px] rounded-full px-1.5 py-0.5",
+                    screeningHasHit
+                      ? "bg-destructive/15 text-destructive"
+                      : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+                  )}
+                >
+                  {screeningHasHit ? "review" : "clear"}
+                </span>
+              )}
             </button>
           );
         })}
