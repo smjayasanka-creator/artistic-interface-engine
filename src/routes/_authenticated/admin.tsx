@@ -296,7 +296,7 @@ function InviteSection() {
   if (isLoading || !data) return null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5" id="staff-invite-section">
       <Card>
         <CardTitle>Invite staff by email</CardTitle>
         <p className="text-[12px] text-muted-foreground -mt-1 mb-3">
