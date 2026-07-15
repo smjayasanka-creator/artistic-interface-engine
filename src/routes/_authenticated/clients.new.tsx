@@ -41,7 +41,7 @@ type TabKey = "screening" | "application" | "risk" | "documents";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "screening", label: "Screening" },
-  { key: "application", label: "Application" },
+  { key: "application", label: "KYC" },
   { key: "risk", label: "Risk profile" },
   { key: "documents", label: "Documents" },
 ];
