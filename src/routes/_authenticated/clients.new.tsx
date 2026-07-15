@@ -145,12 +145,59 @@ function NewClientPage() {
   const [riskAnswers, setRiskAnswers] = useState<RiskAnswer[]>([]);
   const saveRiskFn = useServerFn(saveClientRiskAssessment);
 
-  // Customer screening
+  // Customer screening (inline on Application tab)
   const [screening, setScreening] = useState<ScreeningResult | null>(null);
-  const screeningDone = screening != null;
-  const screeningHasHit =
-    screening != null &&
-    (screening.direct_matches.length > 0 || screening.fuzzy_matches.length > 0);
+  const [approvalInstance, setApprovalInstance] = useState<{ id: string; tier: ScreeningTier } | null>(null);
+  const screenFn = useServerFn(screenCustomer);
+  const fetchScreeningCfg = useServerFn(getScreeningConfig);
+  const requestApprovalFn = useServerFn(requestScreeningApproval);
+  const { data: screeningCfg } = useQuery({
+    queryKey: ["screening-config"],
+    queryFn: () => fetchScreeningCfg(),
+  });
+  const canScreen =
+    form.first_name.trim().length > 0 &&
+    form.last_name.trim().length > 0 &&
+    form.national_id.trim().length > 0;
+
+  const screenMut = useMutation({
+    mutationFn: () =>
+      screenFn({
+        data: {
+          name: `${form.first_name} ${form.last_name}`.trim(),
+          customer_id: form.national_id.trim(),
+        },
+      }),
+    onSuccess: (r) => {
+      setScreening(r);
+      setApprovalInstance(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const classification = useMemo(
+    () => (screening && screeningCfg ? classifyScreening(screening, screeningCfg) : null),
+    [screening, screeningCfg],
+  );
+
+  const approvalMut = useMutation({
+    mutationFn: (tier: "tier1" | "tier2") =>
+      requestApprovalFn({
+        data: {
+          tier,
+          customer_name: `${form.first_name} ${form.last_name}`.trim(),
+          national_id: form.national_id.trim(),
+          max_score: classification?.maxScore ?? 0,
+          has_direct: classification?.hasDirect ?? false,
+        },
+      }),
+    onSuccess: (r, tier) => {
+      setApprovalInstance({ id: r.instance_id, tier });
+      toast.success(`Approval request created (${tier === "tier2" ? "Tier 2" : "Tier 1"})`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
 
 
