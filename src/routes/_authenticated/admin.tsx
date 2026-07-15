@@ -151,6 +151,7 @@ function Admin() {
       {tab === "settings" && <SettingsTab />}
       {tab === "branches" && <BranchesTab />}
       {tab === "staff" && <StaffTab />}
+      {tab === "user_roles" && <UserRolesTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "fd_products" && <FdProductsTab />}
       {tab === "savings_products" && <SavingsProductsTab />}
