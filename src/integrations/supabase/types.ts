@@ -304,6 +304,7 @@ export type Database = {
           company_id: string
           created_at: string
           currency: string
+          eod_locked_through: string | null
           fd_prefix: string | null
           id: string
           loan_prefix: string | null
@@ -318,6 +319,7 @@ export type Database = {
           company_id: string
           created_at?: string
           currency?: string
+          eod_locked_through?: string | null
           fd_prefix?: string | null
           id?: string
           loan_prefix?: string | null
@@ -332,6 +334,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           currency?: string
+          eod_locked_through?: string | null
           fd_prefix?: string | null
           id?: string
           loan_prefix?: string | null
@@ -969,6 +972,62 @@ export type Database = {
           },
         ]
       }
+      eod_run: {
+        Row: {
+          branch_id: string
+          business_date: string
+          closed_at: string
+          closed_by: string | null
+          company_id: string
+          duration_ms: number | null
+          fd_deposits: number
+          gl_accounts: number
+          id: string
+          loans: number
+          note: string | null
+          savings_accounts: number
+          status: string
+        }
+        Insert: {
+          branch_id: string
+          business_date: string
+          closed_at?: string
+          closed_by?: string | null
+          company_id: string
+          duration_ms?: number | null
+          fd_deposits?: number
+          gl_accounts?: number
+          id?: string
+          loans?: number
+          note?: string | null
+          savings_accounts?: number
+          status?: string
+        }
+        Update: {
+          branch_id?: string
+          business_date?: string
+          closed_at?: string
+          closed_by?: string | null
+          company_id?: string
+          duration_ms?: number | null
+          fd_deposits?: number
+          gl_accounts?: number
+          id?: string
+          loans?: number
+          note?: string | null
+          savings_accounts?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eod_run_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fd_accrual: {
         Row: {
           accrual_date: string
@@ -1000,6 +1059,201 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fd_eod_balance: {
+        Row: {
+          accrued_interest: number
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          deposit_id: string
+          interest_paid: number
+          principal: number
+          status: string
+        }
+        Insert: {
+          accrued_interest?: number
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          deposit_id: string
+          interest_paid?: number
+          principal?: number
+          status: string
+        }
+        Update: {
+          accrued_interest?: number
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          deposit_id?: string
+          interest_paid?: number
+          principal?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      fd_eod_balance_202606: {
+        Row: {
+          accrued_interest: number
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          deposit_id: string
+          interest_paid: number
+          principal: number
+          status: string
+        }
+        Insert: {
+          accrued_interest?: number
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          deposit_id: string
+          interest_paid?: number
+          principal?: number
+          status: string
+        }
+        Update: {
+          accrued_interest?: number
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          deposit_id?: string
+          interest_paid?: number
+          principal?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      fd_eod_balance_202607: {
+        Row: {
+          accrued_interest: number
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          deposit_id: string
+          interest_paid: number
+          principal: number
+          status: string
+        }
+        Insert: {
+          accrued_interest?: number
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          deposit_id: string
+          interest_paid?: number
+          principal?: number
+          status: string
+        }
+        Update: {
+          accrued_interest?: number
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          deposit_id?: string
+          interest_paid?: number
+          principal?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      fd_eod_balance_202608: {
+        Row: {
+          accrued_interest: number
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          deposit_id: string
+          interest_paid: number
+          principal: number
+          status: string
+        }
+        Insert: {
+          accrued_interest?: number
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          deposit_id: string
+          interest_paid?: number
+          principal?: number
+          status: string
+        }
+        Update: {
+          accrued_interest?: number
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          deposit_id?: string
+          interest_paid?: number
+          principal?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      fd_eod_balance_202609: {
+        Row: {
+          accrued_interest: number
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          deposit_id: string
+          interest_paid: number
+          principal: number
+          status: string
+        }
+        Insert: {
+          accrued_interest?: number
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          deposit_id: string
+          interest_paid?: number
+          principal?: number
+          status: string
+        }
+        Update: {
+          accrued_interest?: number
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          deposit_id?: string
+          interest_paid?: number
+          principal?: number
+          status?: string
+        }
+        Relationships: []
       }
       fd_interest_schedule: {
         Row: {
@@ -1610,6 +1864,186 @@ export type Database = {
           },
         ]
       }
+      gl_eod_balance: {
+        Row: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          credit_total: number
+          debit_total: number
+          opening_balance: number
+        }
+        Insert: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          credit_total?: number
+          debit_total?: number
+          opening_balance?: number
+        }
+        Update: {
+          account_id?: string
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          credit_total?: number
+          debit_total?: number
+          opening_balance?: number
+        }
+        Relationships: []
+      }
+      gl_eod_balance_202606: {
+        Row: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          credit_total: number
+          debit_total: number
+          opening_balance: number
+        }
+        Insert: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          credit_total?: number
+          debit_total?: number
+          opening_balance?: number
+        }
+        Update: {
+          account_id?: string
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          credit_total?: number
+          debit_total?: number
+          opening_balance?: number
+        }
+        Relationships: []
+      }
+      gl_eod_balance_202607: {
+        Row: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          credit_total: number
+          debit_total: number
+          opening_balance: number
+        }
+        Insert: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          credit_total?: number
+          debit_total?: number
+          opening_balance?: number
+        }
+        Update: {
+          account_id?: string
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          credit_total?: number
+          debit_total?: number
+          opening_balance?: number
+        }
+        Relationships: []
+      }
+      gl_eod_balance_202608: {
+        Row: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          credit_total: number
+          debit_total: number
+          opening_balance: number
+        }
+        Insert: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          credit_total?: number
+          debit_total?: number
+          opening_balance?: number
+        }
+        Update: {
+          account_id?: string
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          credit_total?: number
+          debit_total?: number
+          opening_balance?: number
+        }
+        Relationships: []
+      }
+      gl_eod_balance_202609: {
+        Row: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          credit_total: number
+          debit_total: number
+          opening_balance: number
+        }
+        Insert: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          credit_total?: number
+          debit_total?: number
+          opening_balance?: number
+        }
+        Update: {
+          account_id?: string
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          credit_total?: number
+          debit_total?: number
+          opening_balance?: number
+        }
+        Relationships: []
+      }
       hardening_checklist_item: {
         Row: {
           created_at: string
@@ -1968,6 +2402,261 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      loan_eod_balance: {
+        Row: {
+          arrears: number
+          branch_id: string
+          business_date: string
+          closing_principal: number
+          company_id: string
+          created_at: string
+          disbursed: number
+          fees_paid: number
+          interest_accrued: number
+          interest_paid: number
+          loan_id: string
+          opening_principal: number
+          principal_paid: number
+          status: string
+        }
+        Insert: {
+          arrears?: number
+          branch_id: string
+          business_date: string
+          closing_principal?: number
+          company_id: string
+          created_at?: string
+          disbursed?: number
+          fees_paid?: number
+          interest_accrued?: number
+          interest_paid?: number
+          loan_id: string
+          opening_principal?: number
+          principal_paid?: number
+          status: string
+        }
+        Update: {
+          arrears?: number
+          branch_id?: string
+          business_date?: string
+          closing_principal?: number
+          company_id?: string
+          created_at?: string
+          disbursed?: number
+          fees_paid?: number
+          interest_accrued?: number
+          interest_paid?: number
+          loan_id?: string
+          opening_principal?: number
+          principal_paid?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      loan_eod_balance_202606: {
+        Row: {
+          arrears: number
+          branch_id: string
+          business_date: string
+          closing_principal: number
+          company_id: string
+          created_at: string
+          disbursed: number
+          fees_paid: number
+          interest_accrued: number
+          interest_paid: number
+          loan_id: string
+          opening_principal: number
+          principal_paid: number
+          status: string
+        }
+        Insert: {
+          arrears?: number
+          branch_id: string
+          business_date: string
+          closing_principal?: number
+          company_id: string
+          created_at?: string
+          disbursed?: number
+          fees_paid?: number
+          interest_accrued?: number
+          interest_paid?: number
+          loan_id: string
+          opening_principal?: number
+          principal_paid?: number
+          status: string
+        }
+        Update: {
+          arrears?: number
+          branch_id?: string
+          business_date?: string
+          closing_principal?: number
+          company_id?: string
+          created_at?: string
+          disbursed?: number
+          fees_paid?: number
+          interest_accrued?: number
+          interest_paid?: number
+          loan_id?: string
+          opening_principal?: number
+          principal_paid?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      loan_eod_balance_202607: {
+        Row: {
+          arrears: number
+          branch_id: string
+          business_date: string
+          closing_principal: number
+          company_id: string
+          created_at: string
+          disbursed: number
+          fees_paid: number
+          interest_accrued: number
+          interest_paid: number
+          loan_id: string
+          opening_principal: number
+          principal_paid: number
+          status: string
+        }
+        Insert: {
+          arrears?: number
+          branch_id: string
+          business_date: string
+          closing_principal?: number
+          company_id: string
+          created_at?: string
+          disbursed?: number
+          fees_paid?: number
+          interest_accrued?: number
+          interest_paid?: number
+          loan_id: string
+          opening_principal?: number
+          principal_paid?: number
+          status: string
+        }
+        Update: {
+          arrears?: number
+          branch_id?: string
+          business_date?: string
+          closing_principal?: number
+          company_id?: string
+          created_at?: string
+          disbursed?: number
+          fees_paid?: number
+          interest_accrued?: number
+          interest_paid?: number
+          loan_id?: string
+          opening_principal?: number
+          principal_paid?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      loan_eod_balance_202608: {
+        Row: {
+          arrears: number
+          branch_id: string
+          business_date: string
+          closing_principal: number
+          company_id: string
+          created_at: string
+          disbursed: number
+          fees_paid: number
+          interest_accrued: number
+          interest_paid: number
+          loan_id: string
+          opening_principal: number
+          principal_paid: number
+          status: string
+        }
+        Insert: {
+          arrears?: number
+          branch_id: string
+          business_date: string
+          closing_principal?: number
+          company_id: string
+          created_at?: string
+          disbursed?: number
+          fees_paid?: number
+          interest_accrued?: number
+          interest_paid?: number
+          loan_id: string
+          opening_principal?: number
+          principal_paid?: number
+          status: string
+        }
+        Update: {
+          arrears?: number
+          branch_id?: string
+          business_date?: string
+          closing_principal?: number
+          company_id?: string
+          created_at?: string
+          disbursed?: number
+          fees_paid?: number
+          interest_accrued?: number
+          interest_paid?: number
+          loan_id?: string
+          opening_principal?: number
+          principal_paid?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      loan_eod_balance_202609: {
+        Row: {
+          arrears: number
+          branch_id: string
+          business_date: string
+          closing_principal: number
+          company_id: string
+          created_at: string
+          disbursed: number
+          fees_paid: number
+          interest_accrued: number
+          interest_paid: number
+          loan_id: string
+          opening_principal: number
+          principal_paid: number
+          status: string
+        }
+        Insert: {
+          arrears?: number
+          branch_id: string
+          business_date: string
+          closing_principal?: number
+          company_id: string
+          created_at?: string
+          disbursed?: number
+          fees_paid?: number
+          interest_accrued?: number
+          interest_paid?: number
+          loan_id: string
+          opening_principal?: number
+          principal_paid?: number
+          status: string
+        }
+        Update: {
+          arrears?: number
+          branch_id?: string
+          business_date?: string
+          closing_principal?: number
+          company_id?: string
+          created_at?: string
+          disbursed?: number
+          fees_paid?: number
+          interest_accrued?: number
+          interest_paid?: number
+          loan_id?: string
+          opening_principal?: number
+          principal_paid?: number
+          status?: string
+        }
+        Relationships: []
       }
       loan_installment: {
         Row: {
@@ -2829,6 +3518,231 @@ export type Database = {
           },
         ]
       }
+      savings_eod_balance: {
+        Row: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          deposits: number
+          fees: number
+          interest: number
+          opening_balance: number
+          txn_count: number
+          withdrawals: number
+        }
+        Insert: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          deposits?: number
+          fees?: number
+          interest?: number
+          opening_balance?: number
+          txn_count?: number
+          withdrawals?: number
+        }
+        Update: {
+          account_id?: string
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          deposits?: number
+          fees?: number
+          interest?: number
+          opening_balance?: number
+          txn_count?: number
+          withdrawals?: number
+        }
+        Relationships: []
+      }
+      savings_eod_balance_202606: {
+        Row: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          deposits: number
+          fees: number
+          interest: number
+          opening_balance: number
+          txn_count: number
+          withdrawals: number
+        }
+        Insert: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          deposits?: number
+          fees?: number
+          interest?: number
+          opening_balance?: number
+          txn_count?: number
+          withdrawals?: number
+        }
+        Update: {
+          account_id?: string
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          deposits?: number
+          fees?: number
+          interest?: number
+          opening_balance?: number
+          txn_count?: number
+          withdrawals?: number
+        }
+        Relationships: []
+      }
+      savings_eod_balance_202607: {
+        Row: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          deposits: number
+          fees: number
+          interest: number
+          opening_balance: number
+          txn_count: number
+          withdrawals: number
+        }
+        Insert: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          deposits?: number
+          fees?: number
+          interest?: number
+          opening_balance?: number
+          txn_count?: number
+          withdrawals?: number
+        }
+        Update: {
+          account_id?: string
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          deposits?: number
+          fees?: number
+          interest?: number
+          opening_balance?: number
+          txn_count?: number
+          withdrawals?: number
+        }
+        Relationships: []
+      }
+      savings_eod_balance_202608: {
+        Row: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          deposits: number
+          fees: number
+          interest: number
+          opening_balance: number
+          txn_count: number
+          withdrawals: number
+        }
+        Insert: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          deposits?: number
+          fees?: number
+          interest?: number
+          opening_balance?: number
+          txn_count?: number
+          withdrawals?: number
+        }
+        Update: {
+          account_id?: string
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          deposits?: number
+          fees?: number
+          interest?: number
+          opening_balance?: number
+          txn_count?: number
+          withdrawals?: number
+        }
+        Relationships: []
+      }
+      savings_eod_balance_202609: {
+        Row: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance: number
+          company_id: string
+          created_at: string
+          deposits: number
+          fees: number
+          interest: number
+          opening_balance: number
+          txn_count: number
+          withdrawals: number
+        }
+        Insert: {
+          account_id: string
+          branch_id: string
+          business_date: string
+          closing_balance?: number
+          company_id: string
+          created_at?: string
+          deposits?: number
+          fees?: number
+          interest?: number
+          opening_balance?: number
+          txn_count?: number
+          withdrawals?: number
+        }
+        Update: {
+          account_id?: string
+          branch_id?: string
+          business_date?: string
+          closing_balance?: number
+          company_id?: string
+          created_at?: string
+          deposits?: number
+          fees?: number
+          interest?: number
+          opening_balance?: number
+          txn_count?: number
+          withdrawals?: number
+        }
+        Relationships: []
+      }
       savings_number_seq: {
         Row: {
           company_id: string
@@ -3558,6 +4472,15 @@ export type Database = {
           _payload?: Json
         }
         Returns: string
+      }
+      ensure_eod_partitions: { Args: { _month: string }; Returns: undefined }
+      eod_close: {
+        Args: { _branch_id: string; _business_date: string }
+        Returns: string
+      }
+      eod_reopen: {
+        Args: { _branch_id: string; _business_date: string; _reason: string }
+        Returns: undefined
       }
       hardening_autocheck: { Args: never; Returns: Json }
       has_permission: {
