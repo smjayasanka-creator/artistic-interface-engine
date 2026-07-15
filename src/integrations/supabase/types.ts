@@ -1001,8 +1001,10 @@ export type Database = {
           introducer_commission_account_id: string | null
           marketing_incentive_account_id: string | null
           max_amount: number | null
+          max_tenure_months: number
           maximum_rate: number | null
           min_amount: number
+          min_tenure_months: number
           name: string
           penalty_type: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value: number
@@ -1030,8 +1032,10 @@ export type Database = {
           introducer_commission_account_id?: string | null
           marketing_incentive_account_id?: string | null
           max_amount?: number | null
+          max_tenure_months?: number
           maximum_rate?: number | null
           min_amount?: number
+          min_tenure_months?: number
           name: string
           penalty_type?: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value?: number
@@ -1059,8 +1063,10 @@ export type Database = {
           introducer_commission_account_id?: string | null
           marketing_incentive_account_id?: string | null
           max_amount?: number | null
+          max_tenure_months?: number
           maximum_rate?: number | null
           min_amount?: number
+          min_tenure_months?: number
           name?: string
           penalty_type?: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value?: number
