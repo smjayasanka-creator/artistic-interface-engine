@@ -798,7 +798,20 @@ function StaffTab() {
   return (
     <div className="flex flex-col gap-5">
       <Card padded={false}>
-        <ListHeader title="Staff" count={data.staff.length} onNew={() => setMode("create")} newLabel="New staff" />
+        <div className="px-5 pt-4 pb-3 flex items-center justify-between gap-2 flex-wrap">
+          <div className="text-sm font-semibold">
+            Staff <span className="text-[11px] text-muted-foreground font-normal ml-1">{data.staff.length} total</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMode("create")}
+              className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-[12px] font-semibold hover:bg-primary-hover"
+            >
+              + New staff
+            </button>
+            <InviteButton />
+          </div>
+        </div>
         <div
           className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
           style={{ gridTemplateColumns: GRID }}
