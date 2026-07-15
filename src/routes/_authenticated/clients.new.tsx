@@ -509,7 +509,35 @@ function NewClientPage() {
                   <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} onBlur={() => blur("email")} className={cls("email")} maxLength={255} />
                 </FormField>
               </FormGrid>
+
+              <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-4">
+                <div className="text-[11.5px] text-muted-foreground">
+                  Screen this customer against FIU sanction & watch lists.
+                  {!canScreen && " Fill first name, last name and national ID first."}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => screenMut.mutate()}
+                  disabled={!canScreen || screenMut.isPending}
+                  className={btnSecondaryCls}
+                >
+                  <Search size={13} className="mr-1" />
+                  {screenMut.isPending ? "Screening…" : screening ? "Re-run screening" : "Screen customer"}
+                </button>
+              </div>
             </Card>
+
+            {screening && (
+              <ScreeningResultCard
+                result={screening}
+                classification={classification}
+                config={screeningCfg ?? null}
+                onRequestApproval={(tier) => approvalMut.mutate(tier)}
+                requesting={approvalMut.isPending}
+                approvalInstance={approvalInstance}
+              />
+            )}
+
 
             <Card className="p-6">
               <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Address</h2>
