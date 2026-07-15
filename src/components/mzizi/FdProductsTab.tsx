@@ -248,23 +248,18 @@ export function FdProductsTab() {
 
 function ProductModal({
   initial,
-  rateTiers,
   productId,
   onCancel,
   onSubmit,
   onDelete,
 }: {
   initial: typeof EMPTY;
-  rateTiers: RateTier[];
   productId?: string;
   onCancel: () => void;
   onSubmit: (v: typeof EMPTY) => void;
   onDelete?: () => void;
 }) {
   const [v, setV] = useState(initial);
-  const qc = useQueryClient();
-  const upsertFn = useServerFn(upsertFdRateTier);
-  const deleteFn = useServerFn(deleteFdRateTier);
   const glListFn = useServerFn(getGlAccounts);
   const { data: glAccounts } = useQuery({
     queryKey: ["gl-accounts-fd-product"],
@@ -296,31 +291,8 @@ function ProductModal({
     </select>
   );
 
-  const upsertM = useMutation({
-    mutationFn: (tier: {
-      id?: string;
-      product_id: string;
-      tenure_months: number;
-      annual_rate: number;
-      effective_from: string;
-      effective_to?: string | null;
-    }) => upsertFn({ data: tier }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["fd-products"] }),
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const deleteM = useMutation({
-    mutationFn: (id: string) => deleteFn({ data: { id } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["fd-products"] }),
-  });
+  void productId;
 
-  const [tenure, setTenure] = useState("");
-  const [rate, setRate] = useState("");
-  const [from, setFrom] = useState(new Date().toISOString().slice(0, 10));
-  const [to, setTo] = useState("");
-
-  const sortedTiers = rateTiers
-    .slice()
-    .sort((a, b) => a.tenure_months - b.tenure_months || a.effective_from.localeCompare(b.effective_from));
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onCancel}>
