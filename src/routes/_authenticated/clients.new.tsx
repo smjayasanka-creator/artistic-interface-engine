@@ -474,7 +474,7 @@ function NewClientPage() {
       </div>
 
       <form onSubmit={submit} noValidate className="flex flex-col gap-5">
-        {tab === "application" && (
+        {tab === "screening" && (
           <>
             <Card className="p-6">
               <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Personal details</h2>
@@ -556,10 +556,97 @@ function NewClientPage() {
                 approvalInstance={approvalInstance}
               />
             )}
+          </>
+        )}
 
+        {tab === "application" && (
+          <>
+            <Card className="p-6">
+              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Personal profile</h2>
+              <FormGrid>
+                <FormField label="Nationality" required span={4}>
+                  <input value={nationality} onChange={(e) => setNationality(e.target.value)} className={inputCls} maxLength={60} />
+                </FormField>
+                <FormField label="Marital status" required span={4}>
+                  <select value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value as MaritalStatus)} className={inputCls}>
+                    <option value="">Select…</option>
+                    <option value="single">Single</option>
+                    <option value="married">Married</option>
+                    <option value="other">Other</option>
+                  </select>
+                </FormField>
+                <FormField label="No. of dependents" span={4}>
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputCls + " font-mono"}
+                    value={dependents}
+                    onChange={(e) => setDependents(e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))}
+                  />
+                </FormField>
+                {maritalStatus === "married" && (
+                  <>
+                    <FormField label="Name of spouse" required span={6}>
+                      <input value={spouseName} onChange={(e) => setSpouseName(e.target.value)} className={inputCls} maxLength={120} />
+                    </FormField>
+                    <FormField label="Spouse employer" span={6}>
+                      <input value={spouseEmployer} onChange={(e) => setSpouseEmployer(e.target.value)} className={inputCls} maxLength={120} />
+                    </FormField>
+                  </>
+                )}
+              </FormGrid>
+            </Card>
 
             <Card className="p-6">
-              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Address</h2>
+              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Permanent address</h2>
+              <FormGrid>
+                <FormField label="Building number" required span={3}>
+                  <input value={permanentAddr.building_no} onChange={(e) => setPermanentAddr({ ...permanentAddr, building_no: e.target.value })} className={inputCls} maxLength={40} />
+                </FormField>
+                <FormField label="Street 1" required span={4}>
+                  <input value={permanentAddr.street1} onChange={(e) => setPermanentAddr({ ...permanentAddr, street1: e.target.value })} className={inputCls} maxLength={80} />
+                </FormField>
+                <FormField label="Street 2" span={4}>
+                  <input value={permanentAddr.street2} onChange={(e) => setPermanentAddr({ ...permanentAddr, street2: e.target.value })} className={inputCls} maxLength={80} />
+                </FormField>
+                <FormField label="Town" required span={3}>
+                  <input value={permanentAddr.town} onChange={(e) => setPermanentAddr({ ...permanentAddr, town: e.target.value })} className={inputCls} maxLength={80} />
+                </FormField>
+              </FormGrid>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-secondary-foreground uppercase tracking-wider">Mailing address</h2>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={mailingSameAsPermanent}
+                    onChange={(e) => setMailingSameAsPermanent(e.target.checked)}
+                  />
+                  Same as permanent address
+                </label>
+              </div>
+              {!mailingSameAsPermanent && (
+                <FormGrid>
+                  <FormField label="Building number" required span={3}>
+                    <input value={mailingAddr.building_no} onChange={(e) => setMailingAddr({ ...mailingAddr, building_no: e.target.value })} className={inputCls} maxLength={40} />
+                  </FormField>
+                  <FormField label="Street 1" required span={4}>
+                    <input value={mailingAddr.street1} onChange={(e) => setMailingAddr({ ...mailingAddr, street1: e.target.value })} className={inputCls} maxLength={80} />
+                  </FormField>
+                  <FormField label="Street 2" span={4}>
+                    <input value={mailingAddr.street2} onChange={(e) => setMailingAddr({ ...mailingAddr, street2: e.target.value })} className={inputCls} maxLength={80} />
+                  </FormField>
+                  <FormField label="Town" required span={3}>
+                    <input value={mailingAddr.town} onChange={(e) => setMailingAddr({ ...mailingAddr, town: e.target.value })} className={inputCls} maxLength={80} />
+                  </FormField>
+                </FormGrid>
+              )}
+            </Card>
+
+            <Card className="p-6">
+              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Address (administrative)</h2>
               <FormGrid>
                 <FormField label="Residential address" required span={12} error={showError("address") ? errors.address : undefined}>
                   <textarea value={form.address} onChange={(e) => set("address", e.target.value)} onBlur={() => blur("address")} rows={2} maxLength={200} className={cls("address")} />
