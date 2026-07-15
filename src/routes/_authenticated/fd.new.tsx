@@ -226,8 +226,12 @@ function NewFd() {
             </select>
           </FormField>
           <FormField label="Tenure (months)" required span={3}>
-            <select
-              className={selectCls}
+            <input
+              type="number"
+              min={(product as any)?.min_tenure_months ?? 1}
+              max={(product as any)?.max_tenure_months ?? undefined}
+              step={1}
+              className={inputCls}
               value={tenure}
               onChange={(e) => {
                 const t = e.target.value === "" ? "" : Number(e.target.value);
@@ -235,14 +239,7 @@ function NewFd() {
                 refreshRate(productId, t, valueDate);
               }}
               disabled={!productId}
-            >
-              <option value="">…</option>
-              {availableTenures.map((t) => (
-                <option key={t} value={t}>
-                  {t} months
-                </option>
-              ))}
-            </select>
+            />
             {product && (
               <span className="text-[11px] text-muted-foreground mt-1">
                 Allowed: {(product as any).min_tenure_months ?? 1}–{(product as any).max_tenure_months ?? "—"} months
