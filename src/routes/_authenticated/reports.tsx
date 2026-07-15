@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { getReports, getFinancials } from "@/lib/mzizi.functions";
+import { getReports, getFinancials, getSubledgerReconciliation } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { money, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ type TabKey =
   | "balance"
   | "trial"
   | "ledger"
+  | "recon"
   | "portfolio"
   | "customer";
 
@@ -26,6 +27,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "balance", label: "Balance Sheet" },
   { key: "trial", label: "Trial Balance" },
   { key: "ledger", label: "Ledger" },
+  { key: "recon", label: "Reconciliation" },
   { key: "portfolio", label: "Portfolio" },
   { key: "customer", label: "Customer" },
 ];
@@ -74,6 +76,7 @@ function Reports() {
       {tab === "trial" &&
         (fin ? <TrialBalanceTab data={fin.trialBalance} /> : <Loading />)}
       {tab === "ledger" && <LedgerTab />}
+      {tab === "recon" && <ReconciliationTab />}
       {tab === "portfolio" &&
         (fin ? <PortfolioTab rows={fin.portfolio} /> : <Loading />)}
       {tab === "customer" &&
@@ -403,6 +406,167 @@ function LedgerTab() {
       <div className="text-sm font-medium text-muted-foreground">Ledger</div>
       <div className="text-xs text-faint mt-1">Use the General Ledger page for full journal lines and account filters.</div>
     </Card>
+  );
+}
+
+/* ─── Sub-ledger vs GL Reconciliation ─── */
+
+function ReconciliationTab() {
+  const today = new Date().toISOString().slice(0, 10);
+  const [asOf, setAsOf] = useState<string>(today);
+  const [fromDate, setFromDate] = useState<string>("");
+  const reconFn = useServerFn(getSubledgerReconciliation);
+  const { data, isFetching, refetch } = useQuery({
+    queryKey: ["subledger-recon", asOf, fromDate],
+    queryFn: () => reconFn({ data: { asOf, fromDate: fromDate || undefined } }),
+  });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card>
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-wider text-faint font-semibold">From date (optional)</label>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="border border-border rounded-md px-3 py-1.5 text-sm bg-background"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-wider text-faint font-semibold">As of date</label>
+            <input
+              type="date"
+              value={asOf}
+              onChange={(e) => setAsOf(e.target.value)}
+              className="border border-border rounded-md px-3 py-1.5 text-sm bg-background"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90"
+          >
+            {isFetching ? "Refreshing…" : "Refresh"}
+          </button>
+          {fromDate && (
+            <button
+              type="button"
+              onClick={() => setFromDate("")}
+              className="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted"
+            >
+              Clear range
+            </button>
+          )}
+          <div className="text-xs text-faint ml-auto">
+            {fromDate ? "Period movement" : "Balance snapshot"}
+          </div>
+        </div>
+      </Card>
+
+      {!data ? (
+        <Loading />
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-4">
+            <MetricCard label="Checks run" value={data.totals.checked} tone="primary" />
+            <MetricCard label="Matches" value={data.totals.checked - data.totals.breaks} tone="positive" />
+            <MetricCard label="Breaks" value={data.totals.breaks} tone={data.totals.breaks > 0 ? "negative" : "positive"} />
+          </div>
+
+          <Card>
+            <CardTitle subtitle={fromDate ? `Movement ${fromDate} → ${data.asOf}` : `Snapshot as of ${data.asOf}`}>
+              Sub-ledger vs GL control accounts
+            </CardTitle>
+            <div
+              className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold pb-2 border-b border-border"
+              style={{ gridTemplateColumns: "70px 1.6fr 1.4fr 140px 140px 140px 90px" }}
+            >
+              <div>Code</div>
+              <div>Control account</div>
+              <div>Sub-ledger</div>
+              <div className="text-right">GL balance</div>
+              <div className="text-right">Sub-ledger</div>
+              <div className="text-right">Difference</div>
+              <div className="text-right">Status</div>
+            </div>
+            {data.rows.length === 0 && <EmptyRow label="No control accounts mapped." />}
+            {data.rows.map((r: any) => (
+              <div
+                key={r.code}
+                className={cn(
+                  "grid items-center py-3 border-b border-row-divider last:border-b-0 text-[13px]",
+                  r.status === "break" && "bg-red-50/40",
+                )}
+                style={{ gridTemplateColumns: "70px 1.6fr 1.4fr 140px 140px 140px 90px" }}
+              >
+                <div className="font-mono text-[11.5px] text-muted-foreground">{r.code}</div>
+                <div>
+                  <div>{r.name}</div>
+                  {r.note && (
+                    <div className="text-[11px] text-amber-700 mt-0.5 leading-snug">{r.note}</div>
+                  )}
+                </div>
+                <div className="text-muted-foreground text-[12.5px]">{r.subledger}</div>
+                <div className="font-mono text-right">{money(r.gl_balance)}</div>
+                <div className="font-mono text-right">{money(r.subledger_balance)}</div>
+                <div
+                  className={cn(
+                    "font-mono text-right font-semibold",
+                    r.status === "break" ? "text-red-600" : "text-emerald-600",
+                  )}
+                >
+                  {money(r.difference)}
+                </div>
+                <div className="text-right">
+                  <span
+                    className={cn(
+                      "inline-block px-2 py-0.5 rounded-full text-[10.5px] font-semibold uppercase tracking-wide",
+                      r.status === "break"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-emerald-100 text-emerald-700",
+                    )}
+                  >
+                    {r.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+            <div
+              className="grid items-center py-3 mt-1 border-t-2 border-border text-[13px] font-semibold"
+              style={{ gridTemplateColumns: "70px 1.6fr 1.4fr 140px 140px 140px 90px" }}
+            >
+              <div />
+              <div>Totals</div>
+              <div />
+              <div className="font-mono text-right">{money(data.totals.totalGl)}</div>
+              <div className="font-mono text-right">{money(data.totals.totalSub)}</div>
+              <div
+                className={cn(
+                  "font-mono text-right",
+                  Math.abs(data.totals.totalDiff) > 0.01 ? "text-red-600" : "text-emerald-600",
+                )}
+              >
+                {money(data.totals.totalDiff)}
+              </div>
+              <div />
+            </div>
+          </Card>
+
+          <Card>
+            <div className="text-xs text-muted-foreground leading-relaxed">
+              <strong>How this works.</strong> Each control account's GL balance is the signed sum of postings on that
+              account (respecting normal balance). The sub-ledger side aggregates the underlying business-fact tables:
+              savings uses <code>savings_transaction</code>, fixed deposits use <code>fd_transaction</code>, and loans
+              use <code>v_loan_outstanding</code> for the current snapshot (or disbursed − repayments for a historical
+              range). A non-zero difference means a posting was skipped, split incorrectly, or that a sub-ledger row was
+              written outside the ledger kernel.
+            </div>
+          </Card>
+        </>
+      )}
+    </div>
   );
 }
 

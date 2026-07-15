@@ -2540,3 +2540,183 @@ export const createFacilityTermination = createServerFn({ method: "POST" })
       shortfall: Math.max(0, Math.round((settlement - amount) * 100) / 100),
     };
   });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUB-LEDGER vs GL RECONCILIATION
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Compares the balance of each GL control account (from `posting`) to the
+// summed balances of the underlying sub-ledger tables as of a chosen date.
+// Any non-zero difference is a break the accounting team must investigate.
+//
+// Control-account map (hard-coded to this project's chart of accounts):
+//   1100 Loans receivable       ↔ loan / repayment sub-ledger
+//   2000 Customer Savings       ↔ savings_transaction sub-ledger
+//   2200 Fixed Deposit          ↔ fd_transaction sub-ledger (if the
+//                                  account exists in the COA)
+
+const SAVINGS_POSITIVE = new Set(["deposit", "interest", "opening", "adjustment"]);
+const SAVINGS_NEGATIVE = new Set(["withdrawal", "fee", "closure"]);
+const FD_POSITIVE = new Set(["deposit_receipt", "opening", "renewal"]);
+const FD_NEGATIVE = new Set(["withdrawal", "premature_closure", "maturity_payout"]);
+
+export const getSubledgerReconciliation = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { asOf?: string; fromDate?: string }) =>
+    z
+      .object({
+        asOf: z.string().optional(),
+        fromDate: z.string().optional(),
+      })
+      .parse(i ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const asOf = data.asOf && data.asOf.length ? data.asOf : serverToday();
+    const fromDate = data.fromDate && data.fromDate.length ? data.fromDate : null;
+
+    // 1. GL side — pull postings joined to journal_entry so we can filter by entry_date
+    const { data: accounts } = await supabase
+      .from("gl_account")
+      .select("id, code, name, type, normal_balance");
+
+    const codeMap = new Map<string, { id: string; code: string; name: string; normal: number }>();
+    for (const a of accounts ?? []) {
+      codeMap.set(a.code, {
+        id: a.id as string,
+        code: a.code as string,
+        name: a.name as string,
+        normal: Number(a.normal_balance),
+      });
+    }
+
+    const targetCodes = ["1100", "2000", "2200"].filter((c) => codeMap.has(c));
+    const targetIds = targetCodes.map((c) => codeMap.get(c)!.id);
+
+    // Postings joined with journal_entry.entry_date — filter server-side by date range
+    let postingsQ = supabase
+      .from("posting")
+      .select("account_id, debit, credit, entry:entry_id!inner(entry_date)")
+      .in("account_id", targetIds)
+      .lte("entry.entry_date", asOf);
+    if (fromDate) postingsQ = postingsQ.gte("entry.entry_date", fromDate);
+    const { data: postings } = await postingsQ;
+
+    const glBalance = new Map<string, number>();
+    for (const p of (postings ?? []) as any[]) {
+      const acc = accounts?.find((a) => a.id === p.account_id);
+      if (!acc) continue;
+      const net = Number(p.debit ?? 0) - Number(p.credit ?? 0);
+      const signed = Number(acc.normal_balance) === 1 ? net : -net;
+      glBalance.set(p.account_id, (glBalance.get(p.account_id) ?? 0) + signed);
+    }
+
+    // 2. Savings sub-ledger — signed sum of savings_transaction
+    let savingsQ = supabase
+      .from("savings_transaction")
+      .select("txn_type, amount")
+      .lte("txn_date", asOf);
+    if (fromDate) savingsQ = savingsQ.gte("txn_date", fromDate);
+    const { data: sTxns } = await savingsQ;
+    let savingsSub = 0;
+    for (const t of sTxns ?? []) {
+      const amt = Number(t.amount);
+      if (SAVINGS_POSITIVE.has(t.txn_type as string)) savingsSub += amt;
+      else if (SAVINGS_NEGATIVE.has(t.txn_type as string)) savingsSub -= amt;
+    }
+
+    // 3. FD sub-ledger — signed sum of fd_transaction
+    let fdQ = supabase.from("fd_transaction").select("type, amount").lte("txn_date", asOf);
+    if (fromDate) fdQ = fdQ.gte("txn_date", fromDate);
+    const { data: fTxns } = await fdQ;
+    let fdSub = 0;
+    for (const t of fTxns ?? []) {
+      const amt = Number(t.amount);
+      if (FD_POSITIVE.has(t.type as string)) fdSub += amt;
+      else if (FD_NEGATIVE.has(t.type as string)) fdSub -= amt;
+    }
+
+    // 4. Loans sub-ledger — principal outstanding
+    // v_loan_outstanding is a live view (as-of today). For historical asOf
+    // dates we fall back to disbursed principal minus repayments booked in
+    // the window, which will differ from the GL by the interest portion —
+    // surfaced as a "note" so users don't misread the break.
+    const today = serverToday();
+    let loansSub = 0;
+    let loansNote: string | null = null;
+    if (asOf >= today && !fromDate) {
+      const { data: outs } = await supabase
+        .from("v_loan_outstanding")
+        .select("outstanding_principal");
+      loansSub = (outs ?? []).reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0);
+    } else {
+      let disbQ = supabase
+        .from("loan")
+        .select("principal, disbursed_at")
+        .not("disbursed_at", "is", null)
+        .lte("disbursed_at", `${asOf}T23:59:59Z`);
+      if (fromDate) disbQ = disbQ.gte("disbursed_at", `${fromDate}T00:00:00Z`);
+      const { data: disbs } = await disbQ;
+      const disbTotal = (disbs ?? []).reduce((s, r) => s + Number(r.principal ?? 0), 0);
+
+      let repayQ = supabase
+        .from("repayment")
+        .select("amount, received_at")
+        .lte("received_at", `${asOf}T23:59:59Z`);
+      if (fromDate) repayQ = repayQ.gte("received_at", `${fromDate}T00:00:00Z`);
+      const { data: reps } = await repayQ;
+      const repayTotal = (reps ?? []).reduce((s, r) => s + Number(r.amount ?? 0), 0);
+
+      loansSub = disbTotal - repayTotal;
+      loansNote =
+        "Approximation: repayments include interest, so this may differ from the GL by the period interest income.";
+    }
+
+    type Row = {
+      code: string;
+      name: string;
+      subledger: string;
+      gl_balance: number;
+      subledger_balance: number;
+      difference: number;
+      status: "match" | "break";
+      note: string | null;
+    };
+
+    const rows: Row[] = [];
+
+    const push = (code: string, subledgerLabel: string, subValue: number, note: string | null) => {
+      const acc = codeMap.get(code);
+      if (!acc) return;
+      const gl = glBalance.get(acc.id) ?? 0;
+      const diff = Math.round((gl - subValue) * 100) / 100;
+      rows.push({
+        code: acc.code,
+        name: acc.name,
+        subledger: subledgerLabel,
+        gl_balance: Math.round(gl * 100) / 100,
+        subledger_balance: Math.round(subValue * 100) / 100,
+        difference: diff,
+        status: Math.abs(diff) < 0.01 ? "match" : "break",
+        note,
+      });
+    };
+
+    push("1100", "Loan sub-ledger", loansSub, loansNote);
+    push("2000", "Savings sub-ledger", savingsSub, null);
+    push("2200", "FD sub-ledger", fdSub, null);
+
+    const breaks = rows.filter((r) => r.status === "break").length;
+    return {
+      asOf,
+      fromDate,
+      rows,
+      totals: {
+        totalGl: rows.reduce((s, r) => s + r.gl_balance, 0),
+        totalSub: rows.reduce((s, r) => s + r.subledger_balance, 0),
+        totalDiff: rows.reduce((s, r) => s + r.difference, 0),
+        breaks,
+        checked: rows.length,
+      },
+    };
+  });
