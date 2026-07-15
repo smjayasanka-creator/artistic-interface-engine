@@ -519,18 +519,6 @@ function NewClientPage() {
                   <input value={form.national_id} onChange={(e) => set("national_id", e.target.value)} onBlur={() => blur("national_id")} className={`${cls("national_id")} font-mono`} maxLength={30} />
                 </FormField>
 
-                <FormField label="Date of birth" required span={3} error={showError("date_of_birth") ? errors.date_of_birth : undefined}>
-                  <input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} onBlur={() => blur("date_of_birth")} className={cls("date_of_birth")} />
-                </FormField>
-                <FormField label="Gender" required span={2} error={showError("gender") ? errors.gender : undefined}>
-                  <select value={form.gender} onChange={(e) => set("gender", e.target.value as "" | Gender)} onBlur={() => blur("gender")} className={cls("gender")}>
-                    <option value="">Select…</option>
-                    <option value="female">Female</option>
-                    <option value="male">Male</option>
-                    <option value="other">Other</option>
-                  </select>
-                </FormField>
-
                 <FormField label="Country code" required span={3} error={showError("phone_country_code") ? errors.phone_country_code : undefined}>
                   <select
                     value={form.phone_country_code}
@@ -543,7 +531,7 @@ function NewClientPage() {
                     ))}
                   </select>
                 </FormField>
-                <FormField label="Phone" required span={4} error={showError("phone") ? errors.phone : undefined}>
+                <FormField label="Phone" required span={9} error={showError("phone") ? errors.phone : undefined}>
                   <input
                     value={form.phone}
                     onChange={(e) => set("phone", e.target.value.replace(/[^\d]/g, ""))}
@@ -552,10 +540,6 @@ function NewClientPage() {
                     className={`${cls("phone")} font-mono`}
                     maxLength={15}
                   />
-                </FormField>
-
-                <FormField label="Email" span={12} error={showError("email") ? errors.email : undefined}>
-                  <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} onBlur={() => blur("email")} className={cls("email")} maxLength={255} />
                 </FormField>
               </FormGrid>
 
