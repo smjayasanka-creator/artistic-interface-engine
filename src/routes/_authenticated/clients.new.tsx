@@ -7,6 +7,8 @@ import { z } from "zod";
 import { createClient } from "@/lib/mzizi.functions";
 import { getRiskScheme, saveClientRiskAssessment } from "@/lib/risk.functions";
 import { RiskAssessmentForm, applicableFactors, type RiskAnswer } from "@/components/mzizi/RiskAssessmentForm";
+import { CustomerScreeningTab } from "@/components/mzizi/CustomerScreeningTab";
+import type { ScreeningResult } from "@/lib/screening.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/mzizi/Card";
 import { cn } from "@/lib/utils";
@@ -26,10 +28,11 @@ export const Route = createFileRoute("/_authenticated/clients/new")({
 });
 
 type Gender = "male" | "female" | "other";
-type TabKey = "application" | "risk" | "documents";
+type TabKey = "application" | "screening" | "risk" | "documents";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "application", label: "Application" },
+  { key: "screening", label: "Customer screening" },
   { key: "risk", label: "Risk profile" },
   { key: "documents", label: "Documents" },
 ];
@@ -134,6 +137,15 @@ function NewClientPage() {
   const { data: riskScheme } = useQuery({ queryKey: ["risk-scheme"], queryFn: () => fetchScheme() });
   const [riskAnswers, setRiskAnswers] = useState<RiskAnswer[]>([]);
   const saveRiskFn = useServerFn(saveClientRiskAssessment);
+
+  // Customer screening
+  const [screening, setScreening] = useState<ScreeningResult | null>(null);
+  const screeningDone = screening != null;
+  const screeningHasHit =
+    screening != null &&
+    (screening.direct_matches.length > 0 || screening.fuzzy_matches.length > 0);
+
+
 
   const errors = useMemo(() => {
     const r = clientSchema.safeParse(form);
@@ -383,6 +395,18 @@ function NewClientPage() {
                   ready
                 </span>
               )}
+              {t.key === "screening" && screeningDone && (
+                <span
+                  className={cn(
+                    "text-[10px] rounded-full px-1.5 py-0.5",
+                    screeningHasHit
+                      ? "bg-destructive/15 text-destructive"
+                      : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+                  )}
+                >
+                  {screeningHasHit ? "review" : "clear"}
+                </span>
+              )}
             </button>
           );
         })}
@@ -580,6 +604,16 @@ function NewClientPage() {
               )}
             </Card>
           </>
+        )}
+
+        {tab === "screening" && (
+          <CustomerScreeningTab
+            firstName={form.first_name}
+            lastName={form.last_name}
+            nationalId={form.national_id}
+            result={screening}
+            onResult={setScreening}
+          />
         )}
 
         {tab === "risk" && (
