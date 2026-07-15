@@ -243,6 +243,11 @@ function NewFd() {
                 </option>
               ))}
             </select>
+            {product && (
+              <span className="text-[11px] text-muted-foreground mt-1">
+                Allowed: {(product as any).min_tenure_months ?? 1}–{(product as any).max_tenure_months ?? "—"} months
+              </span>
+            )}
           </FormField>
           <FormField label="Applicable rate (%)" span={3}>
             <input className={inputCls + " bg-muted/40 font-mono"} value={rate == null ? "—" : rate.toFixed(3)} readOnly />
