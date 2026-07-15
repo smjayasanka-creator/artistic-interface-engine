@@ -2923,6 +2923,41 @@ export type Database = {
           },
         ]
       }
+      screening_config: {
+        Row: {
+          auto_escalate_direct: boolean
+          company_id: string
+          created_at: string
+          tier1_min_score: number
+          tier2_min_score: number
+          updated_at: string
+        }
+        Insert: {
+          auto_escalate_direct?: boolean
+          company_id: string
+          created_at?: string
+          tier1_min_score?: number
+          tier2_min_score?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_escalate_direct?: boolean
+          company_id?: string
+          created_at?: string
+          tier1_min_score?: number
+          tier2_min_score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screening_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_type: {
         Row: {
           active: boolean
