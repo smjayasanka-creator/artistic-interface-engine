@@ -2,14 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, X } from "lucide-react";
+import { X } from "lucide-react";
 import {
   listFdProducts,
   createFdProduct,
   updateFdProduct,
   deleteFdProduct,
-  upsertFdRateTier,
-  deleteFdRateTier,
 } from "@/lib/fd.functions";
 import { getGlAccounts } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
@@ -238,7 +236,6 @@ export function FdProductsTab() {
       {editing && (
         <ProductModal
           initial={editing.values}
-          rateTiers={editing.rateTiers}
           productId={editing.id}
           onCancel={() => setEditing(null)}
           onSubmit={(v) => (editing.id ? updateM.mutate({ id: editing.id, patch: v }) : createM.mutate(v))}
@@ -251,23 +248,18 @@ export function FdProductsTab() {
 
 function ProductModal({
   initial,
-  rateTiers,
   productId,
   onCancel,
   onSubmit,
   onDelete,
 }: {
   initial: typeof EMPTY;
-  rateTiers: RateTier[];
   productId?: string;
   onCancel: () => void;
   onSubmit: (v: typeof EMPTY) => void;
   onDelete?: () => void;
 }) {
   const [v, setV] = useState(initial);
-  const qc = useQueryClient();
-  const upsertFn = useServerFn(upsertFdRateTier);
-  const deleteFn = useServerFn(deleteFdRateTier);
   const glListFn = useServerFn(getGlAccounts);
   const { data: glAccounts } = useQuery({
     queryKey: ["gl-accounts-fd-product"],
@@ -299,31 +291,8 @@ function ProductModal({
     </select>
   );
 
-  const upsertM = useMutation({
-    mutationFn: (tier: {
-      id?: string;
-      product_id: string;
-      tenure_months: number;
-      annual_rate: number;
-      effective_from: string;
-      effective_to?: string | null;
-    }) => upsertFn({ data: tier }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["fd-products"] }),
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const deleteM = useMutation({
-    mutationFn: (id: string) => deleteFn({ data: { id } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["fd-products"] }),
-  });
+  void productId;
 
-  const [tenure, setTenure] = useState("");
-  const [rate, setRate] = useState("");
-  const [from, setFrom] = useState(new Date().toISOString().slice(0, 10));
-  const [to, setTo] = useState("");
-
-  const sortedTiers = rateTiers
-    .slice()
-    .sort((a, b) => a.tenure_months - b.tenure_months || a.effective_from.localeCompare(b.effective_from));
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onCancel}>
@@ -462,93 +431,11 @@ function ProductModal({
           </div>
 
           {productId && (
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">Rate tiers</div>
-              <div className="overflow-x-auto border border-border rounded-md">
-                <table className="w-full text-[12.5px]">
-                  <thead>
-                    <tr className="text-left text-faint font-semibold border-b border-border bg-secondary/40">
-                      <th className="py-1.5 px-3">Tenure (months)</th>
-                      <th className="py-1.5 px-3">Annual rate %</th>
-                      <th className="py-1.5 px-3">Effective from</th>
-                      <th className="py-1.5 px-3">Effective to</th>
-                      <th className="py-1.5 px-3"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedTiers.map((t) => (
-                      <tr key={t.id} className="border-b border-border/50 last:border-b-0">
-                        <td className="py-1.5 px-3">{t.tenure_months}</td>
-                        <td className="py-1.5 px-3 font-mono">{Number(t.annual_rate).toFixed(3)}</td>
-                        <td className="py-1.5 px-3">{t.effective_from}</td>
-                        <td className="py-1.5 px-3">{t.effective_to ?? "—"}</td>
-                        <td className="py-1.5 px-3 text-right">
-                          <button
-                            className="text-destructive hover:text-destructive/80"
-                            onClick={() => deleteM.mutate(t.id)}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    <tr>
-                      <td className="py-1.5 px-3">
-                        <input
-                          value={tenure}
-                          onChange={(e) => setTenure(e.target.value)}
-                          className={inputCls}
-                          placeholder="12"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3">
-                        <input
-                          value={rate}
-                          onChange={(e) => setRate(e.target.value)}
-                          className={inputCls}
-                          placeholder="12.500"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3">
-                        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inputCls} />
-                      </td>
-                      <td className="py-1.5 px-3">
-                        <input
-                          type="date"
-                          value={to}
-                          onChange={(e) => setTo(e.target.value)}
-                          className={inputCls}
-                          placeholder="Open-ended"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3 text-right">
-                        <button
-                          className={btnSecondaryCls}
-                          onClick={() => {
-                            const t = parseInt(tenure);
-                            const r = parseFloat(rate);
-                            if (!t || !r || !from || !productId) return toast.error("Fill all fields");
-                            upsertM.mutate({
-                              product_id: productId,
-                              tenure_months: t,
-                              annual_rate: r,
-                              effective_from: from,
-                              effective_to: to || null,
-                            });
-                            setTenure("");
-                            setRate("");
-                            setTo("");
-                          }}
-                        >
-                          <Plus size={13} className="mr-1" /> Add
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+            <div className="text-[11.5px] text-muted-foreground bg-secondary/40 border border-border rounded-md px-3 py-2">
+              Interest rates are managed centrally in the ALCO rates sheet — the applicable rate is looked up automatically at booking based on the deposit tenure and value date.
             </div>
           )}
+
 
           <FormActions>
             {onDelete && (
@@ -570,7 +457,7 @@ function ProductModal({
               type="button"
               className={btnPrimaryCls}
               onClick={() => onSubmit(v)}
-              disabled={upsertM.isPending || deleteM.isPending}
+              disabled={false}
             >
               Save
             </button>

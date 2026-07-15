@@ -103,17 +103,7 @@ function NewFd() {
   }, [introducerId, introducers, principal]);
 
   const product = useMemo(() => products?.find((p) => p.id === productId) ?? null, [products, productId]);
-  const availableTenures = useMemo(() => {
-    if (!product) return [];
-    const p = product as unknown as { rate_tiers: { tenure_months: number }[]; min_tenure_months?: number; max_tenure_months?: number };
-    const minT = Number(p.min_tenure_months ?? 1);
-    const maxT = Number(p.max_tenure_months ?? 600);
-    const set = new Set<number>();
-    for (const t of p.rate_tiers) {
-      if (t.tenure_months >= minT && t.tenure_months <= maxT) set.add(t.tenure_months);
-    }
-    return Array.from(set).sort((a, b) => a - b);
-  }, [product]);
+  // Tenure is validated against the product's min/max range; rates come from ALCO.
 
   const maturity = useMemo(() => (tenure && valueDate ? addMonths(valueDate, Number(tenure)) : ""), [tenure, valueDate]);
 
@@ -226,8 +216,12 @@ function NewFd() {
             </select>
           </FormField>
           <FormField label="Tenure (months)" required span={3}>
-            <select
-              className={selectCls}
+            <input
+              type="number"
+              min={(product as any)?.min_tenure_months ?? 1}
+              max={(product as any)?.max_tenure_months ?? undefined}
+              step={1}
+              className={inputCls}
               value={tenure}
               onChange={(e) => {
                 const t = e.target.value === "" ? "" : Number(e.target.value);
@@ -235,14 +229,7 @@ function NewFd() {
                 refreshRate(productId, t, valueDate);
               }}
               disabled={!productId}
-            >
-              <option value="">…</option>
-              {availableTenures.map((t) => (
-                <option key={t} value={t}>
-                  {t} months
-                </option>
-              ))}
-            </select>
+            />
             {product && (
               <span className="text-[11px] text-muted-foreground mt-1">
                 Allowed: {(product as any).min_tenure_months ?? 1}–{(product as any).max_tenure_months ?? "—"} months
