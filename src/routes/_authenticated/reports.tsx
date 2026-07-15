@@ -76,6 +76,7 @@ function Reports() {
       {tab === "trial" &&
         (fin ? <TrialBalanceTab data={fin.trialBalance} /> : <Loading />)}
       {tab === "ledger" && <LedgerTab />}
+      {tab === "recon" && <ReconciliationTab />}
       {tab === "portfolio" &&
         (fin ? <PortfolioTab rows={fin.portfolio} /> : <Loading />)}
       {tab === "customer" &&
