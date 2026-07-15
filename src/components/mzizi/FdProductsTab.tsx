@@ -236,7 +236,6 @@ export function FdProductsTab() {
       {editing && (
         <ProductModal
           initial={editing.values}
-          rateTiers={editing.rateTiers}
           productId={editing.id}
           onCancel={() => setEditing(null)}
           onSubmit={(v) => (editing.id ? updateM.mutate({ id: editing.id, patch: v }) : createM.mutate(v))}
