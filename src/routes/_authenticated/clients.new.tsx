@@ -110,7 +110,17 @@ function NewClientPage() {
   const createFn = useServerFn(createClient);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  const [tab, setTab] = useState<TabKey>("application");
+  const [tab, setTab] = useState<TabKey>("screening");
+
+  // New profile fields (UI-only for now; not persisted to backend)
+  const [permanentAddr, setPermanentAddr] = useState<AddressBlock>({ ...EMPTY_ADDR });
+  const [mailingAddr, setMailingAddr] = useState<AddressBlock>({ ...EMPTY_ADDR });
+  const [mailingSameAsPermanent, setMailingSameAsPermanent] = useState(true);
+  const [maritalStatus, setMaritalStatus] = useState<MaritalStatus>("");
+  const [spouseName, setSpouseName] = useState("");
+  const [spouseEmployer, setSpouseEmployer] = useState("");
+  const [dependents, setDependents] = useState<number | "">("");
+  const [nationality, setNationality] = useState("Sri Lankan");
 
   const [form, setForm] = useState<FormState>({
     first_name: "",
