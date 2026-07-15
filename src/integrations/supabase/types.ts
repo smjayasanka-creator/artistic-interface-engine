@@ -533,6 +533,66 @@ export type Database = {
           },
         ]
       }
+      client_risk_assessment: {
+        Row: {
+          answers: Json
+          assessed_at: string
+          assessed_by: string | null
+          band: Database["public"]["Enums"]["risk_band_level"]
+          client_id: string
+          company_id: string
+          created_at: string
+          id: string
+          max_score: number
+          pct: number
+          total_score: number
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          assessed_at?: string
+          assessed_by?: string | null
+          band: Database["public"]["Enums"]["risk_band_level"]
+          client_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          max_score: number
+          pct: number
+          total_score: number
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          assessed_at?: string
+          assessed_by?: string | null
+          band?: Database["public"]["Enums"]["risk_band_level"]
+          client_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          max_score?: number
+          pct?: number
+          total_score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_risk_assessment_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_risk_assessment_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company: {
         Row: {
           country: string
@@ -2258,6 +2318,135 @@ export type Database = {
           },
         ]
       }
+      risk_band: {
+        Row: {
+          band: Database["public"]["Enums"]["risk_band_level"]
+          company_id: string
+          created_at: string
+          id: string
+          max_pct: number
+          min_pct: number
+          updated_at: string
+        }
+        Insert: {
+          band: Database["public"]["Enums"]["risk_band_level"]
+          company_id: string
+          created_at?: string
+          id?: string
+          max_pct: number
+          min_pct: number
+          updated_at?: string
+        }
+        Update: {
+          band?: Database["public"]["Enums"]["risk_band_level"]
+          company_id?: string
+          created_at?: string
+          id?: string
+          max_pct?: number
+          min_pct?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_band_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      risk_factor: {
+        Row: {
+          active: boolean
+          applies_to: Database["public"]["Enums"]["risk_applies_to"]
+          code: string
+          company_id: string
+          created_at: string
+          id: string
+          label: string
+          multi_select: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          applies_to?: Database["public"]["Enums"]["risk_applies_to"]
+          code: string
+          company_id: string
+          created_at?: string
+          id?: string
+          label: string
+          multi_select?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          applies_to?: Database["public"]["Enums"]["risk_applies_to"]
+          code?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          label?: string
+          multi_select?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_factor_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      risk_option: {
+        Row: {
+          active: boolean
+          band: Database["public"]["Enums"]["risk_band_level"]
+          created_at: string
+          factor_id: string
+          id: string
+          label: string
+          score: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          band?: Database["public"]["Enums"]["risk_band_level"]
+          created_at?: string
+          factor_id: string
+          id?: string
+          label: string
+          score?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          band?: Database["public"]["Enums"]["risk_band_level"]
+          created_at?: string
+          factor_id?: string
+          id?: string
+          label?: string
+          score?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_option_factor_id_fkey"
+            columns: ["factor_id"]
+            isOneToOne: false
+            referencedRelation: "risk_factor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       savings_account: {
         Row: {
           account_no: string
@@ -3271,6 +3460,10 @@ export type Database = {
         }
         Returns: string
       }
+      seed_default_risk_scheme: {
+        Args: { _company_id: string }
+        Returns: undefined
+      }
       set_cron_job_active: {
         Args: { _active: boolean; _jobid: number }
         Returns: undefined
@@ -3370,6 +3563,8 @@ export type Database = {
         | "void"
       payment_channel: "cash" | "mpesa" | "bank" | "internal"
       repayment_frequency: "weekly" | "biweekly" | "monthly" | "daily"
+      risk_applies_to: "both" | "individual" | "corporate"
+      risk_band_level: "low" | "medium" | "high"
       risk_grade: "low" | "medium" | "high"
       savings_account_status: "active" | "dormant" | "frozen" | "closed"
       savings_channel:
@@ -3593,6 +3788,8 @@ export const Constants = {
       ],
       payment_channel: ["cash", "mpesa", "bank", "internal"],
       repayment_frequency: ["weekly", "biweekly", "monthly", "daily"],
+      risk_applies_to: ["both", "individual", "corporate"],
+      risk_band_level: ["low", "medium", "high"],
       risk_grade: ["low", "medium", "high"],
       savings_account_status: ["active", "dormant", "frozen", "closed"],
       savings_channel: [
