@@ -46,25 +46,32 @@ export const listFdProducts = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-const productInput = z.object({
-  code: z.string().trim().min(2).max(30),
-  name: z.string().trim().min(2).max(120),
-  min_amount: z.number().nonnegative(),
-  max_amount: z.number().positive().nullable().optional(),
-  allow_monthly: z.boolean(),
-  allow_at_maturity: z.boolean(),
-  penalty_type: z.enum(["rate_reduction", "reprice_minus_margin"]),
-  penalty_value: z.number().min(0).max(100),
-  wht_rate: z.number().min(0).max(100),
-  auto_renewal_default: z.enum(["payout", "renew_principal", "renew_principal_interest"]),
-  active: z.boolean(),
-  capital_account_id: z.string().uuid().nullable().optional(),
-  interest_payable_account_id: z.string().uuid().nullable().optional(),
-  interest_expense_account_id: z.string().uuid().nullable().optional(),
-  wht_payable_account_id: z.string().uuid().nullable().optional(),
-  introducer_commission_account_id: z.string().uuid().nullable().optional(),
-  marketing_incentive_account_id: z.string().uuid().nullable().optional(),
-});
+const productInput = z
+  .object({
+    code: z.string().trim().min(2).max(30),
+    name: z.string().trim().min(2).max(120),
+    min_amount: z.number().nonnegative(),
+    max_amount: z.number().positive().nullable().optional(),
+    min_tenure_months: z.number().int().min(1),
+    max_tenure_months: z.number().int().min(1),
+    allow_monthly: z.boolean(),
+    allow_at_maturity: z.boolean(),
+    penalty_type: z.enum(["rate_reduction", "reprice_minus_margin"]),
+    penalty_value: z.number().min(0).max(100),
+    wht_rate: z.number().min(0).max(100),
+    auto_renewal_default: z.enum(["payout", "renew_principal", "renew_principal_interest"]),
+    active: z.boolean(),
+    capital_account_id: z.string().uuid().nullable().optional(),
+    interest_payable_account_id: z.string().uuid().nullable().optional(),
+    interest_expense_account_id: z.string().uuid().nullable().optional(),
+    wht_payable_account_id: z.string().uuid().nullable().optional(),
+    introducer_commission_account_id: z.string().uuid().nullable().optional(),
+    marketing_incentive_account_id: z.string().uuid().nullable().optional(),
+  })
+  .refine((v) => v.max_tenure_months >= v.min_tenure_months, {
+    message: "Max tenure must be ≥ min tenure",
+    path: ["max_tenure_months"],
+  });
 
 export const createFdProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
