@@ -2,14 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, X } from "lucide-react";
+import { X } from "lucide-react";
 import {
   listFdProducts,
   createFdProduct,
   updateFdProduct,
   deleteFdProduct,
-  upsertFdRateTier,
-  deleteFdRateTier,
 } from "@/lib/fd.functions";
 import { getGlAccounts } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
