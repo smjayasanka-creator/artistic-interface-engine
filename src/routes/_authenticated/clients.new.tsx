@@ -578,6 +578,20 @@ function NewClientPage() {
             <Card className="p-6">
               <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Personal profile</h2>
               <FormGrid>
+                <FormField label="Date of birth" required span={4} error={showError("date_of_birth") ? errors.date_of_birth : undefined}>
+                  <input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} onBlur={() => blur("date_of_birth")} className={cls("date_of_birth")} />
+                </FormField>
+                <FormField label="Gender" required span={4} error={showError("gender") ? errors.gender : undefined}>
+                  <select value={form.gender} onChange={(e) => set("gender", e.target.value as "" | Gender)} onBlur={() => blur("gender")} className={cls("gender")}>
+                    <option value="">Select…</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="other">Other</option>
+                  </select>
+                </FormField>
+                <FormField label="Email" span={4} error={showError("email") ? errors.email : undefined}>
+                  <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} onBlur={() => blur("email")} className={cls("email")} maxLength={255} />
+                </FormField>
                 <FormField label="Nationality" required span={4}>
                   <input value={nationality} onChange={(e) => setNationality(e.target.value)} className={inputCls} maxLength={60} />
                 </FormField>
