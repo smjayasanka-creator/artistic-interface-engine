@@ -50,6 +50,7 @@ import { Route as AuthenticatedLoansTerminationRouteImport } from './routes/_aut
 import { Route as AuthenticatedLoansRescheduleRouteImport } from './routes/_authenticated/loans.reschedule'
 import { Route as AuthenticatedLoansNewRouteImport } from './routes/_authenticated/loans.new'
 import { Route as AuthenticatedLoansLegalActionRouteImport } from './routes/_authenticated/loans.legal-action'
+import { Route as AuthenticatedLoansDeliveryOrderRouteImport } from './routes/_authenticated/loans.delivery-order'
 import { Route as AuthenticatedLoansDebitNoteRouteImport } from './routes/_authenticated/loans.debit-note'
 import { Route as AuthenticatedFdNewRouteImport } from './routes/_authenticated/fd.new'
 import { Route as AuthenticatedFdMaturityRouteImport } from './routes/_authenticated/fd.maturity'
@@ -306,6 +307,12 @@ const AuthenticatedLoansLegalActionRoute =
     path: '/loans/legal-action',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedLoansDeliveryOrderRoute =
+  AuthenticatedLoansDeliveryOrderRouteImport.update({
+    id: '/loans/delivery-order',
+    path: '/loans/delivery-order',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLoansDebitNoteRoute =
   AuthenticatedLoansDebitNoteRouteImport.update({
     id: '/loans/debit-note',
@@ -478,6 +485,7 @@ export interface FileRoutesByFullPath {
   '/fd/maturity': typeof AuthenticatedFdMaturityRoute
   '/fd/new': typeof AuthenticatedFdNewRoute
   '/loans/debit-note': typeof AuthenticatedLoansDebitNoteRoute
+  '/loans/delivery-order': typeof AuthenticatedLoansDeliveryOrderRoute
   '/loans/legal-action': typeof AuthenticatedLoansLegalActionRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
   '/loans/reschedule': typeof AuthenticatedLoansRescheduleRoute
@@ -542,6 +550,7 @@ export interface FileRoutesByTo {
   '/fd/maturity': typeof AuthenticatedFdMaturityRoute
   '/fd/new': typeof AuthenticatedFdNewRoute
   '/loans/debit-note': typeof AuthenticatedLoansDebitNoteRoute
+  '/loans/delivery-order': typeof AuthenticatedLoansDeliveryOrderRoute
   '/loans/legal-action': typeof AuthenticatedLoansLegalActionRoute
   '/loans/new': typeof AuthenticatedLoansNewRoute
   '/loans/reschedule': typeof AuthenticatedLoansRescheduleRoute
@@ -612,6 +621,7 @@ export interface FileRoutesById {
   '/_authenticated/fd/maturity': typeof AuthenticatedFdMaturityRoute
   '/_authenticated/fd/new': typeof AuthenticatedFdNewRoute
   '/_authenticated/loans/debit-note': typeof AuthenticatedLoansDebitNoteRoute
+  '/_authenticated/loans/delivery-order': typeof AuthenticatedLoansDeliveryOrderRoute
   '/_authenticated/loans/legal-action': typeof AuthenticatedLoansLegalActionRoute
   '/_authenticated/loans/new': typeof AuthenticatedLoansNewRoute
   '/_authenticated/loans/reschedule': typeof AuthenticatedLoansRescheduleRoute
@@ -682,6 +692,7 @@ export interface FileRouteTypes {
     | '/fd/maturity'
     | '/fd/new'
     | '/loans/debit-note'
+    | '/loans/delivery-order'
     | '/loans/legal-action'
     | '/loans/new'
     | '/loans/reschedule'
@@ -746,6 +757,7 @@ export interface FileRouteTypes {
     | '/fd/maturity'
     | '/fd/new'
     | '/loans/debit-note'
+    | '/loans/delivery-order'
     | '/loans/legal-action'
     | '/loans/new'
     | '/loans/reschedule'
@@ -815,6 +827,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fd/maturity'
     | '/_authenticated/fd/new'
     | '/_authenticated/loans/debit-note'
+    | '/_authenticated/loans/delivery-order'
     | '/_authenticated/loans/legal-action'
     | '/_authenticated/loans/new'
     | '/_authenticated/loans/reschedule'
@@ -1164,6 +1177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLoansLegalActionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/loans/delivery-order': {
+      id: '/_authenticated/loans/delivery-order'
+      path: '/loans/delivery-order'
+      fullPath: '/loans/delivery-order'
+      preLoaderRoute: typeof AuthenticatedLoansDeliveryOrderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/loans/debit-note': {
       id: '/_authenticated/loans/debit-note'
       path: '/loans/debit-note'
@@ -1482,6 +1502,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFdMaturityRoute: typeof AuthenticatedFdMaturityRoute
   AuthenticatedFdNewRoute: typeof AuthenticatedFdNewRoute
   AuthenticatedLoansDebitNoteRoute: typeof AuthenticatedLoansDebitNoteRoute
+  AuthenticatedLoansDeliveryOrderRoute: typeof AuthenticatedLoansDeliveryOrderRoute
   AuthenticatedLoansLegalActionRoute: typeof AuthenticatedLoansLegalActionRoute
   AuthenticatedLoansNewRoute: typeof AuthenticatedLoansNewRoute
   AuthenticatedLoansRescheduleRoute: typeof AuthenticatedLoansRescheduleRoute
@@ -1521,6 +1542,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFdMaturityRoute: AuthenticatedFdMaturityRoute,
   AuthenticatedFdNewRoute: AuthenticatedFdNewRoute,
   AuthenticatedLoansDebitNoteRoute: AuthenticatedLoansDebitNoteRoute,
+  AuthenticatedLoansDeliveryOrderRoute: AuthenticatedLoansDeliveryOrderRoute,
   AuthenticatedLoansLegalActionRoute: AuthenticatedLoansLegalActionRoute,
   AuthenticatedLoansNewRoute: AuthenticatedLoansNewRoute,
   AuthenticatedLoansRescheduleRoute: AuthenticatedLoansRescheduleRoute,

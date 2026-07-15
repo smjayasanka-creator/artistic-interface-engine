@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Plus, FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight, Loader2 } from "lucide-react";
+import { Plus, FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight, Loader2, Truck } from "lucide-react";
 import { getLoans } from "@/lib/mzizi.functions";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { Card } from "@/components/mzizi/Card";
@@ -28,6 +28,13 @@ const TILES = [
     desc: "Add charges to the facility after disbursement",
     icon: FileMinus2,
     accent: "from-sky-500/15 to-sky-500/0 text-sky-600",
+  },
+  {
+    to: "/loans/delivery-order",
+    label: "Delivery Order Release",
+    desc: "Issue a DO to the vehicle supplier to release the asset before supplier payment",
+    icon: Truck,
+    accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600",
   },
   {
     to: "/loans/reschedule",
