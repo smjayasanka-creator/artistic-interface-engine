@@ -582,6 +582,21 @@ function NewClientPage() {
           </>
         )}
 
+        {tab === "risk" && (
+          <Card className="p-6">
+            <h2 className="text-sm font-semibold mb-1 text-secondary-foreground uppercase tracking-wider">Initial risk profile</h2>
+            <p className="text-xs text-muted-foreground mb-4">
+              Complete the risk assessment. All applicable factors must be answered before the client can be registered. Scoring scheme is maintained in Administration → Risk profiling.
+            </p>
+            {!riskScheme ? (
+              <div className="text-sm text-muted-foreground">Loading risk scheme…</div>
+            ) : (
+              <RiskAssessmentForm scheme={riskScheme} answers={riskAnswers} onChange={setRiskAnswers} />
+            )}
+          </Card>
+        )}
+
+
         {tab === "documents" && (
           <Card className="p-6">
             <h2 className="text-sm font-semibold mb-1 text-secondary-foreground uppercase tracking-wider">Onboarding documents</h2>
