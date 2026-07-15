@@ -2706,11 +2706,55 @@ export const getSubledgerReconciliation = createServerFn({ method: "GET" })
     push("2000", "Savings sub-ledger", savingsSub, null);
     push("2200", "FD sub-ledger", fdSub, null);
 
+    // ── Snapshot fast-path (EOD-closed balances) ─────────────────────────
+    // For a point-in-time asOf (no fromDate), pull totals directly from the
+    // EOD snapshot tables. Only surface snapshot totals when every branch
+    // has closed that business_date — otherwise the snapshot is partial
+    // and would mislead the reader.
+    let snapshot:
+      | {
+          asOf: string;
+          coverage: { branchesTotal: number; branchesClosed: number };
+          complete: boolean;
+          savings: number;
+          fd: number;
+          loans: number;
+        }
+      | null = null;
+
+    if (!fromDate) {
+      const { data: branches } = await supabase.from("branch").select("id");
+      const branchesTotal = branches?.length ?? 0;
+      const { data: runs } = await supabase
+        .from("eod_run")
+        .select("branch_id, status")
+        .eq("business_date", asOf)
+        .in("status", ["closed"]);
+      const branchesClosed = runs?.length ?? 0;
+
+      if (branchesClosed > 0) {
+        const [{ data: sRows }, { data: fRows }, { data: lRows }] = await Promise.all([
+          supabase.from("savings_eod_balance").select("closing_balance").eq("business_date", asOf),
+          supabase.from("fd_eod_balance").select("closing_balance").eq("business_date", asOf),
+          supabase.from("loan_eod_balance").select("closing_principal").eq("business_date", asOf),
+        ]);
+        snapshot = {
+          asOf,
+          coverage: { branchesTotal, branchesClosed },
+          complete: branchesTotal > 0 && branchesClosed === branchesTotal,
+          savings: (sRows ?? []).reduce((s, r) => s + Number(r.closing_balance ?? 0), 0),
+          fd: (fRows ?? []).reduce((s, r) => s + Number(r.closing_balance ?? 0), 0),
+          loans: (lRows ?? []).reduce((s, r) => s + Number(r.closing_principal ?? 0), 0),
+        };
+      }
+    }
+
     const breaks = rows.filter((r) => r.status === "break").length;
     return {
       asOf,
       fromDate,
       rows,
+      snapshot,
       totals: {
         totalGl: rows.reduce((s, r) => s + r.gl_balance, 0),
         totalSub: rows.reduce((s, r) => s + r.subledger_balance, 0),
