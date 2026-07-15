@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { createClient } from "@/lib/mzizi.functions";
+import { getRiskScheme, saveClientRiskAssessment } from "@/lib/risk.functions";
+import { RiskAssessmentForm, applicableFactors, type RiskAnswer } from "@/components/mzizi/RiskAssessmentForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/mzizi/Card";
 import { cn } from "@/lib/utils";
