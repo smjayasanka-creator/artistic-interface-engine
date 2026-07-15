@@ -39,6 +39,12 @@ const TILES = [
     accent: "from-rose-500/15 to-rose-500/0 text-rose-600",
   },
   {
+    to: "/transactions/savings-withdrawal",
+    label: "Savings Withdrawal",
+    icon: ArrowDownFromLine,
+    accent: "from-pink-500/15 to-pink-500/0 text-pink-600",
+  },
+  {
     to: "/transactions/cash-wallet",
     label: "Cash ↔ Wallet Transfer",
     icon: Smartphone,
