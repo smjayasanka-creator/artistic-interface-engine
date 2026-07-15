@@ -356,8 +356,8 @@ function NewClientPage() {
     e.preventDefault();
     setSubmitted(true);
     // Core zod fields (Personal details) live on the Screening tab
-    const screeningFields: FieldKey[] = ["first_name", "last_name", "national_id", "date_of_birth", "gender", "phone_country_code", "phone", "email"];
-    const appFields: FieldKey[] = ["address", "gn_division", "divisional_secretariat", "district", "province"];
+    const screeningFields: FieldKey[] = ["first_name", "last_name", "national_id", "phone_country_code", "phone"];
+    const appFields: FieldKey[] = ["date_of_birth", "gender", "email", "address", "gn_division", "divisional_secretariat", "district", "province"];
     const hasScreeningErr = screeningFields.some((k) => errors[k]);
     const hasAppErr = appFields.some((k) => errors[k]);
     if (!isValid) {
