@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { createClient } from "@/lib/mzizi.functions";
+import { getRiskScheme, saveClientRiskAssessment } from "@/lib/risk.functions";
+import { RiskAssessmentForm, applicableFactors, type RiskAnswer } from "@/components/mzizi/RiskAssessmentForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/mzizi/Card";
 import { cn } from "@/lib/utils";
@@ -24,10 +26,11 @@ export const Route = createFileRoute("/_authenticated/clients/new")({
 });
 
 type Gender = "male" | "female" | "other";
-type TabKey = "application" | "documents";
+type TabKey = "application" | "risk" | "documents";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "application", label: "Application" },
+  { key: "risk", label: "Risk profile" },
   { key: "documents", label: "Documents" },
 ];
 
@@ -126,6 +129,12 @@ function NewClientPage() {
   const [geoBusy, setGeoBusy] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
 
+  // Risk profile
+  const fetchScheme = useServerFn(getRiskScheme);
+  const { data: riskScheme } = useQuery({ queryKey: ["risk-scheme"], queryFn: () => fetchScheme() });
+  const [riskAnswers, setRiskAnswers] = useState<RiskAnswer[]>([]);
+  const saveRiskFn = useServerFn(saveClientRiskAssessment);
+
   const errors = useMemo(() => {
     const r = clientSchema.safeParse(form);
     if (r.success) return {} as Partial<Record<FieldKey, string>>;
@@ -142,9 +151,23 @@ function NewClientPage() {
   const missingDocs = REQUIRED_DOCS.filter((d) => !docFiles[d.key]);
   const docsSatisfied = missingDocs.length === 0;
 
+  const applicableRiskFactors = useMemo(
+    () => (riskScheme ? applicableFactors(riskScheme, null) : []),
+    [riskScheme],
+  );
+  const riskMissing = applicableRiskFactors.filter(
+    (f) => !riskAnswers.find((a) => a.factor_id === f.id && a.option_ids.length > 0),
+  );
+  const riskSatisfied = riskScheme != null && riskMissing.length === 0;
+
   const post = useMutation({
     mutationFn: createFn,
-    onSuccess: (c: any) => {
+    onSuccess: async (c: any) => {
+      try {
+        await saveRiskFn({ data: { client_id: c.id, answers: riskAnswers } });
+      } catch (e: any) {
+        toast.error(`Client saved but risk profile failed: ${e.message}`);
+      }
       toast.success("Client registered · pending KYC");
       qc.invalidateQueries();
       navigate({ to: "/clients/$id", params: { id: c.id } });
@@ -257,6 +280,11 @@ function NewClientPage() {
       setTab("documents");
       return;
     }
+    if (!riskSatisfied) {
+      toast.error(`Risk profile incomplete: ${riskMissing.length} factor(s) pending`);
+      setTab("risk");
+      return;
+    }
     post.mutate(
       {
         data: {
@@ -321,6 +349,7 @@ function NewClientPage() {
         {TABS.map((t) => {
           const active = tab === t.key;
           const showDocBadge = t.key === "documents" && !docsSatisfied;
+          const showRiskBadge = t.key === "risk" && !riskSatisfied;
           return (
             <button
               key={t.key}
@@ -340,6 +369,16 @@ function NewClientPage() {
                 </span>
               )}
               {t.key === "documents" && docsSatisfied && (
+                <span className="text-[10px] rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5">
+                  ready
+                </span>
+              )}
+              {showRiskBadge && (
+                <span className="text-[10px] rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 px-1.5 py-0.5">
+                  {riskMissing.length || "…"} pending
+                </span>
+              )}
+              {t.key === "risk" && riskSatisfied && (
                 <span className="text-[10px] rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5">
                   ready
                 </span>
@@ -543,6 +582,21 @@ function NewClientPage() {
           </>
         )}
 
+        {tab === "risk" && (
+          <Card className="p-6">
+            <h2 className="text-sm font-semibold mb-1 text-secondary-foreground uppercase tracking-wider">Initial risk profile</h2>
+            <p className="text-xs text-muted-foreground mb-4">
+              Complete the risk assessment. All applicable factors must be answered before the client can be registered. Scoring scheme is maintained in Administration → Risk profiling.
+            </p>
+            {!riskScheme ? (
+              <div className="text-sm text-muted-foreground">Loading risk scheme…</div>
+            ) : (
+              <RiskAssessmentForm scheme={riskScheme} answers={riskAnswers} onChange={setRiskAnswers} />
+            )}
+          </Card>
+        )}
+
+
         {tab === "documents" && (
           <Card className="p-6">
             <h2 className="text-sm font-semibold mb-1 text-secondary-foreground uppercase tracking-wider">Onboarding documents</h2>
@@ -608,10 +662,13 @@ function NewClientPage() {
           {submitted && isValid && !docsSatisfied && (
             <span className="text-xs text-destructive mr-auto">Attach the required documents</span>
           )}
+          {submitted && isValid && docsSatisfied && !riskSatisfied && (
+            <span className="text-xs text-destructive mr-auto">Complete the risk profile ({riskMissing.length} pending)</span>
+          )}
           <Link to="/clients" className={btnSecondaryCls}>Cancel</Link>
           <button
             type="submit"
-            disabled={post.isPending || uploading || (submitted && (!isValid || !docsSatisfied))}
+            disabled={post.isPending || uploading || (submitted && (!isValid || !docsSatisfied || !riskSatisfied))}
             className={btnPrimaryCls}
           >
             {uploading ? "Uploading photo…" : post.isPending ? "Saving…" : "Register client"}

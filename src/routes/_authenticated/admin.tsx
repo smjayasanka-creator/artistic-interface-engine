@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck, LineChart } from "lucide-react";
+import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck, LineChart, ShieldAlert } from "lucide-react";
 import {
   getAdmin,
   getAllLoanProducts,
@@ -39,12 +39,13 @@ import { SecurityTypesTab } from "@/components/mzizi/SecurityTypesTab";
 import { DelegationAuthorityTab } from "@/components/mzizi/DelegationAuthorityTab";
 import { AlcoRatesPanel } from "@/components/mzizi/AlcoRatesPanel";
 import { LoanAlcoRatesPanel } from "@/components/mzizi/LoanAlcoRatesPanel";
+import { RiskProfilingTab } from "@/components/mzizi/RiskProfilingTab";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "time_travel";
+type Tab = "settings" | "branches" | "staff" | "products" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "risk_profiling" | "time_travel";
 type Mode = "list" | "create" | "edit";
 type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
 const LOAN_SEGMENTS: { value: LoanSegment; label: string }[] = [
@@ -92,6 +93,7 @@ const SECTIONS: Section[] = [
   { id: "accounts",    label: "Chart of accounts", desc: "General ledger accounts & posting rules",          icon: BookOpen,  accent: "from-violet-500/15 to-violet-500/0 text-violet-600" },
   { id: "security_types", label: "Security types",  desc: "Collateral kinds (vehicle, property, gold …)",     icon: Shield,      accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600" },
   { id: "delegation",  label: "Delegation authority", desc: "Approval bands: LTV, amount & rate ranges",     icon: ShieldCheck, accent: "from-rose-500/15 to-rose-500/0 text-rose-600" },
+  { id: "risk_profiling", label: "Risk profiling",   desc: "Customer risk factors, scoring & bands",           icon: ShieldAlert, accent: "from-orange-500/15 to-orange-500/0 text-orange-600" },
   { id: "time_travel", label: "Time travel",       desc: "Simulate a different date for testing (dev only)", icon: Clock,     accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
 ];
 
@@ -154,6 +156,7 @@ function Admin() {
       {tab === "accounts" && <AccountsTab />}
       {tab === "security_types" && <SecurityTypesTab />}
       {tab === "delegation" && <DelegationAuthorityTab />}
+      {tab === "risk_profiling" && <RiskProfilingTab />}
       {tab === "time_travel" && <TimeTravelTab />}
     </div>
   );
