@@ -28,10 +28,11 @@ export const Route = createFileRoute("/_authenticated/clients/new")({
 });
 
 type Gender = "male" | "female" | "other";
-type TabKey = "application" | "risk" | "documents";
+type TabKey = "application" | "screening" | "risk" | "documents";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "application", label: "Application" },
+  { key: "screening", label: "Customer screening" },
   { key: "risk", label: "Risk profile" },
   { key: "documents", label: "Documents" },
 ];
