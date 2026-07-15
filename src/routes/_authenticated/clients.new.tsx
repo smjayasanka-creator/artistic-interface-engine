@@ -558,18 +558,18 @@ function NewClientPage() {
                   {screenMut.isPending ? "Screening…" : screening ? "Re-run screening" : "Screen customer"}
                 </button>
               </div>
-            </Card>
 
-            {screening && (
-              <ScreeningResultCard
-                result={screening}
-                classification={classification}
-                config={screeningCfg ?? null}
-                onRequestApproval={(tier) => approvalMut.mutate(tier)}
-                requesting={approvalMut.isPending}
-                approvalInstance={approvalInstance}
-              />
-            )}
+              {screening && (
+                <ScreeningResultCard
+                  result={screening}
+                  classification={classification}
+                  config={screeningCfg ?? null}
+                  onRequestApproval={(tier) => approvalMut.mutate(tier)}
+                  requesting={approvalMut.isPending}
+                  approvalInstance={approvalInstance}
+                />
+              )}
+            </Card>
           </>
         )}
 
