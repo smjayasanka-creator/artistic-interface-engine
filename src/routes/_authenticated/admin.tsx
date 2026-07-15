@@ -809,7 +809,12 @@ function StaffTab() {
             >
               + New staff
             </button>
-            <InviteButton />
+            <button
+              onClick={() => document.getElementById("staff-invite-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="px-3 py-1.5 rounded-md text-[12px] font-semibold border border-border hover:border-primary hover:text-primary flex items-center gap-1.5"
+            >
+              <Mail size={13} /> Invite by email
+            </button>
           </div>
         </div>
         <div
