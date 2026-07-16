@@ -107,11 +107,13 @@ function NewLoan() {
 
   const clientsFn = useServerFn(getClients);
   const productsFn = useServerFn(getProducts);
+  const chargesFn = useServerFn(listLoanCharges);
   const { data: clients } = useQuery({
     queryKey: ["clients", "all"],
     queryFn: () => clientsFn({ data: { filter: "all" } }),
   });
   const { data: products } = useQuery({ queryKey: ["products"], queryFn: () => productsFn() });
+  const { data: allCharges } = useQuery({ queryKey: ["loan-charges"], queryFn: () => chargesFn() });
   const qc = useQueryClient();
   const submitFn = useServerFn(submitApplication);
   const submit = useMutation({
