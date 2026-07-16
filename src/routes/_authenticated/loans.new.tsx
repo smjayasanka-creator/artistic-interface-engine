@@ -201,6 +201,29 @@ function NewLoan() {
   const rateNum = typeof rate === "number" ? rate : Number(rate || 0);
   const principalNum = Number(principal || 0);
 
+  const productCharges = useMemo(() => {
+    if (!productId || !allCharges) return [];
+    return (allCharges as any[]).filter(
+      (c) => c.active && Array.isArray(c.product_ids) && c.product_ids.includes(productId),
+    );
+  }, [allCharges, productId]);
+
+  const chargeAmount = (c: any) =>
+    c.charge_type === "variable"
+      ? Math.round(((principalNum * Number(c.amount)) / 100) * 100) / 100
+      : Number(c.amount);
+
+  const appliedCharges = useMemo(
+    () =>
+      productCharges
+        .filter((c) => selectedCharges[c.id])
+        .map((c) => ({ charge_id: c.id, name: c.name, amount: chargeAmount(c) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [productCharges, selectedCharges, principalNum],
+  );
+  const chargesTotal = appliedCharges.reduce((s, c) => s + c.amount, 0);
+
+
   const schedule = useMemo(() => {
     if (!principalNum || !rateNum || !term) return null;
     if (scheduleType === "structured") {
