@@ -115,19 +115,6 @@ function Dashboard() {
     },
     retryDelay: (attempt) => Math.min(400 * 2 ** attempt, 2000),
   });
-  const qc = useQueryClient();
-  const approveFn = useServerFn(approveLoan);
-  const declineFn = useServerFn(declineLoan);
-  const approve = useMutation({
-    mutationFn: approveFn,
-    onSuccess: (r) => { toast.success(`Approved · disbursed ${r.reference}`); qc.invalidateQueries(); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const decline = useMutation({
-    mutationFn: declineFn,
-    onSuccess: () => { toast.success("Declined"); qc.invalidateQueries(); },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   const wfFn = useServerFn(listInstances);
   const { data: wfInbox = [] } = useQuery({
