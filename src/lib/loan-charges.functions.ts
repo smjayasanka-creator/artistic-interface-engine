@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type LoanChargeOrigin = "inhouse" | "outside";
-export type LoanChargeType = "fixed" | "variable";
+export type LoanChargeType = "fixed" | "variable" | "manual";
 
 export const listLoanCharges = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
