@@ -1115,6 +1115,18 @@ function ProductsTab() {
                   {incomeAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
                 </select>
               </FormField>
+              <FormField label="Accrued interest receivable (DR daily accrual)" span={6}>
+                <select value={form.accruedAcct} onChange={(e) => setForm({ ...form, accruedAcct: e.target.value })} className={selectCls}>
+                  <option value="">— none (accrual disabled) —</option>
+                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                </select>
+              </FormField>
+              <FormField label="Interest receivable (DR on installment due)" span={6}>
+                <select value={form.interestRecvAcct} onChange={(e) => setForm({ ...form, interestRecvAcct: e.target.value })} className={selectCls}>
+                  <option value="">— none —</option>
+                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                </select>
+              </FormField>
             </FormGrid>
           </div>
 
