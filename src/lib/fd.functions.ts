@@ -448,7 +448,12 @@ export const createFixedDeposit = createServerFn({ method: "POST" })
     const rate = await findApplicableRate(supabase, data.product_id, data.tenure_months, data.value_date);
     if (rate == null) throw new Error("No published rate for this product and tenure at value date");
 
-    const { data: certNo, error: certErr } = await supabase.rpc("next_fd_certificate_no", { _company_id: cid });
+    const { data: certNo, error: certErr } = await supabase.rpc("next_contract_no", {
+      _company_id: cid,
+      _branch_id: staff.branch_id,
+      _product_id: data.product_id,
+      _segment: 2,
+    });
     if (certErr) throw certErr;
     if (!certNo) throw new Error("Failed to allocate certificate number");
 
@@ -882,7 +887,12 @@ export const processMaturity = createServerFn({ method: "POST" })
     const newRate = await findApplicableRate(supabase, fd.product_id, fd.tenure_months, onDate);
     if (newRate == null) throw new Error("No published rate available for renewal");
 
-    const { data: certNo } = await supabase.rpc("next_fd_certificate_no", { _company_id: fd.company_id });
+    const { data: certNo } = await supabase.rpc("next_contract_no", {
+      _company_id: fd.company_id,
+      _branch_id: fd.branch_id,
+      _product_id: fd.product_id,
+      _segment: 2,
+    });
     if (!certNo) throw new Error("Failed to allocate certificate number");
     const { data: product } = await supabase
       .from("fd_product")

@@ -891,6 +891,7 @@ function ProductsTab() {
 
   const emptyForm = {
     name: "",
+    code: "",
     minRate: "",
     maxRate: "",
     minTerm: "1",
@@ -958,6 +959,7 @@ function ProductsTab() {
   function startEdit(p: any) {
     setForm({
       name: p.name ?? "",
+      code: p.code ?? "",
       minRate: String(p.annual_rate_pct ?? ""),
       maxRate: p.max_annual_rate_pct != null ? String(p.max_annual_rate_pct) : "",
       minTerm: String(p.min_term_months ?? 1),
@@ -991,8 +993,13 @@ function ProductsTab() {
       toast.error("Name and min rate required");
       return;
     }
+    if (!/^\d{3}$/.test(form.code.trim())) {
+      toast.error("Product code must be exactly 3 digits");
+      return;
+    }
     const payload = {
       name: form.name.trim(),
+      code: form.code.trim(),
       annual_rate_pct: minRate,
       max_annual_rate_pct: maxRate,
       min_term_months: Number(form.minTerm),
@@ -1028,6 +1035,17 @@ function ProductsTab() {
         <FormHeader title={isEdit ? "Edit loan product" : "New loan product"} onBack={reset} />
         <form onSubmit={submit} className="flex flex-col gap-4 mt-4 text-[12.5px]">
           <FormGrid>
+            <FormField label="Code" required span={2} hint="3 digits (000–999)">
+              <input
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value.replace(/\D/g, "").slice(0, 3) })}
+                placeholder="001"
+                inputMode="numeric"
+                maxLength={3}
+                className={inputCls + " font-mono"}
+                required
+              />
+            </FormField>
             <FormField label="Product name" required span={4}>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Kilimo Boost" className={inputCls} required />
             </FormField>

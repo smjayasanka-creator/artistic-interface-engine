@@ -1109,10 +1109,18 @@ export const submitApplication = createServerFn({ method: "POST" })
     if (!staff) throw new Error("No staff profile");
     const { data: product } = await supabase
       .from("loan_product")
-      .select("annual_rate_pct, frequency")
+      .select("annual_rate_pct, frequency, company_id")
       .eq("id", data.product_id)
       .maybeSingle();
     if (!product) throw new Error("Product not found");
+
+    const { data: contractNo, error: cerr } = await supabase.rpc("next_contract_no", {
+      _company_id: (product as any).company_id,
+      _branch_id: staff.branch_id,
+      _product_id: data.product_id,
+      _segment: 3,
+    });
+    if (cerr) throw new Error(cerr.message);
 
     const { data: loan, error } = await supabase
       .from("loan")
@@ -1133,7 +1141,8 @@ export const submitApplication = createServerFn({ method: "POST" })
           data.schedule_type === "structured" && data.schedule_overrides
             ? (data.schedule_overrides as Record<string, number>)
             : null,
-      })
+        contract_no: contractNo,
+      } as never)
       .select()
       .single();
     if (error) throw error;
@@ -1406,6 +1415,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
   .inputValidator(
     (i: {
       name: string;
+      code: string;
       annual_rate_pct: number;
       max_annual_rate_pct?: number;
       min_term_months: number;
@@ -1431,6 +1441,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       z
         .object({
           name: z.string().trim().min(2).max(80),
+          code: z.string().trim().regex(/^\d{3}$/, "Code must be exactly 3 digits"),
           annual_rate_pct: z.number().positive().max(200),
           max_annual_rate_pct: z.number().positive().max(200).optional(),
           min_term_months: z.number().int().positive().max(120),
@@ -1470,6 +1481,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       .from("loan_product")
       .insert({
         name: data.name,
+        code: data.code,
         annual_rate_pct: data.annual_rate_pct,
         min_term_months: data.min_term_months,
         max_term_months: data.max_term_months,
@@ -1520,6 +1532,7 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
     (i: {
       id: string;
       name: string;
+      code: string;
       annual_rate_pct: number;
       max_annual_rate_pct?: number | null;
       min_term_months: number;
@@ -1545,6 +1558,7 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
         .object({
           id: z.string().uuid(),
           name: z.string().trim().min(2).max(80),
+          code: z.string().trim().regex(/^\d{3}$/, "Code must be exactly 3 digits"),
           annual_rate_pct: z.number().positive().max(200),
           max_annual_rate_pct: z.number().positive().max(200).nullable().optional(),
           min_term_months: z.number().int().positive().max(120),
@@ -1576,6 +1590,7 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       .from("loan_product")
       .update({
         name: data.name,
+        code: data.code,
         annual_rate_pct: data.annual_rate_pct,
         min_term_months: data.min_term_months,
         max_term_months: data.max_term_months,

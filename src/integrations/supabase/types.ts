@@ -761,6 +761,45 @@ export type Database = {
           },
         ]
       }
+      contract_no_seq: {
+        Row: {
+          branch_id: string
+          company_id: string
+          last_no: number
+          product_id: string
+          segment: number
+        }
+        Insert: {
+          branch_id: string
+          company_id: string
+          last_no?: number
+          product_id: string
+          segment: number
+        }
+        Update: {
+          branch_id?: string
+          company_id?: string
+          last_no?: number
+          product_id?: string
+          segment?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_no_seq_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_no_seq_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_role: {
         Row: {
           active: boolean
@@ -2217,6 +2256,7 @@ export type Database = {
           branch_id: string
           client_id: string
           closed_at: string | null
+          contract_no: string | null
           created_at: string
           disbursed_at: string | null
           frequency: Database["public"]["Enums"]["repayment_frequency"]
@@ -2239,6 +2279,7 @@ export type Database = {
           branch_id: string
           client_id: string
           closed_at?: string | null
+          contract_no?: string | null
           created_at?: string
           disbursed_at?: string | null
           frequency?: Database["public"]["Enums"]["repayment_frequency"]
@@ -2261,6 +2302,7 @@ export type Database = {
           branch_id?: string
           client_id?: string
           closed_at?: string | null
+          contract_no?: string | null
           created_at?: string
           disbursed_at?: string | null
           frequency?: Database["public"]["Enums"]["repayment_frequency"]
@@ -3000,6 +3042,7 @@ export type Database = {
           accrued_interest_account_id: string | null
           annual_rate_pct: number
           cash_account_id: string | null
+          code: string
           color: string | null
           company_id: string
           fee_income_account_id: string | null
@@ -3025,6 +3068,7 @@ export type Database = {
           accrued_interest_account_id?: string | null
           annual_rate_pct: number
           cash_account_id?: string | null
+          code: string
           color?: string | null
           company_id: string
           fee_income_account_id?: string | null
@@ -3050,6 +3094,7 @@ export type Database = {
           accrued_interest_account_id?: string | null
           annual_rate_pct?: number
           cash_account_id?: string | null
+          code?: string
           color?: string | null
           company_id?: string
           fee_income_account_id?: string | null
@@ -4833,6 +4878,15 @@ export type Database = {
       mark_domain_event_failed: {
         Args: { _error: string; _id: string }
         Returns: undefined
+      }
+      next_contract_no: {
+        Args: {
+          _branch_id: string
+          _company_id: string
+          _product_id: string
+          _segment: number
+        }
+        Returns: string
       }
       next_fd_certificate_no: { Args: { _company_id: string }; Returns: string }
       next_savings_account_no: {
