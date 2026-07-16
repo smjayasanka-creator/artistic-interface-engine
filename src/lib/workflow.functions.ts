@@ -241,18 +241,28 @@ export const listInstances = createServerFn({ method: "GET" })
     if (data.mine) {
       const { data: staff } = await supabase
         .from("staff")
-        .select("user_id, role, branch_id")
+        .select("id, user_id, role, branch_id")
         .eq("user_id", userId)
         .maybeSingle();
       const myRole = staff?.role as string | undefined;
       const myBranch = staff?.branch_id as string | undefined;
+      const staffId = staff?.id as string | undefined;
+      let myCustomRoleIds = new Set<string>();
+      if (staffId) {
+        const { data: crs } = await supabase
+          .from("user_custom_role").select("role_id").eq("staff_id", staffId);
+        myCustomRoleIds = new Set((crs ?? []).map((r: any) => r.role_id));
+      }
       filtered = filtered.filter((r: any) => {
         if (r.status !== "pending") return false;
         const step = (r.workflow?.steps ?? []).find((s: any) => s.step_order === r.current_step);
         if (!step) return false;
         if (step.approver_kind === "user") return step.user_id === userId;
-        if (step.approver_kind === "role") return step.role === myRole;
-        if (step.approver_kind === "branch_role") return step.role === myRole && step.branch_id === myBranch;
+        const roleMatch = step.custom_role_id
+          ? myCustomRoleIds.has(step.custom_role_id)
+          : step.role === myRole;
+        if (step.approver_kind === "role") return roleMatch;
+        if (step.approver_kind === "branch_role") return roleMatch && step.branch_id === myBranch;
         return false;
       });
     }
