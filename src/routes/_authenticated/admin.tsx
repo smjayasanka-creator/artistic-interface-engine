@@ -891,6 +891,7 @@ function ProductsTab() {
 
   const emptyForm = {
     name: "",
+    code: "",
     minRate: "",
     maxRate: "",
     minTerm: "1",
