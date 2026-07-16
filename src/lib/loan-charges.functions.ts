@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type LoanChargeOrigin = "inhouse" | "outside";
-export type LoanChargeType = "fixed" | "variable";
+export type LoanChargeType = "fixed" | "variable" | "manual";
 
 export const listLoanCharges = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -12,7 +12,7 @@ export const listLoanCharges = createServerFn({ method: "GET" })
     if (!cid) return [];
     const { data: charges, error } = await (supabase as any)
       .from("loan_charge")
-      .select("id, name, origin, charge_type, amount, receivable_account_id, credit_account_id, capitalize, capitalized_receivable_account_id, active, created_at")
+      .select("id, name, origin, charge_type, amount, receivable_account_id, credit_account_id, capitalize, capitalized_receivable_account_id, supplier_client_id, active, created_at")
       .eq("company_id", cid)
       .order("name");
     if (error) throw new Error(error.message);
@@ -47,6 +47,7 @@ export const upsertLoanCharge = createServerFn({ method: "POST" })
       credit_account_id: string;
       capitalize?: boolean;
       capitalized_receivable_account_id?: string | null;
+      supplier_client_id?: string | null;
       active?: boolean;
       product_ids: string[];
     }) => i,
@@ -59,6 +60,9 @@ export const upsertLoanCharge = createServerFn({ method: "POST" })
     if (cap && !data.capitalized_receivable_account_id) {
       throw new Error("Capitalized-charges receivable ledger is required when capitalize is on");
     }
+    if (data.origin === "outside" && !data.supplier_client_id) {
+      throw new Error("Supplier is required for outside charges");
+    }
     const row: any = {
       company_id: cid,
       name: data.name,
@@ -69,6 +73,7 @@ export const upsertLoanCharge = createServerFn({ method: "POST" })
       credit_account_id: data.credit_account_id,
       capitalize: cap,
       capitalized_receivable_account_id: cap ? data.capitalized_receivable_account_id : null,
+      supplier_client_id: data.origin === "outside" ? data.supplier_client_id : null,
       active: data.active ?? true,
     };
     if (data.id) row.id = data.id;

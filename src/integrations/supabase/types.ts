@@ -2574,6 +2574,7 @@ export type Database = {
           name: string
           origin: Database["public"]["Enums"]["loan_charge_origin"]
           receivable_account_id: string
+          supplier_client_id: string | null
           updated_at: string
         }
         Insert: {
@@ -2590,6 +2591,7 @@ export type Database = {
           name: string
           origin?: Database["public"]["Enums"]["loan_charge_origin"]
           receivable_account_id: string
+          supplier_client_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -2606,6 +2608,7 @@ export type Database = {
           name?: string
           origin?: Database["public"]["Enums"]["loan_charge_origin"]
           receivable_account_id?: string
+          supplier_client_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2635,6 +2638,13 @@ export type Database = {
             columns: ["receivable_account_id"]
             isOneToOne: false
             referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_charge_supplier_client_id_fkey"
+            columns: ["supplier_client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
             referencedColumns: ["id"]
           },
         ]
@@ -5046,7 +5056,7 @@ export type Database = {
       interest_method: "flat" | "declining_balance"
       introducer_commission_mode: "cash" | "bank_transfer" | "credit_savings"
       loan_charge_origin: "inhouse" | "outside"
-      loan_charge_type: "fixed" | "variable"
+      loan_charge_type: "fixed" | "variable" | "manual"
       loan_status:
         | "draft"
         | "submitted"
@@ -5271,7 +5281,7 @@ export const Constants = {
       interest_method: ["flat", "declining_balance"],
       introducer_commission_mode: ["cash", "bank_transfer", "credit_savings"],
       loan_charge_origin: ["inhouse", "outside"],
-      loan_charge_type: ["fixed", "variable"],
+      loan_charge_type: ["fixed", "variable", "manual"],
       loan_status: [
         "draft",
         "submitted",

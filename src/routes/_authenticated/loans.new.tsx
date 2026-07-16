@@ -104,6 +104,7 @@ function NewLoan() {
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [selectedCharges, setSelectedCharges] = useState<Record<string, boolean>>({});
   const [capitalizedCharges, setCapitalizedCharges] = useState<Record<string, boolean>>({});
+  const [manualAmounts, setManualAmounts] = useState<Record<string, number>>({});
 
 
 
@@ -233,10 +234,11 @@ function NewLoan() {
     );
   }, [allCharges, productId]);
 
-  const chargeAmount = (c: any) =>
-    c.charge_type === "variable"
-      ? Math.round(((principalNum * Number(c.amount)) / 100) * 100) / 100
-      : Number(c.amount);
+  const chargeAmount = (c: any) => {
+    if (c.charge_type === "manual") return Number(manualAmounts[c.id] ?? 0);
+    if (c.charge_type === "variable") return Math.round(((principalNum * Number(c.amount)) / 100) * 100) / 100;
+    return Number(c.amount);
+  };
 
   const appliedCharges = useMemo(
     () =>
@@ -250,7 +252,7 @@ function NewLoan() {
           capitalize: !!c.capitalize && capitalizedCharges[c.id] !== false, // default on when allowed
         })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [productCharges, selectedCharges, capitalizedCharges, principalNum],
+    [productCharges, selectedCharges, capitalizedCharges, manualAmounts, principalNum],
   );
   const chargesTotal = appliedCharges.reduce((s, c) => s + c.amount, 0);
   const capitalizedTotal = appliedCharges.filter((c) => c.capitalize).reduce((s, c) => s + c.amount, 0);
@@ -532,6 +534,8 @@ function NewLoan() {
                                     {c.origin === "inhouse" ? "In-house" : "Outside"} ·{" "}
                                     {c.charge_type === "variable"
                                       ? `${Number(c.amount)}% of principal`
+                                      : c.charge_type === "manual"
+                                      ? "Manual"
                                       : "Fixed"}
                                     {canCap && " · capitalizable"}
                                   </div>
@@ -552,9 +556,23 @@ function NewLoan() {
                                   Capitalize
                                 </label>
                               )}
-                              <div className="font-mono text-[12px] w-28 text-right">
-                                {money(amt, true)}
-                              </div>
+                              {c.charge_type === "manual" && on ? (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step="0.01"
+                                  value={manualAmounts[c.id] ?? ""}
+                                  onChange={(e) =>
+                                    setManualAmounts((prev) => ({ ...prev, [c.id]: Number(e.target.value) }))
+                                  }
+                                  placeholder="Amount"
+                                  className={cn(inputCls, "font-mono text-[12px] w-28 text-right px-2 py-1")}
+                                />
+                              ) : (
+                                <div className="font-mono text-[12px] w-28 text-right">
+                                  {money(amt, true)}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
