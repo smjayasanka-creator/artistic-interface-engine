@@ -224,15 +224,16 @@ function NewLoan() {
     return opts;
   }, [product]);
 
+  const termNum = term === "" ? 0 : Number(term);
+
   const outOfRange =
     product &&
     (principalNum < Number(product.min_principal ?? 0) ||
       (product.max_principal && principalNum > Number(product.max_principal)) ||
-      term < Number(product.min_term_months) ||
-      term > Number(product.max_term_months));
+      (term !== "" && (termNum < Number(product.min_term_months) || termNum > Number(product.max_term_months))));
 
   const canSubmit =
-    !!clientId && !!productId && !!principal && !!rateNum && docsSatisfied && !submit.isPending;
+    !!clientId && !!productId && !!principal && term !== "" && !!rateNum && docsSatisfied && !submit.isPending;
 
 
   return (
