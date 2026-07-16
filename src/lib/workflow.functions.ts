@@ -131,12 +131,14 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
       name: s.name,
       approver_kind: s.approver_kind,
       role: s.approver_kind === "user" ? null : s.role ?? null,
+      custom_role_id: s.approver_kind === "user" ? null : s.custom_role_id ?? null,
       branch_id: s.approver_kind === "branch_role" ? s.branch_id ?? null : null,
       user_id: s.approver_kind === "user" ? s.user_id ?? null : null,
       required_approvals: s.required_approvals ?? 1,
       sla_hours: s.sla_hours ?? null,
       sla_action: s.sla_action ?? "flag",
       escalation_role: s.sla_action === "escalate" ? s.escalation_role ?? null : null,
+      escalation_custom_role_id: s.sla_action === "escalate" ? s.escalation_custom_role_id ?? null : null,
     }));
     const { error: stErr } = await supabase.from("workflow_step").insert(rows);
     if (stErr) throw stErr;
