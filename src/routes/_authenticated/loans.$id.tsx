@@ -85,7 +85,7 @@ function LoanDetail() {
           <Row k="Created" v={loan.created_at ? shortDate(loan.created_at) : "—"} />
           <Row k="Submitted" v={loan.submitted_at ? shortDate(loan.submitted_at) : "—"} />
           <Row k="Disbursed" v={loan.disbursed_at ? shortDate(loan.disbursed_at) : "—"} />
-          <Row k="First installment" v={loan.first_installment_on ? shortDate(loan.first_installment_on) : "—"} />
+          
         </Card>
         <Card>
           <div className="text-[10.5px] uppercase tracking-wider text-faint font-semibold mb-2">Purpose</div>
@@ -150,7 +150,7 @@ function LoanDetail() {
           ) : accruals.map((a: any, i: number) => (
             <div key={i} className="flex items-center justify-between px-5 py-2 border-b border-row-divider last:border-b-0 text-[12.5px]">
               <div>{shortDate(a.accrual_date)}</div>
-              <div className="font-mono">{money(Number(a.amount))}</div>
+              <div className="font-mono">{money(Number(a.daily_amount))}</div>
             </div>
           ))}
         </Card>

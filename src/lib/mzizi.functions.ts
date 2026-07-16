@@ -2804,7 +2804,7 @@ export const getLoan = createServerFn({ method: "GET" })
     const { data: loan, error } = await supabase
       .from("loan")
       .select(
-        "id, status, principal, term_months, annual_rate_pct, frequency, first_installment_on, disbursed_at, submitted_at, created_at, purpose, client:client_id(id, full_name, avatar_color, phone, national_id), product:product_id(id, name, interest_method, repayment_frequency), branch:branch_id(id, code, name)",
+        "id, status, principal, term_months, annual_rate_pct, frequency, disbursed_at, submitted_at, created_at, purpose, client:client_id(id, full_name, avatar_color, phone, national_id), product:product_id(id, name, interest_method, frequency), branch:branch_id(id, code, name)",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -2829,11 +2829,11 @@ export const getLoan = createServerFn({ method: "GET" })
         .maybeSingle(),
       supabase
         .from("loan_applied_charge")
-        .select("id, amount, created_at, charge:charge_id(name, type)")
+        .select("id, amount, created_at, charge:charge_id(name, charge_type)")
         .eq("loan_id", data.id),
       supabase
         .from("loan_accrual")
-        .select("accrual_date, amount")
+        .select("accrual_date, daily_amount")
         .eq("loan_id", data.id)
         .order("accrual_date", { ascending: false })
         .limit(60),
