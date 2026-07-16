@@ -2,7 +2,7 @@ import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Users, Wallet, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Activity, TrendingUp, CheckCircle2 } from "lucide-react";
+import { Users, Wallet, AlertTriangle, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { getDashboard } from "@/lib/mzizi.functions";
 import { listInstances, CANONICAL_TX_TYPES } from "@/lib/workflow.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
