@@ -1,13 +1,11 @@
 import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
 import { Users, Wallet, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Activity, TrendingUp, CheckCircle2 } from "lucide-react";
-import { getDashboard, approveLoan, declineLoan } from "@/lib/mzizi.functions";
+import { getDashboard } from "@/lib/mzizi.functions";
 import { listInstances, CANONICAL_TX_TYPES } from "@/lib/workflow.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
-import { RiskBadge } from "@/components/mzizi/Badge";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { InstanceDetailModal } from "@/components/mzizi/InstanceDetailModal";
 import { money } from "@/lib/format";
