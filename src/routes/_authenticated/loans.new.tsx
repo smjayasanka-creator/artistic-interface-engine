@@ -464,6 +464,58 @@ function NewLoan() {
                   />
                 </FormField>
 
+                {productId && (
+                  <div className="sm:col-span-12">
+                    <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-1.5">
+                      Initial charges
+                    </div>
+                    {productCharges.length === 0 ? (
+                      <div className="text-[12px] text-muted-foreground border border-dashed border-border rounded-md px-3 py-2">
+                        No charges mapped to this product. Configure them in Administration → Loan charges.
+                      </div>
+                    ) : (
+                      <div className="border border-border rounded-md divide-y divide-row-divider">
+                        {productCharges.map((c: any) => {
+                          const on = !!selectedCharges[c.id];
+                          const amt = chargeAmount(c);
+                          return (
+                            <label
+                              key={c.id}
+                              className="flex items-center gap-3 px-3 py-2 text-[12.5px] cursor-pointer hover:bg-secondary/30"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={on}
+                                onChange={(e) =>
+                                  setSelectedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
+                                }
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium truncate">{c.name}</div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  {c.origin === "inhouse" ? "In-house" : "Outside"} ·{" "}
+                                  {c.charge_type === "variable"
+                                    ? `${Number(c.amount)}% of principal`
+                                    : "Fixed"}
+                                </div>
+                              </div>
+                              <div className="font-mono text-[12px] w-28 text-right">
+                                {money(amt, true)}
+                              </div>
+                            </label>
+                          );
+                        })}
+                        <div className="flex items-center justify-between px-3 py-2 bg-secondary/40 text-[12px]">
+                          <span className="font-semibold">Total charges</span>
+                          <span className="font-mono font-semibold">{money(chargesTotal, true)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+
+
                 {outOfRange && (
                   <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2">
                     Values are outside the product's configured range.
