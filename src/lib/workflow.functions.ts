@@ -225,7 +225,7 @@ export const listInstances = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     let q = supabase
       .from("workflow_instance")
-      .select("id, transaction_type, reference_label, amount, status, current_step, initiated_at, completed_at, workflow:workflow_id(id, name, steps:workflow_step(id, step_order, name, approver_kind, role, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)")
+      .select("id, transaction_type, reference_id, reference_label, amount, status, current_step, initiated_at, completed_at, workflow:workflow_id(id, name, steps:workflow_step(id, step_order, name, approver_kind, role, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)")
       .order("initiated_at", { ascending: false })
       .limit(200);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);

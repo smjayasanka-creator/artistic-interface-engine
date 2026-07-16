@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -48,7 +48,7 @@ function DisbursementPage() {
       <Card padded={false}>
         <div
           className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-b border-border bg-secondary/40"
-          style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 140px" }}
+          style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 210px" }}
         >
           <div>Submitted</div>
           <div>Client</div>
@@ -67,14 +67,21 @@ function DisbursementPage() {
             <div
               key={l.id}
               className="grid items-center text-[12.5px] py-2.5 px-5 border-b border-row-divider hover:bg-secondary/30"
-              style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 140px" }}
+              style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 210px" }}
             >
               <div className="text-muted-foreground">{l.submitted_at ? shortDate(l.submitted_at) : "—"}</div>
               <div className="truncate">{l.client?.full_name ?? "—"}</div>
               <div className="text-muted-foreground truncate">{l.product?.name ?? "—"}</div>
               <div className="text-muted-foreground truncate">{l.branch?.code ?? l.branch?.name ?? "—"}</div>
               <div className="text-right font-mono text-primary">{money(Number(l.principal))}</div>
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                <Link
+                  to="/loans/$id"
+                  params={{ id: l.id }}
+                  className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12px] font-semibold hover:border-primary"
+                >
+                  View
+                </Link>
                 <button
                   onClick={() => disburse.mutate({ data: { loan_id: l.id } })}
                   disabled={busyId === l.id}

@@ -2795,3 +2795,59 @@ export const getSubledgerReconciliation = createServerFn({ method: "GET" })
       },
     };
   });
+
+export const getLoan = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string }) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: loan, error } = await supabase
+      .from("loan")
+      .select(
+        "id, status, principal, term_months, annual_rate_pct, frequency, first_installment_on, disbursed_at, submitted_at, created_at, purpose, client:client_id(id, full_name, avatar_color, phone, national_id), product:product_id(id, name, interest_method, repayment_frequency), branch:branch_id(id, code, name)",
+      )
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!loan) throw new Error("Loan not found");
+
+    const [{ data: schedule }, { data: repayments }, { data: outstanding }, { data: appliedCharges }, { data: accruals }] = await Promise.all([
+      supabase
+        .from("loan_installment")
+        .select("seq, due_date, principal_due, interest_due, principal_paid, interest_paid, state")
+        .eq("loan_id", data.id)
+        .order("seq"),
+      supabase
+        .from("repayment")
+        .select("id, amount, channel, received_at, reference")
+        .eq("loan_id", data.id)
+        .order("received_at", { ascending: false }),
+      supabase
+        .from("v_loan_outstanding")
+        .select("outstanding_principal, principal_repaid")
+        .eq("loan_id", data.id)
+        .maybeSingle(),
+      supabase
+        .from("loan_applied_charge")
+        .select("id, amount, created_at, charge:charge_id(name, type)")
+        .eq("loan_id", data.id),
+      supabase
+        .from("loan_accrual")
+        .select("accrual_date, amount")
+        .eq("loan_id", data.id)
+        .order("accrual_date", { ascending: false })
+        .limit(60),
+    ]);
+
+    return {
+      loan,
+      schedule: schedule ?? [],
+      repayments: repayments ?? [],
+      outstanding: {
+        outstanding_principal: Number(outstanding?.outstanding_principal ?? 0),
+        principal_repaid: Number(outstanding?.principal_repaid ?? 0),
+      },
+      appliedCharges: appliedCharges ?? [],
+      accruals: accruals ?? [],
+    };
+  });

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -84,6 +84,10 @@ function InstanceRow({ inst }: { inst: any }) {
             <span className="text-[13px] font-semibold text-foreground">{inst.reference_label}</span>
             <span className={cn("text-[10.5px] px-1.5 py-0.5 rounded border capitalize", statusTone[inst.status])}>{inst.status}</span>
             {inst.overdue && <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-700 border border-rose-500/30">SLA overdue</span>}
+            {inst.reference_id && typeof inst.transaction_type === "string" && inst.transaction_type.startsWith("loan_") && (
+              <Link to="/loans/$id" params={{ id: inst.reference_id }}
+                className="text-[11px] font-semibold text-primary hover:underline">View loan →</Link>
+            )}
           </div>
           <div className="text-[11.5px] text-faint mt-0.5">
             {txLabel} · {inst.workflow?.name} · started {new Date(inst.initiated_at).toLocaleString()}
