@@ -4676,6 +4676,8 @@ export type Database = {
           approver_kind: Database["public"]["Enums"]["workflow_approver_kind"]
           branch_id: string | null
           created_at: string
+          custom_role_id: string | null
+          escalation_custom_role_id: string | null
           escalation_role: Database["public"]["Enums"]["staff_role"] | null
           id: string
           name: string
@@ -4692,6 +4694,8 @@ export type Database = {
           approver_kind: Database["public"]["Enums"]["workflow_approver_kind"]
           branch_id?: string | null
           created_at?: string
+          custom_role_id?: string | null
+          escalation_custom_role_id?: string | null
           escalation_role?: Database["public"]["Enums"]["staff_role"] | null
           id?: string
           name: string
@@ -4708,6 +4712,8 @@ export type Database = {
           approver_kind?: Database["public"]["Enums"]["workflow_approver_kind"]
           branch_id?: string | null
           created_at?: string
+          custom_role_id?: string | null
+          escalation_custom_role_id?: string | null
           escalation_role?: Database["public"]["Enums"]["staff_role"] | null
           id?: string
           name?: string
@@ -4726,6 +4732,20 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_step_custom_role_id_fkey"
+            columns: ["custom_role_id"]
+            isOneToOne: false
+            referencedRelation: "custom_role"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_step_escalation_custom_role_id_fkey"
+            columns: ["escalation_custom_role_id"]
+            isOneToOne: false
+            referencedRelation: "custom_role"
             referencedColumns: ["id"]
           },
           {
