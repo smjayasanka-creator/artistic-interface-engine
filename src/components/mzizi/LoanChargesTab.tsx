@@ -388,22 +388,6 @@ function ChargeModal({
               />
             </FormField>
 
-            {v.origin === "outside" && (
-              <FormField label="Supplier" required span={12} hint="Pick from clients registered as suppliers">
-                <select
-                  className={selectCls}
-                  value={v.supplier_client_id ?? ""}
-                  onChange={(e) => setV({ ...v, supplier_client_id: e.target.value || null })}
-                >
-                  <option value="">— Select supplier —</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.full_name}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            )}
 
             <FormField label="Receivable ledger" required span={6} hint="Asset account debited when the charge is raised">
               <select
