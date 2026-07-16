@@ -5074,7 +5074,7 @@ export type Database = {
         | "teller"
         | "operations"
         | "admin"
-      workflow_action_decision: "approve" | "decline"
+      workflow_action_decision: "approve" | "decline" | "send_back"
       workflow_approver_kind: "role" | "branch_role" | "user"
       workflow_instance_status:
         | "pending"
@@ -5304,7 +5304,7 @@ export const Constants = {
         "operations",
         "admin",
       ],
-      workflow_action_decision: ["approve", "decline"],
+      workflow_action_decision: ["approve", "decline", "send_back"],
       workflow_approver_kind: ["role", "branch_role", "user"],
       workflow_instance_status: [
         "pending",

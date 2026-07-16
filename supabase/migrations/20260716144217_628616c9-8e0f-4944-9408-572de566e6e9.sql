@@ -1,0 +1,1 @@
+ALTER TYPE public.workflow_action_decision ADD VALUE IF NOT EXISTS 'send_back';
