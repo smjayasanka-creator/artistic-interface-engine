@@ -2829,7 +2829,7 @@ export const getLoan = createServerFn({ method: "GET" })
         .maybeSingle(),
       supabase
         .from("loan_applied_charge")
-        .select("id, amount, created_at, charge:charge_id(name, type)")
+        .select("id, amount, created_at, charge:charge_id(name, charge_type)")
         .eq("loan_id", data.id),
       supabase
         .from("loan_accrual")
