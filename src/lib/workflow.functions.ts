@@ -393,3 +393,65 @@ export const cancelInstance = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+// Fetch read-only details for the resource referenced by a workflow instance.
+export const getInstanceReference = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { instance_id: string }) =>
+    z.object({ instance_id: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: inst, error } = await supabase
+      .from("workflow_instance")
+      .select("id, transaction_type, reference_id")
+      .eq("id", data.instance_id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!inst || !inst.reference_id) return { kind: "none" as const, data: null };
+
+    const tx = inst.transaction_type as string;
+    const refId = inst.reference_id as string;
+
+    if (tx.startsWith("loan_")) {
+      const { data: loan } = await supabase
+        .from("loan")
+        .select("id, loan_no, principal, interest_rate, term_months, status, purpose, submitted_at, disbursed_at, client:client_id(id, full_name, national_id, phone), product:product_id(name, code), branch:branch_id(name, code)")
+        .eq("id", refId)
+        .maybeSingle();
+      return { kind: "loan" as const, data: loan };
+    }
+    if (tx.startsWith("fd_")) {
+      const { data: fd } = await supabase
+        .from("fixed_deposit")
+        .select("id, fd_no, principal, interest_rate, term_months, status, opened_at, maturity_date, client:client_id(id, full_name, national_id), product:product_id(name, code), branch:branch_id(name, code)")
+        .eq("id", refId)
+        .maybeSingle();
+      return { kind: "fd" as const, data: fd };
+    }
+    if (tx === "journal_entry") {
+      const { data: je } = await supabase
+        .from("journal_entry")
+        .select("id, entry_no, entry_date, description, status, total_debit, total_credit, postings:posting(id, gl_account_id, debit, credit, narration)")
+        .eq("id", refId)
+        .maybeSingle();
+      return { kind: "journal" as const, data: je };
+    }
+    if (tx === "payment") {
+      const { data: pay } = await supabase
+        .from("savings_transaction")
+        .select("*")
+        .eq("id", refId)
+        .maybeSingle();
+      return { kind: "payment" as const, data: pay };
+    }
+    if (tx.startsWith("customer_screening")) {
+      const { data: cli } = await supabase
+        .from("client")
+        .select("id, full_name, national_id, phone, email, dob, occupation, kyc_status, risk_rating")
+        .eq("id", refId)
+        .maybeSingle();
+      return { kind: "client" as const, data: cli };
+    }
+    return { kind: "generic" as const, data: { id: refId } };
+  });
