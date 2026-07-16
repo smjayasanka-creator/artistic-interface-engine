@@ -887,7 +887,12 @@ export const processMaturity = createServerFn({ method: "POST" })
     const newRate = await findApplicableRate(supabase, fd.product_id, fd.tenure_months, onDate);
     if (newRate == null) throw new Error("No published rate available for renewal");
 
-    const { data: certNo } = await supabase.rpc("next_fd_certificate_no", { _company_id: fd.company_id });
+    const { data: certNo } = await supabase.rpc("next_contract_no", {
+      _company_id: fd.company_id,
+      _branch_id: fd.branch_id,
+      _product_id: fd.product_id,
+      _segment: 2,
+    });
     if (!certNo) throw new Error("Failed to allocate certificate number");
     const { data: product } = await supabase
       .from("fd_product")
