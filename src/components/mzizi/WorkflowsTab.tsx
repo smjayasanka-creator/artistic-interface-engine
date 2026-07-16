@@ -344,9 +344,25 @@ function WorkflowEditor({ initial, onDone, onCancel }: { initial: any | null; on
                 {s.sla_action === "escalate" && (
                   <label className="text-[11.5px] font-medium text-secondary-foreground space-y-1">
                     <span>Escalation role</span>
-                    <select className={selectCls} value={s.escalation_role ?? ""} onChange={(e) => updateStep(i, { escalation_role: e.target.value || null })}>
+                    <select
+                      className={selectCls}
+                      value={s.escalation_custom_role_id ? `c:${s.escalation_custom_role_id}` : s.escalation_role ? `s:${s.escalation_role}` : ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v.startsWith("c:")) updateStep(i, { escalation_custom_role_id: v.slice(2), escalation_role: null });
+                        else if (v.startsWith("s:")) updateStep(i, { escalation_role: v.slice(2), escalation_custom_role_id: null });
+                        else updateStep(i, { escalation_role: null, escalation_custom_role_id: null });
+                      }}
+                    >
                       <option value="">Select role…</option>
-                      {STAFF_ROLES.map((r) => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
+                      {activeRoles.length > 0 && (
+                        <optgroup label="Custom roles">
+                          {activeRoles.map((r: any) => <option key={r.id} value={`c:${r.id}`}>{r.name}</option>)}
+                        </optgroup>
+                      )}
+                      <optgroup label="Built-in staff roles">
+                        {STAFF_ROLES.map((r) => <option key={r} value={`s:${r}`}>{r.replace("_", " ")}</option>)}
+                      </optgroup>
                     </select>
                   </label>
                 )}
