@@ -1109,10 +1109,18 @@ export const submitApplication = createServerFn({ method: "POST" })
     if (!staff) throw new Error("No staff profile");
     const { data: product } = await supabase
       .from("loan_product")
-      .select("annual_rate_pct, frequency")
+      .select("annual_rate_pct, frequency, company_id")
       .eq("id", data.product_id)
       .maybeSingle();
     if (!product) throw new Error("Product not found");
+
+    const { data: contractNo, error: cerr } = await supabase.rpc("next_contract_no", {
+      _company_id: (product as any).company_id,
+      _branch_id: staff.branch_id,
+      _product_id: data.product_id,
+      _segment: 3,
+    });
+    if (cerr) throw new Error(cerr.message);
 
     const { data: loan, error } = await supabase
       .from("loan")
@@ -1133,7 +1141,8 @@ export const submitApplication = createServerFn({ method: "POST" })
           data.schedule_type === "structured" && data.schedule_overrides
             ? (data.schedule_overrides as Record<string, number>)
             : null,
-      })
+        contract_no: contractNo,
+      } as never)
       .select()
       .single();
     if (error) throw error;
