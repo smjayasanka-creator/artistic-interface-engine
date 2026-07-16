@@ -1146,7 +1146,7 @@ export const submitApplication = createServerFn({ method: "POST" })
       frequency?: "daily" | "weekly" | "biweekly" | "monthly";
       schedule_type?: "normal" | "structured";
       schedule_overrides?: Record<string, number>;
-      initial_charges?: { charge_id: string; amount: number; capitalize?: boolean }[];
+      initial_charges?: { charge_id: string; amount: number; capitalize?: boolean; supplier_client_id?: string | null }[];
     }) =>
       z
         .object({
@@ -1160,7 +1160,7 @@ export const submitApplication = createServerFn({ method: "POST" })
           schedule_type: z.enum(["normal", "structured"]).optional(),
           schedule_overrides: z.record(z.string(), z.number()).optional(),
           initial_charges: z
-            .array(z.object({ charge_id: z.string().uuid(), amount: z.number().nonnegative(), capitalize: z.boolean().optional() }))
+            .array(z.object({ charge_id: z.string().uuid(), amount: z.number().nonnegative(), capitalize: z.boolean().optional(), supplier_client_id: z.string().uuid().nullable().optional() }))
             .optional(),
         })
         .parse(i),
