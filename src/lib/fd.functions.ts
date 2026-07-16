@@ -448,7 +448,12 @@ export const createFixedDeposit = createServerFn({ method: "POST" })
     const rate = await findApplicableRate(supabase, data.product_id, data.tenure_months, data.value_date);
     if (rate == null) throw new Error("No published rate for this product and tenure at value date");
 
-    const { data: certNo, error: certErr } = await supabase.rpc("next_fd_certificate_no", { _company_id: cid });
+    const { data: certNo, error: certErr } = await supabase.rpc("next_contract_no", {
+      _company_id: cid,
+      _branch_id: staff.branch_id,
+      _product_id: data.product_id,
+      _segment: 2,
+    });
     if (certErr) throw certErr;
     if (!certNo) throw new Error("Failed to allocate certificate number");
 
