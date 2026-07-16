@@ -45,6 +45,8 @@ export const upsertLoanCharge = createServerFn({ method: "POST" })
       amount: number;
       receivable_account_id: string;
       credit_account_id: string;
+      capitalize?: boolean;
+      capitalized_receivable_account_id?: string | null;
       active?: boolean;
       product_ids: string[];
     }) => i,
@@ -53,6 +55,10 @@ export const upsertLoanCharge = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { data: cid } = await supabase.rpc("current_company_id");
     if (!cid) throw new Error("No company");
+    const cap = !!data.capitalize;
+    if (cap && !data.capitalized_receivable_account_id) {
+      throw new Error("Capitalized-charges receivable ledger is required when capitalize is on");
+    }
     const row: any = {
       company_id: cid,
       name: data.name,
@@ -61,6 +67,8 @@ export const upsertLoanCharge = createServerFn({ method: "POST" })
       amount: data.amount,
       receivable_account_id: data.receivable_account_id,
       credit_account_id: data.credit_account_id,
+      capitalize: cap,
+      capitalized_receivable_account_id: cap ? data.capitalized_receivable_account_id : null,
       active: data.active ?? true,
     };
     if (data.id) row.id = data.id;
