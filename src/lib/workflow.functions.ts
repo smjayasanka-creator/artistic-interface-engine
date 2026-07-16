@@ -312,7 +312,7 @@ export const actOnInstance = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: inst, error: iErr } = await supabase
       .from("workflow_instance")
-      .select("id, status, current_step, workflow:workflow_id(steps:workflow_step(step_order, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals))")
+      .select("id, status, current_step, transaction_type, reference_id, workflow:workflow_id(steps:workflow_step(step_order, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals))")
       .eq("id", data.instance_id)
       .maybeSingle();
     if (iErr) throw iErr;
