@@ -14,6 +14,14 @@ import { money, getActiveCurrency } from "@/lib/format";
 
 
 export const Route = createFileRoute("/_authenticated/fd/")({
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData({
+      queryKey: ["fd-list", "", "", "", "", 1, 25],
+      queryFn: () => listFixedDeposits({ data: { page: 1, pageSize: 25 } }),
+    });
+    context.queryClient.ensureQueryData({ queryKey: ["fd-summary"], queryFn: () => getFdSummary() });
+    context.queryClient.ensureQueryData({ queryKey: ["fd-products"], queryFn: () => listFdProducts() });
+  },
   component: FdRegister,
 });
 
