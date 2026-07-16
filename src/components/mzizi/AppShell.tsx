@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug, Landmark, ScrollText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
@@ -85,19 +85,24 @@ function ShellInner() {
   const router = useRouter();
   const qc = useQueryClient();
   const sessionFn = useServerFn(getSession);
-  const { data: session } = useQuery({ queryKey: ["session"], queryFn: () => sessionFn() });
+  const { data: session } = useQuery({ queryKey: ["session"], queryFn: () => sessionFn(), staleTime: 5 * 60_000, gcTime: 30 * 60_000 });
   const dashFn = useServerFn(getDashboard);
-  const { data: dash } = useQuery({ queryKey: ["dashboard"], queryFn: () => dashFn() });
+  const { data: dash } = useQuery({ queryKey: ["dashboard"], queryFn: () => dashFn(), staleTime: 60_000, gcTime: 10 * 60_000 });
   const companyFn = useServerFn(getCompany);
-  const { data: company } = useQuery({ queryKey: ["company"], queryFn: () => companyFn() });
+  const { data: company } = useQuery({ queryKey: ["company"], queryFn: () => companyFn(), staleTime: 10 * 60_000, gcTime: 30 * 60_000 });
   // Sync active currency during render so first paint uses the company currency,
-  // and invalidate cached queries once when it actually changes so re-renders
-  // pick up the new formatting.
+  // and invalidate cached queries only when it actually changes.
   if (company?.currency && company.currency.toUpperCase() !== getActiveCurrency()) {
     setActiveCurrency(company.currency);
   }
+  const prevCurrencyRef = useRef<string | undefined>(company?.currency);
   useEffect(() => {
-    if (company?.currency) qc.invalidateQueries();
+    const next = company?.currency;
+    if (!next) return;
+    if (prevCurrencyRef.current && prevCurrencyRef.current !== next) {
+      qc.invalidateQueries();
+    }
+    prevCurrencyRef.current = next;
   }, [company?.currency, qc]);
   const approvalsCount = dash?.approvals.length ?? 0;
 
