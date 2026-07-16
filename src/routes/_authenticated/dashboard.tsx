@@ -244,7 +244,8 @@ function Dashboard() {
           ) : (
             <div className="flex flex-col gap-3">
               {data.productWiseDisbursement.map((row: any) => {
-                const pct = monthDisbursed > 0 ? (row.amount / monthDisbursed) * 100 : 0;
+                const total = data.kpis.disbursement || 0;
+                const pct = total > 0 ? (row.amount / total) * 100 : 0;
                 return (
                   <div key={row.product}>
                     <div className="flex justify-between text-xs mb-1">
