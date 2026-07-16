@@ -930,7 +930,7 @@ function NewLoan() {
                               )
                             : undefined,
                         initial_charges: appliedCharges.length
-                          ? appliedCharges.map((c) => ({ charge_id: c.charge_id, amount: c.amount, capitalize: c.capitalize }))
+                          ? appliedCharges.map((c) => ({ charge_id: c.charge_id, amount: c.amount, capitalize: c.capitalize, supplier_client_id: c.supplier_client_id }))
                           : undefined,
                       },
                     })
