@@ -236,7 +236,14 @@ function Dashboard() {
         </Card>
 
         <Card>
-          <CardTitle subtitle="Disbursed amount grouped by loan product this month">
+          <CardTitle
+            subtitle="Disbursed amount grouped by loan product this month"
+            right={
+              <Link to="/loans" className="text-[11.5px] font-semibold text-primary hover:underline">
+                View loans →
+              </Link>
+            }
+          >
             Product wise disbursement
           </CardTitle>
           {data.productWiseDisbursement?.length === 0 ? (
@@ -247,7 +254,11 @@ function Dashboard() {
                 const total = data.kpis.disbursement || 0;
                 const pct = total > 0 ? (row.amount / total) * 100 : 0;
                 return (
-                  <div key={row.product}>
+                  <Link
+                    key={row.product}
+                    to="/loans"
+                    className="block rounded-md -mx-1 px-1 py-1 hover:bg-muted/50 transition-colors"
+                  >
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-medium text-secondary-foreground truncate pr-2">{row.product}</span>
                       <span className="font-mono text-muted-foreground shrink-0">{money(row.amount)} · {pct.toFixed(1)}%</span>
