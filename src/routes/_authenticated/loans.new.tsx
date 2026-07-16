@@ -101,6 +101,8 @@ function NewLoan() {
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDoc>>({});
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const [selectedCharges, setSelectedCharges] = useState<Record<string, boolean>>({});
+
 
 
   const clientsFn = useServerFn(getClients);
