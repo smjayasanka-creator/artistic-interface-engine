@@ -723,7 +723,7 @@ function NewLoan() {
                         client_id: clientId,
                         product_id: productId,
                         principal: principalNum,
-                        term_months: term,
+                        term_months: termNum,
                         purpose: purpose || undefined,
                         annual_rate_pct: rateNum,
                         frequency,
