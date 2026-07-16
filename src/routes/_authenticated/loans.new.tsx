@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getClients, getProducts, submitApplication } from "@/lib/mzizi.functions";
+import { listLoanCharges } from "@/lib/loan-charges.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
