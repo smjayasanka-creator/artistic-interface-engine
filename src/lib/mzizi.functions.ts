@@ -1241,211 +1241,57 @@ export const declineLoan = createServerFn({ method: "POST" })
 
 export const approveLoan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { loan_id: string; payment_channel?: "cash" | "mpesa" | "bank" | "cheque"; payment_reference?: string; bank_account?: string }) =>
+  .inputValidator((i: { loan_id: string; payment_channel?: string; payment_reference?: string; bank_account?: string }) =>
     z.object({
       loan_id: z.string().uuid(),
-      payment_channel: z.enum(["cash", "mpesa", "bank", "cheque"]).optional(),
+      payment_channel: z.string().optional(),
       payment_reference: z.string().max(80).optional(),
       bank_account: z.string().max(80).optional(),
     }).parse(i))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: staff } = await supabase.from("staff").select("id, branch_id, role").eq("user_id", context.userId).maybeSingle();
-    if (!staff) throw new Error("No staff profile");
-    if (!["admin", "branch_manager"].includes(staff.role as string)) {
-      throw new Error("Only branch managers or admins can approve and disburse loans");
-    }
-    const { data: loan } = await supabase
-      .from("loan")
-      .select("id, principal, term_months, annual_rate_pct, frequency, branch_id, status, product_id, schedule_type, schedule_overrides")
-      .eq("id", data.loan_id)
-      .maybeSingle();
-    if (!loan) throw new Error("Loan not found");
-    if (loan.status !== "submitted" && loan.status !== "approved") {
-      throw new Error("Loan not in submitted/approved state");
-    }
-
-    const now = new Date().toISOString();
-    await supabase
-      .from("loan")
-      .update({
-        status: "disbursed",
-        approved_at: now,
-        approved_by: staff.id,
-        disbursed_at: now,
-      })
-      .eq("id", loan.id);
-
-    const isStructured = loan.schedule_type === "structured" && loan.schedule_overrides;
-    const overridesRaw = (loan.schedule_overrides ?? {}) as Record<string, number>;
-    const overrides: Record<number, number> = {};
-    for (const k of Object.keys(overridesRaw)) overrides[Number(k)] = Number(overridesRaw[k]);
-
-    const schedule = isStructured
-      ? generateStructuredSchedule({
-          principal: Number(loan.principal),
-          annualRatePct: Number(loan.annual_rate_pct),
-          termMonths: loan.term_months,
-          frequency: loan.frequency as Frequency,
-          overrides,
-        })
-      : generateSchedule({
-          principal: Number(loan.principal),
-          annualRatePct: Number(loan.annual_rate_pct),
-          termMonths: loan.term_months,
-          frequency: loan.frequency as Frequency,
-        });
-    const rows = schedule.rows.map((r) => ({
-      loan_id: loan.id,
-      seq: r.seq,
-      due_date: r.dueDate,
-      principal_due: r.principal,
-      interest_due: r.interest,
-      state: "upcoming" as const,
-      is_manual: !!r.isManual,
-    }));
-    if (rows.length) await supabase.from("loan_installment").insert(rows);
-
-    // Journal entry: DR Loans receivable / CR Cash — routed through the ledger kernel (post_entry)
-    const { data: product } = await supabase
-      .from("loan_product")
-      .select("principal_account_id, cash_account_id")
-      .eq("id", loan.product_id)
-      .maybeSingle<{ principal_account_id: string | null; cash_account_id: string | null }>();
-    let arId = product?.principal_account_id ?? null;
-    let cashId = product?.cash_account_id ?? null;
-    if (!arId || !cashId) {
-      const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1100", "1000"]);
-      arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
-      cashId = cashId ?? accts?.find((a) => a.code === "1000")?.id ?? null;
-    }
-    if (!arId || !cashId) throw new Error("Chart of accounts missing — configure product accounts");
-    const ref = "DSB-" + Math.floor(1000 + Math.random() * 9000);
-    const channelLabel = data.payment_channel
-      ? ` via ${data.payment_channel === "mpesa" ? "M-Pesa" : data.payment_channel}${data.payment_reference ? ` (${data.payment_reference})` : ""}${data.bank_account ? ` — ${data.bank_account}` : ""}`
-      : "";
-    const { error: postErr } = await supabase.rpc("post_entry", {
-      _entry_date: now.slice(0, 10),
-      _reference: ref,
-      _description: `Loan disbursement ${ref}${channelLabel}`,
-      _lines: [
-        { account_id: arId, debit: Number(loan.principal), credit: 0 },
-        { account_id: cashId, debit: 0, credit: Number(loan.principal) },
-      ] as any,
-      _branch_id: loan.branch_id,
-      _source_module: "loans",
-      _source_ref: loan.id,
-      _idempotency_key: `loans:disburse:${loan.id}`,
-      _loan_id: loan.id,
-    });
-    if (postErr) throw postErr;
-
-    return { ok: true, reference: ref };
+    // The disburse_loan RPC enforces role, status, schedule generation and GL posting.
+    const { data: result, error } = await supabase.rpc("disburse_loan" as any, {
+      p_loan_id: data.loan_id,
+    } as any);
+    if (error) throw new Error(error.message);
+    const r = (result ?? {}) as any;
+    return { ok: true, reference: r.reference ?? null, ...r };
   });
 
 export const recordRepayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (i: { loan_id: string; amount: number; channel: "cash" | "mpesa" | "bank" }) =>
+    (i: { loan_id: string; amount: number; channel: "cash" | "mpesa" | "bank" | "internal"; reference?: string }) =>
       z
         .object({
           loan_id: z.string().uuid(),
           amount: z.number().positive(),
-          channel: z.enum(["cash", "mpesa", "bank"]),
+          channel: z.enum(["cash", "mpesa", "bank", "internal"]),
+          reference: z.string().max(80).optional(),
         })
         .parse(i),
-  )
+    )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: staff } = await supabase.from("staff").select("id, branch_id").eq("user_id", context.userId).maybeSingle();
-    if (!staff) throw new Error("No staff profile");
-    const { data: loan } = await supabase
-      .from("loan")
-      .select("id, principal, branch_id, annual_rate_pct, term_months, product_id")
-      .eq("id", data.loan_id)
-      .maybeSingle();
-    if (!loan) throw new Error("Loan not found");
-
-    // Split: 90% principal, 10% interest (simple)
-    const principalPortion = Number((data.amount * 0.9).toFixed(2));
-    const interestPortion = Number((data.amount - principalPortion).toFixed(2));
-
-    // Apply to earliest unpaid installment
-    const { data: inst } = await supabase
-      .from("loan_installment")
-      .select("id, principal_due, interest_due, principal_paid, interest_paid, state")
-      .eq("loan_id", loan.id)
-      .in("state", ["upcoming", "due", "partial", "overdue"])
-      .order("seq")
-      .limit(1)
-      .maybeSingle();
-    if (inst) {
-      const newPrinc = Number(inst.principal_paid) + principalPortion;
-      const newInt = Number(inst.interest_paid) + interestPortion;
-      const fullyPaid = newPrinc >= Number(inst.principal_due) && newInt >= Number(inst.interest_due);
-      await supabase
-        .from("loan_installment")
-        .update({
-          principal_paid: newPrinc,
-          interest_paid: newInt,
-          state: fullyPaid ? "paid" : "partial",
-        })
-        .eq("id", inst.id);
-    }
-
-    // Use product-configured accounts if present
-    const { data: product } = await supabase
-      .from("loan_product")
-      .select("principal_account_id, cash_account_id, interest_income_account_id, interest_receivable_account_id")
-      .eq("id", loan.product_id)
-      .maybeSingle<{
-        principal_account_id: string | null;
-        cash_account_id: string | null;
-        interest_income_account_id: string | null;
-        interest_receivable_account_id: string | null;
-      }>();
-    let cashId = product?.cash_account_id ?? null;
-    let arId = product?.principal_account_id ?? null;
-    let incomeId = product?.interest_income_account_id ?? null;
-    if (!cashId || !arId || !incomeId) {
-      const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1000", "1100", "4000"]);
-      cashId = cashId ?? accts?.find((a) => a.code === "1000")?.id ?? null;
-      arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
-      incomeId = incomeId ?? accts?.find((a) => a.code === "4000")?.id ?? null;
-    }
-    // Prefer Interest Receivable when configured (accrual path); fall back to
-    // Interest Income when the product isn't wired for accrual.
-    const intCredit = product?.interest_receivable_account_id ?? incomeId;
-    if (!cashId || !arId || !intCredit) throw new Error("Chart of accounts missing — configure product accounts");
-    const ref = "RC-" + Math.floor(1000 + Math.random() * 9000);
-    const idem = `loans:repay:${loan.id}:${ref}`;
-    const { data: entryId, error: rpcErr } = await supabase.rpc("post_entry", {
-      _entry_date: new Date().toISOString().slice(0, 10),
-      _reference: ref,
-      _description: `Repayment ${ref} · ${data.channel}`,
-      _lines: [
-        { account_id: cashId, debit: data.amount, credit: 0 },
-        { account_id: arId, debit: 0, credit: principalPortion },
-        { account_id: intCredit, debit: 0, credit: interestPortion },
-      ] as any,
-      _branch_id: loan.branch_id,
-      _source_module: "loans",
-      _source_ref: loan.id,
-      _idempotency_key: idem,
-      _loan_id: loan.id,
-    });
-    if (rpcErr) throw rpcErr;
-    const { error: rErr } = await supabase.from("repayment").insert({
-      loan_id: loan.id,
-      entry_id: entryId as unknown as string,
-      amount: data.amount,
-      channel: data.channel,
-      received_by: staff.id,
-    });
-    if (rErr) throw rErr;
-
-    return { ok: true, reference: ref };
+    const { data: result, error } = await supabase.rpc("record_repayment" as any, {
+      p_loan_id: data.loan_id,
+      p_amount: data.amount,
+      p_channel: data.channel,
+      p_reference: data.reference ?? null,
+    } as any);
+    if (error) throw new Error(error.message);
+    const r = (result ?? {}) as any;
+    return {
+      ok: true,
+      reference: r.reference ?? data.reference ?? null,
+      allocated_fees: Number(r.allocated_fees ?? 0),
+      allocated_interest: Number(r.allocated_interest ?? 0),
+      allocated_principal: Number(r.allocated_principal ?? 0),
+      loan_closed: !!r.loan_closed,
+    };
   });
+
 
 export const getCollections = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
