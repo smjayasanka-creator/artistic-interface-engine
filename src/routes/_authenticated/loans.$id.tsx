@@ -150,7 +150,7 @@ function LoanDetail() {
           ) : accruals.map((a: any, i: number) => (
             <div key={i} className="flex items-center justify-between px-5 py-2 border-b border-row-divider last:border-b-0 text-[12.5px]">
               <div>{shortDate(a.accrual_date)}</div>
-              <div className="font-mono">{money(Number(a.amount))}</div>
+              <div className="font-mono">{money(Number(a.daily_amount))}</div>
             </div>
           ))}
         </Card>
