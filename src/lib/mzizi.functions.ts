@@ -2898,3 +2898,76 @@ export const getLoan = createServerFn({ method: "GET" })
       totals: { repaid: totalRepaid, charges: totalCharges, accrued: totalAccrued },
     };
   });
+
+export const updateClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      phone_country_code: string;
+      phone: string;
+      national_id: string;
+      date_of_birth: string;
+      gender: "male" | "female" | "other";
+      email?: string | null;
+      address: string;
+      gn_division: string;
+      divisional_secretariat: string;
+      district: string;
+      province: string;
+      occupation?: string | null;
+      monthly_income?: number | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          first_name: z.string().trim().min(1).max(60),
+          last_name: z.string().trim().min(1).max(60),
+          phone_country_code: z.string().trim().min(1).max(6),
+          phone: z.string().trim().min(6).max(20),
+          national_id: z.string().trim().min(4).max(30),
+          date_of_birth: z.string().min(1),
+          gender: z.enum(["male", "female", "other"]),
+          email: z.union([z.literal(""), z.string().trim().email().max(255)]).nullable().optional(),
+          address: z.string().trim().min(3).max(200),
+          gn_division: z.string().trim().min(1).max(80),
+          divisional_secretariat: z.string().trim().min(1).max(80),
+          district: z.string().trim().min(1).max(80),
+          province: z.string().trim().min(1).max(80),
+          occupation: z.string().trim().max(120).nullable().optional(),
+          monthly_income: z.number().min(0).nullable().optional(),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const fullName = `${data.first_name} ${data.last_name}`.trim();
+    const fullPhone = `${data.phone_country_code}${data.phone}`;
+    const { data: updated, error } = await supabase
+      .from("client")
+      .update({
+        first_name: data.first_name,
+        last_name: data.last_name,
+        full_name: fullName,
+        phone_country_code: data.phone_country_code,
+        phone: fullPhone,
+        national_id: data.national_id,
+        email: data.email || null,
+        date_of_birth: data.date_of_birth,
+        gender: data.gender,
+        address: data.address,
+        gn_division: data.gn_division,
+        divisional_secretariat: data.divisional_secretariat,
+        district: data.district,
+        province: data.province,
+        occupation: data.occupation ?? null,
+        monthly_income: data.monthly_income ?? null,
+      } as any)
+      .eq("id", data.id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return updated;
+  });
