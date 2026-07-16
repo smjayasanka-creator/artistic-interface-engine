@@ -2,7 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { ArrowLeft, Building2, AlertTriangle, TrendingUp, FileText, Receipt, Activity, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Building2, AlertTriangle, Calendar, TrendingUp, FileText, Receipt, Activity, ShieldCheck } from "lucide-react";
 import { getLoan } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
 import { StatusBadge } from "@/components/mzizi/Badge";
