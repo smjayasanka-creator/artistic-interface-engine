@@ -77,7 +77,7 @@ function RecordRepaymentPage() {
               </select>
             </FormField>
             <FormField label="Received on" required span={2}>
-              <input type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} className={inputCls + " font-mono"} />
+              <input type="date" readOnly value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} className={inputCls + " font-mono"} />
             </FormField>
             <FormField label={`Amount (${getActiveCurrency()})`} required span={2}>
               <input

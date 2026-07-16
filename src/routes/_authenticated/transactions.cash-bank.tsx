@@ -72,7 +72,7 @@ function CashBankPage() {
               </select>
             </FormField>
             <FormField label="Date" required span={3}>
-              <input type="date" value={txnDate} onChange={(e) => setTxnDate(e.target.value)} className={`${inputCls} font-mono`} />
+              <input type="date" readOnly value={txnDate} onChange={(e) => setTxnDate(e.target.value)} className={`${inputCls} font-mono`} />
             </FormField>
             <FormField label={`Amount (${getActiveCurrency()})`} required span={3}>
               <input

@@ -65,10 +65,10 @@ function ChequeBankPage() {
             </FormField>
 
             <FormField label="Cheque date" required span={3}>
-              <input type="date" value={chequeDate} onChange={(e) => setChequeDate(e.target.value)} className={`${inputCls} font-mono`} />
+              <input type="date" readOnly value={chequeDate} onChange={(e) => setChequeDate(e.target.value)} className={`${inputCls} font-mono`} />
             </FormField>
             <FormField label="Deposit date" required span={3}>
-              <input type="date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} className={`${inputCls} font-mono`} />
+              <input type="date" readOnly value={depositDate} onChange={(e) => setDepositDate(e.target.value)} className={`${inputCls} font-mono`} />
             </FormField>
             <FormField label="Drawer bank" span={3}>
               <input value={drawerBank} onChange={(e) => setDrawerBank(e.target.value)} className={inputCls} maxLength={80} placeholder="e.g. Absa Bank" />
