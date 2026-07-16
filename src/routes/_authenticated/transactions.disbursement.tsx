@@ -120,15 +120,17 @@ function DisbursementPage() {
                 >
                   View
                 </Link>
-                <button
-                  onClick={() => openModal(l)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary-hover",
-                  )}
-                >
-                  <Send size={13} />
-                  Disburse
-                </button>
+                {canDisburse && (
+                  <button
+                    onClick={() => openModal(l)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary-hover",
+                    )}
+                  >
+                    <Send size={13} />
+                    Disburse
+                  </button>
+                )}
               </div>
             </div>
           ))
