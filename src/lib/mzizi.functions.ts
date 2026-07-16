@@ -131,6 +131,7 @@ export const getDashboard = createServerFn({ method: "GET" })
       { data: savingsTxns },
       { data: installments },
       { count: newClientsCount },
+      { data: productDisbursals },
     ] = await Promise.all([
       supabase.from("client").select("id", { count: "exact", head: true }).eq("status", "active"),
       supabase.from("v_loan_outstanding").select("outstanding_principal"),
@@ -162,6 +163,12 @@ export const getDashboard = createServerFn({ method: "GET" })
         .gte("due_date", monthStartDate)
         .lte("due_date", monthEndDate),
       supabase.from("client").select("id", { count: "exact", head: true }).gte("joined_on", monthStartDate).lte("joined_on", monthEndDate),
+      supabase
+        .from("loan")
+        .select("principal, product:product_id(name)")
+        .not("disbursed_at", "is", null)
+        .gte("disbursed_at", monthStartIso)
+        .lte("disbursed_at", monthEndIso),
     ]);
 
     const outstandingTotal = (outstanding ?? []).reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0);
