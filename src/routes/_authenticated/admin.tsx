@@ -906,6 +906,8 @@ function ProductsTab() {
     cashAcct: "",
     interestAcct: "",
     feeAcct: "",
+    accruedAcct: "",
+    interestRecvAcct: "",
     requiredDocs: [] as string[],
     segment: "micro" as LoanSegment,
   };
