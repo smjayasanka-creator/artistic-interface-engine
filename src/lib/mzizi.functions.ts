@@ -1214,6 +1214,7 @@ export const submitApplication = createServerFn({ method: "POST" })
         charge_id: c.charge_id,
         amount: c.amount,
         capitalize: !!c.capitalize,
+        supplier_client_id: c.supplier_client_id ?? null,
       }));
       const { error: chgErr } = await (supabase as any).from("loan_applied_charge").insert(rows);
       if (chgErr) throw new Error(chgErr.message);
