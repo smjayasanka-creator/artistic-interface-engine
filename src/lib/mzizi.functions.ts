@@ -1322,10 +1322,13 @@ export const approveLoan = createServerFn({ method: "POST" })
     }
     if (!arId || !cashId) throw new Error("Chart of accounts missing — configure product accounts");
     const ref = "DSB-" + Math.floor(1000 + Math.random() * 9000);
+    const channelLabel = data.payment_channel
+      ? ` via ${data.payment_channel === "mpesa" ? "M-Pesa" : data.payment_channel}${data.payment_reference ? ` (${data.payment_reference})` : ""}${data.bank_account ? ` — ${data.bank_account}` : ""}`
+      : "";
     const { error: postErr } = await supabase.rpc("post_entry", {
       _entry_date: now.slice(0, 10),
       _reference: ref,
-      _description: `Loan disbursement ${ref}`,
+      _description: `Loan disbursement ${ref}${channelLabel}`,
       _lines: [
         { account_id: arId, debit: Number(loan.principal), credit: 0 },
         { account_id: cashId, debit: 0, credit: Number(loan.principal) },
