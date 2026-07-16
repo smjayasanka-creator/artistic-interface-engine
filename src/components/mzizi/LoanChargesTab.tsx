@@ -283,6 +283,7 @@ function ChargeModal({
     if (!v.credit_account_id) return toast.error(v.origin === "inhouse" ? "Income account is required" : "Supplier control account is required");
     if (v.amount < 0) return toast.error("Amount must be zero or positive");
     if (v.charge_type === "variable" && v.amount > 100) return toast.error("Variable percent must be 0–100");
+    if (v.capitalize && !v.capitalized_receivable_account_id) return toast.error("Capitalized-charges receivable ledger is required");
     if (v.product_ids.length === 0) return toast.error("Select at least one applicable product");
     onSubmit(v);
   }
