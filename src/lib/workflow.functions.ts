@@ -304,7 +304,7 @@ export const actOnInstance = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({
       instance_id: z.string().uuid(),
-      decision: z.enum(["approve", "decline"]),
+      decision: z.enum(["approve", "decline", "send_back"]),
       comment: z.string().nullable().optional(),
     }).parse(d),
   )
@@ -355,6 +355,15 @@ export const actOnInstance = createServerFn({ method: "POST" })
         .eq("id", data.instance_id);
       return { ok: true, status: "declined" };
     }
+
+    if (data.decision === "send_back") {
+      // Cancel the current instance so the initiator can revise and re-submit.
+      await supabase.from("workflow_instance")
+        .update({ status: "cancelled", completed_at: new Date().toISOString() })
+        .eq("id", data.instance_id);
+      return { ok: true, status: "sent_back" };
+    }
+
 
     // Count approvals for this step
     const { data: acts } = await supabase
