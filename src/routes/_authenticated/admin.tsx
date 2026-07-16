@@ -35,6 +35,7 @@ import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-sched
 import { FdProductsTab } from "@/components/mzizi/FdProductsTab";
 import { SavingsProductsTab } from "@/components/mzizi/SavingsProductsTab";
 import { SavingsChargesTab } from "@/components/mzizi/SavingsChargesTab";
+import { LoanChargesTab } from "@/components/mzizi/LoanChargesTab";
 import { TimeTravelTab } from "@/components/mzizi/TimeTravelTab";
 import { SecurityTypesTab } from "@/components/mzizi/SecurityTypesTab";
 import { DelegationAuthorityTab } from "@/components/mzizi/DelegationAuthorityTab";
