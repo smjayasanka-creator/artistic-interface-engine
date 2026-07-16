@@ -72,6 +72,27 @@ export const getWorkflow = createServerFn({ method: "GET" })
     return { ...wf, steps: (wf.steps ?? []).sort((a: any, b: any) => a.step_order - b.step_order) };
   });
 
+export const hasActiveWorkflow = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { transaction_type: string }) =>
+    z.object({ transaction_type: z.string().min(1) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) return { exists: false };
+    const { data: wf, error } = await supabase
+      .from("workflow_definition")
+      .select("id, steps:workflow_step(id)")
+      .eq("company_id", cid as string)
+      .eq("transaction_type", data.transaction_type)
+      .eq("is_enabled", true)
+      .maybeSingle();
+    if (error) throw error;
+    const exists = !!wf && ((wf as any).steps?.length ?? 0) > 0;
+    return { exists };
+  });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // WRITES: definitions & steps
 // ─────────────────────────────────────────────────────────────────────────────
