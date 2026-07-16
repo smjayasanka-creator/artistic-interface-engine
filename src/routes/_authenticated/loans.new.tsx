@@ -105,6 +105,7 @@ function NewLoan() {
   const [selectedCharges, setSelectedCharges] = useState<Record<string, boolean>>({});
   const [capitalizedCharges, setCapitalizedCharges] = useState<Record<string, boolean>>({});
   const [manualAmounts, setManualAmounts] = useState<Record<string, number>>({});
+  const [chargeSuppliers, setChargeSuppliers] = useState<Record<string, string>>({});
 
 
 
