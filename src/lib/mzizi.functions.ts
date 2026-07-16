@@ -1326,16 +1326,14 @@ export const recordRepayment = createServerFn({ method: "POST" })
     let cashId = product?.cash_account_id ?? null;
     let arId = product?.principal_account_id ?? null;
     let incomeId = product?.interest_income_account_id ?? null;
-    // Prefer Interest Receivable when configured — accrual worker moves due
-    // interest there, and collection settles it. Falls back to interest income
-    // when the product isn't wired for accrual.
-    const intCreditId = product?.interest_receivable_account_id ?? incomeId;
     if (!cashId || !arId || !incomeId) {
       const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1000", "1100", "4000"]);
       cashId = cashId ?? accts?.find((a) => a.code === "1000")?.id ?? null;
       arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
       incomeId = incomeId ?? accts?.find((a) => a.code === "4000")?.id ?? null;
     }
+    // Prefer Interest Receivable when configured (accrual path); fall back to
+    // Interest Income when the product isn't wired for accrual.
     const intCredit = product?.interest_receivable_account_id ?? incomeId;
     if (!cashId || !arId || !intCredit) throw new Error("Chart of accounts missing — configure product accounts");
     const ref = "RC-" + Math.floor(1000 + Math.random() * 9000);
