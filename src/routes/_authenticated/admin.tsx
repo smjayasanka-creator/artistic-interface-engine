@@ -1035,6 +1035,17 @@ function ProductsTab() {
         <FormHeader title={isEdit ? "Edit loan product" : "New loan product"} onBack={reset} />
         <form onSubmit={submit} className="flex flex-col gap-4 mt-4 text-[12.5px]">
           <FormGrid>
+            <FormField label="Code" required span={2} hint="3 digits (000–999)">
+              <input
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value.replace(/\D/g, "").slice(0, 3) })}
+                placeholder="001"
+                inputMode="numeric"
+                maxLength={3}
+                className={inputCls + " font-mono"}
+                required
+              />
+            </FormField>
             <FormField label="Product name" required span={4}>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Kilimo Boost" className={inputCls} required />
             </FormField>
