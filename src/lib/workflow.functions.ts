@@ -304,10 +304,18 @@ export const actOnInstance = createServerFn({ method: "POST" })
 
     // Verify authorization
     const { data: staff } = await supabase
-      .from("staff").select("role, branch_id").eq("user_id", userId).maybeSingle();
+      .from("staff").select("id, role, branch_id").eq("user_id", userId).maybeSingle();
+    let hasCustomRole = false;
+    if (step.custom_role_id && staff?.id) {
+      const { data: cr } = await supabase
+        .from("user_custom_role").select("role_id")
+        .eq("staff_id", staff.id).eq("role_id", step.custom_role_id).maybeSingle();
+      hasCustomRole = !!cr;
+    }
+    const roleMatches = step.custom_role_id ? hasCustomRole : step.role === staff?.role;
     const okUser = step.approver_kind === "user" && step.user_id === userId;
-    const okRole = step.approver_kind === "role" && step.role === staff?.role;
-    const okBranchRole = step.approver_kind === "branch_role" && step.role === staff?.role && step.branch_id === staff?.branch_id;
+    const okRole = step.approver_kind === "role" && roleMatches;
+    const okBranchRole = step.approver_kind === "branch_role" && roleMatches && step.branch_id === staff?.branch_id;
     if (!okUser && !okRole && !okBranchRole) throw new Error("Not authorized to act on this step");
 
     // Insert action (unique per actor/step)
