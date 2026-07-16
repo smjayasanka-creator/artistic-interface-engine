@@ -131,6 +131,7 @@ export const getDashboard = createServerFn({ method: "GET" })
       { data: savingsTxns },
       { data: installments },
       { count: newClientsCount },
+      { data: productDisbursals },
     ] = await Promise.all([
       supabase.from("client").select("id", { count: "exact", head: true }).eq("status", "active"),
       supabase.from("v_loan_outstanding").select("outstanding_principal"),
@@ -162,6 +163,12 @@ export const getDashboard = createServerFn({ method: "GET" })
         .gte("due_date", monthStartDate)
         .lte("due_date", monthEndDate),
       supabase.from("client").select("id", { count: "exact", head: true }).gte("joined_on", monthStartDate).lte("joined_on", monthEndDate),
+      supabase
+        .from("loan")
+        .select("principal, product:product_id(name)")
+        .not("disbursed_at", "is", null)
+        .gte("disbursed_at", monthStartIso)
+        .lte("disbursed_at", monthEndIso),
     ]);
 
     const outstandingTotal = (outstanding ?? []).reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0);
@@ -214,6 +221,15 @@ export const getDashboard = createServerFn({ method: "GET" })
     );
     const dueCollectionRatio = totalDue > 0 ? totalPaid / totalDue : 0;
 
+    const productMap = new Map<string, number>();
+    for (const row of (productDisbursals ?? []) as any[]) {
+      const name = row.product?.name ?? "Unknown";
+      productMap.set(name, (productMap.get(name) ?? 0) + Number(row.principal ?? 0));
+    }
+    const productWiseDisbursement = Array.from(productMap.entries())
+      .map(([product, amount]) => ({ product, amount }))
+      .sort((a, b) => b.amount - a.amount);
+
     return {
       kpis: {
         activeClients: activeClients ?? 0,
@@ -232,6 +248,7 @@ export const getDashboard = createServerFn({ method: "GET" })
       meetings: meetings ?? [],
       team,
       teamTotals,
+      productWiseDisbursement,
     };
   });
 
