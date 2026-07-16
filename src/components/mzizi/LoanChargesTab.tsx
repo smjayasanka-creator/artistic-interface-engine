@@ -11,7 +11,7 @@ import {
   type LoanChargeOrigin,
   type LoanChargeType,
 } from "@/lib/loan-charges.functions";
-import { getAllLoanProducts, getGlAccounts } from "@/lib/mzizi.functions";
+import { getAllLoanProducts, getGlAccounts, getClients } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
 import {
   FormGrid,
