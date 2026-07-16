@@ -7,6 +7,8 @@ import { Avatar } from "@/components/mzizi/Avatar";
 import { money, relTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/collections")({
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({ queryKey: ["collections"], queryFn: () => getCollections() }),
   component: Collections,
 });
 
