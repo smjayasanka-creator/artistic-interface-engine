@@ -117,12 +117,33 @@ function NewLoan() {
   const { data: allCharges } = useQuery({ queryKey: ["loan-charges"], queryFn: () => chargesFn() });
   const qc = useQueryClient();
   const submitFn = useServerFn(submitApplication);
+  const hasWfFn = useServerFn(hasActiveWorkflow);
+  const startWfFn = useServerFn(startWorkflow);
   const submit = useMutation({
     mutationFn: submitFn,
-    onSuccess: () => {
-      toast.success("Application submitted");
+    onSuccess: async (loan: any) => {
       qc.invalidateQueries();
-      nav({ to: "/loans" });
+      try {
+        const { exists } = await hasWfFn({ data: { transaction_type: "loan_approval" } });
+        if (exists) {
+          await startWfFn({
+            data: {
+              transaction_type: "loan_approval",
+              reference_id: loan.id,
+              reference_label: `Loan ${loan.contract_no ?? loan.id.slice(0, 8)}`,
+              amount: Number(loan.principal ?? 0),
+            },
+          });
+          toast.success("Application submitted — sent for approval");
+          nav({ to: "/approvals" });
+        } else {
+          toast.success("Application submitted — ready to disburse");
+          nav({ to: "/transactions/disbursement" });
+        }
+      } catch (e: any) {
+        toast.error(e?.message ?? "Workflow routing failed");
+        nav({ to: "/loans" });
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
