@@ -1242,7 +1242,13 @@ export const declineLoan = createServerFn({ method: "POST" })
 
 export const approveLoan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { loan_id: string }) => z.object({ loan_id: z.string().uuid() }).parse(i))
+  .inputValidator((i: { loan_id: string; payment_channel?: "cash" | "mpesa" | "bank" | "cheque"; payment_reference?: string; bank_account?: string }) =>
+    z.object({
+      loan_id: z.string().uuid(),
+      payment_channel: z.enum(["cash", "mpesa", "bank", "cheque"]).optional(),
+      payment_reference: z.string().max(80).optional(),
+      bank_account: z.string().max(80).optional(),
+    }).parse(i))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { data: staff } = await supabase.from("staff").select("id, branch_id, role").eq("user_id", context.userId).maybeSingle();
