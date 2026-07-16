@@ -157,6 +157,7 @@ export function LoanChargesTab() {
         <div>Amount</div>
         <div>Receivable ledger</div>
         <div>Credit account</div>
+        <div>Supplier</div>
         <div>Products</div>
         <div className="text-right">Status</div>
         <div className="text-right">Actions</div>
