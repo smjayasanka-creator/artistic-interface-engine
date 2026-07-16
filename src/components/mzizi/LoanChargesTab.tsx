@@ -254,6 +254,7 @@ export function LoanChargesTab() {
           products={productList}
           receivableAccounts={receivableList}
           creditAccounts={creditList}
+          clients={clientList}
           onCancel={() => setEditing(null)}
           onSubmit={(v) => saveM.mutate(editing.id ? { ...v, id: editing.id } : v)}
         />
