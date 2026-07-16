@@ -105,6 +105,7 @@ function NewLoan() {
   const [selectedCharges, setSelectedCharges] = useState<Record<string, boolean>>({});
   const [capitalizedCharges, setCapitalizedCharges] = useState<Record<string, boolean>>({});
   const [manualAmounts, setManualAmounts] = useState<Record<string, number>>({});
+  const [chargeSuppliers, setChargeSuppliers] = useState<Record<string, string>>({});
 
 
 
@@ -247,12 +248,14 @@ function NewLoan() {
         .map((c) => ({
           charge_id: c.id,
           name: c.name,
+          origin: c.origin,
           amount: chargeAmount(c),
           canCapitalize: !!c.capitalize,
           capitalize: !!c.capitalize && capitalizedCharges[c.id] !== false, // default on when allowed
+          supplier_client_id: c.origin === "outside" ? (chargeSuppliers[c.id] || c.supplier_client_id || null) : null,
         })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [productCharges, selectedCharges, capitalizedCharges, manualAmounts, principalNum],
+    [productCharges, selectedCharges, capitalizedCharges, manualAmounts, chargeSuppliers, principalNum],
   );
   const chargesTotal = appliedCharges.reduce((s, c) => s + c.amount, 0);
   const capitalizedTotal = appliedCharges.filter((c) => c.capitalize).reduce((s, c) => s + c.amount, 0);
@@ -518,59 +521,78 @@ function NewLoan() {
                           return (
                             <div
                               key={c.id}
-                              className="flex items-center gap-3 px-3 py-2 text-[12.5px] hover:bg-secondary/30"
+                              className="flex flex-col gap-1.5 px-3 py-2 text-[12.5px] hover:bg-secondary/30"
                             >
-                              <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={on}
-                                  onChange={(e) =>
-                                    setSelectedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
-                                  }
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-medium truncate">{c.name}</div>
-                                  <div className="text-[11px] text-muted-foreground">
-                                    {c.origin === "inhouse" ? "In-house" : "Outside"} ·{" "}
-                                    {c.charge_type === "variable"
-                                      ? `${Number(c.amount)}% of principal`
-                                      : c.charge_type === "manual"
-                                      ? "Manual"
-                                      : "Fixed"}
-                                    {canCap && " · capitalizable"}
-                                  </div>
-                                </div>
-                              </label>
-                              {canCap && on && (
-                                <label
-                                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer whitespace-nowrap"
-                                  title="Add to loan capital instead of collecting upfront"
-                                >
+                              <div className="flex items-center gap-3">
+                                <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer">
                                   <input
                                     type="checkbox"
-                                    checked={capOn}
+                                    checked={on}
                                     onChange={(e) =>
-                                      setCapitalizedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
+                                      setSelectedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
                                     }
                                   />
-                                  Capitalize
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium truncate">{c.name}</div>
+                                    <div className="text-[11px] text-muted-foreground">
+                                      {c.origin === "inhouse" ? "In-house" : "Outside"} ·{" "}
+                                      {c.charge_type === "variable"
+                                        ? `${Number(c.amount)}% of principal`
+                                        : c.charge_type === "manual"
+                                        ? "Manual"
+                                        : "Fixed"}
+                                      {canCap && " · capitalizable"}
+                                    </div>
+                                  </div>
                                 </label>
-                              )}
-                              {c.charge_type === "manual" && on ? (
-                                <input
-                                  type="number"
-                                  min={0}
-                                  step="0.01"
-                                  value={manualAmounts[c.id] ?? ""}
-                                  onChange={(e) =>
-                                    setManualAmounts((prev) => ({ ...prev, [c.id]: Number(e.target.value) }))
-                                  }
-                                  placeholder="Amount"
-                                  className={cn(inputCls, "font-mono text-[12px] w-28 text-right px-2 py-1")}
-                                />
-                              ) : (
-                                <div className="font-mono text-[12px] w-28 text-right">
-                                  {money(amt, true)}
+                                {canCap && on && (
+                                  <label
+                                    className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer whitespace-nowrap"
+                                    title="Add to loan capital instead of collecting upfront"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={capOn}
+                                      onChange={(e) =>
+                                        setCapitalizedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
+                                      }
+                                    />
+                                    Capitalize
+                                  </label>
+                                )}
+                                {c.charge_type === "manual" && on ? (
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    value={manualAmounts[c.id] ?? ""}
+                                    onChange={(e) =>
+                                      setManualAmounts((prev) => ({ ...prev, [c.id]: Number(e.target.value) }))
+                                    }
+                                    placeholder="Amount"
+                                    className={cn(inputCls, "font-mono text-[12px] w-28 text-right px-2 py-1")}
+                                  />
+                                ) : (
+                                  <div className="font-mono text-[12px] w-28 text-right">
+                                    {money(amt, true)}
+                                  </div>
+                                )}
+                              </div>
+                              {c.origin === "outside" && on && (
+                                <div className="flex items-center gap-2 pl-7">
+                                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">Supplier</span>
+                                  <select
+                                    value={chargeSuppliers[c.id] ?? c.supplier_client_id ?? ""}
+                                    onChange={(e) =>
+                                      setChargeSuppliers((prev) => ({ ...prev, [c.id]: e.target.value }))
+                                    }
+                                    className={cn(inputCls, "text-[12px] py-1 flex-1")}
+                                  >
+                                    <option value="">— Select supplier —</option>
+                                    {((clients as any[]) ?? []).map((cl: any) => (
+                                      <option key={cl.id} value={cl.id}>{cl.full_name}</option>
+                                    ))}
+                                  </select>
                                 </div>
                               )}
                             </div>
@@ -890,7 +912,12 @@ function NewLoan() {
                 <button
                   type="button"
                   disabled={!canSubmit}
-                  onClick={() =>
+                  onClick={() => {
+                    const missingSup = appliedCharges.find((c) => c.origin === "outside" && !c.supplier_client_id);
+                    if (missingSup) {
+                      toast.error(`Select a supplier for "${missingSup.name}"`);
+                      return;
+                    }
                     submit.mutate({
                       data: {
                         client_id: clientId,
@@ -908,11 +935,11 @@ function NewLoan() {
                               )
                             : undefined,
                         initial_charges: appliedCharges.length
-                          ? appliedCharges.map((c) => ({ charge_id: c.charge_id, amount: c.amount, capitalize: c.capitalize }))
+                          ? appliedCharges.map((c) => ({ charge_id: c.charge_id, amount: c.amount, capitalize: c.capitalize, supplier_client_id: c.supplier_client_id }))
                           : undefined,
                       },
-                    })
-                  }
+                    });
+                  }}
                   className={btnPrimaryCls}
                 >
                   {submit.isPending ? "Submitting…" : "Submit application"}
