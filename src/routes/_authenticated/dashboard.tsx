@@ -263,13 +263,8 @@ function Dashboard() {
                       <span className="font-medium text-secondary-foreground truncate pr-2">{row.product}</span>
                       <span className="font-mono text-muted-foreground shrink-0">{money(row.amount)} · {pct.toFixed(1)}%</span>
                     </div>
-                    <div className="h-2 rounded-md bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-md transition-all bg-primary"
-                        style={{ width: `${Math.max(pct, 2)}%` }}
-                      />
-                    </div>
-                  </div>
+                  </Link>
+
                 );
               })}
             </div>
