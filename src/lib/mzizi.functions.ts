@@ -1197,7 +1197,6 @@ export const submitApplication = createServerFn({ method: "POST" })
         frequency: data.frequency ?? product.frequency,
         purpose: data.purpose,
         status: "submitted",
-        submitted_at: new Date().toISOString(),
         schedule_type: data.schedule_type ?? "normal",
         schedule_overrides:
           data.schedule_type === "structured" && data.schedule_overrides
