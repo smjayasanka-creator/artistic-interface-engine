@@ -103,6 +103,8 @@ function NewLoan() {
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDoc>>({});
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [selectedCharges, setSelectedCharges] = useState<Record<string, boolean>>({});
+  const [capitalizedCharges, setCapitalizedCharges] = useState<Record<string, boolean>>({});
+
 
 
 
