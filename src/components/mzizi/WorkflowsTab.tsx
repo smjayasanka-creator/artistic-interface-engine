@@ -288,8 +288,25 @@ function WorkflowEditor({ initial, onDone, onCancel }: { initial: any | null; on
                 {s.approver_kind !== "user" && (
                   <label className="text-[11.5px] font-medium text-secondary-foreground space-y-1">
                     <span>Role</span>
-                    <select className={selectCls} value={s.role ?? ""} onChange={(e) => updateStep(i, { role: e.target.value })}>
-                      {STAFF_ROLES.map((r) => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
+                    <select
+                      className={selectCls}
+                      value={s.custom_role_id ? `c:${s.custom_role_id}` : s.role ? `s:${s.role}` : ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v.startsWith("c:")) updateStep(i, { custom_role_id: v.slice(2), role: null });
+                        else if (v.startsWith("s:")) updateStep(i, { role: v.slice(2), custom_role_id: null });
+                        else updateStep(i, { role: null, custom_role_id: null });
+                      }}
+                    >
+                      <option value="">Select role…</option>
+                      {activeRoles.length > 0 && (
+                        <optgroup label="Custom roles">
+                          {activeRoles.map((r: any) => <option key={r.id} value={`c:${r.id}`}>{r.name}</option>)}
+                        </optgroup>
+                      )}
+                      <optgroup label="Built-in staff roles">
+                        {STAFF_ROLES.map((r) => <option key={r} value={`s:${r}`}>{r.replace("_", " ")}</option>)}
+                      </optgroup>
                     </select>
                   </label>
                 )}
