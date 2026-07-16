@@ -2824,7 +2824,7 @@ export const getLoan = createServerFn({ method: "GET" })
         .order("received_at", { ascending: false }),
       supabase
         .from("v_loan_outstanding")
-        .select("outstanding_principal, principal_repaid, interest_repaid")
+        .select("outstanding_principal, principal_repaid")
         .eq("loan_id", data.id)
         .maybeSingle(),
       supabase
