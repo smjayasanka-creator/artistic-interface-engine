@@ -49,7 +49,7 @@ export const listWorkflows = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workflow_definition")
-      .select("id, name, transaction_type, description, is_enabled, created_at, updated_at, steps:workflow_step(id, step_order, name, approver_kind, role, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role)")
+      .select("id, name, transaction_type, description, is_enabled, created_at, updated_at, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)")
       .order("transaction_type", { ascending: true });
     if (error) throw error;
     return (data ?? []).map((w: any) => ({
@@ -64,7 +64,7 @@ export const getWorkflow = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: wf, error } = await context.supabase
       .from("workflow_definition")
-      .select("id, name, transaction_type, description, is_enabled, steps:workflow_step(id, step_order, name, approver_kind, role, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role)")
+      .select("id, name, transaction_type, description, is_enabled, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw error;
@@ -227,7 +227,7 @@ export const listInstances = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     let q = supabase
       .from("workflow_instance")
-      .select("id, transaction_type, reference_id, reference_label, amount, status, current_step, initiated_at, completed_at, workflow:workflow_id(id, name, steps:workflow_step(id, step_order, name, approver_kind, role, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)")
+      .select("id, transaction_type, reference_id, reference_label, amount, status, current_step, initiated_at, completed_at, workflow:workflow_id(id, name, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)")
       .order("initiated_at", { ascending: false })
       .limit(200);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
@@ -279,7 +279,7 @@ export const actOnInstance = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: inst, error: iErr } = await supabase
       .from("workflow_instance")
-      .select("id, status, current_step, workflow:workflow_id(steps:workflow_step(step_order, approver_kind, role, branch_id, user_id, required_approvals))")
+      .select("id, status, current_step, workflow:workflow_id(steps:workflow_step(step_order, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals))")
       .eq("id", data.instance_id)
       .maybeSingle();
     if (iErr) throw iErr;
