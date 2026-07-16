@@ -64,7 +64,7 @@ const TYPE_LABEL: Record<LoanChargeType, string> = {
   manual: "Manual",
 };
 
-const GRID_COLS = "1.3fr 0.7fr 0.7fr 0.7fr 1fr 1fr 1fr 0.6fr 0.5fr 0.5fr";
+const GRID_COLS = "1.3fr 0.7fr 0.7fr 0.7fr 1fr 1fr 1fr 0.6fr 0.5fr";
 
 export function LoanChargesTab() {
   const qc = useQueryClient();
