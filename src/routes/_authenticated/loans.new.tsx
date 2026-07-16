@@ -534,6 +534,8 @@ function NewLoan() {
                                     {c.origin === "inhouse" ? "In-house" : "Outside"} ·{" "}
                                     {c.charge_type === "variable"
                                       ? `${Number(c.amount)}% of principal`
+                                      : c.charge_type === "manual"
+                                      ? "Manual"
                                       : "Fixed"}
                                     {canCap && " · capitalizable"}
                                   </div>
@@ -554,9 +556,23 @@ function NewLoan() {
                                   Capitalize
                                 </label>
                               )}
-                              <div className="font-mono text-[12px] w-28 text-right">
-                                {money(amt, true)}
-                              </div>
+                              {c.charge_type === "manual" && on ? (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step="0.01"
+                                  value={manualAmounts[c.id] ?? ""}
+                                  onChange={(e) =>
+                                    setManualAmounts((prev) => ({ ...prev, [c.id]: Number(e.target.value) }))
+                                  }
+                                  placeholder="Amount"
+                                  className={cn(inputCls, "font-mono text-[12px] w-28 text-right px-2 py-1")}
+                                />
+                              ) : (
+                                <div className="font-mono text-[12px] w-28 text-right">
+                                  {money(amt, true)}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
