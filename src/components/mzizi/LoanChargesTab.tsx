@@ -64,7 +64,7 @@ const TYPE_LABEL: Record<LoanChargeType, string> = {
   manual: "Manual",
 };
 
-const GRID_COLS = "1.3fr 0.7fr 0.7fr 0.7fr 1fr 1fr 1fr 0.6fr 0.5fr 0.5fr";
+const GRID_COLS = "1.3fr 0.7fr 0.7fr 0.7fr 1fr 1fr 1fr 0.6fr 0.5fr";
 
 export function LoanChargesTab() {
   const qc = useQueryClient();
@@ -157,7 +157,7 @@ export function LoanChargesTab() {
         <div>Amount</div>
         <div>Receivable ledger</div>
         <div>Credit account</div>
-        <div>Supplier</div>
+        
         <div>Products</div>
         <div className="text-right">Status</div>
         <div className="text-right">Actions</div>
@@ -182,9 +182,6 @@ export function LoanChargesTab() {
           </div>
           <div className="text-[11px] text-muted-foreground truncate" title={glName(c.credit_account_id)}>
             {glName(c.credit_account_id)}
-          </div>
-          <div className="text-[11px] text-muted-foreground truncate" title={clientName(c.supplier_client_id)}>
-            {c.origin === "outside" ? clientName(c.supplier_client_id) : "—"}
           </div>
           <div className="text-[11px] text-muted-foreground truncate" title={c.product_ids.map(productName).join(", ")}>
             {c.product_ids.length === 0
@@ -308,7 +305,7 @@ function ChargeModal({
     if (v.charge_type !== "manual" && v.amount < 0) return toast.error("Amount must be zero or positive");
     if (v.charge_type === "variable" && v.amount > 100) return toast.error("Variable percent must be 0–100");
     if (v.capitalize && !v.capitalized_receivable_account_id) return toast.error("Capitalized-charges receivable ledger is required");
-    if (v.origin === "outside" && !v.supplier_client_id) return toast.error("Select a supplier for outside charges");
+    
     if (v.product_ids.length === 0) return toast.error("Select at least one applicable product");
     // Normalize amount for manual to 0 (entered at application time)
     onSubmit({ ...v, amount: v.charge_type === "manual" ? 0 : v.amount });
@@ -388,22 +385,6 @@ function ChargeModal({
               />
             </FormField>
 
-            {v.origin === "outside" && (
-              <FormField label="Supplier" required span={12} hint="Pick from clients registered as suppliers">
-                <select
-                  className={selectCls}
-                  value={v.supplier_client_id ?? ""}
-                  onChange={(e) => setV({ ...v, supplier_client_id: e.target.value || null })}
-                >
-                  <option value="">— Select supplier —</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.full_name}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            )}
 
             <FormField label="Receivable ledger" required span={6} hint="Asset account debited when the charge is raised">
               <select
