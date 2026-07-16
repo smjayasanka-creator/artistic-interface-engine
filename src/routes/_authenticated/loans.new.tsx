@@ -90,7 +90,7 @@ function NewLoan() {
   const [clientId, setClientId] = useState("");
   const [productId, setProductId] = useState("");
   const [principal, setPrincipal] = useState("");
-  const [term, setTerm] = useState(6);
+  const [term, setTerm] = useState<number | "">("");
   const [rate, setRate] = useState<number | "">("");
   const [frequency, setFrequency] = useState<Frequency>("monthly");
   const [method, setMethod] = useState<InterestMethod>("flat");
@@ -126,11 +126,8 @@ function NewLoan() {
 
   function selectProduct(p: any) {
     setProductId(p.id);
-    setRate(Number(p.annual_rate_pct));
     setFrequency((p.frequency as Frequency) ?? "monthly");
-    setMethod(((p.interest_method as InterestMethod) ?? "flat"));
-    setTerm(Number(p.min_term_months));
-    if (!principal && p.min_principal) setPrincipal(String(p.min_principal));
+    setMethod((p.interest_method as InterestMethod) ?? "flat");
     setCheckedDocs({});
     setUploadedDocs({});
   }
@@ -195,7 +192,7 @@ function NewLoan() {
   const docsSatisfied = requiredDocs.length === 0 || missingDocs.length === 0;
 
 
-  const rateNum = typeof rate === "number" ? rate : Number(rate || product?.annual_rate_pct || 0);
+  const rateNum = typeof rate === "number" ? rate : Number(rate || 0);
   const principalNum = Number(principal || 0);
 
   const schedule = useMemo(() => {
@@ -227,15 +224,19 @@ function NewLoan() {
     return opts;
   }, [product]);
 
+  const termNum = term === "" ? 0 : Number(term);
+
   const outOfRange =
     product &&
+    !!principal &&
+    term !== "" &&
     (principalNum < Number(product.min_principal ?? 0) ||
       (product.max_principal && principalNum > Number(product.max_principal)) ||
-      term < Number(product.min_term_months) ||
-      term > Number(product.max_term_months));
+      termNum < Number(product.min_term_months) ||
+      termNum > Number(product.max_term_months));
 
   const canSubmit =
-    !!clientId && !!productId && !!principal && !!rateNum && docsSatisfied && !submit.isPending;
+    !!clientId && !!productId && !!principal && term !== "" && !!rateNum && docsSatisfied && !submit.isPending;
 
 
   return (
@@ -382,9 +383,10 @@ function NewLoan() {
                 <FormField label="Term (months)" span={4} required>
                   <select
                     value={String(term)}
-                    onChange={(e) => setTerm(Number(e.target.value))}
+                    onChange={(e) => setTerm(e.target.value === "" ? "" : Number(e.target.value))}
                     className={selectCls}
                   >
+                    <option value="">— select term —</option>
                     {termOptions.map((t) => (
                       <option key={t} value={t}>
                         {t} {t === 1 ? "month" : "months"}
@@ -725,7 +727,7 @@ function NewLoan() {
                         client_id: clientId,
                         product_id: productId,
                         principal: principalNum,
-                        term_months: term,
+                        term_months: termNum,
                         purpose: purpose || undefined,
                         annual_rate_pct: rateNum,
                         frequency,
