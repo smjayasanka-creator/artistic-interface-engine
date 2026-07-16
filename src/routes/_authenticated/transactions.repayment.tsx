@@ -36,7 +36,15 @@ function RecordRepaymentPage() {
   const post = useMutation({
     mutationFn: recordFn,
     onSuccess: (r: any) => {
-      toast.success(`Repayment posted · ${r.reference ?? "ok"}`);
+      const parts = [
+        r.allocated_fees > 0 ? `Fees ${money(r.allocated_fees)}` : null,
+        r.allocated_interest > 0 ? `Interest ${money(r.allocated_interest)}` : null,
+        r.allocated_principal > 0 ? `Principal ${money(r.allocated_principal)}` : null,
+      ].filter(Boolean).join(" · ");
+      toast.success(
+        `Repayment posted${r.reference ? " · " + r.reference : ""}`,
+        { description: [parts || null, r.loan_closed ? "Loan closed" : null].filter(Boolean).join(" — ") || undefined },
+      );
       qc.invalidateQueries();
       navigate({ to: "/transactions" });
     },
