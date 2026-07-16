@@ -380,9 +380,10 @@ function NewLoan() {
                 <FormField label="Term (months)" span={4} required>
                   <select
                     value={String(term)}
-                    onChange={(e) => setTerm(Number(e.target.value))}
+                    onChange={(e) => setTerm(e.target.value === "" ? "" : Number(e.target.value))}
                     className={selectCls}
                   >
+                    <option value="">— select term —</option>
                     {termOptions.map((t) => (
                       <option key={t} value={t}>
                         {t} {t === 1 ? "month" : "months"}
