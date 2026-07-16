@@ -160,6 +160,7 @@ function NewLoan() {
     setCheckedDocs({});
     setUploadedDocs({});
     setSelectedCharges({});
+    setCapitalizedCharges({});
   }
 
   async function uploadDocFile(doc: string, file: File) {
