@@ -173,13 +173,18 @@ export function LoanChargesTab() {
           <div className="text-[11.5px] text-muted-foreground">{ORIGIN_LABEL[c.origin]}</div>
           <div className="text-[11.5px] text-muted-foreground">{TYPE_LABEL[c.charge_type]}</div>
           <div className="font-mono text-[11.5px]">
-            {c.charge_type === "variable" ? `${Number(c.amount)}%` : money(c.amount)}
+            {c.charge_type === "manual"
+              ? <span className="text-muted-foreground italic font-sans">Manual</span>
+              : c.charge_type === "variable" ? `${Number(c.amount)}%` : money(c.amount)}
           </div>
           <div className="text-[11px] text-muted-foreground truncate" title={glName(c.receivable_account_id)}>
             {glName(c.receivable_account_id)}
           </div>
           <div className="text-[11px] text-muted-foreground truncate" title={glName(c.credit_account_id)}>
             {glName(c.credit_account_id)}
+          </div>
+          <div className="text-[11px] text-muted-foreground truncate" title={clientName(c.supplier_client_id)}>
+            {c.origin === "outside" ? clientName(c.supplier_client_id) : "—"}
           </div>
           <div className="text-[11px] text-muted-foreground truncate" title={c.product_ids.map(productName).join(", ")}>
             {c.product_ids.length === 0
