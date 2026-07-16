@@ -135,6 +135,7 @@ function NewLoan() {
     setMethod((p.interest_method as InterestMethod) ?? "flat");
     setCheckedDocs({});
     setUploadedDocs({});
+    setSelectedCharges({});
   }
 
   async function uploadDocFile(doc: string, file: File) {
