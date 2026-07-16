@@ -146,7 +146,7 @@ function WorkflowEditor({ initial, onDone, onCancel }: { initial: any | null; on
   const [enabled, setEnabled] = useState<boolean>(initial?.is_enabled ?? true);
   const [steps, setSteps] = useState<StepDraft[]>(
     initial?.steps?.length
-      ? initial.steps.map((s: any) => ({ ...s, role: s.role ?? null, branch_id: s.branch_id ?? null, user_id: s.user_id ?? null, escalation_role: s.escalation_role ?? null }))
+      ? initial.steps.map((s: any) => ({ ...s, role: s.role ?? null, custom_role_id: s.custom_role_id ?? null, branch_id: s.branch_id ?? null, user_id: s.user_id ?? null, escalation_role: s.escalation_role ?? null, escalation_custom_role_id: s.escalation_custom_role_id ?? null }))
       : [emptyStep(1)],
   );
 
@@ -154,8 +154,11 @@ function WorkflowEditor({ initial, onDone, onCancel }: { initial: any | null; on
   const { data: admin } = useQuery({ queryKey: ["admin"], queryFn: () => adminFn() });
   const teamFn = useServerFn(listTeam);
   const { data: team } = useQuery({ queryKey: ["team"], queryFn: () => teamFn() });
+  const rolesFn = useServerFn(listCustomRoles);
+  const { data: customRoles = [] } = useQuery({ queryKey: ["custom-roles"], queryFn: () => rolesFn() });
   const branches = admin?.branches ?? [];
   const members = team?.members ?? [];
+  const activeRoles = (customRoles as any[]).filter((r) => r.active !== false);
 
   const upsertFn = useServerFn(upsertWorkflow);
   const save = useMutation({
