@@ -312,7 +312,7 @@ export const actOnInstance = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: inst, error: iErr } = await supabase
       .from("workflow_instance")
-      .select("id, status, current_step, workflow:workflow_id(steps:workflow_step(step_order, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals))")
+      .select("id, status, current_step, transaction_type, reference_id, workflow:workflow_id(steps:workflow_step(step_order, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals))")
       .eq("id", data.instance_id)
       .maybeSingle();
     if (iErr) throw iErr;
@@ -387,6 +387,16 @@ export const actOnInstance = createServerFn({ method: "POST" })
     await supabase.from("workflow_instance")
       .update({ status: "approved", completed_at: new Date().toISOString() })
       .eq("id", data.instance_id);
+
+    // Loan-approval workflows: mark loan as approved so it appears on the
+    // disbursement page. Disbursement itself stays a manual teller action.
+    if ((inst as any).transaction_type === "loan_approval" && (inst as any).reference_id) {
+      await supabase.from("loan")
+        .update({ status: "approved", approved_at: new Date().toISOString() })
+        .eq("id", (inst as any).reference_id)
+        .eq("status", "submitted");
+    }
+
     return { ok: true, status: "approved" };
   });
 

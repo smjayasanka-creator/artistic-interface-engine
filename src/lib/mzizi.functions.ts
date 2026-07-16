@@ -1194,7 +1194,9 @@ export const approveLoan = createServerFn({ method: "POST" })
       .eq("id", data.loan_id)
       .maybeSingle();
     if (!loan) throw new Error("Loan not found");
-    if (loan.status !== "submitted") throw new Error("Loan not in submitted state");
+    if (loan.status !== "submitted" && loan.status !== "approved") {
+      throw new Error("Loan not in submitted/approved state");
+    }
 
     const now = new Date().toISOString();
     await supabase
