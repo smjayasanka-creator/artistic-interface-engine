@@ -35,6 +35,7 @@ type ChargeRow = {
   credit_account_id: string;
   capitalize: boolean;
   capitalized_receivable_account_id: string | null;
+  supplier_client_id: string | null;
   active: boolean;
   product_ids: string[];
 };
@@ -48,6 +49,7 @@ const EMPTY: Omit<ChargeRow, "id"> = {
   credit_account_id: "",
   capitalize: false,
   capitalized_receivable_account_id: null,
+  supplier_client_id: null,
   active: true,
   product_ids: [],
 };
@@ -59,9 +61,10 @@ const ORIGIN_LABEL: Record<LoanChargeOrigin, string> = {
 const TYPE_LABEL: Record<LoanChargeType, string> = {
   fixed: "Fixed",
   variable: "Variable %",
+  manual: "Manual",
 };
 
-const GRID_COLS = "1.4fr 0.7fr 0.7fr 0.7fr 1.2fr 1.2fr 0.7fr 0.5fr 0.5fr";
+const GRID_COLS = "1.3fr 0.7fr 0.7fr 0.7fr 1fr 1fr 1fr 0.6fr 0.5fr 0.5fr";
 
 export function LoanChargesTab() {
   const qc = useQueryClient();
