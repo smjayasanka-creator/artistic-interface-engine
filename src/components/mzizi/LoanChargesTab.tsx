@@ -183,9 +183,6 @@ export function LoanChargesTab() {
           <div className="text-[11px] text-muted-foreground truncate" title={glName(c.credit_account_id)}>
             {glName(c.credit_account_id)}
           </div>
-          <div className="text-[11px] text-muted-foreground truncate" title={clientName(c.supplier_client_id)}>
-            {c.origin === "outside" ? clientName(c.supplier_client_id) : "—"}
-          </div>
           <div className="text-[11px] text-muted-foreground truncate" title={c.product_ids.map(productName).join(", ")}>
             {c.product_ids.length === 0
               ? "—"
