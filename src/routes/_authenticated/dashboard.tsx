@@ -144,9 +144,9 @@ function Dashboard() {
         <VibrantKpi tone="violet" to="/clients" label="Number of New Customers" value={data.kpis.newCustomers} format="number" delta="Joined this month" icon={Users} />
       </div>
 
-      {/* Pending approvals + PAR */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
+      {/* Pending approvals + PAR + Product wise disbursement */}
+      <div className="grid grid-cols-2 gap-4 auto-rows-fr">
+        <Card className="row-span-2">
           <CardTitle
             subtitle="Click Open to review the request and Approve, Reject or Send back."
             right={
@@ -169,7 +169,7 @@ function Dashboard() {
             <div className="text-center text-faint text-sm py-6">✓ Nothing awaiting your decision</div>
           ) : (
             <div className="flex flex-col divide-y divide-row-divider">
-              {wfInbox.slice(0, 6).map((inst: any) => {
+              {wfInbox.slice(0, 12).map((inst: any) => {
                 const step = inst.step_config;
                 const totalSteps = inst.workflow?.steps?.length ?? 0;
                 const txLabel =
@@ -233,6 +233,35 @@ function Dashboard() {
               </div>
             );
           })}
+        </Card>
+
+        <Card>
+          <CardTitle subtitle="Disbursed amount grouped by loan product this month">
+            Product wise disbursement
+          </CardTitle>
+          {data.productWiseDisbursement?.length === 0 ? (
+            <div className="text-center text-faint text-sm py-6">No disbursements this month</div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {data.productWiseDisbursement.map((row: any) => {
+                const pct = monthDisbursed > 0 ? (row.amount / monthDisbursed) * 100 : 0;
+                return (
+                  <div key={row.product}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-medium text-secondary-foreground truncate pr-2">{row.product}</span>
+                      <span className="font-mono text-muted-foreground shrink-0">{money(row.amount)} · {pct.toFixed(1)}%</span>
+                    </div>
+                    <div className="h-2 rounded-md bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-md transition-all bg-primary"
+                        style={{ width: `${Math.max(pct, 2)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </Card>
       </div>
 
