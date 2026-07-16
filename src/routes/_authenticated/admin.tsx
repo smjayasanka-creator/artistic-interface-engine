@@ -89,6 +89,7 @@ const SECTIONS: Section[] = [
   { id: "staff",       label: "Staff",             desc: "Employees, roles & invitations",                   icon: Users,     accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600" },
   { id: "user_roles",  label: "User roles",        desc: "Create custom roles & assign actions",             icon: KeyRound,  accent: "from-purple-500/15 to-purple-500/0 text-purple-600" },
   { id: "products",    label: "Loan products",     desc: "Interest methods, terms & pricing",                icon: Wallet,    accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
+  { id: "loan_charges", label: "Loan charges",     desc: "Fees applied to loan products (in-house/outside)", icon: Coins,     accent: "from-yellow-500/15 to-yellow-500/0 text-yellow-600" },
   { id: "fd_products", label: "FD products",       desc: "Fixed deposit tenors & rates",                     icon: PiggyBank, accent: "from-teal-500/15 to-teal-500/0 text-teal-600" },
   { id: "savings_products", label: "Savings products", desc: "Passbook accounts, interest & fees",           icon: Coins,     accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600" },
   { id: "savings_charges",  label: "Savings charges",  desc: "Fees applied to savings products",             icon: Coins,     accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600" },
