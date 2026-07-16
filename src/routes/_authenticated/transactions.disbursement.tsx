@@ -48,7 +48,7 @@ function DisbursementPage() {
       <Card padded={false}>
         <div
           className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-b border-border bg-secondary/40"
-          style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 140px" }}
+          style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 210px" }}
         >
           <div>Submitted</div>
           <div>Client</div>
@@ -67,7 +67,7 @@ function DisbursementPage() {
             <div
               key={l.id}
               className="grid items-center text-[12.5px] py-2.5 px-5 border-b border-row-divider hover:bg-secondary/30"
-              style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 140px" }}
+              style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 210px" }}
             >
               <div className="text-muted-foreground">{l.submitted_at ? shortDate(l.submitted_at) : "—"}</div>
               <div className="truncate">{l.client?.full_name ?? "—"}</div>
