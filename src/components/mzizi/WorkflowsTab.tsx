@@ -13,6 +13,7 @@ import {
   SLA_ACTIONS,
   STAFF_ROLES,
 } from "@/lib/workflow.functions";
+import { listCustomRoles } from "@/lib/roles.functions";
 import { getAdmin, listTeam } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
@@ -25,12 +26,14 @@ type StepDraft = {
   name: string;
   approver_kind: (typeof APPROVER_KINDS)[number];
   role: string | null;
+  custom_role_id: string | null;
   branch_id: string | null;
   user_id: string | null;
   required_approvals: number;
   sla_hours: number | null;
   sla_action: (typeof SLA_ACTIONS)[number];
   escalation_role: string | null;
+  escalation_custom_role_id: string | null;
 };
 
 function emptyStep(order: number): StepDraft {
@@ -38,13 +41,15 @@ function emptyStep(order: number): StepDraft {
     step_order: order,
     name: `Step ${order}`,
     approver_kind: "role",
-    role: "branch_manager",
+    role: null,
+    custom_role_id: null,
     branch_id: null,
     user_id: null,
     required_approvals: 1,
     sla_hours: 24,
     sla_action: "flag",
     escalation_role: null,
+    escalation_custom_role_id: null,
   };
 }
 
@@ -141,7 +146,7 @@ function WorkflowEditor({ initial, onDone, onCancel }: { initial: any | null; on
   const [enabled, setEnabled] = useState<boolean>(initial?.is_enabled ?? true);
   const [steps, setSteps] = useState<StepDraft[]>(
     initial?.steps?.length
-      ? initial.steps.map((s: any) => ({ ...s, role: s.role ?? null, branch_id: s.branch_id ?? null, user_id: s.user_id ?? null, escalation_role: s.escalation_role ?? null }))
+      ? initial.steps.map((s: any) => ({ ...s, role: s.role ?? null, custom_role_id: s.custom_role_id ?? null, branch_id: s.branch_id ?? null, user_id: s.user_id ?? null, escalation_role: s.escalation_role ?? null, escalation_custom_role_id: s.escalation_custom_role_id ?? null }))
       : [emptyStep(1)],
   );
 
@@ -149,8 +154,11 @@ function WorkflowEditor({ initial, onDone, onCancel }: { initial: any | null; on
   const { data: admin } = useQuery({ queryKey: ["admin"], queryFn: () => adminFn() });
   const teamFn = useServerFn(listTeam);
   const { data: team } = useQuery({ queryKey: ["team"], queryFn: () => teamFn() });
+  const rolesFn = useServerFn(listCustomRoles);
+  const { data: customRoles = [] } = useQuery({ queryKey: ["custom-roles"], queryFn: () => rolesFn() });
   const branches = admin?.branches ?? [];
   const members = team?.members ?? [];
+  const activeRoles = (customRoles as any[]).filter((r) => r.active !== false);
 
   const upsertFn = useServerFn(upsertWorkflow);
   const save = useMutation({
@@ -183,12 +191,14 @@ function WorkflowEditor({ initial, onDone, onCancel }: { initial: any | null; on
           name: s.name,
           approver_kind: s.approver_kind,
           role: s.role,
+          custom_role_id: s.custom_role_id,
           branch_id: s.branch_id,
           user_id: s.user_id,
           required_approvals: s.required_approvals,
           sla_hours: s.sla_hours,
           sla_action: s.sla_action,
           escalation_role: s.escalation_role,
+          escalation_custom_role_id: s.escalation_custom_role_id,
         })),
       },
     });
@@ -278,8 +288,25 @@ function WorkflowEditor({ initial, onDone, onCancel }: { initial: any | null; on
                 {s.approver_kind !== "user" && (
                   <label className="text-[11.5px] font-medium text-secondary-foreground space-y-1">
                     <span>Role</span>
-                    <select className={selectCls} value={s.role ?? ""} onChange={(e) => updateStep(i, { role: e.target.value })}>
-                      {STAFF_ROLES.map((r) => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
+                    <select
+                      className={selectCls}
+                      value={s.custom_role_id ? `c:${s.custom_role_id}` : s.role ? `s:${s.role}` : ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v.startsWith("c:")) updateStep(i, { custom_role_id: v.slice(2), role: null });
+                        else if (v.startsWith("s:")) updateStep(i, { role: v.slice(2), custom_role_id: null });
+                        else updateStep(i, { role: null, custom_role_id: null });
+                      }}
+                    >
+                      <option value="">Select role…</option>
+                      {activeRoles.length > 0 && (
+                        <optgroup label="Custom roles">
+                          {activeRoles.map((r: any) => <option key={r.id} value={`c:${r.id}`}>{r.name}</option>)}
+                        </optgroup>
+                      )}
+                      <optgroup label="Built-in staff roles">
+                        {STAFF_ROLES.map((r) => <option key={r} value={`s:${r}`}>{r.replace("_", " ")}</option>)}
+                      </optgroup>
                     </select>
                   </label>
                 )}
@@ -317,9 +344,25 @@ function WorkflowEditor({ initial, onDone, onCancel }: { initial: any | null; on
                 {s.sla_action === "escalate" && (
                   <label className="text-[11.5px] font-medium text-secondary-foreground space-y-1">
                     <span>Escalation role</span>
-                    <select className={selectCls} value={s.escalation_role ?? ""} onChange={(e) => updateStep(i, { escalation_role: e.target.value || null })}>
+                    <select
+                      className={selectCls}
+                      value={s.escalation_custom_role_id ? `c:${s.escalation_custom_role_id}` : s.escalation_role ? `s:${s.escalation_role}` : ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v.startsWith("c:")) updateStep(i, { escalation_custom_role_id: v.slice(2), escalation_role: null });
+                        else if (v.startsWith("s:")) updateStep(i, { escalation_role: v.slice(2), escalation_custom_role_id: null });
+                        else updateStep(i, { escalation_role: null, escalation_custom_role_id: null });
+                      }}
+                    >
                       <option value="">Select role…</option>
-                      {STAFF_ROLES.map((r) => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
+                      {activeRoles.length > 0 && (
+                        <optgroup label="Custom roles">
+                          {activeRoles.map((r: any) => <option key={r.id} value={`c:${r.id}`}>{r.name}</option>)}
+                        </optgroup>
+                      )}
+                      <optgroup label="Built-in staff roles">
+                        {STAFF_ROLES.map((r) => <option key={r} value={`s:${r}`}>{r.replace("_", " ")}</option>)}
+                      </optgroup>
                     </select>
                   </label>
                 )}
