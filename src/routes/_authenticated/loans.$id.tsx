@@ -2,7 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { ArrowLeft, Building2, AlertTriangle, Calendar, TrendingUp, FileText, Receipt, Activity, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Building2, AlertTriangle, TrendingUp, FileText, Receipt, Activity, ShieldCheck } from "lucide-react";
 import { getLoan } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
 import { StatusBadge } from "@/components/mzizi/Badge";
@@ -126,15 +126,7 @@ function LoanDetail() {
 function Overview({ loan, outstanding, arrears, nextDue, totals }: any) {
   return (
     <div className="space-y-5">
-      {/* Primary metrics */}
-      <div className="grid gap-3 md:grid-cols-4">
-        <Metric label="Principal" value={money(loan.principal)} />
-        <Metric label="Outstanding" value={money(outstanding.outstanding_principal)} tone="primary" />
-        <Metric label="Repaid" value={money(outstanding.principal_repaid)} />
-        <Metric label="Rate · Term" value={`${Number(loan.annual_rate_pct).toFixed(2)}% · ${loan.term_months}m`} />
-      </div>
-
-      {/* Arrears + Next due */}
+      {/* Arrears */}
       <div className="grid gap-3 md:grid-cols-2">
         <Card padded={false}>
           <div className={cn("px-5 py-3 border-b border-border flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold",
@@ -185,8 +177,8 @@ function Overview({ loan, outstanding, arrears, nextDue, totals }: any) {
         </Card>
       </div>
 
-      {/* Loan info + Timeline + Purpose */}
-      <div className="grid gap-3 md:grid-cols-3">
+      {/* Loan info + Timeline */}
+      <div className="grid gap-3 md:grid-cols-2">
         <Card>
           <div className="text-[10.5px] uppercase tracking-wider text-faint font-semibold mb-2">Loan information</div>
           <Row k="Product" v={loan.product?.name ?? "—"} />
@@ -206,10 +198,6 @@ function Overview({ loan, outstanding, arrears, nextDue, totals }: any) {
             <Row k="Total charges" v={money(totals.charges)} />
             <Row k="Total accrued" v={money(totals.accrued)} />
           </div>
-        </Card>
-        <Card>
-          <div className="text-[10.5px] uppercase tracking-wider text-faint font-semibold mb-2">Purpose</div>
-          <div className="text-[12.5px] text-secondary-foreground whitespace-pre-wrap">{loan.purpose || "—"}</div>
         </Card>
       </div>
     </div>
