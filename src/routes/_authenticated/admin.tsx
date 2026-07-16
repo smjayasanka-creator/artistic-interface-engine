@@ -973,6 +973,8 @@ function ProductsTab() {
       cashAcct: p.cash_account_id ?? "",
       interestAcct: p.interest_income_account_id ?? "",
       feeAcct: p.fee_income_account_id ?? "",
+      accruedAcct: (p as any).accrued_interest_account_id ?? "",
+      interestRecvAcct: (p as any).interest_receivable_account_id ?? "",
       requiredDocs: Array.isArray(p.required_documents) ? [...p.required_documents] : [],
       segment: ((p.segment as LoanSegment) ?? "micro"),
     });
