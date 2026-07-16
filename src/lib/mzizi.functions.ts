@@ -2846,7 +2846,6 @@ export const getLoan = createServerFn({ method: "GET" })
       outstanding: {
         outstanding_principal: Number(outstanding?.outstanding_principal ?? 0),
         principal_repaid: Number(outstanding?.principal_repaid ?? 0),
-        interest_repaid: Number((outstanding as any)?.interest_repaid ?? 0),
       },
       appliedCharges: appliedCharges ?? [],
       accruals: accruals ?? [],
