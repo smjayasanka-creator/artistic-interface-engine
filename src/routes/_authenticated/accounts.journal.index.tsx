@@ -10,6 +10,11 @@ import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/accounts/journal/")({
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["journal-entries", "", "", "", 1, 25],
+      queryFn: () => getJournalEntries({ data: { page: 1, pageSize: 25 } }),
+    }),
   component: JournalEntriesPage,
 });
 
