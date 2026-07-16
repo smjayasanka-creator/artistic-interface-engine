@@ -367,18 +367,43 @@ function ChargeModal({
               >
                 <option value="fixed">Fixed amount</option>
                 <option value="variable">Variable (% of principal)</option>
+                <option value="manual">Manual (enter at application)</option>
               </select>
             </FormField>
-            <FormField label={v.charge_type === "variable" ? "Percent" : "Amount"} required span={4}>
+            <FormField
+              label={v.charge_type === "variable" ? "Percent" : "Amount"}
+              required={v.charge_type !== "manual"}
+              span={4}
+              hint={v.charge_type === "manual" ? "Entered when the charge is applied to a loan" : undefined}
+            >
               <input
                 type="number"
                 min={0}
                 step="0.01"
-                className={inputCls}
-                value={v.amount}
+                disabled={v.charge_type === "manual"}
+                className={cn(inputCls, v.charge_type === "manual" && "opacity-50")}
+                value={v.charge_type === "manual" ? "" : v.amount}
+                placeholder={v.charge_type === "manual" ? "— entered at application —" : undefined}
                 onChange={(e) => setV({ ...v, amount: Number(e.target.value) })}
               />
             </FormField>
+
+            {v.origin === "outside" && (
+              <FormField label="Supplier" required span={12} hint="Pick from clients registered as suppliers">
+                <select
+                  className={selectCls}
+                  value={v.supplier_client_id ?? ""}
+                  onChange={(e) => setV({ ...v, supplier_client_id: e.target.value || null })}
+                >
+                  <option value="">— Select supplier —</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.full_name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            )}
 
             <FormField label="Receivable ledger" required span={6} hint="Asset account debited when the charge is raised">
               <select
