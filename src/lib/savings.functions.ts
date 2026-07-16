@@ -256,8 +256,11 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
       );
     }
 
-    const { data: acctNo, error: nerr } = await supabase.rpc("next_savings_account_no", {
+    const { data: acctNo, error: nerr } = await supabase.rpc("next_contract_no", {
       _company_id: cid,
+      _branch_id: data.branch_id,
+      _product_id: data.product_id,
+      _segment: 1,
     });
     if (nerr) throw new Error(nerr.message);
 
