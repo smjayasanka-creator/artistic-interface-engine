@@ -234,10 +234,11 @@ function NewLoan() {
     );
   }, [allCharges, productId]);
 
-  const chargeAmount = (c: any) =>
-    c.charge_type === "variable"
-      ? Math.round(((principalNum * Number(c.amount)) / 100) * 100) / 100
-      : Number(c.amount);
+  const chargeAmount = (c: any) => {
+    if (c.charge_type === "manual") return Number(manualAmounts[c.id] ?? 0);
+    if (c.charge_type === "variable") return Math.round(((principalNum * Number(c.amount)) / 100) * 100) / 100;
+    return Number(c.amount);
+  };
 
   const appliedCharges = useMemo(
     () =>
@@ -251,7 +252,7 @@ function NewLoan() {
           capitalize: !!c.capitalize && capitalizedCharges[c.id] !== false, // default on when allowed
         })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [productCharges, selectedCharges, capitalizedCharges, principalNum],
+    [productCharges, selectedCharges, capitalizedCharges, manualAmounts, principalNum],
   );
   const chargesTotal = appliedCharges.reduce((s, c) => s + c.amount, 0);
   const capitalizedTotal = appliedCharges.filter((c) => c.capitalize).reduce((s, c) => s + c.amount, 0);
