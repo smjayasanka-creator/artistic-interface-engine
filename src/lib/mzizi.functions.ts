@@ -2811,7 +2811,7 @@ export const getLoan = createServerFn({ method: "GET" })
     if (error) throw error;
     if (!loan) throw new Error("Loan not found");
 
-    const [{ data: schedule }, { data: repayments }, { data: outstanding }, { data: appliedCharges }, { data: accruals }] = await Promise.all([
+    const [{ data: schedule }, { data: repayments }, { data: outstanding }, { data: appliedCharges }, { data: accruals }, { data: approvals }] = await Promise.all([
       supabase
         .from("loan_installment")
         .select("seq, due_date, principal_due, interest_due, principal_paid, interest_paid, state")
@@ -2837,7 +2837,43 @@ export const getLoan = createServerFn({ method: "GET" })
         .eq("loan_id", data.id)
         .order("accrual_date", { ascending: false })
         .limit(60),
+      supabase
+        .from("workflow_instance")
+        .select("id, transaction_type, reference_label, amount, status, current_step, initiated_at, completed_at, workflow:workflow_id(name, steps:workflow_step(step_order, name, approver_kind, role, required_approvals)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)")
+        .eq("reference_id", data.id)
+        .order("initiated_at", { ascending: false }),
     ]);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let arrearsPrincipal = 0;
+    let arrearsInterest = 0;
+    let arrearsCount = 0;
+    let oldestOverdueDate: string | null = null;
+    let nextDueDate: string | null = null;
+    let nextDueAmount = 0;
+    for (const s of (schedule ?? []) as any[]) {
+      const due = new Date(s.due_date);
+      const pDue = Number(s.principal_due) - Number(s.principal_paid);
+      const iDue = Number(s.interest_due) - Number(s.interest_paid);
+      const unpaid = pDue + iDue > 0.005;
+      if (due < today && unpaid) {
+        arrearsPrincipal += Math.max(pDue, 0);
+        arrearsInterest += Math.max(iDue, 0);
+        arrearsCount += 1;
+        if (!oldestOverdueDate || s.due_date < oldestOverdueDate) oldestOverdueDate = s.due_date;
+      } else if (due >= today && unpaid && !nextDueDate) {
+        nextDueDate = s.due_date;
+        nextDueAmount = pDue + iDue;
+      }
+    }
+    const daysPastDue = oldestOverdueDate
+      ? Math.floor((today.getTime() - new Date(oldestOverdueDate).getTime()) / 86400e3)
+      : 0;
+
+    const totalRepaid = (repayments ?? []).reduce((s: number, r: any) => s + Number(r.amount), 0);
+    const totalCharges = (appliedCharges ?? []).reduce((s: number, c: any) => s + Number(c.amount), 0);
+    const totalAccrued = (accruals ?? []).reduce((s: number, a: any) => s + Number(a.daily_amount), 0);
 
     return {
       loan,
@@ -2849,5 +2885,16 @@ export const getLoan = createServerFn({ method: "GET" })
       },
       appliedCharges: appliedCharges ?? [],
       accruals: accruals ?? [],
+      approvals: approvals ?? [],
+      arrears: {
+        principal: arrearsPrincipal,
+        interest: arrearsInterest,
+        total: arrearsPrincipal + arrearsInterest,
+        count: arrearsCount,
+        oldest_due_date: oldestOverdueDate,
+        days_past_due: daysPastDue,
+      },
+      nextDue: nextDueDate ? { date: nextDueDate, amount: nextDueAmount } : null,
+      totals: { repaid: totalRepaid, charges: totalCharges, accrued: totalAccrued },
     };
   });
