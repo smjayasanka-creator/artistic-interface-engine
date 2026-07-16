@@ -15,12 +15,6 @@ const TILES = [
     accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
   },
   {
-    to: "/transactions/payments",
-    label: "Payments",
-    icon: Banknote,
-    accent: "from-sky-500/15 to-sky-500/0 text-sky-600",
-  },
-  {
     to: "/transactions/disbursement",
     label: "Disbursement",
     icon: Send,
