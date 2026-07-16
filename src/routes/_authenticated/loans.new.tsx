@@ -912,7 +912,12 @@ function NewLoan() {
                 <button
                   type="button"
                   disabled={!canSubmit}
-                  onClick={() =>
+                  onClick={() => {
+                    const missingSup = appliedCharges.find((c) => c.origin === "outside" && !c.supplier_client_id);
+                    if (missingSup) {
+                      toast.error(`Select a supplier for "${missingSup.name}"`);
+                      return;
+                    }
                     submit.mutate({
                       data: {
                         client_id: clientId,
