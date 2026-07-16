@@ -392,7 +392,7 @@ export const actOnInstance = createServerFn({ method: "POST" })
     // disbursement page. Disbursement itself stays a manual teller action.
     if ((inst as any).transaction_type === "loan_approval" && (inst as any).reference_id) {
       await supabase.from("loan")
-        .update({ status: "approved", approved_at: new Date().toISOString() })
+        .update({ status: "approved" })
         .eq("id", (inst as any).reference_id)
         .eq("status", "submitted");
     }
