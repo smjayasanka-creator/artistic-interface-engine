@@ -35,6 +35,7 @@ import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-sched
 import { FdProductsTab } from "@/components/mzizi/FdProductsTab";
 import { SavingsProductsTab } from "@/components/mzizi/SavingsProductsTab";
 import { SavingsChargesTab } from "@/components/mzizi/SavingsChargesTab";
+import { LoanChargesTab } from "@/components/mzizi/LoanChargesTab";
 import { TimeTravelTab } from "@/components/mzizi/TimeTravelTab";
 import { SecurityTypesTab } from "@/components/mzizi/SecurityTypesTab";
 import { DelegationAuthorityTab } from "@/components/mzizi/DelegationAuthorityTab";
@@ -47,7 +48,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "user_roles" | "products" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "risk_profiling" | "screening" | "time_travel";
+type Tab = "settings" | "branches" | "staff" | "user_roles" | "products" | "loan_charges" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "risk_profiling" | "screening" | "time_travel";
 type Mode = "list" | "create" | "edit";
 type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
 const LOAN_SEGMENTS: { value: LoanSegment; label: string }[] = [
@@ -88,6 +89,7 @@ const SECTIONS: Section[] = [
   { id: "staff",       label: "Staff",             desc: "Employees, roles & invitations",                   icon: Users,     accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600" },
   { id: "user_roles",  label: "User roles",        desc: "Create custom roles & assign actions",             icon: KeyRound,  accent: "from-purple-500/15 to-purple-500/0 text-purple-600" },
   { id: "products",    label: "Loan products",     desc: "Interest methods, terms & pricing",                icon: Wallet,    accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
+  { id: "loan_charges", label: "Loan charges",     desc: "Fees applied to loan products (in-house/outside)", icon: Coins,     accent: "from-yellow-500/15 to-yellow-500/0 text-yellow-600" },
   { id: "fd_products", label: "FD products",       desc: "Fixed deposit tenors & rates",                     icon: PiggyBank, accent: "from-teal-500/15 to-teal-500/0 text-teal-600" },
   { id: "savings_products", label: "Savings products", desc: "Passbook accounts, interest & fees",           icon: Coins,     accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600" },
   { id: "savings_charges",  label: "Savings charges",  desc: "Fees applied to savings products",             icon: Coins,     accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600" },
@@ -153,6 +155,7 @@ function Admin() {
       {tab === "staff" && <StaffTab />}
       {tab === "user_roles" && <UserRolesTab />}
       {tab === "products" && <ProductsTab />}
+      {tab === "loan_charges" && <LoanChargesTab />}
       {tab === "fd_products" && <FdProductsTab />}
       {tab === "savings_products" && <SavingsProductsTab />}
       {tab === "savings_charges" && <SavingsChargesTab />}

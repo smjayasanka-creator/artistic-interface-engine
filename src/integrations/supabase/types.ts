@@ -2403,6 +2403,103 @@ export type Database = {
           },
         ]
       }
+      loan_charge: {
+        Row: {
+          active: boolean
+          amount: number
+          charge_type: Database["public"]["Enums"]["loan_charge_type"]
+          company_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          id: string
+          name: string
+          origin: Database["public"]["Enums"]["loan_charge_origin"]
+          receivable_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount?: number
+          charge_type?: Database["public"]["Enums"]["loan_charge_type"]
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          id?: string
+          name: string
+          origin?: Database["public"]["Enums"]["loan_charge_origin"]
+          receivable_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          charge_type?: Database["public"]["Enums"]["loan_charge_type"]
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          id?: string
+          name?: string
+          origin?: Database["public"]["Enums"]["loan_charge_origin"]
+          receivable_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_charge_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_charge_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_charge_receivable_account_id_fkey"
+            columns: ["receivable_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_charge_product: {
+        Row: {
+          charge_id: string
+          product_id: string
+        }
+        Insert: {
+          charge_id: string
+          product_id: string
+        }
+        Update: {
+          charge_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_charge_product_charge_id_fkey"
+            columns: ["charge_id"]
+            isOneToOne: false
+            referencedRelation: "loan_charge"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_charge_product_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "loan_product"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_eod_balance: {
         Row: {
           arrears: number
@@ -4658,6 +4755,8 @@ export type Database = {
         | "waived"
       interest_method: "flat" | "declining_balance"
       introducer_commission_mode: "cash" | "bank_transfer" | "credit_savings"
+      loan_charge_origin: "inhouse" | "outside"
+      loan_charge_type: "fixed" | "variable"
       loan_status:
         | "draft"
         | "submitted"
@@ -4881,6 +4980,8 @@ export const Constants = {
       ],
       interest_method: ["flat", "declining_balance"],
       introducer_commission_mode: ["cash", "bank_transfer", "credit_savings"],
+      loan_charge_origin: ["inhouse", "outside"],
+      loan_charge_type: ["fixed", "variable"],
       loan_status: [
         "draft",
         "submitted",
