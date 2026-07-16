@@ -30,12 +30,14 @@ const stepSchema = z.object({
   name: z.string().min(1),
   approver_kind: z.enum(APPROVER_KINDS),
   role: z.enum(STAFF_ROLES).nullable().optional(),
+  custom_role_id: z.string().uuid().nullable().optional(),
   branch_id: z.string().uuid().nullable().optional(),
   user_id: z.string().uuid().nullable().optional(),
   required_approvals: z.number().int().min(1).default(1),
   sla_hours: z.number().int().min(0).nullable().optional(),
   sla_action: z.enum(SLA_ACTIONS).default("flag"),
   escalation_role: z.enum(STAFF_ROLES).nullable().optional(),
+  escalation_custom_role_id: z.string().uuid().nullable().optional(),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
