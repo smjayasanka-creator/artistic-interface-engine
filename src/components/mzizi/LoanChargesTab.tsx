@@ -388,6 +388,44 @@ function ChargeModal({
               </select>
             </FormField>
 
+            <FormField label="Capitalize" span={4} hint="Add to loan capital; don't collect upfront">
+              <label className="flex items-center gap-2 text-[13px] h-[34px]">
+                <input
+                  type="checkbox"
+                  checked={v.capitalize}
+                  onChange={(e) =>
+                    setV({
+                      ...v,
+                      capitalize: e.target.checked,
+                      capitalized_receivable_account_id: e.target.checked ? v.capitalized_receivable_account_id : null,
+                    })
+                  }
+                />
+                Capitalize to loan capital
+              </label>
+            </FormField>
+            <FormField
+              label="Capitalized-charges receivable"
+              required={v.capitalize}
+              span={8}
+              hint="Asset GL debited at disbursement, credited as rentals fall due"
+            >
+              <select
+                className={selectCls}
+                disabled={!v.capitalize}
+                value={v.capitalized_receivable_account_id ?? ""}
+                onChange={(e) => setV({ ...v, capitalized_receivable_account_id: e.target.value || null })}
+              >
+                <option value="">— Select account —</option>
+                {receivableAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.code} · {a.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+
             <FormField label="Applicable loan products" required span={12}>
               {products.length === 0 ? (
                 <div className="text-[12px] text-muted-foreground italic">
