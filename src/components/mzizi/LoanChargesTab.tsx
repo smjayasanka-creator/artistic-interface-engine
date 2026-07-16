@@ -308,7 +308,7 @@ function ChargeModal({
     if (v.charge_type !== "manual" && v.amount < 0) return toast.error("Amount must be zero or positive");
     if (v.charge_type === "variable" && v.amount > 100) return toast.error("Variable percent must be 0–100");
     if (v.capitalize && !v.capitalized_receivable_account_id) return toast.error("Capitalized-charges receivable ledger is required");
-    if (v.origin === "outside" && !v.supplier_client_id) return toast.error("Select a supplier for outside charges");
+    
     if (v.product_ids.length === 0) return toast.error("Select at least one applicable product");
     // Normalize amount for manual to 0 (entered at application time)
     onSubmit({ ...v, amount: v.charge_type === "manual" ? 0 : v.amount });
