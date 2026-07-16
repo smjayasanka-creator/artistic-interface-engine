@@ -228,9 +228,12 @@ function NewLoan() {
 
   const outOfRange =
     product &&
+    !!principal &&
+    term !== "" &&
     (principalNum < Number(product.min_principal ?? 0) ||
       (product.max_principal && principalNum > Number(product.max_principal)) ||
-      (term !== "" && (termNum < Number(product.min_term_months) || termNum > Number(product.max_term_months))));
+      termNum < Number(product.min_term_months) ||
+      termNum > Number(product.max_term_months));
 
   const canSubmit =
     !!clientId && !!productId && !!principal && term !== "" && !!rateNum && docsSatisfied && !submit.isPending;
