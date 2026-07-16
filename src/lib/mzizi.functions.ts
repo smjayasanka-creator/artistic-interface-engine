@@ -1935,9 +1935,9 @@ export const createPayment = createServerFn({ method: "POST" })
   .inputValidator(
     (i: {
       loan_id: string;
-      branch_id: string;
+      branch_id?: string;
       amount: number;
-      channel: "cash" | "mpesa" | "bank";
+      channel: "cash" | "mpesa" | "bank" | "internal";
       received_at?: string;
       reference?: string;
       notes?: string;
@@ -1945,9 +1945,9 @@ export const createPayment = createServerFn({ method: "POST" })
       z
         .object({
           loan_id: z.string().uuid(),
-          branch_id: z.string().uuid(),
+          branch_id: z.string().uuid().optional(),
           amount: z.number().positive(),
-          channel: z.enum(["cash", "mpesa", "bank"]),
+          channel: z.enum(["cash", "mpesa", "bank", "internal"]),
           received_at: z.string().optional(),
           reference: z.string().trim().max(60).optional(),
           notes: z.string().trim().max(300).optional(),
@@ -1956,129 +1956,45 @@ export const createPayment = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: staff } = await supabase
-      .from("staff")
-      .select("id, branch_id")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    if (!staff) throw new Error("No staff profile");
-
-    const { data: loan } = await supabase
-      .from("loan")
-      .select("id, principal, product_id")
-      .eq("id", data.loan_id)
-      .maybeSingle();
-    if (!loan) throw new Error("Loan not found");
-
-    const principalPortion = Number((data.amount * 0.9).toFixed(2));
-    const interestPortion = Number((data.amount - principalPortion).toFixed(2));
-
-    const { data: inst } = await supabase
-      .from("loan_installment")
-      .select("id, principal_due, interest_due, principal_paid, interest_paid, state")
-      .eq("loan_id", loan.id)
-      .in("state", ["upcoming", "due", "partial", "overdue"])
-      .order("seq")
-      .limit(1)
-      .maybeSingle();
-    if (inst) {
-      const newPrinc = Number(inst.principal_paid) + principalPortion;
-      const newInt = Number(inst.interest_paid) + interestPortion;
-      const fullyPaid =
-        newPrinc >= Number(inst.principal_due) && newInt >= Number(inst.interest_due);
-      await supabase
-        .from("loan_installment")
-        .update({
-          principal_paid: newPrinc,
-          interest_paid: newInt,
-          state: fullyPaid ? "paid" : "partial",
-        })
-        .eq("id", inst.id);
-    }
-
-    const { data: product } = await supabase
-      .from("loan_product")
-      .select("principal_account_id, cash_account_id, interest_income_account_id")
-      .eq("id", loan.product_id)
-      .maybeSingle<{
-        principal_account_id: string | null;
-        cash_account_id: string | null;
-        interest_income_account_id: string | null;
-      }>();
-    let cashId = product?.cash_account_id ?? null;
-    let arId = product?.principal_account_id ?? null;
-    let incomeId = product?.interest_income_account_id ?? null;
-    if (!cashId || !arId || !incomeId) {
-      const { data: accts } = await supabase
-        .from("gl_account")
-        .select("id, code")
-        .in("code", ["1000", "1100", "4000"]);
-      cashId = cashId ?? accts?.find((a) => a.code === "1000")?.id ?? null;
-      arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
-      incomeId = incomeId ?? accts?.find((a) => a.code === "4000")?.id ?? null;
-    }
-    if (!cashId || !arId || !incomeId)
-      throw new Error("Chart of accounts missing — configure product accounts");
-
-    const ref = data.reference?.trim() || "RC-" + Math.floor(1000 + Math.random() * 9000);
-    const entryDate = (data.received_at || new Date().toISOString()).slice(0, 10);
-
-    const { data: entry, error: eErr } = await supabase
-      .from("journal_entry")
-      .insert({
-        reference: ref,
-        branch_id: data.branch_id,
-        loan_id: loan.id,
-        posted_by: staff.id,
-        entry_date: entryDate,
-        description: `Payment ${ref} · ${data.channel}${data.notes ? " · " + data.notes : ""}`,
-      })
-      .select()
-      .single();
-    if (eErr) throw eErr;
-
-    const { error: pErr } = await supabase.from("posting").insert([
-      { entry_id: entry.id, account_id: cashId, debit: data.amount, credit: 0 },
-      { entry_id: entry.id, account_id: arId, debit: 0, credit: principalPortion },
-      { entry_id: entry.id, account_id: incomeId, debit: 0, credit: interestPortion },
-    ]);
-    if (pErr) throw pErr;
-
-    const { error: rErr } = await supabase.from("repayment").insert({
-      loan_id: loan.id,
-      entry_id: entry.id,
-      amount: data.amount,
-      channel: data.channel,
-      received_by: staff.id,
-      received_at: data.received_at
-        ? new Date(data.received_at).toISOString()
-        : new Date().toISOString(),
-    });
-    if (rErr) throw rErr;
-
-    return { ok: true, reference: ref, entry_id: entry.id };
+    const { data: result, error } = await supabase.rpc("record_repayment" as any, {
+      p_loan_id: data.loan_id,
+      p_amount: data.amount,
+      p_channel: data.channel,
+      p_reference: data.reference?.trim() || null,
+    } as any);
+    if (error) throw new Error(error.message);
+    const r = (result ?? {}) as any;
+    return {
+      ok: true,
+      reference: r.reference ?? data.reference ?? null,
+      allocated_fees: Number(r.allocated_fees ?? 0),
+      allocated_interest: Number(r.allocated_interest ?? 0),
+      allocated_principal: Number(r.allocated_principal ?? 0),
+      loan_closed: !!r.loan_closed,
+    };
   });
 
 export const createJournalEntry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (i: {
-      branch_id: string;
+      branch_id?: string;
       entry_date: string;
       reference?: string;
       description?: string;
-      lines: { account_id: string; debit: number; credit: number }[];
+      lines: { account_id?: string; account_code?: string; debit: number; credit: number }[];
     }) =>
       z
         .object({
-          branch_id: z.string().uuid(),
+          branch_id: z.string().uuid().optional(),
           entry_date: z.string().min(1),
           reference: z.string().trim().max(60).optional(),
           description: z.string().trim().max(300).optional(),
           lines: z
             .array(
               z.object({
-                account_id: z.string().uuid(),
+                account_id: z.string().uuid().optional(),
+                account_code: z.string().optional(),
                 debit: z.number().min(0),
                 credit: z.number().min(0),
               }),
@@ -2089,52 +2005,39 @@ export const createJournalEntry = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: staff } = await supabase
-      .from("staff")
-      .select("id")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    if (!staff) throw new Error("No staff profile");
+
+    // Resolve any account_id -> account_code (post_manual_journal expects codes)
+    const ids = Array.from(
+      new Set(data.lines.map((l) => l.account_id).filter((x): x is string => !!x)),
+    );
+    let idToCode: Record<string, string> = {};
+    if (ids.length) {
+      const { data: accts } = await supabase.from("gl_account").select("id, code").in("id", ids);
+      idToCode = Object.fromEntries((accts ?? []).map((a: any) => [a.id, a.code]));
+    }
 
     const clean = data.lines
       .map((l) => ({
-        account_id: l.account_id,
+        account_code: l.account_code ?? (l.account_id ? idToCode[l.account_id] : undefined),
         debit: Number(l.debit) || 0,
         credit: Number(l.credit) || 0,
       }))
-      .filter((l) => l.debit > 0 || l.credit > 0);
+      .filter((l) => l.account_code && (l.debit > 0 || l.credit > 0));
     if (clean.length < 2) throw new Error("Add at least two posting lines");
-    for (const l of clean) {
-      if (l.debit > 0 && l.credit > 0)
-        throw new Error("A line must be either a debit or a credit, not both");
-    }
-    const totalD = clean.reduce((s, l) => s + l.debit, 0);
-    const totalC = clean.reduce((s, l) => s + l.credit, 0);
-    if (Math.abs(totalD - totalC) > 0.01)
-      throw new Error(`Entry is unbalanced: DR ${totalD.toFixed(2)} vs CR ${totalC.toFixed(2)}`);
 
     const ref = data.reference?.trim() || "JE-" + Math.floor(1000 + Math.random() * 9000);
 
-    const { data: entry, error: eErr } = await supabase
-      .from("journal_entry")
-      .insert({
-        reference: ref,
-        branch_id: data.branch_id,
-        entry_date: data.entry_date,
-        posted_by: staff.id,
-        description: data.description || null,
-      })
-      .select()
-      .single();
-    if (eErr) throw eErr;
-
-    const { error: pErr } = await supabase
-      .from("posting")
-      .insert(clean.map((l) => ({ entry_id: entry.id, ...l })));
-    if (pErr) throw pErr;
-
-    return { ok: true, reference: ref, entry_id: entry.id };
+    const { data: result, error } = await supabase.rpc("post_manual_journal" as any, {
+      p_reference: ref,
+      p_description: data.description ?? null,
+      p_lines: clean as any,
+      p_entry_date: data.entry_date,
+    } as any);
+    if (error) throw new Error(error.message);
+    const r = (result ?? {}) as any;
+    return { ok: true, reference: r.reference ?? ref, entry_id: r.entry_id ?? null };
   });
+
 
 export const getPendingDisbursements = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
