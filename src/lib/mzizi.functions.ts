@@ -1535,6 +1535,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       cash_account_id?: string | null;
       interest_income_account_id?: string | null;
       fee_income_account_id?: string | null;
+      accrued_interest_account_id?: string | null;
+      interest_receivable_account_id?: string | null;
       required_documents?: string[];
       segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
