@@ -248,12 +248,14 @@ function NewLoan() {
         .map((c) => ({
           charge_id: c.id,
           name: c.name,
+          origin: c.origin,
           amount: chargeAmount(c),
           canCapitalize: !!c.capitalize,
           capitalize: !!c.capitalize && capitalizedCharges[c.id] !== false, // default on when allowed
+          supplier_client_id: c.origin === "outside" ? (chargeSuppliers[c.id] || c.supplier_client_id || null) : null,
         })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [productCharges, selectedCharges, capitalizedCharges, manualAmounts, principalNum],
+    [productCharges, selectedCharges, capitalizedCharges, manualAmounts, chargeSuppliers, principalNum],
   );
   const chargesTotal = appliedCharges.reduce((s, c) => s + c.amount, 0);
   const capitalizedTotal = appliedCharges.filter((c) => c.capitalize).reduce((s, c) => s + c.amount, 0);
