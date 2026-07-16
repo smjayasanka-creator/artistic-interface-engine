@@ -2518,6 +2518,7 @@ export type Database = {
           created_at: string
           id: string
           loan_id: string
+          supplier_client_id: string | null
         }
         Insert: {
           amount?: number
@@ -2526,6 +2527,7 @@ export type Database = {
           created_at?: string
           id?: string
           loan_id: string
+          supplier_client_id?: string | null
         }
         Update: {
           amount?: number
@@ -2534,6 +2536,7 @@ export type Database = {
           created_at?: string
           id?: string
           loan_id?: string
+          supplier_client_id?: string | null
         }
         Relationships: [
           {
@@ -2556,6 +2559,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_loan_outstanding"
             referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "loan_applied_charge_supplier_client_id_fkey"
+            columns: ["supplier_client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
           },
         ]
       }
