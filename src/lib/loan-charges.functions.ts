@@ -60,9 +60,6 @@ export const upsertLoanCharge = createServerFn({ method: "POST" })
     if (cap && !data.capitalized_receivable_account_id) {
       throw new Error("Capitalized-charges receivable ledger is required when capitalize is on");
     }
-    if (data.origin === "outside" && !data.supplier_client_id) {
-      throw new Error("Supplier is required for outside charges");
-    }
     const row: any = {
       company_id: cid,
       name: data.name,
