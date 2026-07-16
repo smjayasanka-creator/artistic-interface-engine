@@ -72,6 +72,7 @@ import { Route as ApiPublicHooksFdMatureRouteImport } from './routes/api/public/
 import { Route as ApiPublicHooksFdAccrueRouteImport } from './routes/api/public/hooks/fd-accrue'
 import { Route as ApiPublicHooksEodCloseRouteImport } from './routes/api/public/hooks/eod-close'
 import { Route as ApiPublicHooksDispatchDomainEventsRouteImport } from './routes/api/public/hooks/dispatch-domain-events'
+import { Route as AuthenticatedClientsIdEditRouteImport } from './routes/_authenticated/clients.$id.edit'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
 import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/api/public/v1/transactions.outbound'
@@ -433,6 +434,12 @@ const ApiPublicHooksDispatchDomainEventsRoute =
     path: '/api/public/hooks/dispatch-domain-events',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedClientsIdEditRoute =
+  AuthenticatedClientsIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AuthenticatedClientsIdRoute,
+  } as any)
 const AuthenticatedAccountsPaymentsNewRoute =
   AuthenticatedAccountsPaymentsNewRouteImport.update({
     id: '/new',
@@ -504,7 +511,7 @@ export interface FileRoutesByFullPath {
   '/accounts/bulk-journal': typeof AuthenticatedAccountsBulkJournalRoute
   '/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
-  '/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/clients/$id': typeof AuthenticatedClientsIdRouteWithChildren
   '/clients/new': typeof AuthenticatedClientsNewRoute
   '/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/fd/$id': typeof AuthenticatedFdIdRoute
@@ -542,6 +549,7 @@ export interface FileRoutesByFullPath {
   '/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/clients/$id/edit': typeof AuthenticatedClientsIdEditRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
@@ -573,7 +581,7 @@ export interface FileRoutesByTo {
   '/workflows': typeof AuthenticatedWorkflowsRoute
   '/accounts/bank-reconciliation': typeof AuthenticatedAccountsBankReconciliationRoute
   '/accounts/bulk-journal': typeof AuthenticatedAccountsBulkJournalRoute
-  '/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/clients/$id': typeof AuthenticatedClientsIdRouteWithChildren
   '/clients/new': typeof AuthenticatedClientsNewRoute
   '/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/fd/$id': typeof AuthenticatedFdIdRoute
@@ -611,6 +619,7 @@ export interface FileRoutesByTo {
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/clients/$id/edit': typeof AuthenticatedClientsIdEditRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
@@ -648,7 +657,7 @@ export interface FileRoutesById {
   '/_authenticated/accounts/bulk-journal': typeof AuthenticatedAccountsBulkJournalRoute
   '/_authenticated/accounts/journal': typeof AuthenticatedAccountsJournalRouteWithChildren
   '/_authenticated/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
-  '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRouteWithChildren
   '/_authenticated/clients/new': typeof AuthenticatedClientsNewRoute
   '/_authenticated/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/_authenticated/fd/$id': typeof AuthenticatedFdIdRoute
@@ -686,6 +695,7 @@ export interface FileRoutesById {
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/_authenticated/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/_authenticated/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/_authenticated/clients/$id/edit': typeof AuthenticatedClientsIdEditRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
@@ -761,6 +771,7 @@ export interface FileRouteTypes {
     | '/transactions/'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
+    | '/clients/$id/edit'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/eod-close'
     | '/api/public/hooks/fd-accrue'
@@ -830,6 +841,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
+    | '/clients/$id/edit'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/eod-close'
     | '/api/public/hooks/fd-accrue'
@@ -904,6 +916,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions/'
     | '/_authenticated/accounts/journal/new'
     | '/_authenticated/accounts/payments/new'
+    | '/_authenticated/clients/$id/edit'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/eod-close'
     | '/api/public/hooks/fd-accrue'
@@ -1383,6 +1396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksDispatchDomainEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/clients/$id/edit': {
+      id: '/_authenticated/clients/$id/edit'
+      path: '/edit'
+      fullPath: '/clients/$id/edit'
+      preLoaderRoute: typeof AuthenticatedClientsIdEditRouteImport
+      parentRoute: typeof AuthenticatedClientsIdRoute
+    }
     '/_authenticated/accounts/payments/new': {
       id: '/_authenticated/accounts/payments/new'
       path: '/new'
@@ -1562,6 +1582,20 @@ const AuthenticatedAccountsPaymentsRouteWithChildren =
     AuthenticatedAccountsPaymentsRouteChildren,
   )
 
+interface AuthenticatedClientsIdRouteChildren {
+  AuthenticatedClientsIdEditRoute: typeof AuthenticatedClientsIdEditRoute
+}
+
+const AuthenticatedClientsIdRouteChildren: AuthenticatedClientsIdRouteChildren =
+  {
+    AuthenticatedClientsIdEditRoute: AuthenticatedClientsIdEditRoute,
+  }
+
+const AuthenticatedClientsIdRouteWithChildren =
+  AuthenticatedClientsIdRoute._addFileChildren(
+    AuthenticatedClientsIdRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedApiRoute: typeof AuthenticatedApiRoute
@@ -1579,7 +1613,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountsBulkJournalRoute: typeof AuthenticatedAccountsBulkJournalRoute
   AuthenticatedAccountsJournalRoute: typeof AuthenticatedAccountsJournalRouteWithChildren
   AuthenticatedAccountsPaymentsRoute: typeof AuthenticatedAccountsPaymentsRouteWithChildren
-  AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
+  AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRouteWithChildren
   AuthenticatedClientsNewRoute: typeof AuthenticatedClientsNewRoute
   AuthenticatedFdIdRoute: typeof AuthenticatedFdIdRoute
   AuthenticatedFdMaturityRoute: typeof AuthenticatedFdMaturityRoute
@@ -1620,7 +1654,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedAccountsJournalRouteWithChildren,
   AuthenticatedAccountsPaymentsRoute:
     AuthenticatedAccountsPaymentsRouteWithChildren,
-  AuthenticatedClientsIdRoute: AuthenticatedClientsIdRoute,
+  AuthenticatedClientsIdRoute: AuthenticatedClientsIdRouteWithChildren,
   AuthenticatedClientsNewRoute: AuthenticatedClientsNewRoute,
   AuthenticatedFdIdRoute: AuthenticatedFdIdRoute,
   AuthenticatedFdMaturityRoute: AuthenticatedFdMaturityRoute,

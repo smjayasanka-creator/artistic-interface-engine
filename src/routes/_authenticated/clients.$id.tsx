@@ -87,13 +87,13 @@ function Client360() {
             >
               <Copy size={11} /> {client.id.slice(0, 8).toUpperCase()}
             </button>
-            <button
-              type="button"
-              onClick={() => setTab("overview")}
+            <Link
+              to="/clients/$id/edit"
+              params={{ id: client.id }}
               className="border border-border-strong px-2.5 py-1 rounded-full text-[11.5px] font-medium hover:border-input inline-flex items-center gap-1"
             >
               <Pencil size={11} /> Edit
-            </button>
+            </Link>
             <Link to="/collections/new" search={{ loanId: active?.id }} className="border border-border-strong px-2.5 py-1 rounded-full text-[11.5px] font-medium hover:border-input">
               Repayment
             </Link>
