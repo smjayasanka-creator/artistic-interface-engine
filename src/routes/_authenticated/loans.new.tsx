@@ -393,28 +393,19 @@ function NewLoan() {
                   </select>
                 </FormField>
 
-                <FormField label="Repayment frequency" span={6}>
-                  <select
-                    value={frequency}
-                    onChange={(e) => setFrequency(e.target.value as Frequency)}
-                    className={selectCls}
-                  >
-                    {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
-                      <option key={f} value={f}>
-                        {FREQ_META[f].label}
-                      </option>
-                    ))}
-                  </select>
+                <FormField label="Repayment frequency" span={6} hint="Set on the product">
+                  <input
+                    value={FREQ_META[frequency]?.label ?? frequency}
+                    readOnly
+                    className={readOnlyCls}
+                  />
                 </FormField>
-                <FormField label="Interest method" span={6}>
-                  <select
-                    value={method}
-                    onChange={(e) => setMethod(e.target.value as InterestMethod)}
-                    className={selectCls}
-                  >
-                    <option value="flat">Flat</option>
-                    <option value="declining_balance">Declining balance</option>
-                  </select>
+                <FormField label="Interest method" span={6} hint="Set on the product">
+                  <input
+                    value={method.replace("_", " ")}
+                    readOnly
+                    className={readOnlyCls + " capitalize"}
+                  />
                 </FormField>
 
                 <FormField label="Schedule type" span={6} hint="Structured lets you set specific rentals; the rest auto-amortize.">
