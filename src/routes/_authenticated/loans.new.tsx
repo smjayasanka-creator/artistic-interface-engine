@@ -103,6 +103,8 @@ function NewLoan() {
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDoc>>({});
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [selectedCharges, setSelectedCharges] = useState<Record<string, boolean>>({});
+  const [capitalizedCharges, setCapitalizedCharges] = useState<Record<string, boolean>>({});
+
 
 
 
@@ -158,6 +160,7 @@ function NewLoan() {
     setCheckedDocs({});
     setUploadedDocs({});
     setSelectedCharges({});
+    setCapitalizedCharges({});
   }
 
   async function uploadDocFile(doc: string, file: File) {
@@ -239,18 +242,26 @@ function NewLoan() {
     () =>
       productCharges
         .filter((c) => selectedCharges[c.id])
-        .map((c) => ({ charge_id: c.id, name: c.name, amount: chargeAmount(c) })),
+        .map((c) => ({
+          charge_id: c.id,
+          name: c.name,
+          amount: chargeAmount(c),
+          canCapitalize: !!c.capitalize,
+          capitalize: !!c.capitalize && capitalizedCharges[c.id] !== false, // default on when allowed
+        })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [productCharges, selectedCharges, principalNum],
+    [productCharges, selectedCharges, capitalizedCharges, principalNum],
   );
   const chargesTotal = appliedCharges.reduce((s, c) => s + c.amount, 0);
+  const capitalizedTotal = appliedCharges.filter((c) => c.capitalize).reduce((s, c) => s + c.amount, 0);
+  const amortizationBase = principalNum + capitalizedTotal;
 
 
   const schedule = useMemo(() => {
-    if (!principalNum || !rateNum || !term) return null;
+    if (!amortizationBase || !rateNum || !term) return null;
     if (scheduleType === "structured") {
       return generateStructuredSchedule({
-        principal: principalNum,
+        principal: amortizationBase,
         annualRatePct: rateNum,
         termMonths: term,
         frequency,
@@ -259,13 +270,13 @@ function NewLoan() {
       });
     }
     return generateSchedule({
-      principal: principalNum,
+      principal: amortizationBase,
       annualRatePct: rateNum,
       termMonths: term,
       frequency,
       method,
     });
-  }, [principalNum, rateNum, term, frequency, method, scheduleType, overrides]);
+  }, [amortizationBase, rateNum, term, frequency, method, scheduleType, overrides]);
 
   const termOptions = useMemo(() => {
     const lo = product?.min_term_months ?? 1;
@@ -500,36 +511,73 @@ function NewLoan() {
                         {productCharges.map((c: any) => {
                           const on = !!selectedCharges[c.id];
                           const amt = chargeAmount(c);
+                          const canCap = !!c.capitalize;
+                          const capOn = canCap && capitalizedCharges[c.id] !== false;
                           return (
-                            <label
+                            <div
                               key={c.id}
-                              className="flex items-center gap-3 px-3 py-2 text-[12.5px] cursor-pointer hover:bg-secondary/30"
+                              className="flex items-center gap-3 px-3 py-2 text-[12.5px] hover:bg-secondary/30"
                             >
-                              <input
-                                type="checkbox"
-                                checked={on}
-                                onChange={(e) =>
-                                  setSelectedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
-                                }
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium truncate">{c.name}</div>
-                                <div className="text-[11px] text-muted-foreground">
-                                  {c.origin === "inhouse" ? "In-house" : "Outside"} ·{" "}
-                                  {c.charge_type === "variable"
-                                    ? `${Number(c.amount)}% of principal`
-                                    : "Fixed"}
+                              <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={on}
+                                  onChange={(e) =>
+                                    setSelectedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
+                                  }
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">{c.name}</div>
+                                  <div className="text-[11px] text-muted-foreground">
+                                    {c.origin === "inhouse" ? "In-house" : "Outside"} ·{" "}
+                                    {c.charge_type === "variable"
+                                      ? `${Number(c.amount)}% of principal`
+                                      : "Fixed"}
+                                    {canCap && " · capitalizable"}
+                                  </div>
                                 </div>
-                              </div>
+                              </label>
+                              {canCap && on && (
+                                <label
+                                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer whitespace-nowrap"
+                                  title="Add to loan capital instead of collecting upfront"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={capOn}
+                                    onChange={(e) =>
+                                      setCapitalizedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
+                                    }
+                                  />
+                                  Capitalize
+                                </label>
+                              )}
                               <div className="font-mono text-[12px] w-28 text-right">
                                 {money(amt, true)}
                               </div>
-                            </label>
+                            </div>
                           );
                         })}
-                        <div className="flex items-center justify-between px-3 py-2 bg-secondary/40 text-[12px]">
-                          <span className="font-semibold">Total charges</span>
-                          <span className="font-mono font-semibold">{money(chargesTotal, true)}</span>
+                        <div className="flex flex-col gap-0.5 px-3 py-2 bg-secondary/40 text-[12px]">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold">Total charges</span>
+                            <span className="font-mono font-semibold">{money(chargesTotal, true)}</span>
+                          </div>
+                          {capitalizedTotal > 0 && (
+                            <>
+                              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                                <span>Capitalized (added to schedule base)</span>
+                                <span className="font-mono">{money(capitalizedTotal, true)}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                                <span>Amortization base = principal + capitalized</span>
+                                <span className="font-mono">{money(amortizationBase, true)}</span>
+                              </div>
+                              <div className="text-[10.5px] text-muted-foreground italic">
+                                Disbursement amount stays at {money(principalNum, true)} — customer isn't charged upfront for capitalized items.
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     )}
@@ -842,7 +890,7 @@ function NewLoan() {
                               )
                             : undefined,
                         initial_charges: appliedCharges.length
-                          ? appliedCharges.map((c) => ({ charge_id: c.charge_id, amount: c.amount }))
+                          ? appliedCharges.map((c) => ({ charge_id: c.charge_id, amount: c.amount, capitalize: c.capitalize }))
                           : undefined,
                       },
                     })

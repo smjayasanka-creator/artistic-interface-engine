@@ -33,6 +33,8 @@ type ChargeRow = {
   amount: number;
   receivable_account_id: string;
   credit_account_id: string;
+  capitalize: boolean;
+  capitalized_receivable_account_id: string | null;
   active: boolean;
   product_ids: string[];
 };
@@ -44,6 +46,8 @@ const EMPTY: Omit<ChargeRow, "id"> = {
   amount: 0,
   receivable_account_id: "",
   credit_account_id: "",
+  capitalize: false,
+  capitalized_receivable_account_id: null,
   active: true,
   product_ids: [],
 };
@@ -194,6 +198,8 @@ export function LoanChargesTab() {
                     amount: Number(c.amount),
                     receivable_account_id: c.receivable_account_id,
                     credit_account_id: c.credit_account_id,
+                    capitalize: !!c.capitalize,
+                    capitalized_receivable_account_id: c.capitalized_receivable_account_id ?? null,
                     active: c.active,
                     product_ids: c.product_ids ?? [],
                   },
@@ -277,6 +283,7 @@ function ChargeModal({
     if (!v.credit_account_id) return toast.error(v.origin === "inhouse" ? "Income account is required" : "Supplier control account is required");
     if (v.amount < 0) return toast.error("Amount must be zero or positive");
     if (v.charge_type === "variable" && v.amount > 100) return toast.error("Variable percent must be 0–100");
+    if (v.capitalize && !v.capitalized_receivable_account_id) return toast.error("Capitalized-charges receivable ledger is required");
     if (v.product_ids.length === 0) return toast.error("Select at least one applicable product");
     onSubmit(v);
   }
@@ -380,6 +387,44 @@ function ChargeModal({
                 ))}
               </select>
             </FormField>
+
+            <FormField label="Capitalize" span={4} hint="Add to loan capital; don't collect upfront">
+              <label className="flex items-center gap-2 text-[13px] h-[34px]">
+                <input
+                  type="checkbox"
+                  checked={v.capitalize}
+                  onChange={(e) =>
+                    setV({
+                      ...v,
+                      capitalize: e.target.checked,
+                      capitalized_receivable_account_id: e.target.checked ? v.capitalized_receivable_account_id : null,
+                    })
+                  }
+                />
+                Capitalize to loan capital
+              </label>
+            </FormField>
+            <FormField
+              label="Capitalized-charges receivable"
+              required={v.capitalize}
+              span={8}
+              hint="Asset GL debited at disbursement, credited as rentals fall due"
+            >
+              <select
+                className={selectCls}
+                disabled={!v.capitalize}
+                value={v.capitalized_receivable_account_id ?? ""}
+                onChange={(e) => setV({ ...v, capitalized_receivable_account_id: e.target.value || null })}
+              >
+                <option value="">— Select account —</option>
+                {receivableAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.code} · {a.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
 
             <FormField label="Applicable loan products" required span={12}>
               {products.length === 0 ? (

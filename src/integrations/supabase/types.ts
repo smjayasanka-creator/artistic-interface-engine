@@ -2513,6 +2513,7 @@ export type Database = {
       loan_applied_charge: {
         Row: {
           amount: number
+          capitalize: boolean
           charge_id: string
           created_at: string
           id: string
@@ -2520,6 +2521,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          capitalize?: boolean
           charge_id: string
           created_at?: string
           id?: string
@@ -2527,6 +2529,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          capitalize?: boolean
           charge_id?: string
           created_at?: string
           id?: string
@@ -2560,6 +2563,8 @@ export type Database = {
         Row: {
           active: boolean
           amount: number
+          capitalize: boolean
+          capitalized_receivable_account_id: string | null
           charge_type: Database["public"]["Enums"]["loan_charge_type"]
           company_id: string
           created_at: string
@@ -2574,6 +2579,8 @@ export type Database = {
         Insert: {
           active?: boolean
           amount?: number
+          capitalize?: boolean
+          capitalized_receivable_account_id?: string | null
           charge_type?: Database["public"]["Enums"]["loan_charge_type"]
           company_id: string
           created_at?: string
@@ -2588,6 +2595,8 @@ export type Database = {
         Update: {
           active?: boolean
           amount?: number
+          capitalize?: boolean
+          capitalized_receivable_account_id?: string | null
           charge_type?: Database["public"]["Enums"]["loan_charge_type"]
           company_id?: string
           created_at?: string
@@ -2600,6 +2609,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "loan_charge_capitalized_receivable_account_id_fkey"
+            columns: ["capitalized_receivable_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "loan_charge_company_id_fkey"
             columns: ["company_id"]

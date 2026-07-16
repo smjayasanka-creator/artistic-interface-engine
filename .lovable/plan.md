@@ -1,30 +1,62 @@
-## Change
+## What changes
 
-Add a **segment** classification to savings products: **Normal Savings**, **Minor Savings**, **Senior Savings**, **Fixed Savings**, **Transaction Account**. When creating a savings account, the user picks a segment first, then only sees products in that segment.
+Loan charges get an optional **Capitalize** setting. When a capitalizable charge is applied to a loan, the user can toggle it on. If on, the charge is **not collected upfront** and **not added to the disbursement amount** — but it **is added to the amortization base** so the customer's rentals slightly increase. On each due rental, the capital portion attributable to capitalized charges is reclassified from the *Capitalized-charges receivable* GL to the normal *Loan receivable* GL.
 
-## Backend
+## Database (one migration)
 
-Migration on `savings_product`:
-- Add `segment text not null default 'normal'` with a check constraint restricting to `normal | minor | senior | fixed | transaction`.
-- Backfill existing rows to `'normal'`.
-- Index `(company_id, segment, active)`.
+`public.loan_charge`
+- add `capitalize boolean not null default false`
+- add `capitalized_receivable_account_id uuid null references gl_account(id)` — asset GL debited at disbursement for capitalized amounts; credited as rentals fall due.
+- CHECK: when `capitalize = true`, `capitalized_receivable_account_id` must be set.
 
-Server functions (`src/lib/savings.functions.ts`):
-- `listSavingsProducts` — include `segment` in the returned columns.
-- `upsertSavingsProduct` — accept `segment` in the Zod input validator (default `'normal'`) and persist it.
+`public.loan_applied_charge`
+- add `capitalize boolean not null default false` — records the per-loan decision.
 
-## Frontend
+## Charge setup — `LoanChargesTab.tsx`
 
-**Savings products form** (`src/components/mzizi/SavingsProductsTab.tsx`):
-- Add a required **Segment** dropdown to the product modal.
-- Show segment as a column in the product list.
+In the charge modal:
+- New checkbox **Capitalize to loan capital**.
+- When on, show a required **Capitalized-charges receivable ledger** dropdown (asset GLs).
+- Grid gets a small "Cap." indicator column.
 
-**New savings account page** (`src/routes/_authenticated/savings.new.tsx`):
-- Add a **Segment** selector above the product picker.
-- Filter the product dropdown to active products matching the selected segment.
-- Segment is derived from the chosen product — nothing new is written to `savings_account`.
+`upsertLoanCharge` / `listLoanCharges` server fns extended with the two new fields (Zod validated; capitalized receivable required when `capitalize=true`).
+
+## Loan creation — `loans.new.tsx`
+
+For each product-mapped charge that has `capitalize=true` on the master, show an extra **Capitalize** toggle next to the row (default on; disabled/unchecked for non-capitalizable charges — behavior unchanged for those).
+
+Summary strip near the schedule shows:
+- Disbursement amount (= principal, unchanged)
+- Capitalized charges total
+- **Amortization base** = principal + capitalized total
+
+Schedule generator receives `principal + capitalizedTotal` as its principal, so:
+- Rentals reflect the higher base
+- Interest is computed on the combined base
+- Disbursement/loan amount displayed to customer is still the raw principal
+
+`submitApplication` persists each applied charge with its `capitalize` flag. Non-capitalized charges behave exactly as today (unchanged).
+
+## Ledger reclass (schema + hook, not RPC internals)
+
+The per-rental reclass entry
+```
+DR  loan receivable        (capital-portion-of-charges)
+CR  capitalized receivable (capital-portion-of-charges)
+```
+belongs inside the accrual/rental-due posting logic. Since `record_repayment` / accrual are hardened Postgres RPCs owned by the backend, this migration lays down the accounts and per-loan `capitalize` flag they need; the actual reclass posting is a follow-up when the accrual RPC is next revised. The front-end passes the data through so nothing else needs to change when that RPC is updated.
 
 ## Not changing
 
-- `savings_account` schema, GL mapping, and transactions are untouched.
-- Existing products default to "Normal Savings" and can be reclassified via the edit form.
+- Disbursement amount / how disbursement is posted.
+- Non-capitalized charge flow (upfront collect).
+- `loan.principal` column value — it stays as the disbursed principal; the schedule math uses the augmented base internally without altering the stored principal.
+- `disburse_loan` / `record_repayment` RPC bodies (they live in the backend and are out of scope for this frontend-facing change).
+
+## Files touched
+
+- new migration under `supabase/migrations/`
+- `src/lib/loan-charges.functions.ts`
+- `src/components/mzizi/LoanChargesTab.tsx`
+- `src/lib/mzizi.functions.ts` (extend `submitApplication` input to accept `capitalize` per applied charge)
+- `src/routes/_authenticated/loans.new.tsx` (per-charge capitalize toggle + amortization base wiring)
