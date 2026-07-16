@@ -127,7 +127,8 @@ function NewLoan() {
   function selectProduct(p: any) {
     setProductId(p.id);
     setRate(Number(p.annual_rate_pct));
-    setFrequency(p.frequency as Frequency);
+    setFrequency((p.frequency as Frequency) ?? "monthly");
+    setMethod(((p.interest_method as InterestMethod) ?? "flat"));
     setTerm(Number(p.min_term_months));
     if (!principal && p.min_principal) setPrincipal(String(p.min_principal));
     setCheckedDocs({});
