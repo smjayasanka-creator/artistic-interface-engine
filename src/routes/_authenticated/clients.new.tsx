@@ -507,7 +507,7 @@ function NewClientPage() {
         {tab === "screening" && (
           <>
             <Card className="p-6">
-              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Personal details</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Personal details</h2>
               <FormGrid>
                 <FormField label="First name" required span={4} error={showError("first_name") ? errors.first_name : undefined}>
                   <input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} onBlur={() => blur("first_name")} className={cls("first_name")} maxLength={60} />
@@ -576,7 +576,7 @@ function NewClientPage() {
         {tab === "application" && (
           <>
             <Card className="p-6">
-              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Personal profile</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Personal profile</h2>
               <FormGrid>
                 <FormField label="Date of birth" required span={4} error={showError("date_of_birth") ? errors.date_of_birth : undefined}>
                   <input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} onBlur={() => blur("date_of_birth")} className={cls("date_of_birth")} />
@@ -626,7 +626,7 @@ function NewClientPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Permanent address</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Permanent address</h2>
               <FormGrid>
                 <FormField label="Building number" required span={3}>
                   <input value={permanentAddr.building_no} onChange={(e) => setPermanentAddr({ ...permanentAddr, building_no: e.target.value })} className={inputCls} maxLength={40} />
@@ -645,7 +645,7 @@ function NewClientPage() {
 
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-secondary-foreground uppercase tracking-wider">Mailing address</h2>
+                <h2 className="text-[11px] font-semibold text-faint uppercase tracking-wider">Mailing address</h2>
                 <label className="flex items-center gap-2 text-xs text-muted-foreground">
                   <input
                     type="checkbox"
@@ -674,7 +674,7 @@ function NewClientPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Address (administrative)</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Address (administrative)</h2>
               <FormGrid>
                 <FormField label="Residential address" required span={12} error={showError("address") ? errors.address : undefined}>
                   <textarea value={form.address} onChange={(e) => set("address", e.target.value)} onBlur={() => blur("address")} rows={2} maxLength={200} className={cls("address")} />
@@ -695,7 +695,7 @@ function NewClientPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Customer photo</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Customer photo</h2>
               <div className="flex items-center gap-4">
                 <div className="w-24 h-24 rounded-md border border-border overflow-hidden bg-muted flex items-center justify-center text-xs text-muted-foreground">
                   {photoPreview ? (
@@ -729,7 +729,7 @@ function NewClientPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Customer geo location</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Customer geo location</h2>
               <div className="flex items-center gap-4 flex-wrap">
                 <button type="button" className={btnSecondaryCls} onClick={captureGeo} disabled={geoBusy}>
                   {geoBusy ? "Locating…" : geo ? "Recapture location" : "Capture current location"}
@@ -747,7 +747,7 @@ function NewClientPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Bank accounts</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Bank accounts</h2>
               <p className="text-xs text-muted-foreground mb-3">Add bank accounts used for FD pay-out or interest transfer. Mark one as primary.</p>
               <div className="flex flex-col gap-2">
                 {banks.map((b, i) => (
@@ -776,7 +776,7 @@ function NewClientPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-sm font-semibold mb-4 text-secondary-foreground uppercase tracking-wider">Introducer settings</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Introducer settings</h2>
               <label className="flex items-center gap-2 text-sm mb-3">
                 <input type="checkbox" checked={isIntroducer} onChange={(e) => setIsIntroducer(e.target.checked)} />
                 This customer can be selected as an introducer on FD / loan bookings
@@ -813,7 +813,7 @@ function NewClientPage() {
 
         {tab === "risk" && (
           <Card className="p-6">
-            <h2 className="text-sm font-semibold mb-1 text-secondary-foreground uppercase tracking-wider">Initial risk profile</h2>
+            <h2 className="text-[11px] font-semibold mb-1 text-faint uppercase tracking-wider">Initial risk profile</h2>
             <p className="text-xs text-muted-foreground mb-4">
               Complete the risk assessment. All applicable factors must be answered before the client can be registered. Scoring scheme is maintained in Administration → Risk profiling.
             </p>
@@ -828,7 +828,7 @@ function NewClientPage() {
 
         {tab === "documents" && (
           <Card className="p-6">
-            <h2 className="text-sm font-semibold mb-1 text-secondary-foreground uppercase tracking-wider">Onboarding documents</h2>
+            <h2 className="text-[11px] font-semibold mb-1 text-faint uppercase tracking-wider">Onboarding documents</h2>
             <p className="text-xs text-muted-foreground mb-4">
               Attach the required KYC documents below. Each file must be an image or PDF, up to 10 MB.
             </p>
@@ -952,7 +952,7 @@ function ScreeningResultCard({
     <div className="mt-6 border-t border-border pt-5">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-sm font-semibold text-secondary-foreground uppercase tracking-wider">
+          <h2 className="text-[11px] font-semibold text-faint uppercase tracking-wider">
             Screening result
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
