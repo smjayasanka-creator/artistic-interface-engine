@@ -45,7 +45,7 @@ function Groups() {
           </div>
           <div className="flex items-center justify-between pt-3 border-t border-row-divider">
             <div className="text-[12px] text-muted-foreground">Chair: {g.leader?.full_name ?? "—"}</div>
-            <Link to="/collections/new" className="bg-primary text-primary-foreground text-[11.5px] font-semibold px-3 py-1.5 rounded-md hover:bg-primary-hover">
+            <Link to="/transactions/repayment" className="bg-primary text-primary-foreground text-[11.5px] font-semibold px-3 py-1.5 rounded-md hover:bg-primary-hover">
               Record collection
             </Link>
           </div>

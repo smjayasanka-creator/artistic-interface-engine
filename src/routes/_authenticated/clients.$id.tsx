@@ -94,7 +94,7 @@ function Client360() {
             >
               <Pencil size={11} /> Edit
             </Link>
-            <Link to="/collections/new" search={{ loanId: active?.id }} className="border border-border-strong px-2.5 py-1 rounded-full text-[11.5px] font-medium hover:border-input">
+            <Link to="/transactions/repayment" search={{ loanId: active?.id }} className="border border-border-strong px-2.5 py-1 rounded-full text-[11.5px] font-medium hover:border-input">
               Repayment
             </Link>
             <Link to="/loans/new" className="bg-primary text-primary-foreground px-2.5 py-1 rounded-full text-[11.5px] font-semibold hover:bg-primary-hover inline-flex items-center gap-1">

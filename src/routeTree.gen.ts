@@ -57,7 +57,6 @@ import { Route as AuthenticatedLoansIdRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedFdNewRouteImport } from './routes/_authenticated/fd.new'
 import { Route as AuthenticatedFdMaturityRouteImport } from './routes/_authenticated/fd.maturity'
 import { Route as AuthenticatedFdIdRouteImport } from './routes/_authenticated/fd.$id'
-import { Route as AuthenticatedCollectionsNewRouteImport } from './routes/_authenticated/collections.new'
 import { Route as AuthenticatedClientsNewRouteImport } from './routes/_authenticated/clients.new'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as AuthenticatedAccountsPaymentsRouteImport } from './routes/_authenticated/accounts.payments'
@@ -350,12 +349,6 @@ const AuthenticatedFdIdRoute = AuthenticatedFdIdRouteImport.update({
   path: '/fd/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCollectionsNewRoute =
-  AuthenticatedCollectionsNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedCollectionsRoute,
-  } as any)
 const AuthenticatedClientsNewRoute = AuthenticatedClientsNewRouteImport.update({
   id: '/clients/new',
   path: '/clients/new',
@@ -499,7 +492,7 @@ export interface FileRoutesByFullPath {
   '/api': typeof AuthenticatedApiRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/audit-log': typeof AuthenticatedAuditLogRoute
-  '/collections': typeof AuthenticatedCollectionsRouteWithChildren
+  '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ledger': typeof AuthenticatedLedgerRoute
   '/platform-admin': typeof AuthenticatedPlatformAdminRoute
@@ -513,7 +506,6 @@ export interface FileRoutesByFullPath {
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRouteWithChildren
   '/clients/new': typeof AuthenticatedClientsNewRoute
-  '/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/fd/$id': typeof AuthenticatedFdIdRoute
   '/fd/maturity': typeof AuthenticatedFdMaturityRoute
   '/fd/new': typeof AuthenticatedFdNewRoute
@@ -573,7 +565,7 @@ export interface FileRoutesByTo {
   '/api': typeof AuthenticatedApiRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/audit-log': typeof AuthenticatedAuditLogRoute
-  '/collections': typeof AuthenticatedCollectionsRouteWithChildren
+  '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ledger': typeof AuthenticatedLedgerRoute
   '/platform-admin': typeof AuthenticatedPlatformAdminRoute
@@ -583,7 +575,6 @@ export interface FileRoutesByTo {
   '/accounts/bulk-journal': typeof AuthenticatedAccountsBulkJournalRoute
   '/clients/$id': typeof AuthenticatedClientsIdRouteWithChildren
   '/clients/new': typeof AuthenticatedClientsNewRoute
-  '/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/fd/$id': typeof AuthenticatedFdIdRoute
   '/fd/maturity': typeof AuthenticatedFdMaturityRoute
   '/fd/new': typeof AuthenticatedFdNewRoute
@@ -645,7 +636,7 @@ export interface FileRoutesById {
   '/_authenticated/api': typeof AuthenticatedApiRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/audit-log': typeof AuthenticatedAuditLogRoute
-  '/_authenticated/collections': typeof AuthenticatedCollectionsRouteWithChildren
+  '/_authenticated/collections': typeof AuthenticatedCollectionsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/ledger': typeof AuthenticatedLedgerRoute
   '/_authenticated/platform-admin': typeof AuthenticatedPlatformAdminRoute
@@ -659,7 +650,6 @@ export interface FileRoutesById {
   '/_authenticated/accounts/payments': typeof AuthenticatedAccountsPaymentsRouteWithChildren
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRouteWithChildren
   '/_authenticated/clients/new': typeof AuthenticatedClientsNewRoute
-  '/_authenticated/collections/new': typeof AuthenticatedCollectionsNewRoute
   '/_authenticated/fd/$id': typeof AuthenticatedFdIdRoute
   '/_authenticated/fd/maturity': typeof AuthenticatedFdMaturityRoute
   '/_authenticated/fd/new': typeof AuthenticatedFdNewRoute
@@ -735,7 +725,6 @@ export interface FileRouteTypes {
     | '/accounts/payments'
     | '/clients/$id'
     | '/clients/new'
-    | '/collections/new'
     | '/fd/$id'
     | '/fd/maturity'
     | '/fd/new'
@@ -805,7 +794,6 @@ export interface FileRouteTypes {
     | '/accounts/bulk-journal'
     | '/clients/$id'
     | '/clients/new'
-    | '/collections/new'
     | '/fd/$id'
     | '/fd/maturity'
     | '/fd/new'
@@ -880,7 +868,6 @@ export interface FileRouteTypes {
     | '/_authenticated/accounts/payments'
     | '/_authenticated/clients/$id'
     | '/_authenticated/clients/new'
-    | '/_authenticated/collections/new'
     | '/_authenticated/fd/$id'
     | '/_authenticated/fd/maturity'
     | '/_authenticated/fd/new'
@@ -1291,13 +1278,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFdIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/collections/new': {
-      id: '/_authenticated/collections/new'
-      path: '/new'
-      fullPath: '/collections/new'
-      preLoaderRoute: typeof AuthenticatedCollectionsNewRouteImport
-      parentRoute: typeof AuthenticatedCollectionsRoute
-    }
     '/_authenticated/clients/new': {
       id: '/_authenticated/clients/new'
       path: '/clients/new'
@@ -1469,20 +1449,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedCollectionsRouteChildren {
-  AuthenticatedCollectionsNewRoute: typeof AuthenticatedCollectionsNewRoute
-}
-
-const AuthenticatedCollectionsRouteChildren: AuthenticatedCollectionsRouteChildren =
-  {
-    AuthenticatedCollectionsNewRoute: AuthenticatedCollectionsNewRoute,
-  }
-
-const AuthenticatedCollectionsRouteWithChildren =
-  AuthenticatedCollectionsRoute._addFileChildren(
-    AuthenticatedCollectionsRouteChildren,
-  )
-
 interface AuthenticatedSavingsRouteChildren {
   AuthenticatedSavingsCloseRoute: typeof AuthenticatedSavingsCloseRoute
   AuthenticatedSavingsNewRoute: typeof AuthenticatedSavingsNewRoute
@@ -1601,7 +1567,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedApiRoute: typeof AuthenticatedApiRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedAuditLogRoute: typeof AuthenticatedAuditLogRoute
-  AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRouteWithChildren
+  AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLedgerRoute: typeof AuthenticatedLedgerRoute
   AuthenticatedPlatformAdminRoute: typeof AuthenticatedPlatformAdminRoute
@@ -1639,7 +1605,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedApiRoute: AuthenticatedApiRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedAuditLogRoute: AuthenticatedAuditLogRoute,
-  AuthenticatedCollectionsRoute: AuthenticatedCollectionsRouteWithChildren,
+  AuthenticatedCollectionsRoute: AuthenticatedCollectionsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLedgerRoute: AuthenticatedLedgerRoute,
   AuthenticatedPlatformAdminRoute: AuthenticatedPlatformAdminRoute,
