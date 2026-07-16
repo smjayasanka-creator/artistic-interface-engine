@@ -1315,23 +1315,29 @@ export const recordRepayment = createServerFn({ method: "POST" })
     // Use product-configured accounts if present
     const { data: product } = await supabase
       .from("loan_product")
-      .select("principal_account_id, cash_account_id, interest_income_account_id")
+      .select("principal_account_id, cash_account_id, interest_income_account_id, interest_receivable_account_id")
       .eq("id", loan.product_id)
       .maybeSingle<{
         principal_account_id: string | null;
         cash_account_id: string | null;
         interest_income_account_id: string | null;
+        interest_receivable_account_id: string | null;
       }>();
     let cashId = product?.cash_account_id ?? null;
     let arId = product?.principal_account_id ?? null;
     let incomeId = product?.interest_income_account_id ?? null;
+    // Prefer Interest Receivable when configured — accrual worker moves due
+    // interest there, and collection settles it. Falls back to interest income
+    // when the product isn't wired for accrual.
+    const intCreditId = product?.interest_receivable_account_id ?? incomeId;
     if (!cashId || !arId || !incomeId) {
       const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", ["1000", "1100", "4000"]);
       cashId = cashId ?? accts?.find((a) => a.code === "1000")?.id ?? null;
       arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
       incomeId = incomeId ?? accts?.find((a) => a.code === "4000")?.id ?? null;
     }
-    if (!cashId || !arId || !incomeId) throw new Error("Chart of accounts missing — configure product accounts");
+    const intCredit = product?.interest_receivable_account_id ?? incomeId;
+    if (!cashId || !arId || !intCredit) throw new Error("Chart of accounts missing — configure product accounts");
     const ref = "RC-" + Math.floor(1000 + Math.random() * 9000);
     const idem = `loans:repay:${loan.id}:${ref}`;
     const { data: entryId, error: rpcErr } = await supabase.rpc("post_entry", {
@@ -1341,7 +1347,7 @@ export const recordRepayment = createServerFn({ method: "POST" })
       _lines: [
         { account_id: cashId, debit: data.amount, credit: 0 },
         { account_id: arId, debit: 0, credit: principalPortion },
-        { account_id: incomeId, debit: 0, credit: interestPortion },
+        { account_id: intCredit, debit: 0, credit: interestPortion },
       ] as any,
       _branch_id: loan.branch_id,
       _source_module: "loans",
