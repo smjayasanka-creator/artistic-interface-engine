@@ -959,6 +959,7 @@ function ProductsTab() {
   function startEdit(p: any) {
     setForm({
       name: p.name ?? "",
+      code: p.code ?? "",
       minRate: String(p.annual_rate_pct ?? ""),
       maxRate: p.max_annual_rate_pct != null ? String(p.max_annual_rate_pct) : "",
       minTerm: String(p.min_term_months ?? 1),
