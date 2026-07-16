@@ -33,6 +33,8 @@ type ChargeRow = {
   amount: number;
   receivable_account_id: string;
   credit_account_id: string;
+  capitalize: boolean;
+  capitalized_receivable_account_id: string | null;
   active: boolean;
   product_ids: string[];
 };
@@ -44,6 +46,8 @@ const EMPTY: Omit<ChargeRow, "id"> = {
   amount: 0,
   receivable_account_id: "",
   credit_account_id: "",
+  capitalize: false,
+  capitalized_receivable_account_id: null,
   active: true,
   product_ids: [],
 };
