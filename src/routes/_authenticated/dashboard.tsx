@@ -6,7 +6,6 @@ import { Users, Wallet, AlertTriangle, ArrowDownCircle, ArrowUpCircle } from "lu
 import { getDashboard } from "@/lib/mzizi.functions";
 import { listInstances, CANONICAL_TX_TYPES } from "@/lib/workflow.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
-import { Avatar } from "@/components/mzizi/Avatar";
 import { InstanceDetailModal } from "@/components/mzizi/InstanceDetailModal";
 import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -125,7 +124,6 @@ function Dashboard() {
 
   if (!data) return <div className="text-sm text-muted-foreground">Loading…</div>;
 
-
   const totalPar = data.par.reduce((s, b) => s + b.amount, 0);
 
   return (
@@ -139,8 +137,71 @@ function Dashboard() {
         <VibrantKpi tone="violet" to="/transactions" label="Disbursed / week" value={data.kpis.disbursedWeek} delta="Last 7 days" icon={ArrowUpCircle} />
       </div>
 
-      {/* PAR + Meetings */}
+      {/* Pending approvals + PAR */}
       <div className="grid grid-cols-2 gap-4">
+        <Card>
+          <CardTitle
+            subtitle="Click Open to review the request and Approve, Reject or Send back."
+            right={
+              <Link to="/approvals" className="text-[11.5px] font-semibold text-primary hover:underline">
+                Open inbox →
+              </Link>
+            }
+          >
+            <span className="flex items-center gap-2">
+              Pending approval jobs
+              <span
+                className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: "#f59e0b", color: "#3a2606" }}
+              >
+                {wfInbox.length}
+              </span>
+            </span>
+          </CardTitle>
+          {wfInbox.length === 0 ? (
+            <div className="text-center text-faint text-sm py-6">✓ Nothing awaiting your decision</div>
+          ) : (
+            <div className="flex flex-col divide-y divide-row-divider">
+              {wfInbox.slice(0, 6).map((inst: any) => {
+                const step = inst.step_config;
+                const totalSteps = inst.workflow?.steps?.length ?? 0;
+                const txLabel =
+                  CANONICAL_TX_TYPES.find((t) => t.code === inst.transaction_type)?.label ??
+                  inst.transaction_type;
+                return (
+                  <div key={inst.id} className="flex items-center gap-3 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[13px] font-semibold text-foreground truncate">
+                          {inst.reference_label}
+                        </span>
+                        {inst.overdue && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-700 border border-rose-500/30">
+                            SLA overdue
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11.5px] text-faint mt-0.5">
+                        {txLabel} · Step {inst.current_step}/{totalSteps} — {step?.name ?? "—"}
+                        {inst.amount != null && <> · {money(Number(inst.amount))}</>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setOpenInst(inst)}
+                      className={cn(
+                        "shrink-0 inline-flex items-center h-8 px-3 rounded-md",
+                        "bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary-hover",
+                      )}
+                    >
+                      Open
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
         <Card>
           <CardTitle subtitle={`Aging by principal balance · ${money(totalPar)} outstanding`}>
             Portfolio at risk
@@ -166,158 +227,7 @@ function Dashboard() {
             );
           })}
         </Card>
-
-        <Card>
-          <CardTitle>Today's group meetings</CardTitle>
-          {data.meetings.length === 0 && <div className="text-center text-sm text-faint py-6">No meetings scheduled</div>}
-          {data.meetings.map((m: any) => (
-            <div key={m.id} className="flex items-center gap-3 py-3 border-t border-row-divider first:border-t-0">
-              <div className="font-mono font-semibold text-[13px] text-primary w-11">{m.meeting_day?.split(" ")[1] ?? "—"}</div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold">{m.name}</div>
-                <div className="text-[11.5px] text-muted-foreground">{m.meeting_place ?? "Field"}</div>
-              </div>
-              <div className="text-right">
-                <div className="font-mono text-xs font-semibold text-primary">{money(m.target_today)}</div>
-                <div className="text-[10.5px] text-faint">target today</div>
-              </div>
-            </div>
-          ))}
-        </Card>
       </div>
-
-      {/* Team attendance / workflow performance */}
-      <Card>
-        <CardTitle
-          subtitle="Staff logging activity — based on approval workflow decisions"
-          right={
-            <div className="flex items-center gap-2 text-[11px]">
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary font-semibold">
-                <Activity size={12} /> {teamTotals.totalToday} actions today
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted text-secondary-foreground font-semibold">
-                <TrendingUp size={12} /> {teamTotals.totalWeek} / 7d
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted text-secondary-foreground font-semibold">
-                <Users size={12} /> {teamTotals.activeStaff} active
-              </span>
-            </div>
-          }
-        >
-          Team activity
-        </CardTitle>
-
-        {team.length === 0 && (
-          <div className="text-center text-faint text-sm py-6">No workflow actions recorded in the last 7 days.</div>
-        )}
-
-        {team.map((t: any, idx: number) => {
-          const pct = teamTotals.maxWeek > 0 ? Math.round((t.week / teamTotals.maxWeek) * 100) : 0;
-          const isTop = idx === 0 && t.week > 0;
-          return (
-            <div key={t.staff_id} className="py-2.5 border-t border-row-divider first:border-t-0">
-              <div className="flex items-center gap-3">
-                <Avatar name={t.name} size={30} color={isTop ? "#4f46e5" : "#0f766e"} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-semibold truncate">{t.name}</span>
-                    <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-muted text-secondary-foreground capitalize">{t.role?.replace("_", " ")}</span>
-                    {isTop && (
-                      <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">Top performer</span>
-                    )}
-                  </div>
-                  <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${Math.max(pct, 4)}%`,
-                        background: "linear-gradient(90deg, #14b8a6 0%, #6366f1 100%)",
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="text-right shrink-0 w-40">
-                  <div className="flex items-center justify-end gap-3 text-[11.5px]">
-                    <span className="text-muted-foreground">Today <span className="font-mono font-semibold text-foreground">{t.today}</span></span>
-                    <span className="text-muted-foreground">7d <span className="font-mono font-semibold text-foreground">{t.week}</span></span>
-                  </div>
-                  <div className="flex items-center justify-end gap-2 mt-0.5 text-[10.5px]">
-                    <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 size={10} />{t.approvals}</span>
-                    <span className="text-rose-600">✕ {t.declines}</span>
-                    {t.last_at && (
-                      <span className="text-faint">· {new Date(t.last_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </Card>
-
-      {/* Workflow inbox — assigned to me */}
-      <Card>
-        <CardTitle
-          subtitle="Click Open to review the request and Approve, Reject or Send back."
-          right={
-            <Link to="/approvals" className="text-[11.5px] font-semibold text-primary hover:underline">
-              Open inbox →
-            </Link>
-          }
-        >
-          <span className="flex items-center gap-2">
-            Pending approval jobs
-            <span
-              className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full"
-              style={{ background: "#f59e0b", color: "#3a2606" }}
-            >
-              {wfInbox.length}
-            </span>
-          </span>
-        </CardTitle>
-        {wfInbox.length === 0 ? (
-          <div className="text-center text-faint text-sm py-6">✓ Nothing awaiting your decision</div>
-        ) : (
-          <div className="flex flex-col divide-y divide-row-divider">
-            {wfInbox.slice(0, 6).map((inst: any) => {
-              const step = inst.step_config;
-              const totalSteps = inst.workflow?.steps?.length ?? 0;
-              const txLabel =
-                CANONICAL_TX_TYPES.find((t) => t.code === inst.transaction_type)?.label ??
-                inst.transaction_type;
-              return (
-                <div key={inst.id} className="flex items-center gap-3 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[13px] font-semibold text-foreground truncate">
-                        {inst.reference_label}
-                      </span>
-                      {inst.overdue && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-700 border border-rose-500/30">
-                          SLA overdue
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11.5px] text-faint mt-0.5">
-                      {txLabel} · Step {inst.current_step}/{totalSteps} — {step?.name ?? "—"}
-                      {inst.amount != null && <> · {money(Number(inst.amount))}</>}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setOpenInst(inst)}
-                    className={cn(
-                      "shrink-0 inline-flex items-center h-8 px-3 rounded-md",
-                      "bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary-hover",
-                    )}
-                  >
-                    Open
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Card>
 
       {openInst && (
         <InstanceDetailModal instance={openInst} onClose={() => setOpenInst(null)} />
