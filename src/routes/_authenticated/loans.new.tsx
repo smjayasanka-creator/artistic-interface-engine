@@ -918,6 +918,13 @@ function NewLoan() {
                       toast.error(`Select a supplier for "${missingSup.name}"`);
                       return;
                     }
+                    const missingManual = productCharges.find(
+                      (c: any) => c.charge_type === "manual" && selectedCharges[c.id] && !(Number(manualAmounts[c.id]) > 0),
+                    );
+                    if (missingManual) {
+                      toast.error(`Enter amount for "${missingManual.name}"`);
+                      return;
+                    }
                     submit.mutate({
                       data: {
                         client_id: clientId,
