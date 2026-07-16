@@ -131,7 +131,15 @@ function Dashboard() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const wfFn = useServerFn(listInstances);
+  const { data: wfInbox = [] } = useQuery({
+    queryKey: ["workflow_instances", "mine"],
+    queryFn: () => wfFn({ data: { mine: true, status: "pending" } as any }),
+  });
+  const [openInst, setOpenInst] = useState<any | null>(null);
+
   if (!data) return <div className="text-sm text-muted-foreground">Loading…</div>;
+
 
   const totalPar = data.par.reduce((s, b) => s + b.amount, 0);
   const team = data.team ?? [];
