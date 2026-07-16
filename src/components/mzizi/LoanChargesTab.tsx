@@ -220,6 +220,7 @@ export function LoanChargesTab() {
                     credit_account_id: c.credit_account_id,
                     capitalize: !!c.capitalize,
                     capitalized_receivable_account_id: c.capitalized_receivable_account_id ?? null,
+                    supplier_client_id: c.supplier_client_id ?? null,
                     active: c.active,
                     product_ids: c.product_ids ?? [],
                   },
