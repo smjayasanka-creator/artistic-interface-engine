@@ -1486,6 +1486,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
         cash_account_id: data.cash_account_id ?? null,
         interest_income_account_id: data.interest_income_account_id ?? null,
         fee_income_account_id: data.fee_income_account_id ?? null,
+        accrued_interest_account_id: data.accrued_interest_account_id ?? null,
+        interest_receivable_account_id: data.interest_receivable_account_id ?? null,
         required_documents: data.required_documents ?? [],
         segment: data.segment ?? "micro",
       } as never)
