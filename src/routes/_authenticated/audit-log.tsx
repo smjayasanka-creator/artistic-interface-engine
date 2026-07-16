@@ -9,6 +9,11 @@ import { TablePagination } from "@/components/mzizi/TablePagination";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/audit-log")({
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["audit-log", "all", 1, 25],
+      queryFn: () => listAuditLog({ data: { limit: 25, offset: 0 } }),
+    }),
   component: AuditLogPage,
 });
 
