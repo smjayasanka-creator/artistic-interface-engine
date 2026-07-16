@@ -134,8 +134,8 @@ function LoansList() {
         {rows.map((l: any) => (
           <Link
             key={l.id}
-            to="/clients/$id"
-            params={{ id: l.client?.id }}
+            to="/loans/$id"
+            params={{ id: l.id }}
             className="grid gap-4 items-center text-[12.5px] py-3 px-5 border-b border-row-divider last:border-b-0 hover:bg-row-hover"
             style={{ gridTemplateColumns: "1.7fr 1.4fr 1fr 1fr 1.4fr 1fr" }}
           >
