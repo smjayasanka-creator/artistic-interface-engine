@@ -75,9 +75,14 @@ export function LoanChargesTab() {
   const toggleFn = useServerFn(toggleLoanCharge);
   const deleteFn = useServerFn(deleteLoanCharge);
 
+  const clientsFn = useServerFn(getClients);
   const { data: charges } = useQuery({ queryKey: ["loan-charges"], queryFn: () => listFn() });
   const { data: products } = useQuery({ queryKey: ["loan-products-all"], queryFn: () => productsFn() });
   const { data: glAccounts } = useQuery({ queryKey: ["gl-accounts-loan-charge"], queryFn: () => glFn() });
+  const { data: clients } = useQuery({
+    queryKey: ["clients", "all"],
+    queryFn: () => clientsFn({ data: { filter: "all" } }),
+  });
 
   const [editing, setEditing] = useState<null | { id?: string; values: typeof EMPTY }>(null);
 
