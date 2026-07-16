@@ -242,18 +242,26 @@ function NewLoan() {
     () =>
       productCharges
         .filter((c) => selectedCharges[c.id])
-        .map((c) => ({ charge_id: c.id, name: c.name, amount: chargeAmount(c) })),
+        .map((c) => ({
+          charge_id: c.id,
+          name: c.name,
+          amount: chargeAmount(c),
+          canCapitalize: !!c.capitalize,
+          capitalize: !!c.capitalize && capitalizedCharges[c.id] !== false, // default on when allowed
+        })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [productCharges, selectedCharges, principalNum],
+    [productCharges, selectedCharges, capitalizedCharges, principalNum],
   );
   const chargesTotal = appliedCharges.reduce((s, c) => s + c.amount, 0);
+  const capitalizedTotal = appliedCharges.filter((c) => c.capitalize).reduce((s, c) => s + c.amount, 0);
+  const amortizationBase = principalNum + capitalizedTotal;
 
 
   const schedule = useMemo(() => {
-    if (!principalNum || !rateNum || !term) return null;
+    if (!amortizationBase || !rateNum || !term) return null;
     if (scheduleType === "structured") {
       return generateStructuredSchedule({
-        principal: principalNum,
+        principal: amortizationBase,
         annualRatePct: rateNum,
         termMonths: term,
         frequency,
@@ -262,13 +270,13 @@ function NewLoan() {
       });
     }
     return generateSchedule({
-      principal: principalNum,
+      principal: amortizationBase,
       annualRatePct: rateNum,
       termMonths: term,
       frequency,
       method,
     });
-  }, [principalNum, rateNum, term, frequency, method, scheduleType, overrides]);
+  }, [amortizationBase, rateNum, term, frequency, method, scheduleType, overrides]);
 
   const termOptions = useMemo(() => {
     const lo = product?.min_term_months ?? 1;
