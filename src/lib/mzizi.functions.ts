@@ -2804,7 +2804,7 @@ export const getLoan = createServerFn({ method: "GET" })
     const { data: loan, error } = await supabase
       .from("loan")
       .select(
-        "id, status, principal, term_months, annual_rate_pct, frequency, first_installment_on, disbursed_at, submitted_at, created_at, purpose, client:client_id(id, full_name, avatar_color, phone, national_id), product:product_id(id, name, interest_method, repayment_frequency), branch:branch_id(id, code, name)",
+        "id, status, principal, term_months, annual_rate_pct, frequency, disbursed_at, submitted_at, created_at, purpose, client:client_id(id, full_name, avatar_color, phone, national_id), product:product_id(id, name, interest_method, repayment_frequency), branch:branch_id(id, code, name)",
       )
       .eq("id", data.id)
       .maybeSingle();
