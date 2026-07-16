@@ -26,12 +26,14 @@ type StepDraft = {
   name: string;
   approver_kind: (typeof APPROVER_KINDS)[number];
   role: string | null;
+  custom_role_id: string | null;
   branch_id: string | null;
   user_id: string | null;
   required_approvals: number;
   sla_hours: number | null;
   sla_action: (typeof SLA_ACTIONS)[number];
   escalation_role: string | null;
+  escalation_custom_role_id: string | null;
 };
 
 function emptyStep(order: number): StepDraft {
@@ -39,13 +41,15 @@ function emptyStep(order: number): StepDraft {
     step_order: order,
     name: `Step ${order}`,
     approver_kind: "role",
-    role: "branch_manager",
+    role: null,
+    custom_role_id: null,
     branch_id: null,
     user_id: null,
     required_approvals: 1,
     sla_hours: 24,
     sla_action: "flag",
     escalation_role: null,
+    escalation_custom_role_id: null,
   };
 }
 
