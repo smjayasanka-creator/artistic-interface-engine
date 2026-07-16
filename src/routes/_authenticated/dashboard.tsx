@@ -340,48 +340,6 @@ function Dashboard() {
         <InstanceDetailModal instance={openInst} onClose={() => setOpenInst(null)} />
       )}
 
-
-      {/* Approvals — kept intact */}
-      <Card>
-        <CardTitle>
-          <span className="flex items-center gap-2">
-            Pending approvals
-            <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#f59e0b", color: "#3a2606" }}>
-              {data.approvals.length}
-            </span>
-          </span>
-        </CardTitle>
-        <div className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold pb-2.5 border-b border-border" style={{ gridTemplateColumns: "1.5fr 1.4fr 1fr .9fr .8fr 1.3fr" }}>
-          <div>Client</div><div>Product</div><div>Amount</div><div>Submitted</div><div>Risk</div><div className="text-right">Decision</div>
-        </div>
-        {data.approvals.length === 0 && <div className="text-center text-faint text-sm py-7">✓ All applications reviewed</div>}
-        {data.approvals.map((a: any) => (
-          <div key={a.id} className="grid items-center text-[12.5px] py-3 border-b border-row-divider last:border-b-0" style={{ gridTemplateColumns: "1.5fr 1.4fr 1fr .9fr .8fr 1.3fr" }}>
-            <div className="font-semibold flex items-center gap-2.5">
-              <Avatar name={a.client?.full_name ?? "?"} color={a.client?.avatar_color} size={28} />
-              {a.client?.full_name}
-            </div>
-            <div className="text-secondary-foreground">{a.product?.name}</div>
-            <div className="font-mono font-semibold">{money(a.principal)}</div>
-            <div className="text-muted-foreground">{new Date(a.submitted_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}</div>
-            <div><RiskBadge risk={a.client?.risk_grade} /></div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => decline.mutate({ data: { loan_id: a.id } })}
-                className="border border-border-strong bg-card text-muted-foreground text-[11.5px] font-medium px-3 py-1.5 rounded-md hover:border-destructive hover:text-destructive"
-              >
-                Decline
-              </button>
-              <button
-                onClick={() => approve.mutate({ data: { loan_id: a.id } })}
-                className="bg-primary text-primary-foreground text-[11.5px] font-semibold px-3 py-1.5 rounded-md hover:bg-primary-hover"
-              >
-                Approve
-              </button>
-            </div>
-          </div>
-        ))}
-      </Card>
     </div>
   );
 }
