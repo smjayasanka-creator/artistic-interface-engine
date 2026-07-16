@@ -1084,6 +1084,7 @@ export const submitApplication = createServerFn({ method: "POST" })
       frequency?: "daily" | "weekly" | "biweekly" | "monthly";
       schedule_type?: "normal" | "structured";
       schedule_overrides?: Record<string, number>;
+      initial_charges?: { charge_id: string; amount: number }[];
     }) =>
       z
         .object({
@@ -1096,6 +1097,9 @@ export const submitApplication = createServerFn({ method: "POST" })
           frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]).optional(),
           schedule_type: z.enum(["normal", "structured"]).optional(),
           schedule_overrides: z.record(z.string(), z.number()).optional(),
+          initial_charges: z
+            .array(z.object({ charge_id: z.string().uuid(), amount: z.number().nonnegative() }))
+            .optional(),
         })
         .parse(i),
   )
@@ -1133,6 +1137,17 @@ export const submitApplication = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw error;
+
+    if (data.initial_charges && data.initial_charges.length) {
+      const rows = data.initial_charges.map((c) => ({
+        loan_id: (loan as any).id,
+        charge_id: c.charge_id,
+        amount: c.amount,
+      }));
+      const { error: chgErr } = await (supabase as any).from("loan_applied_charge").insert(rows);
+      if (chgErr) throw new Error(chgErr.message);
+    }
+
     return loan;
   });
 
