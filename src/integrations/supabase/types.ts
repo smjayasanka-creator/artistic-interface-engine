@@ -2314,6 +2314,71 @@ export type Database = {
           },
         ]
       }
+      loan_accrual: {
+        Row: {
+          accrual_date: string
+          company_id: string
+          created_at: string
+          cumulative_amount: number
+          daily_amount: number
+          entry_id: string | null
+          id: string
+          loan_id: string
+          outstanding_principal: number
+        }
+        Insert: {
+          accrual_date: string
+          company_id: string
+          created_at?: string
+          cumulative_amount: number
+          daily_amount: number
+          entry_id?: string | null
+          id?: string
+          loan_id: string
+          outstanding_principal: number
+        }
+        Update: {
+          accrual_date?: string
+          company_id?: string
+          created_at?: string
+          cumulative_amount?: number
+          daily_amount?: number
+          entry_id?: string | null
+          id?: string
+          loan_id?: string
+          outstanding_principal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_accrual_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_accrual_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_accrual_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_accrual_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "v_loan_outstanding"
+            referencedColumns: ["loan_id"]
+          },
+        ]
+      }
       loan_alco_rate: {
         Row: {
           active: boolean
@@ -2861,8 +2926,78 @@ export type Database = {
           },
         ]
       }
+      loan_installment_reclass: {
+        Row: {
+          amount: number
+          company_id: string
+          created_at: string
+          entry_id: string | null
+          id: string
+          installment_id: string
+          loan_id: string
+          reclass_date: string
+        }
+        Insert: {
+          amount: number
+          company_id: string
+          created_at?: string
+          entry_id?: string | null
+          id?: string
+          installment_id: string
+          loan_id: string
+          reclass_date: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          created_at?: string
+          entry_id?: string | null
+          id?: string
+          installment_id?: string
+          loan_id?: string
+          reclass_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_installment_reclass_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_installment_reclass_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_installment_reclass_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: true
+            referencedRelation: "loan_installment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_installment_reclass_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_installment_reclass_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "v_loan_outstanding"
+            referencedColumns: ["loan_id"]
+          },
+        ]
+      }
       loan_product: {
         Row: {
+          accrued_interest_account_id: string | null
           annual_rate_pct: number
           cash_account_id: string | null
           color: string | null
@@ -2872,6 +3007,7 @@ export type Database = {
           id: string
           interest_income_account_id: string | null
           interest_method: Database["public"]["Enums"]["interest_method"]
+          interest_receivable_account_id: string | null
           is_active: boolean
           max_principal: number | null
           max_term_months: number
@@ -2886,6 +3022,7 @@ export type Database = {
           termination_fee_pct: number
         }
         Insert: {
+          accrued_interest_account_id?: string | null
           annual_rate_pct: number
           cash_account_id?: string | null
           color?: string | null
@@ -2895,6 +3032,7 @@ export type Database = {
           id?: string
           interest_income_account_id?: string | null
           interest_method?: Database["public"]["Enums"]["interest_method"]
+          interest_receivable_account_id?: string | null
           is_active?: boolean
           max_principal?: number | null
           max_term_months?: number
@@ -2909,6 +3047,7 @@ export type Database = {
           termination_fee_pct?: number
         }
         Update: {
+          accrued_interest_account_id?: string | null
           annual_rate_pct?: number
           cash_account_id?: string | null
           color?: string | null
@@ -2918,6 +3057,7 @@ export type Database = {
           id?: string
           interest_income_account_id?: string | null
           interest_method?: Database["public"]["Enums"]["interest_method"]
+          interest_receivable_account_id?: string | null
           is_active?: boolean
           max_principal?: number | null
           max_term_months?: number
@@ -2932,6 +3072,13 @@ export type Database = {
           termination_fee_pct?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "loan_product_accrued_interest_account_id_fkey"
+            columns: ["accrued_interest_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "loan_product_cash_account_id_fkey"
             columns: ["cash_account_id"]
@@ -2956,6 +3103,13 @@ export type Database = {
           {
             foreignKeyName: "loan_product_interest_income_account_id_fkey"
             columns: ["interest_income_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_product_interest_receivable_account_id_fkey"
+            columns: ["interest_receivable_account_id"]
             isOneToOne: false
             referencedRelation: "gl_account"
             referencedColumns: ["id"]

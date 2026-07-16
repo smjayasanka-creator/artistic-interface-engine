@@ -906,6 +906,8 @@ function ProductsTab() {
     cashAcct: "",
     interestAcct: "",
     feeAcct: "",
+    accruedAcct: "",
+    interestRecvAcct: "",
     requiredDocs: [] as string[],
     segment: "micro" as LoanSegment,
   };
@@ -971,6 +973,8 @@ function ProductsTab() {
       cashAcct: p.cash_account_id ?? "",
       interestAcct: p.interest_income_account_id ?? "",
       feeAcct: p.fee_income_account_id ?? "",
+      accruedAcct: (p as any).accrued_interest_account_id ?? "",
+      interestRecvAcct: (p as any).interest_receivable_account_id ?? "",
       requiredDocs: Array.isArray(p.required_documents) ? [...p.required_documents] : [],
       segment: ((p.segment as LoanSegment) ?? "micro"),
     });
@@ -1004,6 +1008,8 @@ function ProductsTab() {
       cash_account_id: form.cashAcct || null,
       interest_income_account_id: form.interestAcct || null,
       fee_income_account_id: form.feeAcct || null,
+      accrued_interest_account_id: form.accruedAcct || null,
+      interest_receivable_account_id: form.interestRecvAcct || null,
       required_documents: form.requiredDocs.map((s) => s.trim()).filter(Boolean),
       segment: form.segment,
     };
@@ -1107,6 +1113,18 @@ function ProductsTab() {
                 <select value={form.feeAcct} onChange={(e) => setForm({ ...form, feeAcct: e.target.value })} className={selectCls}>
                   <option value="">— none —</option>
                   {incomeAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                </select>
+              </FormField>
+              <FormField label="Accrued interest receivable (DR daily accrual)" span={6}>
+                <select value={form.accruedAcct} onChange={(e) => setForm({ ...form, accruedAcct: e.target.value })} className={selectCls}>
+                  <option value="">— none (accrual disabled) —</option>
+                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                </select>
+              </FormField>
+              <FormField label="Interest receivable (DR on installment due)" span={6}>
+                <select value={form.interestRecvAcct} onChange={(e) => setForm({ ...form, interestRecvAcct: e.target.value })} className={selectCls}>
+                  <option value="">— none —</option>
+                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
                 </select>
               </FormField>
             </FormGrid>

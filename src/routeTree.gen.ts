@@ -66,6 +66,7 @@ import { Route as AuthenticatedAccountsBankReconciliationRouteImport } from './r
 import { Route as AuthenticatedAccountsPaymentsIndexRouteImport } from './routes/_authenticated/accounts.payments.index'
 import { Route as AuthenticatedAccountsJournalIndexRouteImport } from './routes/_authenticated/accounts.journal.index'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
+import { Route as ApiPublicHooksLoanAccrueRouteImport } from './routes/api/public/hooks/loan-accrue'
 import { Route as ApiPublicHooksFdMatureRouteImport } from './routes/api/public/hooks/fd-mature'
 import { Route as ApiPublicHooksFdAccrueRouteImport } from './routes/api/public/hooks/fd-accrue'
 import { Route as ApiPublicHooksEodCloseRouteImport } from './routes/api/public/hooks/eod-close'
@@ -399,6 +400,12 @@ const ApiPublicV1HealthRoute = ApiPublicV1HealthRouteImport.update({
   path: '/api/public/v1/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksLoanAccrueRoute =
+  ApiPublicHooksLoanAccrueRouteImport.update({
+    id: '/api/public/hooks/loan-accrue',
+    path: '/api/public/hooks/loan-accrue',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksFdMatureRoute = ApiPublicHooksFdMatureRouteImport.update({
   id: '/api/public/hooks/fd-mature',
   path: '/api/public/hooks/fd-mature',
@@ -532,6 +539,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
+  '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
   '/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
@@ -599,6 +607,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
+  '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/accounts/journal': typeof AuthenticatedAccountsJournalIndexRoute
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsIndexRoute
@@ -672,6 +681,7 @@ export interface FileRoutesById {
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
+  '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/_authenticated/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
   '/_authenticated/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
@@ -745,6 +755,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/eod-close'
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
+    | '/api/public/hooks/loan-accrue'
     | '/api/public/v1/health'
     | '/accounts/journal/'
     | '/accounts/payments/'
@@ -812,6 +823,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/eod-close'
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
+    | '/api/public/hooks/loan-accrue'
     | '/api/public/v1/health'
     | '/accounts/journal'
     | '/accounts/payments'
@@ -884,6 +896,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/eod-close'
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
+    | '/api/public/hooks/loan-accrue'
     | '/api/public/v1/health'
     | '/_authenticated/accounts/journal/'
     | '/_authenticated/accounts/payments/'
@@ -904,6 +917,7 @@ export interface RootRouteChildren {
   ApiPublicHooksEodCloseRoute: typeof ApiPublicHooksEodCloseRoute
   ApiPublicHooksFdAccrueRoute: typeof ApiPublicHooksFdAccrueRoute
   ApiPublicHooksFdMatureRoute: typeof ApiPublicHooksFdMatureRoute
+  ApiPublicHooksLoanAccrueRoute: typeof ApiPublicHooksLoanAccrueRoute
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
   ApiPublicV1AtmAuthorizeRoute: typeof ApiPublicV1AtmAuthorizeRoute
   ApiPublicV1CeftTransferRoute: typeof ApiPublicV1CeftTransferRoute
@@ -1315,6 +1329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/loan-accrue': {
+      id: '/api/public/hooks/loan-accrue'
+      path: '/api/public/hooks/loan-accrue'
+      fullPath: '/api/public/hooks/loan-accrue'
+      preLoaderRoute: typeof ApiPublicHooksLoanAccrueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/fd-mature': {
       id: '/api/public/hooks/fd-mature'
       path: '/api/public/hooks/fd-mature'
@@ -1611,6 +1632,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksEodCloseRoute: ApiPublicHooksEodCloseRoute,
   ApiPublicHooksFdAccrueRoute: ApiPublicHooksFdAccrueRoute,
   ApiPublicHooksFdMatureRoute: ApiPublicHooksFdMatureRoute,
+  ApiPublicHooksLoanAccrueRoute: ApiPublicHooksLoanAccrueRoute,
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
   ApiPublicV1AtmAuthorizeRoute: ApiPublicV1AtmAuthorizeRoute,
   ApiPublicV1CeftTransferRoute: ApiPublicV1CeftTransferRoute,

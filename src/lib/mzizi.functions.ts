@@ -1315,12 +1315,13 @@ export const recordRepayment = createServerFn({ method: "POST" })
     // Use product-configured accounts if present
     const { data: product } = await supabase
       .from("loan_product")
-      .select("principal_account_id, cash_account_id, interest_income_account_id")
+      .select("principal_account_id, cash_account_id, interest_income_account_id, interest_receivable_account_id")
       .eq("id", loan.product_id)
       .maybeSingle<{
         principal_account_id: string | null;
         cash_account_id: string | null;
         interest_income_account_id: string | null;
+        interest_receivable_account_id: string | null;
       }>();
     let cashId = product?.cash_account_id ?? null;
     let arId = product?.principal_account_id ?? null;
@@ -1331,7 +1332,10 @@ export const recordRepayment = createServerFn({ method: "POST" })
       arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
       incomeId = incomeId ?? accts?.find((a) => a.code === "4000")?.id ?? null;
     }
-    if (!cashId || !arId || !incomeId) throw new Error("Chart of accounts missing — configure product accounts");
+    // Prefer Interest Receivable when configured (accrual path); fall back to
+    // Interest Income when the product isn't wired for accrual.
+    const intCredit = product?.interest_receivable_account_id ?? incomeId;
+    if (!cashId || !arId || !intCredit) throw new Error("Chart of accounts missing — configure product accounts");
     const ref = "RC-" + Math.floor(1000 + Math.random() * 9000);
     const idem = `loans:repay:${loan.id}:${ref}`;
     const { data: entryId, error: rpcErr } = await supabase.rpc("post_entry", {
@@ -1341,7 +1345,7 @@ export const recordRepayment = createServerFn({ method: "POST" })
       _lines: [
         { account_id: cashId, debit: data.amount, credit: 0 },
         { account_id: arId, debit: 0, credit: principalPortion },
-        { account_id: incomeId, debit: 0, credit: interestPortion },
+        { account_id: intCredit, debit: 0, credit: interestPortion },
       ] as any,
       _branch_id: loan.branch_id,
       _source_module: "loans",
@@ -1418,6 +1422,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       cash_account_id?: string | null;
       interest_income_account_id?: string | null;
       fee_income_account_id?: string | null;
+      accrued_interest_account_id?: string | null;
+      interest_receivable_account_id?: string | null;
       required_documents?: string[];
       segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
@@ -1441,6 +1447,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
           cash_account_id: z.string().uuid().nullable().optional(),
           interest_income_account_id: z.string().uuid().nullable().optional(),
           fee_income_account_id: z.string().uuid().nullable().optional(),
+          accrued_interest_account_id: z.string().uuid().nullable().optional(),
+          interest_receivable_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
           segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
         })
@@ -1478,6 +1486,8 @@ export const createLoanProduct = createServerFn({ method: "POST" })
         cash_account_id: data.cash_account_id ?? null,
         interest_income_account_id: data.interest_income_account_id ?? null,
         fee_income_account_id: data.fee_income_account_id ?? null,
+        accrued_interest_account_id: data.accrued_interest_account_id ?? null,
+        interest_receivable_account_id: data.interest_receivable_account_id ?? null,
         required_documents: data.required_documents ?? [],
         segment: data.segment ?? "micro",
       } as never)
@@ -1525,6 +1535,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       cash_account_id?: string | null;
       interest_income_account_id?: string | null;
       fee_income_account_id?: string | null;
+      accrued_interest_account_id?: string | null;
+      interest_receivable_account_id?: string | null;
       required_documents?: string[];
       segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
@@ -1548,6 +1560,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
           cash_account_id: z.string().uuid().nullable().optional(),
           interest_income_account_id: z.string().uuid().nullable().optional(),
           fee_income_account_id: z.string().uuid().nullable().optional(),
+          accrued_interest_account_id: z.string().uuid().nullable().optional(),
+          interest_receivable_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
           segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
         })
@@ -1576,6 +1590,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
         cash_account_id: data.cash_account_id ?? null,
         interest_income_account_id: data.interest_income_account_id ?? null,
         fee_income_account_id: data.fee_income_account_id ?? null,
+        accrued_interest_account_id: data.accrued_interest_account_id ?? null,
+        interest_receivable_account_id: data.interest_receivable_account_id ?? null,
         required_documents: data.required_documents ?? [],
         ...(data.segment ? { segment: data.segment } : {}),
       } as never)
