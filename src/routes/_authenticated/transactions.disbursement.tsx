@@ -20,10 +20,15 @@ type PaymentChannel = "cash" | "mpesa" | "bank" | "cheque";
 function DisbursementPage() {
   const qc = useQueryClient();
   const listFn = useServerFn(getPendingDisbursements);
+  const sessionFn = useServerFn(getSession);
+  const { data: session } = useQuery({ queryKey: ["session"], queryFn: () => sessionFn() });
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["pending-disbursements"],
     queryFn: () => listFn(),
   });
+  const role = (session?.staff as any)?.role as string | undefined;
+  const roles = (session as any)?.roles ?? [];
+  const canDisburse = ["branch_manager", "admin"].includes(role ?? "") || roles.includes("admin") || roles.includes("branch_manager");
 
   const [selected, setSelected] = useState<any | null>(null);
   const [channel, setChannel] = useState<PaymentChannel>("cash");
