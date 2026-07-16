@@ -272,6 +272,75 @@ function Dashboard() {
         })}
       </Card>
 
+      {/* Workflow inbox — assigned to me */}
+      <Card>
+        <CardTitle
+          subtitle="Click Open to review the request and Approve, Reject or Send back."
+          right={
+            <Link to="/approvals" className="text-[11.5px] font-semibold text-primary hover:underline">
+              Open inbox →
+            </Link>
+          }
+        >
+          <span className="flex items-center gap-2">
+            Pending approval jobs
+            <span
+              className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: "#f59e0b", color: "#3a2606" }}
+            >
+              {wfInbox.length}
+            </span>
+          </span>
+        </CardTitle>
+        {wfInbox.length === 0 ? (
+          <div className="text-center text-faint text-sm py-6">✓ Nothing awaiting your decision</div>
+        ) : (
+          <div className="flex flex-col divide-y divide-row-divider">
+            {wfInbox.slice(0, 6).map((inst: any) => {
+              const step = inst.step_config;
+              const totalSteps = inst.workflow?.steps?.length ?? 0;
+              const txLabel =
+                CANONICAL_TX_TYPES.find((t) => t.code === inst.transaction_type)?.label ??
+                inst.transaction_type;
+              return (
+                <div key={inst.id} className="flex items-center gap-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[13px] font-semibold text-foreground truncate">
+                        {inst.reference_label}
+                      </span>
+                      {inst.overdue && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-700 border border-rose-500/30">
+                          SLA overdue
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11.5px] text-faint mt-0.5">
+                      {txLabel} · Step {inst.current_step}/{totalSteps} — {step?.name ?? "—"}
+                      {inst.amount != null && <> · {money(Number(inst.amount))}</>}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setOpenInst(inst)}
+                    className={cn(
+                      "shrink-0 inline-flex items-center h-8 px-3 rounded-md",
+                      "bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary-hover",
+                    )}
+                  >
+                    Open
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
+      {openInst && (
+        <InstanceDetailModal instance={openInst} onClose={() => setOpenInst(null)} />
+      )}
+
+
       {/* Approvals — kept intact */}
       <Card>
         <CardTitle>
