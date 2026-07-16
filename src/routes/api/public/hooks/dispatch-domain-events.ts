@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authenticateCronRequest } from "@/lib/api-auth.server";
 
 /**
  * Domain-event dispatcher worker.
@@ -17,9 +18,7 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-domain-events")
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY;
-        const provided = request.headers.get("apikey") ?? "";
-        if (!expected || provided !== expected) {
+        if (!(await authenticateCronRequest(request))) {
           return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
