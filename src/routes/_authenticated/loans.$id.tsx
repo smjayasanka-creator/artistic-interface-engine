@@ -127,55 +127,31 @@ function Overview({ loan, outstanding, arrears, nextDue, totals }: any) {
   return (
     <div className="space-y-5">
       {/* Arrears */}
-      <div className="grid gap-3 md:grid-cols-2">
-        <Card padded={false}>
-          <div className={cn("px-5 py-3 border-b border-border flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold",
-            arrears.count > 0 ? "text-rose-700 bg-rose-500/5" : "text-faint")}>
-            <AlertTriangle size={13} /> Arrears
-          </div>
-          <div className="p-5">
-            {arrears.count === 0 ? (
-              <div className="text-[13px] text-emerald-700">No overdue installments. Loan is current.</div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <StatBox label="Overdue installments" value={String(arrears.count)} tone="danger" />
-                <StatBox label="Days past due" value={String(arrears.days_past_due)} tone="danger" />
-                <StatBox label="Principal in arrears" value={money(arrears.principal)} />
-                <StatBox label="Interest in arrears" value={money(arrears.interest)} />
-                <div className="col-span-2 border-t border-border pt-3 flex items-center justify-between">
-                  <span className="text-[11px] uppercase tracking-wider text-faint font-semibold">Total arrears</span>
-                  <span className="font-mono text-lg font-semibold text-rose-700">{money(arrears.total)}</span>
-                </div>
-                {arrears.oldest_due_date && (
-                  <div className="col-span-2 text-[11.5px] text-faint">Oldest overdue: {shortDate(arrears.oldest_due_date)}</div>
-                )}
+      <Card padded={false}>
+        <div className={cn("px-5 py-3 border-b border-border flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold",
+          arrears.count > 0 ? "text-rose-700 bg-rose-500/5" : "text-faint")}>
+          <AlertTriangle size={13} /> Arrears
+        </div>
+        <div className="p-5">
+          {arrears.count === 0 ? (
+            <div className="text-[13px] text-emerald-700">No overdue installments. Loan is current.</div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <StatBox label="Overdue installments" value={String(arrears.count)} tone="danger" />
+              <StatBox label="Days past due" value={String(arrears.days_past_due)} tone="danger" />
+              <StatBox label="Principal in arrears" value={money(arrears.principal)} />
+              <StatBox label="Interest in arrears" value={money(arrears.interest)} />
+              <div className="col-span-2 border-t border-border pt-3 flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wider text-faint font-semibold">Total arrears</span>
+                <span className="font-mono text-lg font-semibold text-rose-700">{money(arrears.total)}</span>
               </div>
-            )}
-          </div>
-        </Card>
-
-        <Card padded={false}>
-          <div className="px-5 py-3 border-b border-border flex items-center gap-2 text-[11px] uppercase tracking-wider text-faint font-semibold">
-            <Calendar size={13} /> Next installment due
-          </div>
-          <div className="p-5">
-            {!nextDue ? (
-              <div className="text-[13px] text-faint">No upcoming installments.</div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">Due date</div>
-                  <div className="text-lg font-semibold mt-1">{shortDate(nextDue.date)}</div>
-                </div>
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">Amount due</div>
-                  <div className="text-lg font-mono font-semibold text-primary mt-1">{money(nextDue.amount)}</div>
-                </div>
-              </div>
-            )}
-          </div>
-        </Card>
-      </div>
+              {arrears.oldest_due_date && (
+                <div className="col-span-2 text-[11.5px] text-faint">Oldest overdue: {shortDate(arrears.oldest_due_date)}</div>
+              )}
+            </div>
+          )}
+        </div>
+      </Card>
 
       {/* Loan info + Timeline */}
       <div className="grid gap-3 md:grid-cols-2">
