@@ -1560,6 +1560,8 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
           cash_account_id: z.string().uuid().nullable().optional(),
           interest_income_account_id: z.string().uuid().nullable().optional(),
           fee_income_account_id: z.string().uuid().nullable().optional(),
+          accrued_interest_account_id: z.string().uuid().nullable().optional(),
+          interest_receivable_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
           segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
         })
