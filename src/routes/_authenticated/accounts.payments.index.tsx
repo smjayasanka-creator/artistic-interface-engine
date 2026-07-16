@@ -9,6 +9,11 @@ import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/accounts/payments/")({
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["payments", "", "", "", "", 1, 25],
+      queryFn: () => getPayments({ data: { page: 1, pageSize: 25 } }),
+    }),
   component: PaymentsPage,
 });
 

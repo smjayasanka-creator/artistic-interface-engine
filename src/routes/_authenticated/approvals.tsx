@@ -10,6 +10,11 @@ import { cn } from "@/lib/utils";
 import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/approvals")({
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["workflow_instances", "mine"],
+      queryFn: () => listInstances({ data: { mine: true, status: "pending" } as any }),
+    }),
   component: Approvals,
 });
 

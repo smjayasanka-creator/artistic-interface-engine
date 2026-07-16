@@ -11,6 +11,11 @@ import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/loans/")({
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["loans", 1, 25],
+      queryFn: () => getLoans({ data: { page: 1, pageSize: 25 } }),
+    }),
   component: LoansList,
 });
 
