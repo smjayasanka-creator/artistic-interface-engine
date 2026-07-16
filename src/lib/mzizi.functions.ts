@@ -108,6 +108,14 @@ export const getDashboard = createServerFn({ method: "GET" })
     startOfDay.setHours(0, 0, 0, 0);
     const startOfDayIso = startOfDay.toISOString();
 
+    const now = serverNow();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const monthStartIso = startOfMonth.toISOString();
+    const monthEndIso = endOfMonth.toISOString();
+    const monthStartDate = monthStartIso.slice(0, 10);
+    const monthEndDate = monthEndIso.slice(0, 10);
+
     const [
       { count: activeClients },
       { data: outstanding },
@@ -118,6 +126,11 @@ export const getDashboard = createServerFn({ method: "GET" })
       { data: meetings },
       { data: wfActions },
       { data: staffRows },
+      { data: monthDisbursals },
+      { data: monthRepays },
+      { data: savingsTxns },
+      { data: installments },
+      { count: newClientsCount },
     ] = await Promise.all([
       supabase.from("client").select("id", { count: "exact", head: true }).eq("status", "active"),
       supabase.from("v_loan_outstanding").select("outstanding_principal"),
@@ -140,6 +153,15 @@ export const getDashboard = createServerFn({ method: "GET" })
         .select("actor_user_id, decision, acted_at")
         .gte("acted_at", weekAgoIso),
       supabase.from("staff").select("id, user_id, full_name, role"),
+      supabase.from("loan").select("principal").not("disbursed_at", "is", null).gte("disbursed_at", monthStartIso).lte("disbursed_at", monthEndIso),
+      supabase.from("repayment").select("amount").gte("received_at", monthStartIso).lte("received_at", monthEndIso),
+      supabase.from("savings_transaction").select("amount, txn_type").gte("txn_date", monthStartDate).lte("txn_date", monthEndDate),
+      supabase
+        .from("loan_installment")
+        .select("principal_due, interest_due, fee_due, principal_paid, interest_paid, fee_paid")
+        .gte("due_date", monthStartDate)
+        .lte("due_date", monthEndDate),
+      supabase.from("client").select("id", { count: "exact", head: true }).gte("joined_on", monthStartDate).lte("joined_on", monthEndDate),
     ]);
 
     const outstandingTotal = (outstanding ?? []).reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0);
@@ -174,6 +196,24 @@ export const getDashboard = createServerFn({ method: "GET" })
       maxWeek: team.reduce((m, r) => Math.max(m, r.week), 0),
     };
 
+    const monthDisbursed = (monthDisbursals ?? []).reduce((s, r) => s + Number(r.principal), 0);
+    const monthRepaid = (monthRepays ?? []).reduce((s, r) => s + Number(r.amount), 0);
+    const portfolioGrowth = monthDisbursed - monthRepaid;
+
+    const deposits = (savingsTxns ?? []).filter((t: any) => t.txn_type === "deposit").reduce((s, r) => s + Number(r.amount), 0);
+    const withdrawals = (savingsTxns ?? []).filter((t: any) => t.txn_type === "withdrawal").reduce((s, r) => s + Number(r.amount), 0);
+    const depositNetIntake = deposits - withdrawals;
+
+    const totalDue = (installments ?? []).reduce(
+      (s, r) => s + Number(r.principal_due ?? 0) + Number(r.interest_due ?? 0) + Number(r.fee_due ?? 0),
+      0,
+    );
+    const totalPaid = (installments ?? []).reduce(
+      (s, r) => s + Number(r.principal_paid ?? 0) + Number(r.interest_paid ?? 0) + Number(r.fee_paid ?? 0),
+      0,
+    );
+    const dueCollectionRatio = totalDue > 0 ? totalPaid / totalDue : 0;
+
     return {
       kpis: {
         activeClients: activeClients ?? 0,
@@ -181,6 +221,11 @@ export const getDashboard = createServerFn({ method: "GET" })
         par30plus,
         collectedToday,
         disbursedWeek,
+        disbursement: monthDisbursed,
+        portfolioGrowth,
+        depositNetIntake,
+        dueCollectionRatio,
+        newCustomers: newClientsCount ?? 0,
       },
       par: parBuckets,
       approvals: approvals ?? [],

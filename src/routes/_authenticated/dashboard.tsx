@@ -2,7 +2,7 @@ import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Users, Wallet, AlertTriangle, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Users, Wallet, Banknote, TrendingUp, Percent } from "lucide-react";
 import { getDashboard } from "@/lib/mzizi.functions";
 import { listInstances, CANONICAL_TX_TYPES } from "@/lib/workflow.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
@@ -60,7 +60,7 @@ const TONES: Record<string, KpiTone> = {
 };
 
 function VibrantKpi({
-  tone, label, value, delta, icon: Icon, to,
+  tone, label, value, delta, icon: Icon, to, format = "money",
 }: {
   tone: keyof typeof TONES;
   label: string;
@@ -68,8 +68,15 @@ function VibrantKpi({
   delta?: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   to?: string;
+  format?: "money" | "percent" | "number";
 }) {
   const t = TONES[tone];
+  const displayValue = (() => {
+    if (typeof value !== "number") return value;
+    if (format === "percent") return `${(value * 100).toFixed(1)}%`;
+    if (format === "number") return value.toLocaleString();
+    return money(value);
+  })();
   const inner = (
     <>
       <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20" style={{ background: "radial-gradient(circle, #fff 0%, transparent 70%)" }} />
@@ -80,7 +87,7 @@ function VibrantKpi({
         </div>
       </div>
       <div className="relative text-[22px] font-semibold tracking-tight leading-none">
-        {typeof value === "number" ? money(value) : value}
+        {displayValue}
       </div>
       {delta && (
         <div className="relative text-[11px] font-medium mt-2" style={{ color: "rgba(255,255,255,.9)" }}>{delta}</div>
@@ -130,11 +137,11 @@ function Dashboard() {
     <div className="flex flex-col gap-5 animate-fadein">
       {/* Vibrant KPIs */}
       <div className="grid grid-cols-5 gap-3.5">
-        <VibrantKpi tone="indigo" to="/clients" label="Active clients" value={String(data.kpis.activeClients)} delta={`+${Math.floor(data.kpis.activeClients / 20 || 1)} this week`} icon={Users} />
-        <VibrantKpi tone="teal"   to="/loans" label="Portfolio outstanding" value={data.kpis.outstanding} delta="Live balance" icon={Wallet} />
-        <VibrantKpi tone="rose"   to="/collections" label="PAR > 30 days" value={data.kpis.par30plus} delta={totalPar > 0 ? `${((data.kpis.par30plus / totalPar) * 100).toFixed(1)}% of book` : "—"} icon={AlertTriangle} />
-        <VibrantKpi tone="amber"  to="/collections" label="Collected today" value={data.kpis.collectedToday} delta="Since midnight" icon={ArrowDownCircle} />
-        <VibrantKpi tone="violet" to="/transactions" label="Disbursed / week" value={data.kpis.disbursedWeek} delta="Last 7 days" icon={ArrowUpCircle} />
+        <VibrantKpi tone="indigo" to="/transactions" label="Disbursement" value={data.kpis.disbursement} delta="This month" icon={Banknote} />
+        <VibrantKpi tone="teal"   to="/loans" label="Portfolio Growth" value={data.kpis.portfolioGrowth} delta="Disbursed − collected this month" icon={TrendingUp} />
+        <VibrantKpi tone="rose"   to="/savings" label="Deposit Net Intake" value={data.kpis.depositNetIntake} delta="Deposits − withdrawals this month" icon={Wallet} />
+        <VibrantKpi tone="amber"  to="/collections" label="Due Collection Ratio" value={data.kpis.dueCollectionRatio} format="percent" delta="Collected / due this month" icon={Percent} />
+        <VibrantKpi tone="violet" to="/clients" label="Number of New Customers" value={data.kpis.newCustomers} format="number" delta="Joined this month" icon={Users} />
       </div>
 
       {/* Pending approvals + PAR */}
