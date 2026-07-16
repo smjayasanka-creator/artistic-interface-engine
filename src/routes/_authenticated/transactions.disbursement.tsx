@@ -74,7 +74,14 @@ function DisbursementPage() {
               <div className="text-muted-foreground truncate">{l.product?.name ?? "—"}</div>
               <div className="text-muted-foreground truncate">{l.branch?.code ?? l.branch?.name ?? "—"}</div>
               <div className="text-right font-mono text-primary">{money(Number(l.principal))}</div>
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                <Link
+                  to="/loans/$id"
+                  params={{ id: l.id }}
+                  className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12px] font-semibold hover:border-primary"
+                >
+                  View
+                </Link>
                 <button
                   onClick={() => disburse.mutate({ data: { loan_id: l.id } })}
                   disabled={busyId === l.id}
