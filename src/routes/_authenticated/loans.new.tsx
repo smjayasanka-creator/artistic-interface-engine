@@ -90,7 +90,7 @@ function NewLoan() {
   const [clientId, setClientId] = useState("");
   const [productId, setProductId] = useState("");
   const [principal, setPrincipal] = useState("");
-  const [term, setTerm] = useState(6);
+  const [term, setTerm] = useState<number | "">("");
   const [rate, setRate] = useState<number | "">("");
   const [frequency, setFrequency] = useState<Frequency>("monthly");
   const [method, setMethod] = useState<InterestMethod>("flat");
