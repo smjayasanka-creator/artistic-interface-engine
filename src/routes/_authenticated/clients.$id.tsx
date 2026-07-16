@@ -337,8 +337,8 @@ function LoansPanel({ loans }: any) {
   return (
     <Card padded={false}>
       <Table
-        cols="1.5fr 1fr .8fr .8fr 1fr 1fr .8fr"
-        head={["Product", "Principal", "Term", "Rate", "Frequency", "Disbursed", "Status"]}
+        cols="1.5fr 1fr .8fr .8fr 1fr 1fr .8fr .6fr"
+        head={["Product", "Principal", "Term", "Rate", "Frequency", "Disbursed", "Status", ""]}
         rows={loans.map((l: any) => [
           l.product?.name ?? "—",
           <span className="font-mono">{money(l.principal)}</span>,
@@ -347,6 +347,7 @@ function LoansPanel({ loans }: any) {
           l.frequency,
           l.disbursed_at ? shortDate(l.disbursed_at) : "—",
           <StatusBadge status={l.status} />,
+          <Link to="/loans/$id" params={{ id: l.id }} className="text-primary text-[12px] font-semibold hover:underline">View</Link>,
         ])}
       />
     </Card>
