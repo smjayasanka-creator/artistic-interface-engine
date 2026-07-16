@@ -103,9 +103,12 @@ function RootComponent() {
   const router = useRouter();
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      // SIGNED_OUT is handled by the sign-out handler itself (cancel + clear
+      // queries, then navigate). Invalidating here would refetch protected
+      // queries against a cleared session and trigger a 401 storm.
+      if (event !== "SIGNED_IN" && event !== "USER_UPDATED") return;
       router.invalidate();
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+      queryClient.invalidateQueries();
     });
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
