@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getClients, getProducts, submitApplication } from "@/lib/mzizi.functions";
+import { listLoanCharges } from "@/lib/loan-charges.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
@@ -100,15 +101,19 @@ function NewLoan() {
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDoc>>({});
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const [selectedCharges, setSelectedCharges] = useState<Record<string, boolean>>({});
+
 
 
   const clientsFn = useServerFn(getClients);
   const productsFn = useServerFn(getProducts);
+  const chargesFn = useServerFn(listLoanCharges);
   const { data: clients } = useQuery({
     queryKey: ["clients", "all"],
     queryFn: () => clientsFn({ data: { filter: "all" } }),
   });
   const { data: products } = useQuery({ queryKey: ["products"], queryFn: () => productsFn() });
+  const { data: allCharges } = useQuery({ queryKey: ["loan-charges"], queryFn: () => chargesFn() });
   const qc = useQueryClient();
   const submitFn = useServerFn(submitApplication);
   const submit = useMutation({
@@ -130,6 +135,7 @@ function NewLoan() {
     setMethod((p.interest_method as InterestMethod) ?? "flat");
     setCheckedDocs({});
     setUploadedDocs({});
+    setSelectedCharges({});
   }
 
   async function uploadDocFile(doc: string, file: File) {
@@ -194,6 +200,29 @@ function NewLoan() {
 
   const rateNum = typeof rate === "number" ? rate : Number(rate || 0);
   const principalNum = Number(principal || 0);
+
+  const productCharges = useMemo(() => {
+    if (!productId || !allCharges) return [];
+    return (allCharges as any[]).filter(
+      (c) => c.active && Array.isArray(c.product_ids) && c.product_ids.includes(productId),
+    );
+  }, [allCharges, productId]);
+
+  const chargeAmount = (c: any) =>
+    c.charge_type === "variable"
+      ? Math.round(((principalNum * Number(c.amount)) / 100) * 100) / 100
+      : Number(c.amount);
+
+  const appliedCharges = useMemo(
+    () =>
+      productCharges
+        .filter((c) => selectedCharges[c.id])
+        .map((c) => ({ charge_id: c.id, name: c.name, amount: chargeAmount(c) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [productCharges, selectedCharges, principalNum],
+  );
+  const chargesTotal = appliedCharges.reduce((s, c) => s + c.amount, 0);
+
 
   const schedule = useMemo(() => {
     if (!principalNum || !rateNum || !term) return null;
@@ -434,6 +463,58 @@ function NewLoan() {
                     className={readOnlyCls}
                   />
                 </FormField>
+
+                {productId && (
+                  <div className="sm:col-span-12">
+                    <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-1.5">
+                      Initial charges
+                    </div>
+                    {productCharges.length === 0 ? (
+                      <div className="text-[12px] text-muted-foreground border border-dashed border-border rounded-md px-3 py-2">
+                        No charges mapped to this product. Configure them in Administration → Loan charges.
+                      </div>
+                    ) : (
+                      <div className="border border-border rounded-md divide-y divide-row-divider">
+                        {productCharges.map((c: any) => {
+                          const on = !!selectedCharges[c.id];
+                          const amt = chargeAmount(c);
+                          return (
+                            <label
+                              key={c.id}
+                              className="flex items-center gap-3 px-3 py-2 text-[12.5px] cursor-pointer hover:bg-secondary/30"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={on}
+                                onChange={(e) =>
+                                  setSelectedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
+                                }
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium truncate">{c.name}</div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  {c.origin === "inhouse" ? "In-house" : "Outside"} ·{" "}
+                                  {c.charge_type === "variable"
+                                    ? `${Number(c.amount)}% of principal`
+                                    : "Fixed"}
+                                </div>
+                              </div>
+                              <div className="font-mono text-[12px] w-28 text-right">
+                                {money(amt, true)}
+                              </div>
+                            </label>
+                          );
+                        })}
+                        <div className="flex items-center justify-between px-3 py-2 bg-secondary/40 text-[12px]">
+                          <span className="font-semibold">Total charges</span>
+                          <span className="font-mono font-semibold">{money(chargesTotal, true)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+
 
                 {outOfRange && (
                   <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2">
@@ -738,6 +819,9 @@ function NewLoan() {
                                 Object.entries(overrides).map(([k, v]) => [String(k), Number(v)]),
                               )
                             : undefined,
+                        initial_charges: appliedCharges.length
+                          ? appliedCharges.map((c) => ({ charge_id: c.charge_id, amount: c.amount }))
+                          : undefined,
                       },
                     })
                   }

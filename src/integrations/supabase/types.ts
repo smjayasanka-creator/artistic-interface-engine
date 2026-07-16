@@ -2403,6 +2403,52 @@ export type Database = {
           },
         ]
       }
+      loan_applied_charge: {
+        Row: {
+          amount: number
+          charge_id: string
+          created_at: string
+          id: string
+          loan_id: string
+        }
+        Insert: {
+          amount?: number
+          charge_id: string
+          created_at?: string
+          id?: string
+          loan_id: string
+        }
+        Update: {
+          amount?: number
+          charge_id?: string
+          created_at?: string
+          id?: string
+          loan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_applied_charge_charge_id_fkey"
+            columns: ["charge_id"]
+            isOneToOne: false
+            referencedRelation: "loan_charge"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_applied_charge_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_applied_charge_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "v_loan_outstanding"
+            referencedColumns: ["loan_id"]
+          },
+        ]
+      }
       loan_charge: {
         Row: {
           active: boolean
