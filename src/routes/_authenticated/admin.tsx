@@ -993,8 +993,13 @@ function ProductsTab() {
       toast.error("Name and min rate required");
       return;
     }
+    if (!/^\d{3}$/.test(form.code.trim())) {
+      toast.error("Product code must be exactly 3 digits");
+      return;
+    }
     const payload = {
       name: form.name.trim(),
+      code: form.code.trim(),
       annual_rate_pct: minRate,
       max_annual_rate_pct: maxRate,
       min_term_months: Number(form.minTerm),
