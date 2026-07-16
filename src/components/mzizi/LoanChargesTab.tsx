@@ -125,6 +125,12 @@ export function LoanChargesTab() {
     const a = glAll.find((x) => x.id === id);
     return a ? `${a.code} · ${a.name}` : "—";
   };
+  const clientList = ((clients as any[]) ?? []).map((c) => ({ id: c.id, full_name: c.full_name }));
+  const clientName = (id: string | null) => {
+    if (!id) return "—";
+    const c = clientList.find((x) => x.id === id);
+    return c ? c.full_name : "—";
+  };
 
   return (
     <Card padded={false}>
