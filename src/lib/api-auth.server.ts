@@ -15,6 +15,25 @@ async function sha256Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Constant-time string compare (both inputs hashed first so length differences
+// don't leak via early-exit timing on the raw secret).
+async function timingSafeEqual(a: string, b: string): Promise<boolean> {
+  const [ha, hb] = await Promise.all([sha256Hex(a), sha256Hex(b)]);
+  return ha === hb;
+}
+
+// Authenticates internal pg_cron / scheduler workers (EOD close, accrual jobs,
+// domain-event dispatch). These are NOT customer-facing API-key routes, so they
+// use a dedicated secret rather than a Supabase key — the anon/publishable key
+// is public by design (shipped to every browser) and must never gate a
+// service-role-privileged operation.
+export function authenticateCronRequest(request: Request): Promise<boolean> {
+  const expected = process.env.CRON_SECRET;
+  const provided = request.headers.get("x-cron-secret") ?? "";
+  if (!expected || !provided) return Promise.resolve(false);
+  return timingSafeEqual(provided, expected);
+}
+
 export function extractApiKey(request: Request): string | null {
   const header = request.headers.get("authorization");
   if (header?.toLowerCase().startsWith("bearer ")) return header.slice(7).trim();

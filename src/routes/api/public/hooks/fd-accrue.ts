@@ -7,14 +7,13 @@
 // UNIQUE(deposit_id, accrual_date) and schedule paid-flag guards double-pay.
 
 import { createFileRoute } from "@tanstack/react-router";
+import { authenticateCronRequest } from "@/lib/api-auth.server";
 
 export const Route = createFileRoute("/api/public/hooks/fd-accrue")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY;
-        const provided = request.headers.get("apikey") ?? "";
-        if (!expected || provided !== expected) {
+        if (!(await authenticateCronRequest(request))) {
           return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
         }
 
