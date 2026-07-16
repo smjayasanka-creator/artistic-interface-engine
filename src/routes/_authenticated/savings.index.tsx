@@ -7,6 +7,13 @@ import { listSavingsAccounts, listPassbookStock } from "@/lib/savings.functions"
 import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/savings/")({
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData({
+      queryKey: ["savings-accounts", "all"],
+      queryFn: () => listSavingsAccounts({ data: { status: "all" } }),
+    });
+    context.queryClient.ensureQueryData({ queryKey: ["passbook-stock"], queryFn: () => listPassbookStock() });
+  },
   component: SavingsIndex,
 });
 
