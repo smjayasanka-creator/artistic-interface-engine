@@ -192,7 +192,7 @@ function NewLoan() {
   const docsSatisfied = requiredDocs.length === 0 || missingDocs.length === 0;
 
 
-  const rateNum = typeof rate === "number" ? rate : Number(rate || product?.annual_rate_pct || 0);
+  const rateNum = typeof rate === "number" ? rate : Number(rate || 0);
   const principalNum = Number(principal || 0);
 
   const schedule = useMemo(() => {
