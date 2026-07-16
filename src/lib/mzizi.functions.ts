@@ -2833,7 +2833,7 @@ export const getLoan = createServerFn({ method: "GET" })
         .eq("loan_id", data.id),
       supabase
         .from("loan_accrual")
-        .select("accrual_date, amount")
+        .select("accrual_date, daily_amount")
         .eq("loan_id", data.id)
         .order("accrual_date", { ascending: false })
         .limit(60),
