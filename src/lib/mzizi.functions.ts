@@ -1415,6 +1415,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
   .inputValidator(
     (i: {
       name: string;
+      code: string;
       annual_rate_pct: number;
       max_annual_rate_pct?: number;
       min_term_months: number;
@@ -1440,6 +1441,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       z
         .object({
           name: z.string().trim().min(2).max(80),
+          code: z.string().trim().regex(/^\d{3}$/, "Code must be exactly 3 digits"),
           annual_rate_pct: z.number().positive().max(200),
           max_annual_rate_pct: z.number().positive().max(200).optional(),
           min_term_months: z.number().int().positive().max(120),
@@ -1479,6 +1481,7 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       .from("loan_product")
       .insert({
         name: data.name,
+        code: data.code,
         annual_rate_pct: data.annual_rate_pct,
         min_term_months: data.min_term_months,
         max_term_months: data.max_term_months,
