@@ -47,6 +47,7 @@ export const upsertLoanCharge = createServerFn({ method: "POST" })
       credit_account_id: string;
       capitalize?: boolean;
       capitalized_receivable_account_id?: string | null;
+      supplier_client_id?: string | null;
       active?: boolean;
       product_ids: string[];
     }) => i,
@@ -59,6 +60,9 @@ export const upsertLoanCharge = createServerFn({ method: "POST" })
     if (cap && !data.capitalized_receivable_account_id) {
       throw new Error("Capitalized-charges receivable ledger is required when capitalize is on");
     }
+    if (data.origin === "outside" && !data.supplier_client_id) {
+      throw new Error("Supplier is required for outside charges");
+    }
     const row: any = {
       company_id: cid,
       name: data.name,
@@ -69,6 +73,7 @@ export const upsertLoanCharge = createServerFn({ method: "POST" })
       credit_account_id: data.credit_account_id,
       capitalize: cap,
       capitalized_receivable_account_id: cap ? data.capitalized_receivable_account_id : null,
+      supplier_client_id: data.origin === "outside" ? data.supplier_client_id : null,
       active: data.active ?? true,
     };
     if (data.id) row.id = data.id;
