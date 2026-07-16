@@ -457,8 +457,13 @@ function NewClientPage() {
   const cls = (k: FieldKey) => (showError(k) ? errorInputCls : inputCls);
 
   return (
-    <div className="animate-fadein flex flex-col gap-4">
-      <Link to="/clients" className="text-xs text-primary hover:underline">← Back to clients</Link>
+    <div className="animate-fadein flex flex-col gap-4 text-[12.5px]">
+      <Link
+        to="/clients"
+        className="text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-1.5 self-start"
+      >
+        ← Back to clients
+      </Link>
 
       <div className="flex items-center gap-1 border-b border-border -mx-1 px-1 overflow-x-auto">
         {TABS.map((t) => {
