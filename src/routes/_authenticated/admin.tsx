@@ -1008,6 +1008,8 @@ function ProductsTab() {
       cash_account_id: form.cashAcct || null,
       interest_income_account_id: form.interestAcct || null,
       fee_income_account_id: form.feeAcct || null,
+      accrued_interest_account_id: form.accruedAcct || null,
+      interest_receivable_account_id: form.interestRecvAcct || null,
       required_documents: form.requiredDocs.map((s) => s.trim()).filter(Boolean),
       segment: form.segment,
     };
