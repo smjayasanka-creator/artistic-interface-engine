@@ -127,8 +127,6 @@ function Dashboard() {
 
 
   const totalPar = data.par.reduce((s, b) => s + b.amount, 0);
-  const team = data.team ?? [];
-  const teamTotals = data.teamTotals ?? { totalToday: 0, totalWeek: 0, activeStaff: 0, maxWeek: 0 };
 
   return (
     <div className="flex flex-col gap-5 animate-fadein">
