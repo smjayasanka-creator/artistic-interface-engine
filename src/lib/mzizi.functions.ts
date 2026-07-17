@@ -1230,6 +1230,17 @@ export const submitApplication = createServerFn({ method: "POST" })
       if (chgErr) throw new Error(chgErr.message);
     }
 
+    if (data.securities && data.securities.length) {
+      const rows = data.securities.map((s) => ({
+        loan_id: (loan as any).id,
+        security_type_id: s.security_type_id,
+        values: s.values ?? {},
+        notes: s.notes ?? null,
+      }));
+      const { error: secErr } = await (supabase as any).from("loan_security").insert(rows);
+      if (secErr) throw new Error(secErr.message);
+    }
+
     return loan;
   });
 
