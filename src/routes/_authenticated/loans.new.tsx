@@ -111,7 +111,16 @@ function NewLoan() {
   const [manualAmounts, setManualAmounts] = useState<Record<string, number>>({});
   const [chargeSuppliers, setChargeSuppliers] = useState<Record<string, string>>({});
   const [securities, setSecurities] = useState<
-    { key: string; security_type_id: string; values: Record<string, any>; notes: string }[]
+    {
+      key: string;
+      security_type_id: string;
+      values: Record<string, any>;
+      notes: string;
+      documents: UploadedDoc[];
+      autoFillCr: boolean;
+      uploadingDoc: boolean;
+      extracting: boolean;
+    }[]
   >([]);
 
   const clientsFn = useServerFn(getClients);
