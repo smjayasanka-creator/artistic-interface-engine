@@ -1307,6 +1307,7 @@ function NewLoan() {
                               security_type_id: s.security_type_id,
                               values: s.values,
                               notes: s.notes || null,
+                              documents: s.documents.map((d) => ({ path: d.path, name: d.name, size: d.size })),
                             }))
                           : undefined,
                       },
