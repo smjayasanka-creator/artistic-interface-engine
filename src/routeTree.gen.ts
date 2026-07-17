@@ -19,6 +19,7 @@ import { Route as AuthenticatedSavingsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlatformAdminRouteImport } from './routes/_authenticated/platform-admin'
 import { Route as AuthenticatedLedgerRouteImport } from './routes/_authenticated/ledger'
+import { Route as AuthenticatedEodRouteImport } from './routes/_authenticated/eod'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCollectionsRouteImport } from './routes/_authenticated/collections'
 import { Route as AuthenticatedAuditLogRouteImport } from './routes/_authenticated/audit-log'
@@ -136,6 +137,11 @@ const AuthenticatedPlatformAdminRoute =
 const AuthenticatedLedgerRoute = AuthenticatedLedgerRouteImport.update({
   id: '/ledger',
   path: '/ledger',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEodRoute = AuthenticatedEodRouteImport.update({
+  id: '/eod',
+  path: '/eod',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -527,6 +533,7 @@ export interface FileRoutesByFullPath {
   '/audit-log': typeof AuthenticatedAuditLogRoute
   '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/eod': typeof AuthenticatedEodRoute
   '/ledger': typeof AuthenticatedLedgerRoute
   '/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/reports': typeof AuthenticatedReportsRoute
@@ -605,6 +612,7 @@ export interface FileRoutesByTo {
   '/audit-log': typeof AuthenticatedAuditLogRoute
   '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/eod': typeof AuthenticatedEodRoute
   '/ledger': typeof AuthenticatedLedgerRoute
   '/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/reports': typeof AuthenticatedReportsRoute
@@ -681,6 +689,7 @@ export interface FileRoutesById {
   '/_authenticated/audit-log': typeof AuthenticatedAuditLogRoute
   '/_authenticated/collections': typeof AuthenticatedCollectionsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/eod': typeof AuthenticatedEodRoute
   '/_authenticated/ledger': typeof AuthenticatedLedgerRoute
   '/_authenticated/platform-admin': typeof AuthenticatedPlatformAdminRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
@@ -761,6 +770,7 @@ export interface FileRouteTypes {
     | '/audit-log'
     | '/collections'
     | '/dashboard'
+    | '/eod'
     | '/ledger'
     | '/platform-admin'
     | '/reports'
@@ -839,6 +849,7 @@ export interface FileRouteTypes {
     | '/audit-log'
     | '/collections'
     | '/dashboard'
+    | '/eod'
     | '/ledger'
     | '/platform-admin'
     | '/reports'
@@ -914,6 +925,7 @@ export interface FileRouteTypes {
     | '/_authenticated/audit-log'
     | '/_authenticated/collections'
     | '/_authenticated/dashboard'
+    | '/_authenticated/eod'
     | '/_authenticated/ledger'
     | '/_authenticated/platform-admin'
     | '/_authenticated/reports'
@@ -1076,6 +1088,13 @@ declare module '@tanstack/react-router' {
       path: '/ledger'
       fullPath: '/ledger'
       preLoaderRoute: typeof AuthenticatedLedgerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/eod': {
+      id: '/_authenticated/eod'
+      path: '/eod'
+      fullPath: '/eod'
+      preLoaderRoute: typeof AuthenticatedEodRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -1673,6 +1692,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAuditLogRoute: typeof AuthenticatedAuditLogRoute
   AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEodRoute: typeof AuthenticatedEodRoute
   AuthenticatedLedgerRoute: typeof AuthenticatedLedgerRoute
   AuthenticatedPlatformAdminRoute: typeof AuthenticatedPlatformAdminRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
@@ -1711,6 +1731,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAuditLogRoute: AuthenticatedAuditLogRoute,
   AuthenticatedCollectionsRoute: AuthenticatedCollectionsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEodRoute: AuthenticatedEodRoute,
   AuthenticatedLedgerRoute: AuthenticatedLedgerRoute,
   AuthenticatedPlatformAdminRoute: AuthenticatedPlatformAdminRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
