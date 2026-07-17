@@ -2058,8 +2058,9 @@ export const createDebitNote = createServerFn({ method: "POST" })
   .inputValidator(
     (i: {
       loan_id: string;
+      charge_id: string;
       amount: number;
-      charge_type: "fee" | "penalty" | "insurance" | "legal" | "other";
+      supplier_client_id?: string | null;
       entry_date?: string;
       reference?: string;
       description?: string;
@@ -2067,8 +2068,9 @@ export const createDebitNote = createServerFn({ method: "POST" })
       z
         .object({
           loan_id: z.string().uuid(),
+          charge_id: z.string().uuid(),
           amount: z.number().positive(),
-          charge_type: z.enum(["fee", "penalty", "insurance", "legal", "other"]),
+          supplier_client_id: z.string().uuid().nullable().optional(),
           entry_date: z.string().optional(),
           reference: z.string().trim().max(60).optional(),
           description: z.string().trim().max(300).optional(),
@@ -2093,39 +2095,41 @@ export const createDebitNote = createServerFn({ method: "POST" })
     if (!["disbursed", "active"].includes(loan.status as string))
       throw new Error("Debit notes can only be added to disbursed / active facilities");
 
-    // Resolve GL accounts: Dr principal AR, Cr fee income
-    const { data: product } = await supabase
-      .from("loan_product")
-      .select("principal_account_id, fee_income_account_id, interest_income_account_id")
-      .eq("id", loan.product_id)
-      .maybeSingle<{
-        principal_account_id: string | null;
-        fee_income_account_id: string | null;
-        interest_income_account_id: string | null;
-      }>();
-    let arId = product?.principal_account_id ?? null;
-    let incomeId = product?.fee_income_account_id ?? product?.interest_income_account_id ?? null;
-    if (!arId || !incomeId) {
-      const { data: accts } = await supabase
-        .from("gl_account")
-        .select("id, code")
-        .in("code", ["1100", "4100", "4000"]);
-      arId = arId ?? accts?.find((a) => a.code === "1100")?.id ?? null;
-      incomeId =
-        incomeId ??
-        accts?.find((a) => a.code === "4100")?.id ??
-        accts?.find((a) => a.code === "4000")?.id ??
-        null;
+    // Load charge definition — must exist, be active, linked to this product, and NOT capitalized.
+    const { data: charge, error: cErr } = await (supabase as any)
+      .from("loan_charge")
+      .select(
+        "id, name, origin, charge_type, capitalize, receivable_account_id, credit_account_id, supplier_client_id, active",
+      )
+      .eq("id", data.charge_id)
+      .maybeSingle();
+    if (cErr) throw new Error(cErr.message);
+    if (!charge) throw new Error("Charge not found");
+    if (!charge.active) throw new Error("Charge is inactive");
+    if (charge.capitalize) throw new Error("Capitalized charges cannot be posted as a debit note");
+
+    const { data: link } = await (supabase as any)
+      .from("loan_charge_product")
+      .select("product_id")
+      .eq("charge_id", charge.id)
+      .eq("product_id", loan.product_id)
+      .maybeSingle();
+    if (!link) throw new Error("This charge is not configured for the facility's product");
+
+    let supplierId: string | null = null;
+    if (charge.origin === "outside") {
+      supplierId = data.supplier_client_id ?? charge.supplier_client_id ?? null;
+      if (!supplierId) throw new Error("Outside-party charge requires a supplier");
     }
+
+    const arId = charge.receivable_account_id;
+    const incomeId = charge.credit_account_id;
     if (!arId || !incomeId)
-      throw new Error("Chart of accounts missing — configure principal & fee income accounts");
+      throw new Error("Charge is missing its receivable / credit ledger accounts");
 
     const ref = data.reference?.trim() || "DN-" + Math.floor(1000 + Math.random() * 9000);
     const entryDate = (data.entry_date || serverToday()).slice(0, 10);
-    const label =
-      { fee: "Fee", penalty: "Penalty", insurance: "Insurance", legal: "Legal cost", other: "Charge" }[
-        data.charge_type
-      ] || "Charge";
+    const supplierNote = supplierId ? " · supplier " + supplierId.slice(0, 8) : "";
 
     const { data: entry, error: eErr } = await supabase
       .from("journal_entry")
@@ -2135,7 +2139,7 @@ export const createDebitNote = createServerFn({ method: "POST" })
         loan_id: loan.id,
         posted_by: staff.id,
         entry_date: entryDate,
-        description: `Debit note ${ref} · ${label}${data.description ? " · " + data.description : ""}`,
+        description: `Debit note ${ref} · ${charge.name}${supplierNote}${data.description ? " · " + data.description : ""}`,
       })
       .select()
       .single();
