@@ -165,23 +165,64 @@ function SavingsIndex() {
                 <th className="py-2 pr-3">Branch</th>
                 <th className="py-2 pr-3 text-right">Balance</th>
                 <th className="py-2 pr-3">Status</th>
+                <th className="py-2 pr-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {(accounts ?? []).slice(0, 12).map((a: any) => (
-                <tr key={a.id} className="border-b border-border last:border-0">
-                  <td className="py-2 pr-3 font-mono text-xs">{a.account_no}</td>
-                  <td className="py-2 pr-3">{a.client?.full_name}</td>
-                  <td className="py-2 pr-3">{a.product?.name}</td>
-                  <td className="py-2 pr-3">{a.branch?.name}</td>
-                  <td className="py-2 pr-3 text-right font-mono">{money(a.balance, true)}</td>
-                  <td className="py-2 pr-3 capitalize text-xs">{a.status}</td>
-                </tr>
-              ))}
+              {(accounts ?? []).slice(0, 12).map((a: any) => {
+                const status = String(a.status);
+                const canDormant = status === "active";
+                const canUnclaimed = status === "dormant" || status === "closed";
+                const busy = dormantM.isPending || unclaimedM.isPending;
+                return (
+                  <tr key={a.id} className="border-b border-border last:border-0">
+                    <td className="py-2 pr-3 font-mono text-xs">{a.account_no}</td>
+                    <td className="py-2 pr-3">{a.client?.full_name}</td>
+                    <td className="py-2 pr-3">{a.product?.name}</td>
+                    <td className="py-2 pr-3">{a.branch?.name}</td>
+                    <td className="py-2 pr-3 text-right font-mono">{money(a.balance, true)}</td>
+                    <td className="py-2 pr-3 capitalize text-xs">{status}</td>
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {canDormant && (
+                          <button
+                            disabled={busy}
+                            onClick={() => {
+                              if (confirm(`Mark account ${a.account_no} as dormant?`))
+                                dormantM.mutate(a.id);
+                            }}
+                            className="inline-flex items-center gap-1 h-7 px-2 rounded text-[11px] border border-input hover:bg-muted disabled:opacity-40"
+                            title="Mark dormant"
+                          >
+                            <MoonStar size={11} /> Dormant
+                          </button>
+                        )}
+                        {canUnclaimed && (
+                          <button
+                            disabled={busy}
+                            onClick={() => {
+                              if (
+                                confirm(
+                                  `Transfer balance of ${a.account_no} to unclaimed liability?`,
+                                )
+                              )
+                                unclaimedM.mutate(a.id);
+                            }}
+                            className="inline-flex items-center gap-1 h-7 px-2 rounded text-[11px] border border-amber-500/40 text-amber-700 hover:bg-amber-500/10 disabled:opacity-40"
+                            title="Transfer to unclaimed"
+                          >
+                            <Archive size={11} /> Unclaimed
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {!accounts?.length && (
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-muted-foreground text-sm">
-                    No savings accounts yet — open one from “New Savings”.
+                  <td colSpan={7} className="py-6 text-center text-muted-foreground text-sm">
+                    No savings accounts yet — open one from "New Savings".
                   </td>
                 </tr>
               )}
