@@ -773,31 +773,53 @@ export const closePrematurely = createServerFn({ method: "POST" })
       created_by: userId,
     });
 
-    // Ledger posting via kernel — DR FD Liability + Interest Expense / CR Cash
+    // Ledger posting via kernel — clears principal + accrued liability
     const { data: fdProd2 } = await supabase
       .from("fd_product")
-      .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+      .select(FD_PRODUCT_ACCOUNT_COLUMNS)
       .eq("id", r.fd.product_id)
       .maybeSingle();
-    const glp = await resolveFdAccounts(supabase, fdProd2);
-    if (glp.cash && glp.liab && glp.intr && r.settlement > 0) {
+    const glp = await resolveFdAccounts(supabase, fdProd2, cid);
+    if (glp.cash && glp.liab && glp.intr && glp.accrued && r.settlement > 0) {
       const principal = Number(r.fd.principal);
       const interestPart = Math.max(0, r.settlement - principal + r.excessPaid);
+      // Sum unreleased accrual for this deposit up to the closure date.
+      const { data: accRows } = await supabase
+        .from("fd_accrual")
+        .select("daily_amount")
+        .eq("deposit_id", r.fd.id)
+        .is("released_at", null)
+        .lte("accrual_date", data.on_date);
+      const accruedAmount = Math.round(
+        ((accRows ?? []).reduce((s: number, x: any) => s + Number(x.daily_amount ?? 0), 0)) * 100,
+      ) / 100;
+      // Interest side total debit must equal interestPart. Split as
+      //   Dr Accrued (accruedAmount) + adjust Interest Expense.
+      const intrAdj = Math.round((interestPart - accruedAmount) * 100) / 100;
+      const lines: Array<{ account_id: string; debit: number; credit: number }> = [
+        { account_id: glp.liab, debit: principal, credit: 0 },
+      ];
+      if (accruedAmount > 0) lines.push({ account_id: glp.accrued, debit: accruedAmount, credit: 0 });
+      if (intrAdj > 0) lines.push({ account_id: glp.intr, debit: intrAdj, credit: 0 });
+      if (intrAdj < 0) lines.push({ account_id: glp.intr, debit: 0, credit: -intrAdj });
+      lines.push({ account_id: glp.cash, debit: 0, credit: r.settlement });
+      if (r.excessPaid > 0) lines.push({ account_id: glp.intr, debit: 0, credit: r.excessPaid });
       await supabase.rpc("post_entry", {
         _entry_date: data.on_date,
         _reference: `FD-CLOSE-${r.fd.certificate_no}`,
         _description: `FD premature closure · ${r.fd.certificate_no}`,
-        _lines: [
-          { account_id: glp.liab, debit: principal, credit: 0 },
-          ...(interestPart > 0 ? [{ account_id: glp.intr, debit: interestPart, credit: 0 }] : []),
-          { account_id: glp.cash, debit: 0, credit: r.settlement },
-          ...(r.excessPaid > 0 ? [{ account_id: glp.intr, debit: 0, credit: r.excessPaid }] : []),
-        ] as any,
+        _lines: lines as any,
         _branch_id: r.fd.branch_id,
         _source_module: "fd",
         _source_ref: r.fd.id,
         _idempotency_key: `fd:close:${r.fd.id}`,
       });
+      await supabase
+        .from("fd_accrual")
+        .update({ released_at: new Date().toISOString(), released_ref: `fd:close:${r.fd.id}` })
+        .eq("deposit_id", r.fd.id)
+        .is("released_at", null)
+        .lte("accrual_date", data.on_date);
     }
 
     return { ok: true, settlement: r.settlement };
