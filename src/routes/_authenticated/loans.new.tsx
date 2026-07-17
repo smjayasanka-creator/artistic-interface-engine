@@ -127,6 +127,7 @@ function NewLoan() {
   const productsFn = useServerFn(getProducts);
   const chargesFn = useServerFn(listLoanCharges);
   const securityTypesFn = useServerFn(listSecurityTypes);
+  const extractSecurityFn = useServerFn(extractSecurityFieldsFromDocument);
   const { data: clients } = useQuery({
     queryKey: ["clients", "all"],
     queryFn: () => clientsFn({ data: { filter: "all" } }),
