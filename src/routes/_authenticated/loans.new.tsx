@@ -145,6 +145,11 @@ function NewLoan() {
     mutationFn: submitFn,
     onSuccess: async (loan: any) => {
       qc.invalidateQueries();
+      if (loan?.status === "draft") {
+        toast.success("Draft saved");
+        nav({ to: "/loans" });
+        return;
+      }
       try {
         const { exists } = await hasWfFn({ data: { transaction_type: "loan_approval" } });
         if (exists) {
@@ -169,6 +174,50 @@ function NewLoan() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  function buildPayload(draft: boolean) {
+    return {
+      client_id: clientId,
+      product_id: productId,
+      principal: principalNum,
+      term_months: termNum,
+      purpose: purpose || undefined,
+      annual_rate_pct: rateNum,
+      frequency,
+      schedule_type: scheduleType,
+      schedule_overrides:
+        scheduleType === "structured"
+          ? Object.fromEntries(Object.entries(overrides).map(([k, v]) => [String(k), Number(v)]))
+          : undefined,
+      initial_charges: appliedCharges.length
+        ? appliedCharges.map((c) => ({
+            charge_id: c.charge_id,
+            amount: c.amount,
+            capitalize: c.capitalize,
+            supplier_client_id: c.supplier_client_id,
+          }))
+        : undefined,
+      securities: securities.length
+        ? securities.map((s) => ({
+            security_type_id: s.security_type_id,
+            values: s.values,
+            notes: s.notes || null,
+            documents: s.documents.map((d) => ({ path: d.path, name: d.name, size: d.size })),
+          }))
+        : undefined,
+      draft,
+    };
+  }
+
+  function saveDraft() {
+    if (!clientId) {
+      toast.error("Select a client before saving a draft");
+      setTab("customer");
+      return;
+    }
+    submit.mutate({ data: buildPayload(true) as any });
+  }
+
 
   const product = products?.find((p: any) => p.id === productId);
   const selectedClient = (clients ?? []).find((c: any) => c.id === clientId);
@@ -1280,6 +1329,15 @@ function NewLoan() {
               Cancel
             </button>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={saveDraft}
+                disabled={submit.isPending || !clientId}
+                className={btnSecondaryCls}
+                title="Save progress without submitting for approval"
+              >
+                {submit.isPending ? "Saving…" : "Save draft"}
+              </button>
               {tab !== "customer" && (
                 <button
                   type="button"
@@ -1344,35 +1402,7 @@ function NewLoan() {
                         return;
                       }
                     }
-                    submit.mutate({
-                      data: {
-                        client_id: clientId,
-                        product_id: productId,
-                        principal: principalNum,
-                        term_months: termNum,
-                        purpose: purpose || undefined,
-                        annual_rate_pct: rateNum,
-                        frequency,
-                        schedule_type: scheduleType,
-                        schedule_overrides:
-                          scheduleType === "structured"
-                            ? Object.fromEntries(
-                                Object.entries(overrides).map(([k, v]) => [String(k), Number(v)]),
-                              )
-                            : undefined,
-                        initial_charges: appliedCharges.length
-                          ? appliedCharges.map((c) => ({ charge_id: c.charge_id, amount: c.amount, capitalize: c.capitalize, supplier_client_id: c.supplier_client_id }))
-                          : undefined,
-                        securities: securities.length
-                          ? securities.map((s) => ({
-                              security_type_id: s.security_type_id,
-                              values: s.values,
-                              notes: s.notes || null,
-                              documents: s.documents.map((d) => ({ path: d.path, name: d.name, size: d.size })),
-                            }))
-                          : undefined,
-                      },
-                    });
+                    submit.mutate({ data: buildPayload(false) as any });
                   }}
                   className={btnPrimaryCls}
                 >
@@ -1381,6 +1411,7 @@ function NewLoan() {
               )}
             </div>
           </FormActions>
+
         </div>
       </Card>
     </div>
