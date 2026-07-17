@@ -166,6 +166,15 @@
     -webkit-font-smoothing: antialiased;
   }
   .font-mono { font-family: var(--font-mono); }
+
+  /* Editable form fields get a light green background across the whole app.
+     Read-only / disabled inputs keep their default styling. */
+  input:not([readonly]):not([disabled]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+  select:not([disabled]):not([data-readonly]),
+  textarea:not([readonly]):not([disabled]),
+  [contenteditable="true"] {
+    background-color: #D4F6D4;
+  }
 }
 
 @keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
