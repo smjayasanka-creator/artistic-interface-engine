@@ -376,6 +376,7 @@ export type Database = {
       }
       branch: {
         Row: {
+          auto_eod: boolean
           branch_prefix: string | null
           code: string
           company_id: string
@@ -391,6 +392,7 @@ export type Database = {
           savings_prefix: string | null
         }
         Insert: {
+          auto_eod?: boolean
           branch_prefix?: string | null
           code: string
           company_id: string
@@ -406,6 +408,7 @@ export type Database = {
           savings_prefix?: string | null
         }
         Update: {
+          auto_eod?: boolean
           branch_prefix?: string | null
           code?: string
           company_id?: string
@@ -1090,49 +1093,79 @@ export type Database = {
       }
       eod_run: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           branch_id: string
           business_date: string
           closed_at: string
           closed_by: string | null
           company_id: string
+          completed_at: string | null
           duration_ms: number | null
           fd_deposits: number
           gl_accounts: number
           id: string
+          initiated_at: string | null
+          initiated_by: string | null
           loans: number
           note: string | null
+          pre_check: Json
+          reports: Json
           savings_accounts: number
+          started_at: string | null
           status: string
+          steps: Json
+          warnings: Json
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           branch_id: string
           business_date: string
           closed_at?: string
           closed_by?: string | null
           company_id: string
+          completed_at?: string | null
           duration_ms?: number | null
           fd_deposits?: number
           gl_accounts?: number
           id?: string
+          initiated_at?: string | null
+          initiated_by?: string | null
           loans?: number
           note?: string | null
+          pre_check?: Json
+          reports?: Json
           savings_accounts?: number
+          started_at?: string | null
           status?: string
+          steps?: Json
+          warnings?: Json
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           branch_id?: string
           business_date?: string
           closed_at?: string
           closed_by?: string | null
           company_id?: string
+          completed_at?: string | null
           duration_ms?: number | null
           fd_deposits?: number
           gl_accounts?: number
           id?: string
+          initiated_at?: string | null
+          initiated_by?: string | null
           loans?: number
           note?: string | null
+          pre_check?: Json
+          reports?: Json
           savings_accounts?: number
+          started_at?: string | null
           status?: string
+          steps?: Json
+          warnings?: Json
         }
         Relationships: [
           {
@@ -1140,6 +1173,53 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eod_step_log: {
+        Row: {
+          actor_user_id: string | null
+          duration_ms: number | null
+          ended_at: string | null
+          error: string | null
+          id: string
+          metrics: Json
+          run_id: string
+          started_at: string
+          status: string
+          step_key: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          duration_ms?: number | null
+          ended_at?: string | null
+          error?: string | null
+          id?: string
+          metrics?: Json
+          run_id: string
+          started_at?: string
+          status: string
+          step_key: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          duration_ms?: number | null
+          ended_at?: string | null
+          error?: string | null
+          id?: string
+          metrics?: Json
+          run_id?: string
+          started_at?: string
+          status?: string
+          step_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eod_step_log_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "eod_run"
             referencedColumns: ["id"]
           },
         ]
@@ -5305,12 +5385,39 @@ export type Database = {
         Returns: string
       }
       ensure_eod_partitions: { Args: { _month: string }; Returns: undefined }
+      eod_approve_and_run: { Args: { _run_id: string }; Returns: undefined }
       eod_close: {
         Args: { _branch_id: string; _business_date: string }
         Returns: string
       }
+      eod_finalize: {
+        Args: { _run_id: string; _status: string }
+        Returns: undefined
+      }
+      eod_initiate: {
+        Args: { _branch_id: string; _business_date: string }
+        Returns: string
+      }
+      eod_precheck: {
+        Args: { _branch_id: string; _business_date: string }
+        Returns: Json
+      }
+      eod_record_step: {
+        Args: {
+          _error: string
+          _metrics: Json
+          _run_id: string
+          _status: string
+          _step_key: string
+        }
+        Returns: undefined
+      }
       eod_reopen: {
         Args: { _branch_id: string; _business_date: string; _reason: string }
+        Returns: undefined
+      }
+      eod_save_reports: {
+        Args: { _reports: Json; _run_id: string }
         Returns: undefined
       }
       hardening_autocheck: { Args: never; Returns: Json }
