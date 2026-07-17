@@ -297,6 +297,83 @@ export type Database = {
           },
         ]
       }
+      bank: {
+        Row: {
+          active: boolean
+          cefts_enabled: boolean
+          code: string
+          created_at: string
+          id: string
+          name: string
+          slips_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          cefts_enabled?: boolean
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          slips_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          cefts_enabled?: boolean
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          slips_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bank_branch: {
+        Row: {
+          active: boolean
+          address: string | null
+          bank_id: string
+          city: string | null
+          code: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          bank_id: string
+          city?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          bank_id?: string
+          city?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_branch_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "bank"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch: {
         Row: {
           branch_prefix: string | null
