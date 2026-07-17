@@ -73,7 +73,6 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/fd/maturity")) return { title: "Maturity due", sub: "Deposits maturing soon" };
   if (pathname.startsWith("/fd")) return { title: "Fixed deposits", sub: "Portfolio & register" };
   
-  if (pathname.startsWith("/eod")) return { title: "Day End Process", sub: "Daily close, accruals & rollover" };
   if (pathname.startsWith("/platform-admin")) return { title: "Platform Admin", sub: "Tenant oversight & subscriptions" };
   if (pathname.startsWith("/api")) return { title: "API", sub: "Third-party integrations & endpoints" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };
