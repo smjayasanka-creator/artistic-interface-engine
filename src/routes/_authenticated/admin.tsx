@@ -104,6 +104,7 @@ const SECTIONS: Section[] = [
   { id: "risk_profiling", label: "Risk profiling",   desc: "Customer risk factors, scoring & bands",           icon: ShieldAlert, accent: "from-orange-500/15 to-orange-500/0 text-orange-600" },
   { id: "screening",   label: "Customer screening", desc: "FIU screening score thresholds & approval routing", icon: ScanSearch,  accent: "from-red-500/15 to-red-500/0 text-red-600" },
   { id: "bank_directory", label: "Bank directory",  desc: "Banks & branches — CEFTS / SLIPS enablement",       icon: Landmark,    accent: "from-blue-500/15 to-blue-500/0 text-blue-600" },
+  { id: "eod",         label: "Day End Process",  desc: "Company-wide daily close, accruals & auto-schedule", icon: CalendarClock, accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600" },
   { id: "time_travel", label: "Time travel",       desc: "Simulate a different date for testing (dev only)", icon: Clock,     accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
 ];
 
