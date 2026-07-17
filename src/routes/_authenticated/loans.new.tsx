@@ -1050,6 +1050,22 @@ function NewLoan() {
                       toast.error(`Enter amount for "${missingManual.name}"`);
                       return;
                     }
+                    for (let i = 0; i < securities.length; i++) {
+                      const s = securities[i];
+                      if (!s.security_type_id) {
+                        toast.error(`Select a security type for security #${i + 1}`);
+                        return;
+                      }
+                      const type: any = (securityTypes ?? []).find((t: any) => t.id === s.security_type_id);
+                      const defs: any[] = Array.isArray(type?.fields?.definitions) ? type.fields.definitions : [];
+                      const missing = defs.find(
+                        (d: any) => d.required && !String(s.values[d.key] ?? "").trim(),
+                      );
+                      if (missing) {
+                        toast.error(`Fill "${missing.label}" for security #${i + 1}`);
+                        return;
+                      }
+                    }
                     submit.mutate({
                       data: {
                         client_id: clientId,
@@ -1068,6 +1084,13 @@ function NewLoan() {
                             : undefined,
                         initial_charges: appliedCharges.length
                           ? appliedCharges.map((c) => ({ charge_id: c.charge_id, amount: c.amount, capitalize: c.capitalize, supplier_client_id: c.supplier_client_id }))
+                          : undefined,
+                        securities: securities.length
+                          ? securities.map((s) => ({
+                              security_type_id: s.security_type_id,
+                              values: s.values,
+                              notes: s.notes || null,
+                            }))
                           : undefined,
                       },
                     });
