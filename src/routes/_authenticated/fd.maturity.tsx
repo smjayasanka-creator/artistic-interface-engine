@@ -130,7 +130,7 @@ function MaturityDue() {
             onSubmit={(e) => {
               e.preventDefault();
               if (!paymentMethodValid(pay)) return toast.error("Complete payment details");
-              matureM.mutate(payoutFor.id);
+              matureM.mutate({ id: payoutFor.id, payload: pay });
             }}
             className="flex flex-col gap-4"
           >
