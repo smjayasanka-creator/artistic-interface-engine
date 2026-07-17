@@ -6,25 +6,42 @@ import { buildSchedule, dailyAccrual, addMonths, daysBetween, interestForPeriod 
 import { PAYMENT_METHODS, assertPaymentMethod } from "@/lib/payment-methods";
 
 // ─────────── Ledger kernel helper ───────────
-// Resolves GL account ids from fd_product (preferred) or falls back to
-// standard chart-of-accounts codes: 1000 cash, 2200 FD liability,
-// 5200 interest expense, 2300 WHT liability.
-async function resolveFdAccounts(supabase: any, product: any) {
+// Resolves GL account ids for the FD module. Prefers the mappings actually
+// saved on the FD product form (capital / interest payable / interest
+// expense / WHT payable), falls back to the legacy overlapping columns
+// (deposit_liability / wht_liability), and finally to standard chart codes:
+//   1000 cash · 2200 FD liability · 2210 Accrued Interest Payable - FD
+//   2300 WHT payable · 5200 FD interest expense
+export const FD_PRODUCT_ACCOUNT_COLUMNS =
+  "cash_account_id, capital_account_id, deposit_liability_account_id, " +
+  "interest_payable_account_id, interest_expense_account_id, " +
+  "wht_payable_account_id, wht_liability_account_id";
+
+async function resolveFdAccounts(supabase: any, product: any, companyId?: string | null) {
   const need: Record<string, { fromProduct: string | null; code: string }> = {
-    cash: { fromProduct: product?.cash_account_id ?? null, code: "1000" },
-    liab: { fromProduct: product?.deposit_liability_account_id ?? null, code: "2200" },
-    intr: { fromProduct: product?.interest_expense_account_id ?? null, code: "5200" },
-    wht:  { fromProduct: product?.wht_liability_account_id ?? null, code: "2300" },
+    cash:    { fromProduct: product?.cash_account_id ?? null, code: "1000" },
+    liab:    { fromProduct: product?.capital_account_id ?? product?.deposit_liability_account_id ?? null, code: "2200" },
+    accrued: { fromProduct: product?.interest_payable_account_id ?? null, code: "2210" },
+    intr:    { fromProduct: product?.interest_expense_account_id ?? null, code: "5200" },
+    wht:     { fromProduct: product?.wht_payable_account_id ?? product?.wht_liability_account_id ?? null, code: "2300" },
   };
   const missing = Object.values(need).filter((n) => !n.fromProduct).map((n) => n.code);
   let byCode: Record<string, string> = {};
   if (missing.length) {
-    const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", missing);
+    let q = supabase.from("gl_account").select("id, code, company_id").in("code", missing);
+    if (companyId) q = q.eq("company_id", companyId);
+    const { data: accts } = await q;
     byCode = Object.fromEntries((accts ?? []).map((a: any) => [a.code, a.id]));
   }
   const out: Record<string, string | null> = {};
   for (const [k, v] of Object.entries(need)) out[k] = v.fromProduct ?? byCode[v.code] ?? null;
-  return out as { cash: string | null; liab: string | null; intr: string | null; wht: string | null };
+  return out as {
+    cash: string | null;
+    liab: string | null;
+    accrued: string | null;
+    intr: string | null;
+    wht: string | null;
+  };
 }
 
 
