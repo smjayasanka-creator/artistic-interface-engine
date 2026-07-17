@@ -40,10 +40,11 @@ export const Route = createFileRoute("/_authenticated/loans/new")({
   component: NewLoan,
 });
 
-type TabKey = "customer" | "application" | "documents" | "evaluations";
+type TabKey = "customer" | "application" | "securities" | "documents" | "evaluations";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "customer", label: "Customer" },
   { key: "application", label: "Application" },
+  { key: "securities", label: "Securities" },
   { key: "documents", label: "Documents" },
   { key: "evaluations", label: "Evaluations" },
 ];
