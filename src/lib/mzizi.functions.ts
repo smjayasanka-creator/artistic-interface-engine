@@ -460,12 +460,38 @@ export const getLoans = createServerFn({ method: "GET" })
     const nextMap = new Map<string, any>();
     for (const r of nextDue ?? []) if (!nextMap.has(r.loan_id)) nextMap.set(r.loan_id, r);
 
+    const { data: wfInstances } = ids.length
+      ? await supabase
+          .from("workflow_instance")
+          .select("reference_id, status, current_step, workflow:workflow_id(name, steps:workflow_step(step_order, name))")
+          .eq("transaction_type", "loan_approval")
+          .in("reference_id", ids)
+      : { data: [] as any[] };
+    const wfMap = new Map<string, any>();
+    for (const w of wfInstances ?? []) if (w.reference_id) wfMap.set(w.reference_id, w);
+
     const rows = (loans ?? []).map((l) => {
       const o = outMap.get(l.id);
       const out = Number(o?.outstanding_principal ?? 0);
       const rep = Number(o?.principal_repaid ?? 0);
       const nxt = nextMap.get(l.id);
       const overdue = nxt && new Date(nxt.due_date) < serverNow();
+      const wf = wfMap.get(l.id);
+      let stage = "Draft";
+      if (l.status === "submitted") {
+        if (wf) {
+          const step = (wf.workflow?.steps ?? []).find((s: any) => s.step_order === wf.current_step);
+          stage = wf.status === "approved"
+            ? "Approved — ready to disburse"
+            : wf.status === "rejected"
+              ? "Rejected"
+              : step?.name
+                ? `Approval · ${step.name}`
+                : "Pending approval";
+        } else {
+          stage = "Ready to disburse";
+        }
+      }
       return {
         ...l,
         outstanding: out,
@@ -473,6 +499,7 @@ export const getLoans = createServerFn({ method: "GET" })
         progress: l.principal > 0 ? Math.min(100, Math.round((rep / Number(l.principal)) * 100)) : 0,
         nextDue: nxt?.due_date ?? null,
         overdue,
+        stage,
       };
     });
     return { rows, totalCount: count ?? 0 };
