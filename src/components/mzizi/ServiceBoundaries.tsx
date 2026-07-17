@@ -192,16 +192,26 @@ const DOMAINS: Domain[] = [
     tag: "double-entry GL",
     icon: BookOpen,
     summary:
-      "Shared kernel. Every money-moving domain posts through post_entry(). Immutable, balanced, append-only.",
-    ownedTables: ["gl_account", "journal_entry", "posting"],
-    serverFns: ["(central post_entry RPC — planned)"],
-    publicApi: [],
-    publishesEvents: ["ledger.entry_posted"],
+      "Shared kernel. Every money-moving domain posts through post_entry(). Immutable, balanced, append-only. Also owns the outbox (domain_event) and month-partitioned EOD balance snapshots.",
+    ownedTables: [
+      "gl_account", "journal_entry", "posting", "domain_event",
+      "gl_eod_balance", "loan_eod_balance", "savings_eod_balance", "fd_eod_balance",
+      "eod_run",
+    ],
+    serverFns: ["src/lib/api-ledger.server.ts (post_entry_system wrapper)"],
+    publicApi: [
+      "/api/public/hooks/eod-close",
+      "/api/public/hooks/dispatch-domain-events",
+      "/api/public/hooks/fd-accrue",
+      "/api/public/hooks/fd-mature",
+      "/api/public/hooks/loan-accrue",
+    ],
+    publishesEvents: ["ledger.entry_posted", "eod.closed"],
     consumesEvents: [],
     dependsOn: [],
     extractionReadiness: "coupled",
     extractionNotes:
-      "Do NOT extract. Ledger is the shared kernel — colocated with Postgres for ACID balance guarantees.",
+      "Do NOT extract. Ledger is the shared kernel — colocated with Postgres for ACID balance guarantees. The outbox dispatcher can move to its own worker once subscribers exist.",
     accent: "from-slate-500/10 to-slate-500/0 border-slate-500/30",
   },
   {
@@ -210,22 +220,58 @@ const DOMAINS: Domain[] = [
     tag: "party master",
     icon: Users,
     summary:
-      "Customer master, KYC, staff, branches, company. Cross-cutting party data every domain reads.",
+      "Customer master, KYC, staff, branches, company, and staff invites. When a staff row is created an invite email is sent; the invitee accepts via Google or password and the existing staff row is linked on first sign-in.",
     ownedTables: [
-      "client", "client_bank_account", "staff",
-      "branch", "company", "company_invite", "user_roles",
+      "client", "client_bank_account", "client_risk_assessment", "staff",
+      "branch", "company", "company_invite", "company_subscription",
+      "subscription_plan", "user_roles", "custom_role", "custom_role_permission",
+      "user_custom_role", "permission",
     ],
-    serverFns: ["src/lib/mzizi.functions.ts (client.*, staff.*)"],
+    serverFns: [
+      "src/lib/mzizi.functions.ts (client.*, staff.*, invite.*)",
+      "src/lib/roles.functions.ts",
+      "src/lib/risk.functions.ts",
+    ],
     publicApi: [],
     publishesEvents: [
       "client.created", "client.kyc_verified", "client.bank_account_added",
+      "staff.invited", "staff.invite_accepted",
     ],
     consumesEvents: [],
-    dependsOn: ["auth"],
+    dependsOn: ["auth", "notifications"],
     extractionReadiness: "partial",
     extractionNotes:
-      "Read-heavy from every domain — needs a well-cached read replica or GraphQL federation before extraction.",
+      "Read-heavy from every domain — needs a well-cached read replica or GraphQL federation before extraction. Invite send now depends on the Notifications domain.",
     accent: "from-teal-500/10 to-teal-500/0 border-teal-500/30",
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    tag: "notify.m-sme.com",
+    icon: Mail,
+    summary:
+      "Outbound email — Supabase auth templates (signup, magic link, recovery, invite, email change, reauth), transactional templates, and the send helper. Delivery via the configured email domain.",
+    ownedTables: [],
+    serverFns: [
+      "src/lib/email-templates/send-email.ts",
+      "src/lib/email-templates/registry.ts",
+      "src/routes/lovable/email/auth/webhook.ts",
+    ],
+    publicApi: [
+      "/lovable/email/auth/webhook",
+      "/lovable/email/auth/preview",
+      "/lovable/email/transactional/preview",
+    ],
+    publishesEvents: ["email.sent", "email.bounced", "email.suppressed"],
+    consumesEvents: [
+      "staff.invited", "client.created",
+      "workflow.approved", "workflow.rejected",
+    ],
+    dependsOn: [],
+    extractionReadiness: "ready",
+    extractionNotes:
+      "Stateless — templates + provider call. Extract to its own worker whenever email volume warrants dedicated retry / suppression handling.",
+    accent: "from-fuchsia-500/10 to-fuchsia-500/0 border-fuchsia-500/30",
   },
 ];
 
