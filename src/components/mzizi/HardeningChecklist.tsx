@@ -33,6 +33,11 @@ const TIERS: Tier[] = [
       { id: "reconciliation", label: "Automated bank / cash / suspense reconciliation", detail: "Operational check. Bank statement imports must be matched against posting entries with an exception queue for unmatched items. Reviewer confirms a reconciliation table and daily match job exist." },
       { id: "money-type", label: "Monetary amounts stored as NUMERIC (never float)", detail: "Auto-check queries information_schema.columns for posting.debit and posting.credit and confirms both are numeric (fixed-precision). Floating-point money silently drops cents at scale; numeric(18,2) preserves every cent." },
       { id: "fx-policy", label: "FX conversion policy + rate table with history", detail: "Auto-check searches information_schema.tables for any table matching '%fx%rate%'. A rate table with valid-from/valid-to columns lets the ledger revalue foreign-currency balances and reproduce past conversions for audit." },
+      { id: "subledger-gl", label: "Sub-ledger to GL control account tie-out (automated, daily)", detail: "Each register (loan book, FD register, savings) must reconcile to its GL control account after EOD via an automated comparison job with an exception queue. Distinct from bank/cash/suspense reconciliation, which matches external statements." },
+      { id: "atomic-postings", label: "Multi-step financial writes are atomic (single DB transaction / RPC)", detail: "Approval, payout, closure and renewal flows write several tables plus the ledger; all steps must commit or roll back together. FD approval currently performs the schedule insert, status update, fd_transaction insert and GL post as separate calls, so a mid-sequence failure leaves a half-approved contract. Code review." },
+      { id: "db-constraints", label: "Integrity constraints enforced in the database, not only app validation", detail: "Foreign keys, uniques and CHECK constraints (nominee percentages summing to 100, positive amounts, valid status transitions) so no code path can persist invalid financial data, regardless of Zod validation in the app layer." },
+      { id: "lifecycle-gl", label: "Every product lifecycle event has both a state change and a GL posting", detail: "Open, approve, service, and every exit path (maturity, renewal, premature closure, write-off, reschedule, deceased/nominee settlement, dormancy) must post to the ledger. FD deposit receipts/withdrawals and daily accruals currently bypass post_entry. Code review per product." },
+      { id: "day-count", label: "Uniform day-count, compounding and rounding conventions, signed off by finance", detail: "One documented convention set applied identically across loans, FDs and savings (currently 360-day loans versus actual/365 FD accrual), verified against hand-worked examples approved by finance rather than by developers." },
     ],
   },
   {
@@ -48,6 +53,9 @@ const TIERS: Tier[] = [
       { id: "crib", label: "CRIB reporting integration", detail: "Sri Lanka Credit Information Bureau reporting. Requires a scheduled export of borrower repayment history in CRIB format and an inquiry API called during loan origination. External integration — reviewer confirms." },
       { id: "wht-ifrs9", label: "WHT + IFRS 9 provisioning logic", detail: "Withholding tax on FD interest must post to a WHT liability account on every accrual. IFRS 9 requires stage 1/2/3 loan classification with expected credit loss (ECL) provisions posted monthly. Business-logic review." },
       { id: "pii-masking", label: "PII masking in logs and non-prod environments", detail: "Application logs and error reports must redact NIC, phone, DOB, and address. Non-production database refreshes must scrub or hash PII before restore. Configuration review." },
+      { id: "cbsl-returns", label: "CBSL statutory returns data and generation", detail: "Monthly and quarterly prudential returns for a licensed NBFI must be producible from the data model (asset classification, maturity buckets, sector codes, deposit analyses). Reviewer confirms field mapping per return." },
+      { id: "pdpa", label: "Sri Lanka PDPA compliance (consent, subject access, retention alignment)", detail: "Lawful-basis capture at onboarding, a subject access and erasure workflow that respects statutory retention overrides, and a breach notification procedure. Policy and workflow review." },
+      { id: "master-versioning", label: "Master data deactivation and change history (no hard deletes)", detail: "Products, rate tiers and GL mappings must be deactivated or versioned once referenced, never physically deleted (deleteFdProduct and fd_rate_tier deletion currently hard-delete). Rate changes retain effective-dated history." },
     ],
   },
   {
@@ -63,6 +71,7 @@ const TIERS: Tier[] = [
       { id: "pentest", label: "External penetration test — annual", detail: "An independent security firm performs a black-box + credentialed test annually, findings tracked to closure. Attach the latest report as evidence." },
       { id: "soc2", label: "SOC 2 / ISO 27001 controls documented", detail: "Formal control framework covering access, change management, incident response, vendor risk, and monitoring. Requires a controls register and evidence of operating effectiveness." },
       { id: "vuln-scan", label: "Dependency + container vulnerability scanning", detail: "CI pipeline runs npm audit / Snyk / Trivy on every build and blocks merges on high-severity CVEs. Runtime images are rebuilt weekly to pull security patches. CI configuration review." },
+      { id: "env-separation", label: "Separate dev / test / production environments with controlled promotion", detail: "Production data never appears in development, changes are promoted through migration review, and test users cannot reach production. A single Lovable/Supabase project currently serves all purposes. Infrastructure review." },
     ],
   },
   {
@@ -88,6 +97,7 @@ const TIERS: Tier[] = [
       { id: "multi-region", label: "Multi-region failover with defined RPO/RTO", detail: "Standby database in a second region, DNS or gateway cutover runbook, and stated targets (e.g. RPO ≤ 5 min, RTO ≤ 1 hr). Infrastructure review." },
       { id: "runbooks", label: "Incident runbooks + on-call rotation", detail: "Written runbooks per incident class (DB down, ledger imbalance, payment rail outage, security breach), a paging rotation, and severity-based response SLAs. Operational review." },
       { id: "status-page", label: "Public status page + customer comms plan", detail: "A public status page reflecting real component health and pre-approved customer notification templates for incidents. Operational review." },
+      { id: "monitoring", label: "Monitoring and alerting on batch failures, error rates and posting anomalies", detail: "Failed EOD/accrual jobs, elevated API error rates and unusual posting volumes must page a human; dashboards and alert history retained as audit evidence. Operational review." },
     ],
   },
   {
@@ -101,6 +111,17 @@ const TIERS: Tier[] = [
       { id: "card-switch", label: "Card switch / ATM network", detail: "Integration to a card switch (LankaPay, Visa/Mastercard processor) with ISO 8583 messaging and settlement file processing. External integration." },
       { id: "mobile", label: "Mobile / internet banking channel", detail: "Customer-facing apps hitting a hardened API layer with device binding, transaction signing, and rate limiting — separate from the staff console. Product review." },
       { id: "core-seam", label: "Integration seam to swap in a licensed core (Temenos/Mambu/Fern)", detail: "Domain services (ledger, loan, deposit) hidden behind interfaces so a licensed core banking product can be substituted without rewriting the app. Architecture review." },
+    ],
+  },
+  {
+    id: "t7",
+    name: "Tier 7 — Testing & Verification",
+    blurb: "Proof the system computes and balances correctly before it becomes the ledger of record.",
+    items: [
+      { id: "calc-tests", label: "Unit tests for all interest, penalty and settlement calculations", detail: "Every formula tested against hand-worked examples approved by finance, covering edge cases such as end-of-month dates, leap years, premature-closure clawback and WHT rounding." },
+      { id: "simulated-month", label: "Simulated full month: sub-ledgers tie to GL to the cent", detail: "Seed a realistic book, run thirty days of EOD, payouts, maturities and closures, then prove the trial balance balances and every control-account tie-out holds. The single most valuable end-to-end test for a core system." },
+      { id: "uat-parallel", label: "Scripted UAT per process plus parallel run before cutover", detail: "Documented UAT scripts with business sign-off per module, followed by a parallel run against existing or manual computation before go-live." },
+      { id: "load-test", label: "Load test at target volume with EOD completing within its window", detail: "Test at a realistic target (for example 100k clients, 50k active contracts, five years of postings) measuring screen response, report generation and EOD duration; batch jobs must be set-based rather than per-row loops." },
     ],
   },
 ];
