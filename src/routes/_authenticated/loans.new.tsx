@@ -50,17 +50,20 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "evaluations", label: "Evaluations" },
 ];
 
-function FormHeader({ title, onBack }: { title: string; onBack: () => void }) {
+function FormHeader({ title, onBack, actions }: { title: string; onBack: () => void; actions?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-3 flex-wrap">
       <CardTitle>{title}</CardTitle>
-      <button
-        type="button"
-        onClick={onBack}
-        className="text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-1.5"
-      >
-        ← Back to list
-      </button>
+      <div className="flex items-center gap-2 flex-wrap">
+        {actions}
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-1.5"
+        >
+          ← Back to list
+        </button>
+      </div>
     </div>
   );
 }
