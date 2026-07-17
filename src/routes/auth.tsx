@@ -6,7 +6,11 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: z.object({ redirect: z.string().optional() }),
+  validateSearch: z.object({
+    redirect: z.string().optional(),
+    invited: z.union([z.literal("1"), z.literal("true"), z.boolean()]).optional(),
+    email: z.string().email().optional(),
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — Mzizi Core" },
@@ -18,9 +22,10 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const nav = useNavigate();
-  const { redirect } = useSearch({ from: "/auth" });
-  const [mode, setMode] = useState<"in" | "up" | "forgot">("in");
-  const [email, setEmail] = useState("");
+  const { redirect, invited, email: invitedEmail } = useSearch({ from: "/auth" });
+  const isInvited = invited === "1" || invited === "true" || invited === true;
+  const [mode, setMode] = useState<"in" | "up" | "forgot">(isInvited ? "up" : "in");
+  const [email, setEmail] = useState(invitedEmail ?? "");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [companyName, setCompanyName] = useState("");
