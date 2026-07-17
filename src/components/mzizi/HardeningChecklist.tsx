@@ -97,6 +97,7 @@ const TIERS: Tier[] = [
       { id: "multi-region", label: "Multi-region failover with defined RPO/RTO", detail: "Standby database in a second region, DNS or gateway cutover runbook, and stated targets (e.g. RPO ≤ 5 min, RTO ≤ 1 hr). Infrastructure review." },
       { id: "runbooks", label: "Incident runbooks + on-call rotation", detail: "Written runbooks per incident class (DB down, ledger imbalance, payment rail outage, security breach), a paging rotation, and severity-based response SLAs. Operational review." },
       { id: "status-page", label: "Public status page + customer comms plan", detail: "A public status page reflecting real component health and pre-approved customer notification templates for incidents. Operational review." },
+      { id: "monitoring", label: "Monitoring and alerting on batch failures, error rates and posting anomalies", detail: "Failed EOD/accrual jobs, elevated API error rates and unusual posting volumes must page a human; dashboards and alert history retained as audit evidence. Operational review." },
     ],
   },
   {
