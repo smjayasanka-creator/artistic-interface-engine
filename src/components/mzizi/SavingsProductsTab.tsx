@@ -53,6 +53,7 @@ type ProductRow = {
   deposit_liability_account_id: string | null;
   fee_income_account_id: string | null;
   interest_expense_account_id: string | null;
+  unclaimed_deposit_liability_account_id: string | null;
 };
 
 const EMPTY = {
@@ -72,6 +73,7 @@ const EMPTY = {
   deposit_liability_account_id: null as string | null,
   fee_income_account_id: null as string | null,
   interest_expense_account_id: null as string | null,
+  unclaimed_deposit_liability_account_id: null as string | null,
 };
 
 const GRID_COLS = "0.6fr 1.5fr 0.95fr 0.5fr 0.85fr 0.6fr 0.5fr 0.45fr";
@@ -185,6 +187,7 @@ export function SavingsProductsTab() {
                     deposit_liability_account_id: p.deposit_liability_account_id,
                     fee_income_account_id: p.fee_income_account_id,
                     interest_expense_account_id: p.interest_expense_account_id,
+                    unclaimed_deposit_liability_account_id: p.unclaimed_deposit_liability_account_id ?? null,
                   },
                 })
               }
@@ -239,7 +242,8 @@ function ProductModal({
   const glSelect = (
     key:
       | "deposit_liability_account_id"
-      | "interest_expense_account_id",
+      | "interest_expense_account_id"
+      | "unclaimed_deposit_liability_account_id",
   ) => (
     <select
       className={selectCls}
@@ -397,6 +401,7 @@ function ProductModal({
             <FormGrid>
               <FormField label="Deposit liability account" span={6}>{glSelect("deposit_liability_account_id")}</FormField>
               <FormField label="Interest expense account" span={6}>{glSelect("interest_expense_account_id")}</FormField>
+              <FormField label="Unclaimed / dormant deposits liability" span={12} hint="Segregated liability used when a dormant balance is transferred to an unclaimed-deposits account per CBSL rules. Optional — falls back to the deposit-liability account if left blank.">{glSelect("unclaimed_deposit_liability_account_id")}</FormField>
             </FormGrid>
           </div>
 

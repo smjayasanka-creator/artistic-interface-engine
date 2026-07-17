@@ -70,6 +70,7 @@ const EMPTY = {
   wht_payable_account_id: null as string | null,
   introducer_commission_account_id: null as string | null,
   marketing_incentive_account_id: null as string | null,
+  unclaimed_deposit_liability_account_id: null as string | null,
 };
 
 const GRID_COLS = "0.5fr 1.4fr 0.95fr 0.75fr 0.45fr 0.85fr 0.55fr 0.4fr";
@@ -216,6 +217,7 @@ export function FdProductsTab() {
                       wht_payable_account_id: (product as any).wht_payable_account_id ?? null,
                       introducer_commission_account_id: (product as any).introducer_commission_account_id ?? null,
                       marketing_incentive_account_id: (product as any).marketing_incentive_account_id ?? null,
+                      unclaimed_deposit_liability_account_id: (product as any).unclaimed_deposit_liability_account_id ?? null,
                     },
                     rateTiers: product.rate_tiers,
                   })
@@ -275,7 +277,8 @@ function ProductModal({
       | "interest_expense_account_id"
       | "wht_payable_account_id"
       | "introducer_commission_account_id"
-      | "marketing_incentive_account_id",
+      | "marketing_incentive_account_id"
+      | "unclaimed_deposit_liability_account_id",
   ) => (
     <select
       className={selectCls}
@@ -427,6 +430,7 @@ function ProductModal({
               <FormField label="WHT payable account" span={6}>{glSelect("wht_payable_account_id")}</FormField>
               <FormField label="Introducer commission account" span={6}>{glSelect("introducer_commission_account_id")}</FormField>
               <FormField label="Marketing incentive account" span={6}>{glSelect("marketing_incentive_account_id")}</FormField>
+              <FormField label="Unclaimed / dormant deposits liability" span={12} hint="Segregated liability for matured / unclaimed FD balances aged into dormancy. Optional — falls back to the deposit-liability account if left blank.">{glSelect("unclaimed_deposit_liability_account_id")}</FormField>
             </FormGrid>
           </div>
 

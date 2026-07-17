@@ -84,6 +84,7 @@ const productInputBase = z.object({
   wht_payable_account_id: z.string().uuid().nullable().optional(),
   introducer_commission_account_id: z.string().uuid().nullable().optional(),
   marketing_incentive_account_id: z.string().uuid().nullable().optional(),
+  unclaimed_deposit_liability_account_id: z.string().uuid().nullable().optional(),
 });
 const productInput = productInputBase.refine(
   (v) => v.max_tenure_months >= v.min_tenure_months,

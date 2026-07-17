@@ -937,6 +937,9 @@ function ProductsTab() {
     feeAcct: "",
     accruedAcct: "",
     interestRecvAcct: "",
+    badDebtAcct: "",
+    loanLossAcct: "",
+    suspIntAcct: "",
     requiredDocs: [] as string[],
     segment: "micro" as LoanSegment,
   };
@@ -946,6 +949,7 @@ function ProductsTab() {
   const activeAccts = (accounts ?? []).filter((a: any) => a.is_active);
   const assetAccts = activeAccts.filter((a: any) => a.type === "asset");
   const incomeAccts = activeAccts.filter((a: any) => a.type === "income");
+  const expenseAccts = activeAccts.filter((a: any) => a.type === "expense");
 
   const reset = () => {
     setForm(emptyForm);
@@ -1005,6 +1009,9 @@ function ProductsTab() {
       feeAcct: p.fee_income_account_id ?? "",
       accruedAcct: (p as any).accrued_interest_account_id ?? "",
       interestRecvAcct: (p as any).interest_receivable_account_id ?? "",
+      badDebtAcct: (p as any).bad_debt_expense_account_id ?? "",
+      loanLossAcct: (p as any).loan_loss_provision_account_id ?? "",
+      suspIntAcct: (p as any).suspended_interest_account_id ?? "",
       requiredDocs: Array.isArray(p.required_documents) ? [...p.required_documents] : [],
       segment: ((p.segment as LoanSegment) ?? "micro"),
     });
@@ -1045,6 +1052,9 @@ function ProductsTab() {
       fee_income_account_id: form.feeAcct || null,
       accrued_interest_account_id: form.accruedAcct || null,
       interest_receivable_account_id: form.interestRecvAcct || null,
+      bad_debt_expense_account_id: form.badDebtAcct || null,
+      loan_loss_provision_account_id: form.loanLossAcct || null,
+      suspended_interest_account_id: form.suspIntAcct || null,
       required_documents: form.requiredDocs.map((s) => s.trim()).filter(Boolean),
       segment: form.segment,
     };
@@ -1171,6 +1181,24 @@ function ProductsTab() {
                 <select value={form.interestRecvAcct} onChange={(e) => setForm({ ...form, interestRecvAcct: e.target.value })} className={selectCls}>
                   <option value="">— none —</option>
                   {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                </select>
+              </FormField>
+              <FormField label="Bad debt expense (DR on write-off)" span={6} hint="Used when writing off principal straight to P&L (no provision yet built)">
+                <select value={form.badDebtAcct} onChange={(e) => setForm({ ...form, badDebtAcct: e.target.value })} className={selectCls}>
+                  <option value="">— none —</option>
+                  {expenseAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                </select>
+              </FormField>
+              <FormField label="Loan-loss provision / allowance (contra-asset)" span={6} hint="Used when write-off is charged against a previously built allowance">
+                <select value={form.loanLossAcct} onChange={(e) => setForm({ ...form, loanLossAcct: e.target.value })} className={selectCls}>
+                  <option value="">— none —</option>
+                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                </select>
+              </FormField>
+              <FormField label="Suspended interest (interest-in-suspense)" span={6} hint="Reverses accrued interest income when loan becomes NPL / written off">
+                <select value={form.suspIntAcct} onChange={(e) => setForm({ ...form, suspIntAcct: e.target.value })} className={selectCls}>
+                  <option value="">— none —</option>
+                  {[...assetAccts, ...incomeAccts].map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
                 </select>
               </FormField>
             </FormGrid>

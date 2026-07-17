@@ -62,6 +62,7 @@ export const upsertSavingsProduct = createServerFn({ method: "POST" })
       deposit_liability_account_id?: string | null;
       fee_income_account_id?: string | null;
       interest_expense_account_id?: string | null;
+      unclaimed_deposit_liability_account_id?: string | null;
       segment?: "normal" | "minor" | "senior" | "fixed" | "transaction";
     }) => i,
   )
@@ -314,11 +315,17 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
     });
     await (supabase as any).from("savings_transaction").insert(txnRows);
 
-    // Ledger postings via kernel (best-effort — skip silently if COA not configured)
+    // Ledger postings via kernel — required. Missing GL mapping is a hard error
+    // so no sub-ledger row exists without a matching GL entry.
     const gl = await resolveSavingsAccounts(supabase, product);
     const today = new Date().toISOString().slice(0, 10);
     const fee = Number(product.opening_fee ?? 0);
-    if (gl.cash && gl.liab && Number(data.opening_deposit) > 0) {
+    if (Number(data.opening_deposit) > 0) {
+      if (!gl.cash || !gl.liab) {
+        throw new Error(
+          "Savings product is missing GL mapping (cash and deposit-liability accounts). Set them under Admin → Savings products before opening accounts.",
+        );
+      }
       await supabase.rpc("post_entry", {
         _entry_date: today,
         _reference: `SAV-OPEN-${acct.account_no}`,
@@ -333,7 +340,12 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
         _idempotency_key: `savings:open:${acct.id}`,
       });
     }
-    if (fee > 0 && gl.liab && gl.fee) {
+    if (fee > 0) {
+      if (!gl.liab || !gl.fee) {
+        throw new Error(
+          "Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to charge the opening fee.",
+        );
+      }
       await supabase.rpc("post_entry", {
         _entry_date: today,
         _reference: `SAV-FEE-${acct.account_no}`,
@@ -437,25 +449,36 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
     const today = new Date().toISOString().slice(0, 10);
     let lines: Array<{ account_id: string; debit: number; credit: number }> | null = null;
     let refPrefix = "";
-    if (data.txn_type === "deposit" && gl.cash && gl.liab) {
+    const needCashLiab = () => {
+      if (!gl.cash || !gl.liab) {
+        throw new Error(
+          "Savings product is missing GL mapping (cash and deposit-liability accounts). Configure them under Admin → Savings products.",
+        );
+      }
+    };
+    if (data.txn_type === "deposit") {
+      needCashLiab();
       refPrefix = "SAV-DEP";
       lines = [
-        { account_id: gl.cash, debit: amt, credit: 0 },
-        { account_id: gl.liab, debit: 0, credit: amt },
+        { account_id: gl.cash!, debit: amt, credit: 0 },
+        { account_id: gl.liab!, debit: 0, credit: amt },
       ];
-    } else if (data.txn_type === "withdrawal" && gl.cash && gl.liab) {
+    } else if (data.txn_type === "withdrawal") {
+      needCashLiab();
       refPrefix = "SAV-WD";
       lines = [
-        { account_id: gl.liab, debit: amt, credit: 0 },
-        { account_id: gl.cash, debit: 0, credit: amt },
+        { account_id: gl.liab!, debit: amt, credit: 0 },
+        { account_id: gl.cash!, debit: 0, credit: amt },
       ];
-    } else if (data.txn_type === "fee" && gl.liab && gl.fee) {
+    } else if (data.txn_type === "fee") {
+      if (!gl.liab || !gl.fee) throw new Error("Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to post a fee.");
       refPrefix = "SAV-FEE";
       lines = [
         { account_id: gl.liab, debit: amt, credit: 0 },
         { account_id: gl.fee, debit: 0, credit: amt },
       ];
-    } else if (data.txn_type === "interest" && gl.liab && gl.intr) {
+    } else if (data.txn_type === "interest") {
+      if (!gl.liab || !gl.intr) throw new Error("Savings product is missing GL mapping (deposit-liability and interest-expense accounts) required to credit interest.");
       refPrefix = "SAV-INT";
       lines = [
         { account_id: gl.intr, debit: amt, credit: 0 },
@@ -551,7 +574,10 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
     // Ledger postings via kernel
     const gl = await resolveSavingsAccounts(supabase, acct.product);
     const today = new Date().toISOString().slice(0, 10);
-    if (fee > 0 && gl.liab && gl.fee) {
+    if (fee > 0) {
+      if (!gl.liab || !gl.fee) {
+        throw new Error("Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to post the closure fee.");
+      }
       await supabase.rpc("post_entry", {
         _entry_date: today,
         _reference: `SAV-CLOSE-FEE-${acct.account_no}`,
@@ -566,7 +592,10 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
         _idempotency_key: `savings:close-fee:${acct.id}`,
       });
     }
-    if (balAfterFee > 0 && gl.cash && gl.liab) {
+    if (balAfterFee > 0) {
+      if (!gl.cash || !gl.liab) {
+        throw new Error("Savings product is missing GL mapping (cash and deposit-liability accounts) required to pay out on closure.");
+      }
       await supabase.rpc("post_entry", {
         _entry_date: today,
         _reference: `SAV-CLOSE-${acct.account_no}`,

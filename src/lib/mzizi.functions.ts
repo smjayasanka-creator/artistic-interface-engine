@@ -1497,6 +1497,9 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       fee_income_account_id?: string | null;
       accrued_interest_account_id?: string | null;
       interest_receivable_account_id?: string | null;
+      bad_debt_expense_account_id?: string | null;
+      loan_loss_provision_account_id?: string | null;
+      suspended_interest_account_id?: string | null;
       required_documents?: string[];
       segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
@@ -1523,6 +1526,9 @@ export const createLoanProduct = createServerFn({ method: "POST" })
           fee_income_account_id: z.string().uuid().nullable().optional(),
           accrued_interest_account_id: z.string().uuid().nullable().optional(),
           interest_receivable_account_id: z.string().uuid().nullable().optional(),
+          bad_debt_expense_account_id: z.string().uuid().nullable().optional(),
+          loan_loss_provision_account_id: z.string().uuid().nullable().optional(),
+          suspended_interest_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
           segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
         })
@@ -1563,6 +1569,9 @@ export const createLoanProduct = createServerFn({ method: "POST" })
         fee_income_account_id: data.fee_income_account_id ?? null,
         accrued_interest_account_id: data.accrued_interest_account_id ?? null,
         interest_receivable_account_id: data.interest_receivable_account_id ?? null,
+        bad_debt_expense_account_id: data.bad_debt_expense_account_id ?? null,
+        loan_loss_provision_account_id: data.loan_loss_provision_account_id ?? null,
+        suspended_interest_account_id: data.suspended_interest_account_id ?? null,
         required_documents: data.required_documents ?? [],
         segment: data.segment ?? "micro",
       } as never)
@@ -1613,6 +1622,9 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       fee_income_account_id?: string | null;
       accrued_interest_account_id?: string | null;
       interest_receivable_account_id?: string | null;
+      bad_debt_expense_account_id?: string | null;
+      loan_loss_provision_account_id?: string | null;
+      suspended_interest_account_id?: string | null;
       required_documents?: string[];
       segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
@@ -1639,6 +1651,9 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
           fee_income_account_id: z.string().uuid().nullable().optional(),
           accrued_interest_account_id: z.string().uuid().nullable().optional(),
           interest_receivable_account_id: z.string().uuid().nullable().optional(),
+          bad_debt_expense_account_id: z.string().uuid().nullable().optional(),
+          loan_loss_provision_account_id: z.string().uuid().nullable().optional(),
+          suspended_interest_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
           segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
         })
@@ -1670,6 +1685,9 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
         fee_income_account_id: data.fee_income_account_id ?? null,
         accrued_interest_account_id: data.accrued_interest_account_id ?? null,
         interest_receivable_account_id: data.interest_receivable_account_id ?? null,
+        bad_debt_expense_account_id: data.bad_debt_expense_account_id ?? null,
+        loan_loss_provision_account_id: data.loan_loss_provision_account_id ?? null,
+        suspended_interest_account_id: data.suspended_interest_account_id ?? null,
         required_documents: data.required_documents ?? [],
         ...(data.segment ? { segment: data.segment } : {}),
       } as never)
