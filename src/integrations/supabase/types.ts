@@ -1074,6 +1074,8 @@ export type Database = {
           daily_amount: number
           deposit_id: string
           id: string
+          released_at: string | null
+          released_ref: string | null
         }
         Insert: {
           accrual_date: string
@@ -1081,6 +1083,8 @@ export type Database = {
           daily_amount: number
           deposit_id: string
           id?: string
+          released_at?: string | null
+          released_ref?: string | null
         }
         Update: {
           accrual_date?: string
@@ -1088,6 +1092,8 @@ export type Database = {
           daily_amount?: number
           deposit_id?: string
           id?: string
+          released_at?: string | null
+          released_ref?: string | null
         }
         Relationships: [
           {
