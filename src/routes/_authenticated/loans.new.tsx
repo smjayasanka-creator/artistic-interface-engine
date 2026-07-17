@@ -234,6 +234,105 @@ function NewLoan() {
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
+  function updateSecurity(idx: number, patch: (row: typeof securities[number]) => typeof securities[number]) {
+    setSecurities((prev) => prev.map((r, i) => (i === idx ? patch(r) : r)));
+  }
+
+  async function fileToBase64(file: File): Promise<string> {
+    const buf = await file.arrayBuffer();
+    let binary = "";
+    const bytes = new Uint8Array(buf);
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  async function uploadSecurityDocFile(idx: number, file: File) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error(`${file.name} exceeds 10 MB limit.`);
+      return;
+    }
+    const sec = securities[idx];
+    if (!sec) return;
+    updateSecurity(idx, (r) => ({ ...r, uploadingDoc: true }));
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Not signed in");
+      const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";
+      const path = `${uid}/${sec.key}/${slugifyDoc(file.name.replace(/\.[^.]+$/, ""))}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("security-documents").upload(path, file, {
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+      if (error) throw error;
+      updateSecurity(idx, (r) => ({
+        ...r,
+        documents: [...r.documents, { path, name: file.name, size: file.size }],
+      }));
+      toast.success(`Uploaded ${file.name}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Upload failed");
+    } finally {
+      updateSecurity(idx, (r) => ({ ...r, uploadingDoc: false }));
+    }
+  }
+
+  async function removeSecurityDoc(idx: number, path: string) {
+    try {
+      await supabase.storage.from("security-documents").remove([path]);
+    } catch {
+      // ignore
+    }
+    updateSecurity(idx, (r) => ({ ...r, documents: r.documents.filter((d) => d.path !== path) }));
+  }
+
+  async function autoFillFromCr(idx: number, file: File) {
+    const sec = securities[idx];
+    if (!sec) return;
+    const type: any = (securityTypes ?? []).find((t: any) => t.id === sec.security_type_id);
+    const defs: any[] = Array.isArray(type?.fields?.definitions) ? type.fields.definitions : [];
+    if (defs.length === 0) {
+      toast.error("This security type has no fields to fill.");
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error(`${file.name} exceeds 10 MB limit.`);
+      return;
+    }
+    if (!/^image\//.test(file.type) && file.type !== "application/pdf") {
+      toast.error("Upload an image (JPG/PNG) or PDF of the CR.");
+      return;
+    }
+    updateSecurity(idx, (r) => ({ ...r, extracting: true }));
+    try {
+      // Upload the CR as a stored document as well.
+      await uploadSecurityDocFile(idx, file);
+      const base64 = await fileToBase64(file);
+      const res = await extractSecurityFn({
+        data: {
+          image_base64: base64,
+          mime: file.type || "image/jpeg",
+          document_kind: `${type?.category ?? ""} ${type?.kind ?? "Vehicle CR"}`.trim() || "Vehicle CR",
+          fields: defs.map((d) => ({ key: d.key, label: d.label, type: d.type })),
+        },
+      });
+      const extracted = res?.values ?? {};
+      const filled = Object.entries(extracted).filter(([, v]) => String(v ?? "").length > 0).length;
+      updateSecurity(idx, (r) => ({
+        ...r,
+        values: { ...r.values, ...Object.fromEntries(Object.entries(extracted).filter(([, v]) => String(v ?? "").length > 0)) },
+      }));
+      toast.success(filled ? `Auto-filled ${filled} field${filled === 1 ? "" : "s"} from CR` : "No fields could be read from this document");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Auto-fill failed");
+    } finally {
+      updateSecurity(idx, (r) => ({ ...r, extracting: false }));
+    }
+  }
+
   const requiredDocs: string[] = Array.isArray(product?.required_documents)
     ? (product?.required_documents as string[])
     : [];
