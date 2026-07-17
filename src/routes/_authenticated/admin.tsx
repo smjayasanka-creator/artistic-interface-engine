@@ -172,6 +172,7 @@ function Admin() {
       {tab === "risk_profiling" && <RiskProfilingTab />}
       {tab === "screening" && <ScreeningConfigTab />}
       {tab === "bank_directory" && <BankDirectoryTab />}
+      {tab === "eod" && <EodTab />}
       {tab === "time_travel" && <TimeTravelTab />}
     </div>
   );
