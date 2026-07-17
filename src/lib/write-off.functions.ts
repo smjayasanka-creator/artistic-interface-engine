@@ -9,7 +9,7 @@ export const listWriteOffCandidates = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: loans, error } = await supabase
       .from("loan")
-      .select("id, contract_no, status, client_id, principal, client:client_id(display_name)")
+      .select("id, contract_no, status, client_id, principal, client:client_id(full_name)")
       .in("status", ["disbursed", "active", "overdue"] as any);
     if (error) throw new Error(error.message);
     if (!loans?.length) return [];
@@ -33,7 +33,7 @@ export const listWriteOffCandidates = createServerFn({ method: "GET" })
         id: l.id,
         contract_no: l.contract_no,
         status: l.status,
-        client_name: l.client?.display_name ?? "—",
+        client_name: l.client?.full_name ?? "—",
         principal: Number(l.principal),
         outstanding_principal: b.p,
         outstanding_interest: b.i,
@@ -49,12 +49,12 @@ export const listWriteOffs = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await supabase
       .from("loan_write_off" as any)
-      .select("*, client:client_id(display_name)")
+      .select("*, client:client_id(full_name)")
       .order("write_off_date", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map((r: any) => ({
       ...r,
-      client_name: r.client?.display_name ?? "—",
+      client_name: r.client?.full_name ?? "—",
     }));
   });
 
