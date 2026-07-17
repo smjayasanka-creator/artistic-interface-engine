@@ -47,7 +47,7 @@ export const upsertSecurityType = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => upsertSecurityTypeSchema.parse(d))
   .handler(async ({ data, context }) => {
     const company_id = await currentCompanyId(context.supabase);
-    const payload = { ...data, company_id };
+    const payload = { ...data, company_id, name: data.kind };
     const { error } = await context.supabase
       .from("security_type")
       .upsert(payload, { onConflict: "id" });
