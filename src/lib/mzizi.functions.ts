@@ -441,7 +441,7 @@ export const getLoans = createServerFn({ method: "GET" })
         "id, principal, status, disbursed_at, client:client_id(id, full_name, avatar_color), product:product_id(name)",
         { count: "exact" },
       )
-      .in("status", ["disbursed", "active", "closed"])
+      .in("status", ["draft", "submitted"])
       .order("disbursed_at", { ascending: false })
       .range(from, to);
     const ids = (loans ?? []).map((l) => l.id);
@@ -1148,6 +1148,7 @@ export const submitApplication = createServerFn({ method: "POST" })
       schedule_overrides?: Record<string, number>;
       initial_charges?: { charge_id: string; amount: number; capitalize?: boolean; supplier_client_id?: string | null }[];
       securities?: { security_type_id: string; values: Record<string, unknown>; notes?: string | null; documents?: { path: string; name: string; size: number; kind?: string | null }[] }[];
+      draft?: boolean;
     }) =>
       z
         .object({
@@ -1182,6 +1183,7 @@ export const submitApplication = createServerFn({ method: "POST" })
               }),
             )
             .optional(),
+          draft: z.boolean().optional(),
         })
         .parse(i),
   )
@@ -1216,7 +1218,7 @@ export const submitApplication = createServerFn({ method: "POST" })
         annual_rate_pct: data.annual_rate_pct ?? product.annual_rate_pct,
         frequency: data.frequency ?? product.frequency,
         purpose: data.purpose,
-        status: "submitted",
+        status: data.draft ? "draft" : "submitted",
         schedule_type: data.schedule_type ?? "normal",
         schedule_overrides:
           data.schedule_type === "structured" && data.schedule_overrides
