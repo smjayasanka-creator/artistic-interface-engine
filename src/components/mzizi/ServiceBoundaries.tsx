@@ -4,7 +4,7 @@ import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Badge } from "@/components/mzizi/Badge";
 import {
   Landmark, PiggyBank, CircleDollarSign, GitBranch, Plug,
-  ShieldCheck, BookOpen, Users, ArrowRight, Package, Database, Radio,
+  ShieldCheck, BookOpen, Users, ArrowRight, Package, Database, Radio, Mail,
 } from "lucide-react";
 
 type Domain = {
@@ -31,22 +31,31 @@ const DOMAINS: Domain[] = [
     tag: "credit facilities",
     icon: Landmark,
     summary:
-      "Origination, disbursement, repayment, restructure, termination, write-off and legal action for all credit facilities.",
+      "Origination (with draft save), disbursement, repayment, restructure, termination, write-off and legal action. Owns loan charges (fixed / variable / manual, capitalizable, inside/outside supplier), ALCO rate overrides, debit notes, and attached securities with document uploads + AI auto-fill.",
     ownedTables: [
-      "loan", "loan_product", "loan_installment", "repayment",
-      "lending_group", "security_type",
+      "loan", "loan_product", "loan_installment", "loan_installment_reclass",
+      "repayment", "lending_group",
+      "loan_charge", "loan_charge_product", "loan_applied_charge",
+      "loan_alco_rate", "loan_security", "security_type",
     ],
-    serverFns: ["src/lib/mzizi.functions.ts (loan.*)"],
+    serverFns: [
+      "src/lib/mzizi.functions.ts (loan.*)",
+      "src/lib/loan-charges.functions.ts",
+      "src/lib/loan-alco.functions.ts",
+      "src/lib/security.functions.ts",
+      "src/lib/security-ai.functions.ts",
+    ],
     publicApi: [],
     publishesEvents: [
-      "loan.disbursed", "loan.repaid", "loan.restructured",
-      "loan.written_off", "loan.transferred_to_legal",
+      "loan.drafted", "loan.submitted", "loan.disbursed", "loan.repaid",
+      "loan.restructured", "loan.written_off", "loan.transferred_to_legal",
+      "loan.charge_capitalized", "loan.security_attached", "loan.debit_note_issued",
     ],
-    consumesEvents: ["client.kyc_verified", "workflow.approved"],
+    consumesEvents: ["client.kyc_verified", "workflow.approved", "alco.loan_rate_changed"],
     dependsOn: ["ledger", "workflow", "clients"],
     extractionReadiness: "partial",
     extractionNotes:
-      "Ledger writes are transactional today. Extract only after ledger kernel + outbox pattern is in place.",
+      "Ledger writes are transactional today, and the capitalized-charge reclass runs inside the accrual RPC. Extract only after ledger kernel + outbox pattern is in place. Security AI extraction already calls out to Lovable AI Gateway, so that side is decoupled.",
     accent: "from-indigo-500/10 to-indigo-500/0 border-indigo-500/30",
   },
   {
@@ -55,12 +64,13 @@ const DOMAINS: Domain[] = [
     tag: "current & savings accounts",
     icon: PiggyBank,
     summary:
-      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, passbook stock and issue.",
+      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, passbook stock and issue. Withdrawals accept Cash, Fund Transfer (client bank account), Cheque or SDF Savings, enforced server-side.",
     ownedTables: [
       "savings_account", "savings_product", "savings_transaction",
+      "savings_charge", "savings_charge_product", "savings_alco_rate",
       "passbook_stock", "passbook_issue", "savings_number_seq",
     ],
-    serverFns: ["src/lib/savings.functions.ts"],
+    serverFns: ["src/lib/savings.functions.ts", "src/lib/payment-methods.ts (guard)"],
     publicApi: [],
     publishesEvents: [
       "savings.account_opened", "savings.deposited",
@@ -70,7 +80,7 @@ const DOMAINS: Domain[] = [
     dependsOn: ["ledger", "clients"],
     extractionReadiness: "ready",
     extractionNotes:
-      "Cleanest boundary — schema already isolated, no shared writes outside the ledger.",
+      "Cleanest boundary — schema already isolated, no shared writes outside the ledger. Payment-method guard is a pure module and travels with the service.",
     accent: "from-emerald-500/10 to-emerald-500/0 border-emerald-500/30",
   },
   {
@@ -79,13 +89,13 @@ const DOMAINS: Domain[] = [
     tag: "term deposits",
     icon: CircleDollarSign,
     summary:
-      "Term deposit lifecycle: booking, interest schedule, daily accrual, payout, maturity, renewal and premature closure.",
+      "Term deposit lifecycle: booking, interest schedule, daily accrual, payout, maturity, renewal and premature closure. Maturity payout accepts Fund Transfer, Cheque or SDF Savings, enforced server-side.",
     ownedTables: [
       "fixed_deposit", "fd_product", "fd_rate_tier",
       "fd_interest_schedule", "fd_accrual", "fd_transaction",
       "fd_nominee", "fd_number_seq",
     ],
-    serverFns: ["src/lib/fd.functions.ts"],
+    serverFns: ["src/lib/fd.functions.ts", "src/lib/payment-methods.ts (guard)"],
     publicApi: [],
     publishesEvents: [
       "fd.booked", "fd.interest_accrued", "fd.interest_paid",
@@ -182,16 +192,26 @@ const DOMAINS: Domain[] = [
     tag: "double-entry GL",
     icon: BookOpen,
     summary:
-      "Shared kernel. Every money-moving domain posts through post_entry(). Immutable, balanced, append-only.",
-    ownedTables: ["gl_account", "journal_entry", "posting"],
-    serverFns: ["(central post_entry RPC — planned)"],
-    publicApi: [],
-    publishesEvents: ["ledger.entry_posted"],
+      "Shared kernel. Every money-moving domain posts through post_entry(). Immutable, balanced, append-only. Also owns the outbox (domain_event) and month-partitioned EOD balance snapshots.",
+    ownedTables: [
+      "gl_account", "journal_entry", "posting", "domain_event",
+      "gl_eod_balance", "loan_eod_balance", "savings_eod_balance", "fd_eod_balance",
+      "eod_run",
+    ],
+    serverFns: ["src/lib/api-ledger.server.ts (post_entry_system wrapper)"],
+    publicApi: [
+      "/api/public/hooks/eod-close",
+      "/api/public/hooks/dispatch-domain-events",
+      "/api/public/hooks/fd-accrue",
+      "/api/public/hooks/fd-mature",
+      "/api/public/hooks/loan-accrue",
+    ],
+    publishesEvents: ["ledger.entry_posted", "eod.closed"],
     consumesEvents: [],
     dependsOn: [],
     extractionReadiness: "coupled",
     extractionNotes:
-      "Do NOT extract. Ledger is the shared kernel — colocated with Postgres for ACID balance guarantees.",
+      "Do NOT extract. Ledger is the shared kernel — colocated with Postgres for ACID balance guarantees. The outbox dispatcher can move to its own worker once subscribers exist.",
     accent: "from-slate-500/10 to-slate-500/0 border-slate-500/30",
   },
   {
@@ -200,22 +220,58 @@ const DOMAINS: Domain[] = [
     tag: "party master",
     icon: Users,
     summary:
-      "Customer master, KYC, staff, branches, company. Cross-cutting party data every domain reads.",
+      "Customer master, KYC, staff, branches, company, and staff invites. When a staff row is created an invite email is sent; the invitee accepts via Google or password and the existing staff row is linked on first sign-in.",
     ownedTables: [
-      "client", "client_bank_account", "staff",
-      "branch", "company", "company_invite", "user_roles",
+      "client", "client_bank_account", "client_risk_assessment", "staff",
+      "branch", "company", "company_invite", "company_subscription",
+      "subscription_plan", "user_roles", "custom_role", "custom_role_permission",
+      "user_custom_role", "permission",
     ],
-    serverFns: ["src/lib/mzizi.functions.ts (client.*, staff.*)"],
+    serverFns: [
+      "src/lib/mzizi.functions.ts (client.*, staff.*, invite.*)",
+      "src/lib/roles.functions.ts",
+      "src/lib/risk.functions.ts",
+    ],
     publicApi: [],
     publishesEvents: [
       "client.created", "client.kyc_verified", "client.bank_account_added",
+      "staff.invited", "staff.invite_accepted",
     ],
     consumesEvents: [],
-    dependsOn: ["auth"],
+    dependsOn: ["auth", "notifications"],
     extractionReadiness: "partial",
     extractionNotes:
-      "Read-heavy from every domain — needs a well-cached read replica or GraphQL federation before extraction.",
+      "Read-heavy from every domain — needs a well-cached read replica or GraphQL federation before extraction. Invite send now depends on the Notifications domain.",
     accent: "from-teal-500/10 to-teal-500/0 border-teal-500/30",
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    tag: "notify.m-sme.com",
+    icon: Mail,
+    summary:
+      "Outbound email — Supabase auth templates (signup, magic link, recovery, invite, email change, reauth), transactional templates, and the send helper. Delivery via the configured email domain.",
+    ownedTables: [],
+    serverFns: [
+      "src/lib/email-templates/send-email.ts",
+      "src/lib/email-templates/registry.ts",
+      "src/routes/lovable/email/auth/webhook.ts",
+    ],
+    publicApi: [
+      "/lovable/email/auth/webhook",
+      "/lovable/email/auth/preview",
+      "/lovable/email/transactional/preview",
+    ],
+    publishesEvents: ["email.sent", "email.bounced", "email.suppressed"],
+    consumesEvents: [
+      "staff.invited", "client.created",
+      "workflow.approved", "workflow.rejected",
+    ],
+    dependsOn: [],
+    extractionReadiness: "ready",
+    extractionNotes:
+      "Stateless — templates + provider call. Extract to its own worker whenever email volume warrants dedicated retry / suppression handling.",
+    accent: "from-fuchsia-500/10 to-fuchsia-500/0 border-fuchsia-500/30",
   },
 ];
 
