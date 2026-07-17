@@ -123,31 +123,44 @@ function Admin() {
 
   if (!tab) {
     return (
-      <div className="animate-fadein flex flex-col gap-5">
-        <div className="grid gap-3 md:grid-cols-3">
-          {SECTIONS.map((s) => {
-            const Icon = s.icon;
-            return (
-              <button key={s.id} onClick={() => setTab(s.id)} className="text-left group">
-                <Card className="p-3.5 hover:border-primary/40 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${s.accent}`}>
-                      <Icon size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-[14px] truncate">{s.label}</div>
-                      <div className="text-[11.5px] text-muted-foreground truncate">{s.desc}</div>
-                    </div>
-                    <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </Card>
-              </button>
-            );
-          })}
-        </div>
+      <div className="animate-fadein flex flex-col gap-6">
+        {GROUPS.map((g) => {
+          const items = SECTIONS.filter((s) => s.group === g.id);
+          if (!items.length) return null;
+          return (
+            <div key={g.id} className="flex flex-col gap-2.5">
+              <div className="flex items-center gap-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</div>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                {items.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <button key={s.id} onClick={() => setTab(s.id)} className="text-left group">
+                      <Card className="p-3.5 hover:border-primary/40 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${s.accent}`}>
+                            <Icon size={18} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-[14px] truncate">{s.label}</div>
+                            <div className="text-[11.5px] text-muted-foreground truncate">{s.desc}</div>
+                          </div>
+                          <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </Card>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   }
+
 
   const current = SECTIONS.find((s) => s.id === tab)!;
   const Icon = current.icon;
