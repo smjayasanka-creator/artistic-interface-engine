@@ -475,11 +475,89 @@ function NewLoan() {
     !!clientId && !!productId && !!principal && term !== "" && !!rateNum && docsSatisfied && !submit.isPending;
 
 
+  const submitApp = () => {
+    const missingSup = appliedCharges.find((c) => c.origin === "outside" && !c.supplier_client_id);
+    if (missingSup) {
+      toast.error(`Select a supplier for "${missingSup.name}"`);
+      return;
+    }
+    const missingManual = productCharges.find(
+      (c: any) => c.charge_type === "manual" && selectedCharges[c.id] && !(Number(manualAmounts[c.id]) > 0),
+    );
+    if (missingManual) {
+      toast.error(`Enter amount for "${missingManual.name}"`);
+      return;
+    }
+    for (let i = 0; i < securities.length; i++) {
+      const s = securities[i];
+      if (!s.security_type_id) {
+        toast.error(`Select a security type for security #${i + 1}`);
+        return;
+      }
+      const type: any = (securityTypes ?? []).find((t: any) => t.id === s.security_type_id);
+      const defs: any[] = Array.isArray(type?.fields?.definitions) ? type.fields.definitions : [];
+      const missing = defs.find((d: any) => d.required && !String(s.values[d.key] ?? "").trim());
+      if (missing) {
+        toast.error(`Fill "${missing.label}" for security #${i + 1}`);
+        return;
+      }
+    }
+    submit.mutate({ data: buildPayload(false) as any });
+  };
+
+  const actionButtons = (
+    <>
+      <button
+        type="button"
+        onClick={saveDraft}
+        disabled={submit.isPending || !clientId}
+        className={btnSecondaryCls}
+        title="Save progress without submitting for approval"
+      >
+        {submit.isPending ? "Saving…" : "Save draft"}
+      </button>
+      {tab !== "customer" && (
+        <button
+          type="button"
+          onClick={() => {
+            const i = TABS.findIndex((t) => t.key === tab);
+            setTab(TABS[i - 1].key);
+          }}
+          className={btnSecondaryCls}
+        >
+          ← Back
+        </button>
+      )}
+      {tab !== "evaluations" ? (
+        <button
+          type="button"
+          disabled={tab === "documents" && !docsSatisfied}
+          onClick={() => {
+            if (tab === "documents" && !docsSatisfied) {
+              toast.error(`Please provide all required documents (${missingDocs.length} missing).`);
+              return;
+            }
+            const i = TABS.findIndex((t) => t.key === tab);
+            setTab(TABS[i + 1].key);
+          }}
+          className={btnPrimaryCls}
+        >
+          Next →
+        </button>
+      ) : (
+        <button type="button" disabled={!canSubmit} onClick={submitApp} className={btnPrimaryCls}>
+          {submit.isPending ? "Submitting…" : "Submit application"}
+        </button>
+      )}
+    </>
+  );
+
   return (
     <div className="animate-fadein">
       <Card>
-        <FormHeader title="New loan application" onBack={() => nav({ to: "/loans" })} />
+        <FormHeader title="New loan application" onBack={() => nav({ to: "/loans" })} actions={actionButtons} />
         <TabHeader tab={tab} setTab={setTab} />
+
 
         <div className="flex flex-col gap-4 text-[12.5px] mt-5">
           {tab === "customer" && (
