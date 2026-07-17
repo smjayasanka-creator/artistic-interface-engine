@@ -8,7 +8,7 @@ import { hasActiveWorkflow, startWorkflow } from "@/lib/workflow.functions";
 import { listLoanCharges } from "@/lib/loan-charges.functions";
 import { listSecurityTypes } from "@/lib/security.functions";
 import { extractSecurityFieldsFromDocument } from "@/lib/security-ai.functions";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, Check, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
