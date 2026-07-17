@@ -1119,6 +1119,37 @@ function NewLoan() {
                             )}
                           </div>
                         </div>
+
+                        <div className="mt-3 flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => updateSecurity(idx, (r) => ({ ...r, expanded: false }))}
+                            className="text-[11.5px] px-2.5 py-1 rounded-md border border-border hover:bg-secondary"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!s.security_type_id) {
+                                toast.error("Select a security type");
+                                return;
+                              }
+                              const missing = defs.find((d) => d.required && !s.values[d.key]);
+                              if (missing) {
+                                toast.error(`Fill "${missing.label}"`);
+                                return;
+                              }
+                              updateSecurity(idx, (r) => ({ ...r, saved: true, expanded: false }));
+                              toast.success(`Security #${idx + 1} saved`);
+                            }}
+                            className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1 rounded-md text-[11.5px] font-semibold hover:bg-primary-hover"
+                          >
+                            <Check size={13} /> Save security
+                          </button>
+                        </div>
+                        </div>
+                        )}
                       </div>
                     );
                   })}
