@@ -1,15 +1,24 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
+function readSearchString(value: unknown) {
+  return typeof value === "string" ? value : undefined;
+}
+
+function readInvitedFlag(value: unknown) {
+  if (value === true || value === 1 || value === "1" || value === "true") return true;
+  if (Array.isArray(value)) return value.some(readInvitedFlag);
+  return false;
+}
+
 export const Route = createFileRoute("/auth")({
-  validateSearch: z.object({
-    redirect: z.string().optional(),
-    invited: z.union([z.string(), z.number(), z.boolean()]).optional(),
-    email: z.string().optional(),
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: readSearchString(search.redirect),
+    invited: readInvitedFlag(search.invited),
+    email: readSearchString(search.email),
   }),
   head: () => ({
     meta: [
@@ -23,7 +32,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const nav = useNavigate();
   const { redirect, invited, email: invitedEmail } = useSearch({ from: "/auth" });
-  const isInvited = invited === "1" || invited === "true" || invited === true || invited === 1;
+  const isInvited = invited;
   const [mode, setMode] = useState<"in" | "up" | "forgot">(isInvited ? "up" : "in");
   const [email, setEmail] = useState(invitedEmail ?? "");
   const [password, setPassword] = useState("");
