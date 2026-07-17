@@ -30,7 +30,20 @@ function MaturityDue() {
   const [pay, setPay] = useState<PaymentMethodValue>({ method: "fund_transfer" });
 
   const matureM = useMutation({
-    mutationFn: (id: string) => matureFn({ data: { id } }),
+    mutationFn: (args: { id: string; payload?: PaymentMethodValue }) =>
+      matureFn({
+        data: {
+          id: args.id,
+          ...(args.payload
+            ? {
+                payment_method: args.payload.method,
+                bank_account_id: args.payload.bank_account_id ?? null,
+                savings_account_id: args.payload.savings_account_id ?? null,
+                reference: args.payload.reference ?? null,
+              }
+            : {}),
+        } as any,
+      }),
     onSuccess: (r) => {
       toast.success(r.action === "renewed" ? `Renewed as ${r.new_certificate}` : `Payout ${money(r.settlement ?? 0)}`);
       qc.invalidateQueries({ queryKey: ["fd-maturity"] });
