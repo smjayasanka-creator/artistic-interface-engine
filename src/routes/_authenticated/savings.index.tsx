@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PiggyBank, XCircle, BookMarked, ArrowRight, Wallet } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { PiggyBank, XCircle, BookMarked, ArrowRight, Wallet, MoonStar, Archive } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { Card } from "@/components/mzizi/Card";
 import { listSavingsAccounts, listPassbookStock } from "@/lib/savings.functions";
+import { markSavingsDormant, transferSavingsToUnclaimed } from "@/lib/lifecycle.functions";
 import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/savings/")({
@@ -42,13 +44,34 @@ const CARDS = [
 ] as const;
 
 function SavingsIndex() {
+  const qc = useQueryClient();
   const acctFn = useServerFn(listSavingsAccounts);
   const stockFn = useServerFn(listPassbookStock);
+  const dormantFn = useServerFn(markSavingsDormant);
+  const unclaimedFn = useServerFn(transferSavingsToUnclaimed);
   const { data: accounts } = useQuery({
     queryKey: ["savings-accounts", "all"],
     queryFn: () => acctFn({ data: { status: "all" } }),
   });
   const { data: stock } = useQuery({ queryKey: ["passbook-stock"], queryFn: () => stockFn() });
+
+  const dormantM = useMutation({
+    mutationFn: (id: string) => dormantFn({ data: { account_id: id } }),
+    onSuccess: () => {
+      toast.success("Account marked dormant");
+      qc.invalidateQueries({ queryKey: ["savings-accounts", "all"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const unclaimedM = useMutation({
+    mutationFn: (id: string) =>
+      unclaimedFn({ data: { account_id: id, idempotency_key: `savings:unclaimed:${id}` } }),
+    onSuccess: () => {
+      toast.success("Balance transferred to unclaimed liability");
+      qc.invalidateQueries({ queryKey: ["savings-accounts", "all"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const active = (accounts ?? []).filter((a: any) => a.status === "active");
   const totalBalance = active.reduce((s: number, a: any) => s + Number(a.balance ?? 0), 0);
@@ -142,23 +165,64 @@ function SavingsIndex() {
                 <th className="py-2 pr-3">Branch</th>
                 <th className="py-2 pr-3 text-right">Balance</th>
                 <th className="py-2 pr-3">Status</th>
+                <th className="py-2 pr-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {(accounts ?? []).slice(0, 12).map((a: any) => (
-                <tr key={a.id} className="border-b border-border last:border-0">
-                  <td className="py-2 pr-3 font-mono text-xs">{a.account_no}</td>
-                  <td className="py-2 pr-3">{a.client?.full_name}</td>
-                  <td className="py-2 pr-3">{a.product?.name}</td>
-                  <td className="py-2 pr-3">{a.branch?.name}</td>
-                  <td className="py-2 pr-3 text-right font-mono">{money(a.balance, true)}</td>
-                  <td className="py-2 pr-3 capitalize text-xs">{a.status}</td>
-                </tr>
-              ))}
+              {(accounts ?? []).slice(0, 12).map((a: any) => {
+                const status = String(a.status);
+                const canDormant = status === "active";
+                const canUnclaimed = status === "dormant" || status === "closed";
+                const busy = dormantM.isPending || unclaimedM.isPending;
+                return (
+                  <tr key={a.id} className="border-b border-border last:border-0">
+                    <td className="py-2 pr-3 font-mono text-xs">{a.account_no}</td>
+                    <td className="py-2 pr-3">{a.client?.full_name}</td>
+                    <td className="py-2 pr-3">{a.product?.name}</td>
+                    <td className="py-2 pr-3">{a.branch?.name}</td>
+                    <td className="py-2 pr-3 text-right font-mono">{money(a.balance, true)}</td>
+                    <td className="py-2 pr-3 capitalize text-xs">{status}</td>
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {canDormant && (
+                          <button
+                            disabled={busy}
+                            onClick={() => {
+                              if (confirm(`Mark account ${a.account_no} as dormant?`))
+                                dormantM.mutate(a.id);
+                            }}
+                            className="inline-flex items-center gap-1 h-7 px-2 rounded text-[11px] border border-input hover:bg-muted disabled:opacity-40"
+                            title="Mark dormant"
+                          >
+                            <MoonStar size={11} /> Dormant
+                          </button>
+                        )}
+                        {canUnclaimed && (
+                          <button
+                            disabled={busy}
+                            onClick={() => {
+                              if (
+                                confirm(
+                                  `Transfer balance of ${a.account_no} to unclaimed liability?`,
+                                )
+                              )
+                                unclaimedM.mutate(a.id);
+                            }}
+                            className="inline-flex items-center gap-1 h-7 px-2 rounded text-[11px] border border-amber-500/40 text-amber-700 hover:bg-amber-500/10 disabled:opacity-40"
+                            title="Transfer to unclaimed"
+                          >
+                            <Archive size={11} /> Unclaimed
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {!accounts?.length && (
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-muted-foreground text-sm">
-                    No savings accounts yet — open one from “New Savings”.
+                  <td colSpan={7} className="py-6 text-center text-muted-foreground text-sm">
+                    No savings accounts yet — open one from "New Savings".
                   </td>
                 </tr>
               )}

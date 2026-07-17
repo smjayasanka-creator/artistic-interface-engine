@@ -7,6 +7,7 @@ import { getLoan } from "@/lib/mzizi.functions";
 import { Card } from "@/components/mzizi/Card";
 import { StatusBadge } from "@/components/mzizi/Badge";
 import { Avatar } from "@/components/mzizi/Avatar";
+import { LoanLifecycleActions } from "@/components/mzizi/LoanLifecycleActions";
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -90,6 +91,8 @@ function LoanDetail() {
           </Link>
         )}
       </div>
+
+      <LoanLifecycleActions loan={loan} schedule={schedule} />
 
       {/* Tab bar */}
       <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
