@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { ArrowLeft } from "lucide-react";
-import { getActiveLoansForClient, createDebitNote } from "@/lib/mzizi.functions";
+import { getActiveLoansForClient, createDebitNote, getClients } from "@/lib/mzizi.functions";
+import { listLoanCharges } from "@/lib/loan-charges.functions";
 import { Card } from "@/components/mzizi/Card";
 import {
   FormGrid,
@@ -27,90 +28,15 @@ export const Route = createFileRoute("/_authenticated/loans/debit-note")({
   component: DebitNotePage,
 });
 
-const CHARGES = [
-  { id: "fee", label: "Fee" },
-  { id: "penalty", label: "Penalty" },
-  { id: "insurance", label: "Insurance" },
-  { id: "legal", label: "Legal cost" },
-  { id: "other", label: "Other" },
-] as const;
-
-type Charge = (typeof CHARGES)[number]["id"];
-
-// Reasonable business bounds — a single debit note above KES 5M or under 1 shilling
-// is almost certainly a data-entry mistake.
 const MIN_AMOUNT = 1;
 const MAX_AMOUNT = 5_000_000;
-
-// Charges beyond this % of the facility principal require a description explaining why.
-const HIGH_PCT_THRESHOLD = 0.5;
-
 const today = () => new Date().toISOString().slice(0, 10);
 const daysBetween = (a: string, b: string) =>
   Math.round((new Date(a).getTime() - new Date(b).getTime()) / 86_400_000);
 
-function buildSchema(ctx: { principal: number | null }) {
-  return z
-    .object({
-      loan_id: z.string().uuid({ message: "Select a facility" }),
-      amount: z
-        .number({ invalid_type_error: "Enter an amount" })
-        .positive("Amount must be greater than zero")
-        .min(MIN_AMOUNT, `Amount must be at least ${money(MIN_AMOUNT)}`)
-        .max(MAX_AMOUNT, `Amount cannot exceed ${money(MAX_AMOUNT)} in a single note`)
-        .refine((n) => Math.round(n * 100) === n * 100, {
-          message: "Use at most two decimal places",
-        }),
-      charge_type: z.enum(["fee", "penalty", "insurance", "legal", "other"], {
-        errorMap: () => ({ message: "Pick a charge type" }),
-      }),
-      entry_date: z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/, "Entry date is required")
-        .refine((d) => !Number.isNaN(new Date(d).getTime()), "Invalid date")
-        .refine((d) => daysBetween(d, today()) <= 0, "Entry date cannot be in the future")
-        .refine((d) => daysBetween(today(), d) <= 365, "Entry date cannot be more than a year old"),
-      reference: z
-        .string()
-        .trim()
-        .max(40, "Reference is too long")
-        .regex(/^[A-Za-z0-9\-\/_ ]*$/, "Reference may only contain letters, numbers, - / _")
-        .optional(),
-      description: z.string().trim().max(300, "Keep the description under 300 characters").optional(),
-    })
-    .superRefine((v, c) => {
-      // "Other" must be justified in the description.
-      if (v.charge_type === "other" && (!v.description || v.description.length < 5)) {
-        c.addIssue({
-          path: ["description"],
-          code: z.ZodIssueCode.custom,
-          message: "Describe the charge (min 5 chars) when picking Other",
-        });
-      }
-      // Legal / large charges also need a description.
-      if (v.charge_type === "legal" && (!v.description || v.description.length < 5)) {
-        c.addIssue({
-          path: ["description"],
-          code: z.ZodIssueCode.custom,
-          message: "Add a short note explaining the legal cost",
-        });
-      }
-      if (
-        ctx.principal &&
-        ctx.principal > 0 &&
-        v.amount / ctx.principal > HIGH_PCT_THRESHOLD &&
-        (!v.description || v.description.length < 10)
-      ) {
-        c.addIssue({
-          path: ["amount"],
-          code: z.ZodIssueCode.custom,
-          message: `Charge exceeds ${Math.round(HIGH_PCT_THRESHOLD * 100)}% of the facility — add a description explaining why`,
-        });
-      }
-    });
-}
-
-type Errors = Partial<Record<"loan_id" | "amount" | "charge_type" | "entry_date" | "reference" | "description", string>>;
+type Errors = Partial<
+  Record<"loan_id" | "charge_id" | "amount" | "supplier_client_id" | "entry_date" | "reference" | "description", string>
+>;
 
 function DebitNotePage() {
   const search = useSearch({ strict: false }) as { loanId?: string };
@@ -118,22 +44,71 @@ function DebitNotePage() {
   const qc = useQueryClient();
 
   const [loanId, setLoanId] = useState<string>(search.loanId ?? "");
+  const [chargeId, setChargeId] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
-  const [chargeType, setChargeType] = useState<Charge>("fee");
+  const [supplierId, setSupplierId] = useState<string>("");
   const [reference, setReference] = useState<string>("");
   const [entryDate, setEntryDate] = useState<string>(() => today());
   const [description, setDescription] = useState<string>("");
   const [errors, setErrors] = useState<Errors>({});
-  const [attempted, setAttempted] = useState(false);
 
   const listFn = useServerFn(getActiveLoansForClient);
+  const chargesFn = useServerFn(listLoanCharges);
+  const clientsFn = useServerFn(getClients);
   const { data: loans } = useQuery({ queryKey: ["active-loans"], queryFn: () => listFn() });
+  const { data: allCharges } = useQuery({ queryKey: ["loan-charges"], queryFn: () => chargesFn() });
+  const { data: clients } = useQuery({
+    queryKey: ["clients", "all"],
+    queryFn: () => clientsFn({ data: { filter: "all" } }),
+  });
 
   const selectedLoan = useMemo(
     () => (loans ?? []).find((l: any) => l.id === loanId) as any | undefined,
     [loans, loanId],
   );
   const principal = selectedLoan ? Number(selectedLoan.principal) : null;
+
+  // Only non-capitalized, active charges linked to this loan's product.
+  const availableCharges = useMemo(() => {
+    if (!selectedLoan || !allCharges) return [];
+    return (allCharges as any[]).filter(
+      (c) =>
+        c.active &&
+        !c.capitalize &&
+        Array.isArray(c.product_ids) &&
+        c.product_ids.includes(selectedLoan.product_id),
+    );
+  }, [allCharges, selectedLoan]);
+
+  const selectedCharge = useMemo(
+    () => availableCharges.find((c: any) => c.id === chargeId),
+    [availableCharges, chargeId],
+  );
+
+  // Auto-compute amount when charge is fixed/variable, and default supplier.
+  useEffect(() => {
+    if (!selectedCharge) return;
+    if (selectedCharge.charge_type === "fixed") {
+      setAmount(String(Number(selectedCharge.amount)));
+    } else if (selectedCharge.charge_type === "variable" && principal) {
+      const v = Math.round(((principal * Number(selectedCharge.amount)) / 100) * 100) / 100;
+      setAmount(String(v));
+    } else if (selectedCharge.charge_type === "manual") {
+      setAmount("");
+    }
+    if (selectedCharge.origin === "outside") {
+      setSupplierId((prev) => prev || selectedCharge.supplier_client_id || "");
+    } else {
+      setSupplierId("");
+    }
+  }, [selectedCharge, principal]);
+
+  // Reset charge when loan changes.
+  useEffect(() => {
+    setChargeId("");
+    setAmount("");
+    setSupplierId("");
+  }, [loanId]);
 
   const postFn = useServerFn(createDebitNote);
   const post = useMutation({
@@ -146,31 +121,22 @@ function DebitNotePage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  function validate(): { ok: boolean; data?: z.infer<ReturnType<typeof buildSchema>> } {
-    const parsed = buildSchema({ principal }).safeParse({
-      loan_id: loanId,
-      amount: amount === "" ? Number.NaN : Number(amount),
-      charge_type: chargeType,
-      entry_date: entryDate,
-      reference: reference || undefined,
-      description: description || undefined,
-    });
-    if (!parsed.success) {
-      const next: Errors = {};
-      for (const issue of parsed.error.issues) {
-        const key = issue.path[0] as keyof Errors;
-        if (key && !next[key]) next[key] = issue.message;
-      }
-      setErrors(next);
-      return { ok: false };
-    }
-    setErrors({});
-    return { ok: true, data: parsed.data };
-  }
-
-  // Live re-validate after the first submit attempt so users see errors clear as they fix them.
-  function revalidate() {
-    if (attempted) validate();
+  function validate(): boolean {
+    const e: Errors = {};
+    if (!loanId) e.loan_id = "Select a facility";
+    if (!chargeId) e.charge_id = "Select a charge";
+    const amt = Number(amount);
+    if (!amount || Number.isNaN(amt) || amt <= 0) e.amount = "Enter an amount";
+    else if (amt < MIN_AMOUNT) e.amount = `Minimum ${money(MIN_AMOUNT)}`;
+    else if (amt > MAX_AMOUNT) e.amount = `Maximum ${money(MAX_AMOUNT)}`;
+    if (!entryDate) e.entry_date = "Entry date required";
+    else if (daysBetween(entryDate, today()) > 0) e.entry_date = "Cannot be in the future";
+    else if (daysBetween(today(), entryDate) > 365) e.entry_date = "Too far in the past";
+    if (reference && !/^[A-Za-z0-9\-\/_ ]*$/.test(reference)) e.reference = "Invalid characters";
+    if (selectedCharge?.origin === "outside" && !supplierId) e.supplier_client_id = "Select a supplier";
+    if (description && description.length > 300) e.description = "Keep under 300 characters";
+    setErrors(e);
+    return Object.keys(e).length === 0;
   }
 
   return (
@@ -182,24 +148,22 @@ function DebitNotePage() {
         <ArrowLeft size={14} /> Back to Loans
       </Link>
 
-
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          setAttempted(true);
-          const r = validate();
-          if (!r.ok || !r.data) {
+          if (!validate()) {
             toast.error("Fix the highlighted fields before posting");
             return;
           }
           post.mutate({
             data: {
-              loan_id: r.data.loan_id,
-              amount: r.data.amount,
-              charge_type: r.data.charge_type,
-              entry_date: r.data.entry_date,
-              ...(r.data.reference ? { reference: r.data.reference } : {}),
-              ...(r.data.description ? { description: r.data.description } : {}),
+              loan_id: loanId,
+              charge_id: chargeId,
+              amount: Number(amount),
+              entry_date: entryDate,
+              ...(supplierId ? { supplier_client_id: supplierId } : {}),
+              ...(reference ? { reference } : {}),
+              ...(description ? { description } : {}),
             } as any,
           });
         }}
@@ -210,10 +174,7 @@ function DebitNotePage() {
             <FormField label="Facility" required span={8} error={errors.loan_id}>
               <select
                 value={loanId}
-                onChange={(e) => {
-                  setLoanId(e.target.value);
-                  revalidate();
-                }}
+                onChange={(e) => setLoanId(e.target.value)}
                 className={errors.loan_id ? errorInputCls : selectCls}
               >
                 <option value="">Select loan…</option>
@@ -230,10 +191,7 @@ function DebitNotePage() {
                 type="date"
                 value={entryDate}
                 max={today()}
-                onChange={(e) => {
-                  setEntryDate(e.target.value);
-                  revalidate();
-                }}
+                onChange={(e) => setEntryDate(e.target.value)}
                 className={(errors.entry_date ? errorInputCls : inputCls) + " font-mono"}
               />
             </FormField>
@@ -244,58 +202,94 @@ function DebitNotePage() {
               span={2}
               error={errors.amount}
               hint={
-                !errors.amount && principal
-                  ? `Facility principal ${money(principal)}`
-                  : undefined
+                !errors.amount && selectedCharge?.charge_type === "variable" && principal
+                  ? `${Number(selectedCharge.amount)}% of ${money(principal)}`
+                  : !errors.amount && selectedCharge?.charge_type === "manual"
+                    ? "Enter amount"
+                    : !errors.amount && principal
+                      ? `Facility ${money(principal)}`
+                      : undefined
               }
             >
               <input
                 inputMode="decimal"
                 value={amount}
+                readOnly={selectedCharge?.charge_type !== "manual" && !!selectedCharge}
                 onChange={(e) => {
-                  // Allow digits + single decimal + up to 2 fractional digits.
                   const cleaned = e.target.value
                     .replace(/[^\d.]/g, "")
                     .replace(/(\..*)\./g, "$1")
                     .replace(/^(\d*\.\d{0,2}).*$/, "$1");
                   setAmount(cleaned);
-                  revalidate();
                 }}
                 placeholder="0.00"
                 className={`${errors.amount ? errorInputCls : inputCls} font-mono font-semibold`}
               />
             </FormField>
 
-            <FormField label="Charge type" required span={7} error={errors.charge_type}>
-              <div className="grid grid-cols-5 gap-2">
-                {CHARGES.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => {
-                      setChargeType(c.id);
-                      revalidate();
-                    }}
-                    className={cn(
-                      "text-xs py-1.5 rounded-md border font-medium",
-                      chargeType === c.id
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background border-input text-secondary-foreground hover:border-border-strong",
-                    )}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
+            <FormField label="Charge" required span={12} error={errors.charge_id}>
+              {!loanId ? (
+                <div className="text-[12px] text-muted-foreground italic px-1">
+                  Select a facility to see available charges.
+                </div>
+              ) : availableCharges.length === 0 ? (
+                <div className="text-[12px] text-muted-foreground italic px-1">
+                  No non-capitalized charges configured for this facility's product.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {availableCharges.map((c: any) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setChargeId(c.id)}
+                      className={cn(
+                        "text-left text-xs py-2 px-3 rounded-md border font-medium flex flex-col gap-0.5",
+                        chargeId === c.id
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-input text-secondary-foreground hover:border-border-strong",
+                      )}
+                    >
+                      <span className="font-semibold">{c.name}</span>
+                      <span className="text-[10.5px] opacity-80">
+                        {c.origin === "inhouse" ? "In-house" : "Outside"} ·{" "}
+                        {c.charge_type === "variable"
+                          ? `${Number(c.amount)}%`
+                          : c.charge_type === "manual"
+                            ? "Manual"
+                            : money(Number(c.amount))}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </FormField>
 
-            <FormField label="Reference" span={5} error={errors.reference}>
+            {selectedCharge?.origin === "outside" && (
+              <FormField label="Supplier" required span={7} error={errors.supplier_client_id}>
+                <select
+                  value={supplierId}
+                  onChange={(e) => setSupplierId(e.target.value)}
+                  className={errors.supplier_client_id ? errorInputCls : selectCls}
+                >
+                  <option value="">— Select supplier —</option>
+                  {((clients as any[]) ?? []).map((cl: any) => (
+                    <option key={cl.id} value={cl.id}>
+                      {cl.full_name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            )}
+
+            <FormField
+              label="Reference"
+              span={selectedCharge?.origin === "outside" ? 5 : 12}
+              error={errors.reference}
+            >
               <input
                 value={reference}
-                onChange={(e) => {
-                  setReference(e.target.value);
-                  revalidate();
-                }}
+                onChange={(e) => setReference(e.target.value)}
                 placeholder="Auto DN-####"
                 className={`${errors.reference ? errorInputCls : inputCls} font-mono`}
                 maxLength={40}
@@ -303,25 +297,14 @@ function DebitNotePage() {
             </FormField>
 
             <FormField
-              label={
-                chargeType === "other" || chargeType === "legal"
-                  ? "Description (required)"
-                  : "Description / notes"
-              }
+              label="Description / notes"
               span={12}
               error={errors.description}
-              hint={
-                !errors.description
-                  ? `${description.length}/300 characters`
-                  : undefined
-              }
+              hint={!errors.description ? `${description.length}/300 characters` : undefined}
             >
               <textarea
                 value={description}
-                onChange={(e) => {
-                  setDescription(e.target.value);
-                  revalidate();
-                }}
+                onChange={(e) => setDescription(e.target.value)}
                 rows={2}
                 maxLength={300}
                 placeholder="Reason for the charge (visible on the journal entry)…"
