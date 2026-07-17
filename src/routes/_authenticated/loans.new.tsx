@@ -120,6 +120,8 @@ function NewLoan() {
       autoFillCr: boolean;
       uploadingDoc: boolean;
       extracting: boolean;
+      expanded: boolean;
+      saved: boolean;
     }[]
   >([]);
 
