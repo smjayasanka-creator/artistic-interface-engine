@@ -107,13 +107,15 @@ function AuthPage() {
         </div>
         <div className="bg-card border border-border rounded-2xl p-7">
           <h1 className="text-lg font-semibold text-foreground">
-            {mode === "in" ? "Sign in" : mode === "up" ? "Create an account" : "Reset your password"}
+            {mode === "in" ? "Sign in" : mode === "up" ? (isInvited ? "Accept your invitation" : "Create an account") : "Reset your password"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {mode === "in"
               ? "Access your Mzizi workspace."
               : mode === "up"
-                ? "Create your workspace — you'll be the owner."
+                ? (isInvited
+                    ? "You've been invited to join a workspace. Continue with Google below or set a password to accept."
+                    : "Create your workspace — you'll be the owner.")
                 : "Enter your email and we'll send you a reset link."}
           </p>
           {mode === "forgot" ? (
@@ -145,11 +147,13 @@ function AuthPage() {
                       <label className="text-xs font-medium text-muted-foreground">Full name</label>
                       <input value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 w-full border border-input rounded-md px-3 py-2 text-sm bg-background" />
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">Company / workspace name</label>
-                      <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Acme Microfinance" className="mt-1 w-full border border-input rounded-md px-3 py-2 text-sm bg-background" />
-                      <p className="text-[10.5px] text-muted-foreground mt-1">If you were invited by email, leave your invited email address and this becomes your existing workspace.</p>
-                    </div>
+                    {!isInvited && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground">Company / workspace name</label>
+                        <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Acme Microfinance" className="mt-1 w-full border border-input rounded-md px-3 py-2 text-sm bg-background" />
+                        <p className="text-[10.5px] text-muted-foreground mt-1">If you were invited by email, use your invited address — it becomes your existing workspace.</p>
+                      </div>
+                    )}
                   </>
                 )}
                 <div>
