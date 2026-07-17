@@ -866,6 +866,13 @@ export const processMaturity = createServerFn({ method: "POST" })
     }
 
     if (fd.maturity_instruction === "payout") {
+      if (!data.payment_method) throw new Error("Payment method is required for FD payout");
+      assertPaymentMethod("fd_withdrawal", {
+        payment_method: data.payment_method,
+        bank_account_id: data.bank_account_id ?? null,
+        savings_account_id: data.savings_account_id ?? null,
+        reference: data.reference ?? null,
+      });
       const settlement = Math.round((Number(fd.principal) + owedNet) * 100) / 100;
       await supabase
         .from("fixed_deposit")
