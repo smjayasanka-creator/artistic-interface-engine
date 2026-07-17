@@ -73,6 +73,7 @@ const TIERS: Tier[] = [
       { id: "soc2", label: "SOC 2 / ISO 27001 controls documented", detail: "Formal control framework covering access, change management, incident response, vendor risk, and monitoring. Requires a controls register and evidence of operating effectiveness." },
       { id: "vuln-scan", label: "Dependency + container vulnerability scanning", detail: "CI pipeline runs npm audit / Snyk / Trivy on every build and blocks merges on high-severity CVEs. Runtime images are rebuilt weekly to pull security patches. CI configuration review." },
       { id: "env-separation", label: "Separate dev / test / production environments with controlled promotion", detail: "Production data never appears in development, changes are promoted through migration review, and test users cannot reach production. A single Lovable/Supabase project currently serves all purposes. Infrastructure review." },
+      { id: "session-security", label: "Session security: inactivity timeout, token rotation, revocation on role change", detail: "Staff sessions must expire on inactivity, refresh tokens must rotate, and sessions must be revocable immediately when a user's role changes or employment ends. Supabase Auth configuration plus a revocation check in the auth middleware. Configuration review." },
     ],
   },
   {
