@@ -635,10 +635,10 @@ export const approveFixedDeposit = createServerFn({ method: "POST" })
     // Ledger posting via kernel — DR Cash / CR FD Liability
     const { data: fdProd } = await supabase
       .from("fd_product")
-      .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+      .select(FD_PRODUCT_ACCOUNT_COLUMNS)
       .eq("id", fd.product_id)
       .maybeSingle();
-    const gl = await resolveFdAccounts(supabase, fdProd);
+    const gl = await resolveFdAccounts(supabase, fdProd, cid);
     if (gl.cash && gl.liab && Number(fd.principal) > 0) {
       await supabase.rpc("post_entry", {
         _entry_date: fd.value_date,
