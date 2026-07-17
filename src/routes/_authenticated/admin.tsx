@@ -278,9 +278,9 @@ function InviteSection() {
   const [role, setRole] = useState<(typeof INVITE_ROLES)[number]>("loan_officer");
 
   const invite = useMutation({
-    mutationFn: (v: { email: string; role: (typeof INVITE_ROLES)[number] }) => inviteFn({ data: v }),
+    mutationFn: (v: { email: string; role: (typeof INVITE_ROLES)[number]; invite_origin: string }) => inviteFn({ data: v }),
     onSuccess: () => {
-      toast.success("Invite created");
+      toast.success("Invite sent");
       setEmail("");
       qc.invalidateQueries({ queryKey: ["team"] });
     },
@@ -309,7 +309,7 @@ function InviteSection() {
           onSubmit={(e) => {
             e.preventDefault();
             if (!email.trim()) return;
-            invite.mutate({ email: email.trim(), role });
+            invite.mutate({ email: email.trim(), role, invite_origin: window.location.origin });
           }}
           className="flex flex-col gap-3"
         >
