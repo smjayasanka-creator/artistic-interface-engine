@@ -1154,10 +1154,10 @@ export const submitApplication = createServerFn({ method: "POST" })
         .object({
           client_id: z.string().uuid(),
           product_id: z.string().uuid(),
-          principal: z.number().positive(),
-          term_months: z.number().int().positive(),
+          principal: z.number().nonnegative(),
+          term_months: z.number().int().nonnegative(),
           purpose: z.string().optional(),
-          annual_rate_pct: z.number().positive().max(200).optional(),
+          annual_rate_pct: z.number().nonnegative().max(200).optional(),
           frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]).optional(),
           schedule_type: z.enum(["normal", "structured"]).optional(),
           schedule_overrides: z.record(z.string(), z.number()).optional(),
