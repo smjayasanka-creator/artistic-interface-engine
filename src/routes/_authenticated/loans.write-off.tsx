@@ -127,7 +127,9 @@ function WriteOffWorkspace() {
       </Card>
 
       {/* Master table */}
-      <Card className="p-0 overflow-hidden" id="collections">
+      <div id="collections" />
+      <Card className="p-0 overflow-hidden">
+
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <div className="font-semibold text-[14px]">Written-off facilities</div>
           <div className="text-[11.5px] text-faint">{writeOffsQ.data?.length ?? 0} rows</div>
