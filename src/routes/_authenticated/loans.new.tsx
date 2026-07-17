@@ -982,6 +982,113 @@ function NewLoan() {
                             />
                           </FormField>
                         </FormGrid>
+
+                        {/* Documents + AI auto-fill for this security */}
+                        <div className="mt-3 rounded-md border border-border bg-background/60 p-3">
+                          <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                            <div>
+                              <div className="text-[11.5px] font-semibold">Attached documents</div>
+                              <div className="text-[10.5px] text-muted-foreground">
+                                Deed, CR, invoice or any proof — PDF or image up to 10 MB.
+                              </div>
+                            </div>
+                            <label className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={s.autoFillCr}
+                                disabled={!s.security_type_id || defs.length === 0}
+                                onChange={(e) => updateSecurity(idx, (r) => ({ ...r, autoFillCr: e.target.checked }))}
+                              />
+                              Enable AI auto-fill from Vehicle CR
+                            </label>
+                          </div>
+
+                          {s.documents.length > 0 && (
+                            <div className="mb-2 flex flex-col gap-1">
+                              {s.documents.map((d) => (
+                                <div key={d.path} className="flex items-center gap-2 text-[11.5px] border border-border rounded px-2 py-1 bg-secondary/30">
+                                  <div className="flex-1 min-w-0 truncate font-mono">{d.name}</div>
+                                  <span className="text-muted-foreground">{formatBytes(d.size)}</span>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const { data, error } = await supabase.storage
+                                        .from("security-documents")
+                                        .createSignedUrl(d.path, 60);
+                                      if (error || !data?.signedUrl) {
+                                        toast.error(error?.message ?? "Could not open file");
+                                        return;
+                                      }
+                                      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+                                    }}
+                                    className="text-primary hover:underline"
+                                  >
+                                    Preview
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSecurityDoc(idx, d.path)}
+                                    className="text-muted-foreground hover:text-destructive"
+                                    title="Remove"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            <input
+                              id={`sec-doc-${s.key}`}
+                              type="file"
+                              accept="application/pdf,image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                e.target.value = "";
+                                if (f) uploadSecurityDocFile(idx, f);
+                              }}
+                            />
+                            <label
+                              htmlFor={`sec-doc-${s.key}`}
+                              className={cn(
+                                "text-[11.5px] px-2.5 py-1 rounded-md border border-border cursor-pointer hover:bg-secondary",
+                                s.uploadingDoc && "opacity-60 pointer-events-none",
+                              )}
+                            >
+                              {s.uploadingDoc ? "Uploading…" : "Attach document"}
+                            </label>
+
+                            {s.autoFillCr && (
+                              <>
+                                <input
+                                  id={`sec-cr-${s.key}`}
+                                  type="file"
+                                  accept="application/pdf,image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    e.target.value = "";
+                                    if (f) autoFillFromCr(idx, f);
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`sec-cr-${s.key}`}
+                                  className={cn(
+                                    "text-[11.5px] px-2.5 py-1 rounded-md border border-primary/40 bg-primary/5 text-primary cursor-pointer hover:bg-primary/10",
+                                    s.extracting && "opacity-60 pointer-events-none",
+                                  )}
+                                >
+                                  {s.extracting ? "Reading CR…" : "Upload CR & auto-fill"}
+                                </label>
+                                <span className="text-[10.5px] text-muted-foreground">
+                                  AI reads the CR and fills the fields above.
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
