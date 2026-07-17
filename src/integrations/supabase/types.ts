@@ -3204,6 +3204,58 @@ export type Database = {
           },
         ]
       }
+      loan_security: {
+        Row: {
+          created_at: string
+          id: string
+          loan_id: string
+          notes: string | null
+          security_type_id: string
+          updated_at: string
+          values: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          loan_id: string
+          notes?: string | null
+          security_type_id: string
+          updated_at?: string
+          values?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          loan_id?: string
+          notes?: string | null
+          security_type_id?: string
+          updated_at?: string
+          values?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_security_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_security_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "v_loan_outstanding"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "loan_security_security_type_id_fkey"
+            columns: ["security_type_id"]
+            isOneToOne: false
+            referencedRelation: "security_type"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       passbook_issue: {
         Row: {
           account_id: string
