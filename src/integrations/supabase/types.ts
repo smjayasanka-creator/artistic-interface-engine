@@ -1442,6 +1442,7 @@ export type Database = {
           penalty_type: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value: number
           standard_rate: number | null
+          unclaimed_deposit_liability_account_id: string | null
           updated_at: string
           wht_liability_account_id: string | null
           wht_payable_account_id: string | null
@@ -1473,6 +1474,7 @@ export type Database = {
           penalty_type?: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value?: number
           standard_rate?: number | null
+          unclaimed_deposit_liability_account_id?: string | null
           updated_at?: string
           wht_liability_account_id?: string | null
           wht_payable_account_id?: string | null
@@ -1504,6 +1506,7 @@ export type Database = {
           penalty_type?: Database["public"]["Enums"]["fd_penalty_type"]
           penalty_value?: number
           standard_rate?: number | null
+          unclaimed_deposit_liability_account_id?: string | null
           updated_at?: string
           wht_liability_account_id?: string | null
           wht_payable_account_id?: string | null
@@ -1562,6 +1565,13 @@ export type Database = {
           {
             foreignKeyName: "fd_product_marketing_incentive_account_id_fkey"
             columns: ["marketing_incentive_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_product_unclaimed_deposit_liability_account_id_fkey"
+            columns: ["unclaimed_deposit_liability_account_id"]
             isOneToOne: false
             referencedRelation: "gl_account"
             referencedColumns: ["id"]
@@ -3139,6 +3149,7 @@ export type Database = {
         Row: {
           accrued_interest_account_id: string | null
           annual_rate_pct: number
+          bad_debt_expense_account_id: string | null
           cash_account_id: string | null
           code: string
           color: string | null
@@ -3150,6 +3161,7 @@ export type Database = {
           interest_method: Database["public"]["Enums"]["interest_method"]
           interest_receivable_account_id: string | null
           is_active: boolean
+          loan_loss_provision_account_id: string | null
           max_principal: number | null
           max_term_months: number
           min_principal: number
@@ -3159,12 +3171,14 @@ export type Database = {
           processing_fee_pct: number
           required_documents: string[]
           segment: string
+          suspended_interest_account_id: string | null
           termination_fee: number
           termination_fee_pct: number
         }
         Insert: {
           accrued_interest_account_id?: string | null
           annual_rate_pct: number
+          bad_debt_expense_account_id?: string | null
           cash_account_id?: string | null
           code: string
           color?: string | null
@@ -3176,6 +3190,7 @@ export type Database = {
           interest_method?: Database["public"]["Enums"]["interest_method"]
           interest_receivable_account_id?: string | null
           is_active?: boolean
+          loan_loss_provision_account_id?: string | null
           max_principal?: number | null
           max_term_months?: number
           min_principal?: number
@@ -3185,12 +3200,14 @@ export type Database = {
           processing_fee_pct?: number
           required_documents?: string[]
           segment?: string
+          suspended_interest_account_id?: string | null
           termination_fee?: number
           termination_fee_pct?: number
         }
         Update: {
           accrued_interest_account_id?: string | null
           annual_rate_pct?: number
+          bad_debt_expense_account_id?: string | null
           cash_account_id?: string | null
           code?: string
           color?: string | null
@@ -3202,6 +3219,7 @@ export type Database = {
           interest_method?: Database["public"]["Enums"]["interest_method"]
           interest_receivable_account_id?: string | null
           is_active?: boolean
+          loan_loss_provision_account_id?: string | null
           max_principal?: number | null
           max_term_months?: number
           min_principal?: number
@@ -3211,6 +3229,7 @@ export type Database = {
           processing_fee_pct?: number
           required_documents?: string[]
           segment?: string
+          suspended_interest_account_id?: string | null
           termination_fee?: number
           termination_fee_pct?: number
         }
@@ -3218,6 +3237,13 @@ export type Database = {
           {
             foreignKeyName: "loan_product_accrued_interest_account_id_fkey"
             columns: ["accrued_interest_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_product_bad_debt_expense_account_id_fkey"
+            columns: ["bad_debt_expense_account_id"]
             isOneToOne: false
             referencedRelation: "gl_account"
             referencedColumns: ["id"]
@@ -3258,8 +3284,22 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "loan_product_loan_loss_provision_account_id_fkey"
+            columns: ["loan_loss_provision_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "loan_product_principal_account_id_fkey"
             columns: ["principal_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_product_suspended_interest_account_id_fkey"
+            columns: ["suspended_interest_account_id"]
             isOneToOne: false
             referencedRelation: "gl_account"
             referencedColumns: ["id"]
@@ -4286,6 +4326,7 @@ export type Database = {
           passbook_required: boolean
           passbook_series_prefix: string | null
           segment: string
+          unclaimed_deposit_liability_account_id: string | null
           updated_at: string
         }
         Insert: {
@@ -4309,6 +4350,7 @@ export type Database = {
           passbook_required?: boolean
           passbook_series_prefix?: string | null
           segment?: string
+          unclaimed_deposit_liability_account_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -4332,6 +4374,7 @@ export type Database = {
           passbook_required?: boolean
           passbook_series_prefix?: string | null
           segment?: string
+          unclaimed_deposit_liability_account_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -4366,6 +4409,13 @@ export type Database = {
           {
             foreignKeyName: "savings_product_interest_expense_account_id_fkey"
             columns: ["interest_expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_product_unclaimed_deposit_liability_account_id_fkey"
+            columns: ["unclaimed_deposit_liability_account_id"]
             isOneToOne: false
             referencedRelation: "gl_account"
             referencedColumns: ["id"]
@@ -5057,6 +5107,7 @@ export type Database = {
         Args: { _error: string; _id: string }
         Returns: undefined
       }
+      mark_savings_dormant: { Args: { _account_id: string }; Returns: string }
       next_contract_no: {
         Args: {
           _branch_id: string
@@ -5100,6 +5151,10 @@ export type Database = {
         }
         Returns: string
       }
+      reschedule_loan: {
+        Args: { _loan_id: string; _new_installments: Json; _reason: string }
+        Returns: string
+      }
       seed_default_risk_scheme: {
         Args: { _company_id: string }
         Returns: undefined
@@ -5107,6 +5162,10 @@ export type Database = {
       set_cron_job_active: {
         Args: { _active: boolean; _jobid: number }
         Returns: undefined
+      }
+      transfer_savings_to_unclaimed: {
+        Args: { _account_id: string; _idempotency_key?: string }
+        Returns: string
       }
       upsert_fd_rate_tier_version: {
         Args: {
@@ -5142,6 +5201,15 @@ export type Database = {
           _min_balance: number
           _note?: string
           _product_id: string
+        }
+        Returns: string
+      }
+      write_off_loan: {
+        Args: {
+          _idempotency_key?: string
+          _loan_id: string
+          _reason: string
+          _use_provision?: boolean
         }
         Returns: string
       }
@@ -5185,6 +5253,7 @@ export type Database = {
         | "partial"
         | "overdue"
         | "waived"
+        | "cancelled"
       interest_method: "flat" | "declining_balance"
       introducer_commission_mode: "cash" | "bank_transfer" | "credit_savings"
       loan_charge_origin: "inhouse" | "outside"
@@ -5409,6 +5478,7 @@ export const Constants = {
         "partial",
         "overdue",
         "waived",
+        "cancelled",
       ],
       interest_method: ["flat", "declining_balance"],
       introducer_commission_mode: ["cash", "bank_transfer", "credit_savings"],
