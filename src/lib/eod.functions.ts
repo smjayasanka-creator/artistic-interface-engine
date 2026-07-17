@@ -158,7 +158,7 @@ export const runStep = createServerFn({ method: "POST" })
       _error: null,
     } as any);
 
-    let metrics: Record<string, unknown> = {};
+    let metrics: Record<string, any> = {};
     let error: string | null = null;
 
     try {
