@@ -6,6 +6,7 @@ import { FormField, inputCls, selectCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
 
 export type PaymentMethod = "cash" | "fund_transfer" | "cheque" | "sdf_savings";
+type Span = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export type PaymentMethodValue = {
   method: PaymentMethod;
