@@ -3030,3 +3030,220 @@ export const updateClient = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return updated;
   });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CUSTOM REPORTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const getReportFilterOptions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const [{ data: accounts }, { data: branches }, { data: products }] = await Promise.all([
+      supabase.from("gl_account").select("id, code, name, type").order("code"),
+      supabase.from("branch").select("id, code, name").order("name"),
+      supabase.from("loan_product").select("id, name").order("name"),
+    ]);
+    return {
+      accounts: accounts ?? [],
+      branches: branches ?? [],
+      products: products ?? [],
+    };
+  });
+
+export const getReportGeneralLedger = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { accountId?: string; fromDate?: string; toDate?: string; branchId?: string }) =>
+    z
+      .object({
+        accountId: z.string().uuid().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        branchId: z.string().uuid().optional(),
+      })
+      .parse(i ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+
+    // Account info + normal balance for signed running balance
+    let acctInfo: { id: string; code: string; name: string; normal_balance: number } | null = null;
+    if (data.accountId) {
+      const { data: a } = await supabase
+        .from("gl_account")
+        .select("id, code, name, normal_balance")
+        .eq("id", data.accountId)
+        .maybeSingle();
+      if (a) acctInfo = { id: a.id, code: a.code, name: a.name, normal_balance: Number(a.normal_balance) };
+    }
+
+    // Opening balance (before fromDate) for the selected account
+    let opening = 0;
+    if (data.accountId && data.fromDate) {
+      let openQ = supabase
+        .from("posting")
+        .select("debit, credit, entry:entry_id!inner(entry_date, branch_id)")
+        .eq("account_id", data.accountId)
+        .lt("entry.entry_date", data.fromDate);
+      if (data.branchId) openQ = openQ.eq("entry.branch_id", data.branchId);
+      const { data: openRows } = await openQ;
+      const net = (openRows ?? []).reduce(
+        (s: number, r: any) => s + Number(r.debit ?? 0) - Number(r.credit ?? 0),
+        0,
+      );
+      opening = acctInfo && acctInfo.normal_balance === -1 ? -net : net;
+    }
+
+    // Main postings in range
+    let q = supabase
+      .from("posting")
+      .select(
+        "id, debit, credit, entry:entry_id!inner(id, entry_date, reference, description, branch_id, branch:branch_id(code, name))",
+      )
+      .order("entry_date", { referencedTable: "entry", ascending: true })
+      .order("id", { ascending: true })
+      .limit(2000);
+    if (data.accountId) q = q.eq("account_id", data.accountId);
+    if (data.fromDate) q = q.gte("entry.entry_date", data.fromDate);
+    if (data.toDate) q = q.lte("entry.entry_date", data.toDate);
+    if (data.branchId) q = q.eq("entry.branch_id", data.branchId);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const sign = acctInfo && acctInfo.normal_balance === -1 ? -1 : 1;
+    let running = opening;
+    const lines = (rows ?? []).map((r: any) => {
+      const debit = Number(r.debit ?? 0);
+      const credit = Number(r.credit ?? 0);
+      running += sign * (debit - credit);
+      return {
+        id: r.id,
+        date: r.entry?.entry_date,
+        reference: r.entry?.reference,
+        description: r.entry?.description,
+        branch: r.entry?.branch?.name ?? null,
+        debit,
+        credit,
+        balance: running,
+      };
+    });
+
+    const totalDebit = lines.reduce((s, l) => s + l.debit, 0);
+    const totalCredit = lines.reduce((s, l) => s + l.credit, 0);
+
+    return {
+      account: acctInfo,
+      opening,
+      closing: running,
+      totalDebit,
+      totalCredit,
+      lines,
+    };
+  });
+
+export const getReportLoanBase = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { asOf: string; branchId?: string; productId?: string }) =>
+    z
+      .object({
+        asOf: z.string(),
+        branchId: z.string().uuid().optional(),
+        productId: z.string().uuid().optional(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const asOf = data.asOf;
+
+    let q = supabase
+      .from("loan")
+      .select(
+        "id, contract_no, principal, term_months, annual_rate_pct, frequency, disbursed_at, status, branch_id, product:product_id(id, name), client:client_id(id, full_name), branch:branch_id(id, code, name)",
+      )
+      .not("disbursed_at", "is", null)
+      .lte("disbursed_at", `${asOf}T23:59:59Z`)
+      .in("status", ["active", "disbursed", "closed", "written_off"] as any)
+      .limit(2000);
+    if (data.branchId) q = q.eq("branch_id", data.branchId);
+    if (data.productId) q = q.eq("product_id", data.productId);
+    const { data: loans, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const loanIds = (loans ?? []).map((l: any) => l.id);
+    if (loanIds.length === 0) return { asOf, rows: [] };
+
+    const [{ data: insts }, { data: accruals }] = await Promise.all([
+      supabase
+        .from("loan_installment")
+        .select("loan_id, due_date, principal_due, interest_due, fee_due, principal_paid, interest_paid, fee_paid"),
+      supabase
+        .from("loan_accrual")
+        .select("loan_id, accrual_date, cumulative_amount")
+        .lte("accrual_date", asOf)
+        .order("accrual_date", { ascending: false }),
+    ]);
+
+    const latestAccrualByLoan = new Map<string, number>();
+    for (const a of accruals ?? []) {
+      if (!latestAccrualByLoan.has(a.loan_id as string)) {
+        latestAccrualByLoan.set(a.loan_id as string, Number(a.cumulative_amount ?? 0));
+      }
+    }
+
+    const instByLoan = new Map<string, any[]>();
+    for (const r of insts ?? []) {
+      const arr = instByLoan.get(r.loan_id as string) ?? [];
+      arr.push(r);
+      instByLoan.set(r.loan_id as string, arr);
+    }
+
+    const rows = (loans ?? []).map((l: any) => {
+      const rows = instByLoan.get(l.id) ?? [];
+      let principalOut = 0;
+      let interestOut = 0;
+      let chargesOut = 0;
+      let rentalArrears = 0;
+      let earliestOverdue: string | null = null;
+      for (const r of rows) {
+        const pOut = Math.max(0, Number(r.principal_due) - Number(r.principal_paid));
+        const iOut = Math.max(0, Number(r.interest_due) - Number(r.interest_paid));
+        const fOut = Math.max(0, Number(r.fee_due) - Number(r.fee_paid));
+        principalOut += pOut;
+        interestOut += iOut;
+        chargesOut += fOut;
+        if (r.due_date <= asOf && pOut + iOut + fOut > 0) {
+          rentalArrears += pOut + iOut + fOut;
+          if (!earliestOverdue || r.due_date < earliestOverdue) earliestOverdue = r.due_date;
+        }
+      }
+      const daysInArrears = earliestOverdue
+        ? Math.max(
+            0,
+            Math.floor(
+              (new Date(asOf).getTime() - new Date(earliestOverdue).getTime()) / (1000 * 60 * 60 * 24),
+            ),
+          )
+        : 0;
+      return {
+        loan_id: l.id,
+        contract_no: l.contract_no,
+        customer: l.client?.full_name ?? "",
+        branch: l.branch?.name ?? "",
+        product: l.product?.name ?? "",
+        facility_amount: Number(l.principal),
+        rate: Number(l.annual_rate_pct),
+        term_months: l.term_months,
+        frequency: l.frequency,
+        principal_outstanding: principalOut,
+        interest_outstanding: interestOut,
+        charges_outstanding: chargesOut,
+        total_outstanding: principalOut + interestOut + chargesOut,
+        days_in_arrears: daysInArrears,
+        rental_arrears: rentalArrears,
+        accrued_interest: latestAccrualByLoan.get(l.id) ?? 0,
+      };
+    });
+
+    return { asOf, rows };
+  });
