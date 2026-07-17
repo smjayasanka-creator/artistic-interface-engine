@@ -2,12 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight, Loader2, Truck } from "lucide-react";
+import { FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight, Loader2, Truck, Eye } from "lucide-react";
 import { getLoans } from "@/lib/mzizi.functions";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { Card } from "@/components/mzizi/Card";
 import { TablePagination } from "@/components/mzizi/TablePagination";
-import { money, shortDate } from "@/lib/format";
+import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/loans/")({
@@ -125,36 +125,45 @@ function LoansList() {
 
       <div className={cn("bg-card border border-border rounded-xl overflow-hidden", isPlaceholderData && "opacity-60 transition-opacity")}>
         <div className="grid gap-4 text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-b border-border bg-secondary/40"
-             style={{ gridTemplateColumns: "1.7fr 1.4fr 1fr 1fr 1.4fr 1fr" }}>
-          <div>Borrower</div><div>Product</div><div>Principal</div><div>Outstanding</div><div>Repaid</div><div>Next due</div>
+             style={{ gridTemplateColumns: "1fr 1.7fr 1fr 1.4fr 60px" }}>
+          <div>Facility No.</div><div>Client</div><div>Principal</div><div>Current stage</div><div className="text-right">View</div>
         </div>
-        {rows.map((l: any) => (
-          <Link
-            key={l.id}
-            to="/loans/$id"
-            params={{ id: l.id }}
-            className="grid gap-4 items-center text-[12.5px] py-3 px-5 border-b border-row-divider last:border-b-0 hover:bg-row-hover"
-            style={{ gridTemplateColumns: "1.7fr 1.4fr 1fr 1fr 1.4fr 1fr" }}
-          >
-            <div className="font-semibold flex items-center gap-2.5">
-              <Avatar name={l.client?.full_name ?? "?"} color={l.client?.avatar_color} size={30} />
-              {l.client?.full_name}
-            </div>
-            <div className="text-secondary-foreground">{l.product?.name}</div>
-            <div className="font-mono">{money(l.principal)}</div>
-            <div className="font-mono font-semibold">{money(l.outstanding)}</div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-1.5 bg-muted rounded-md overflow-hidden">
-                <div className="h-full bg-primary" style={{ width: `${l.progress}%` }} />
+        {rows.map((l: any) => {
+          const isDraft = l.status === "draft";
+          const to = isDraft ? "/loans/new" : "/loans/$id";
+          const linkProps: any = isDraft
+            ? { to, search: { id: l.id } }
+            : { to, params: { id: l.id } };
+          return (
+            <Link
+              key={l.id}
+              {...linkProps}
+              className="grid gap-4 items-center text-[12.5px] py-3 px-5 border-b border-row-divider last:border-b-0 hover:bg-row-hover"
+              style={{ gridTemplateColumns: "1fr 1.7fr 1fr 1.4fr 60px" }}
+            >
+              <div className="font-mono text-[12px] font-semibold">{l.contract_no ?? "—"}</div>
+              <div className="font-semibold flex items-center gap-2.5 min-w-0">
+                <Avatar name={l.client?.full_name ?? "?"} color={l.client?.avatar_color} size={30} />
+                <span className="truncate">{l.client?.full_name}</span>
               </div>
-              <span className="font-mono text-[11px] text-muted-foreground w-8">{l.progress}%</span>
-            </div>
-            <div className="text-[11.5px] font-semibold" style={{ color: l.overdue ? "var(--status-danger-fg)" : "var(--secondary-foreground)" }}>
-              {l.overdue ? `Overdue · ${shortDate(l.nextDue)}` : shortDate(l.nextDue)}
-            </div>
-          </Link>
-        ))}
-        {rows.length === 0 && <div className="text-center text-faint text-sm py-10">No disbursed loans yet.</div>}
+              <div className="font-mono">{money(l.principal)}</div>
+              <div className="text-[11.5px] font-semibold text-secondary-foreground">
+                <span className={cn(
+                  "inline-flex items-center px-2 py-0.5 rounded-md",
+                  isDraft ? "bg-amber-500/15 text-amber-700" : "bg-primary/10 text-primary",
+                )}>
+                  {l.stage}
+                </span>
+              </div>
+              <div className="flex justify-end">
+                <span className="w-8 h-8 rounded-md border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40">
+                  <Eye size={14} />
+                </span>
+              </div>
+            </Link>
+          );
+        })}
+        {rows.length === 0 && <div className="text-center text-faint text-sm py-10">No pending facilities.</div>}
       </div>
       <TablePagination
         page={page}
