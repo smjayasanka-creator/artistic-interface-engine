@@ -1169,6 +1169,16 @@ export const submitApplication = createServerFn({ method: "POST" })
                 security_type_id: z.string().uuid(),
                 values: z.record(z.string(), z.any()).default({}),
                 notes: z.string().max(1000).nullable().optional(),
+                documents: z
+                  .array(
+                    z.object({
+                      path: z.string().min(1),
+                      name: z.string().min(1),
+                      size: z.number().nonnegative(),
+                      kind: z.string().max(60).nullable().optional(),
+                    }),
+                  )
+                  .optional(),
               }),
             )
             .optional(),
