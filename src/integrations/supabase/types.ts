@@ -4901,6 +4901,10 @@ export type Database = {
       current_company_id: { Args: never; Returns: string }
       current_staff_branch: { Args: never; Returns: string }
       current_staff_id: { Args: never; Returns: string }
+      current_staff_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["staff_role"]
+      }
       emit_audit: {
         Args: {
           _action: string
