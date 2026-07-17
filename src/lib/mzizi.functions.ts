@@ -438,11 +438,11 @@ export const getLoans = createServerFn({ method: "GET" })
     const { data: loans, count } = await supabase
       .from("loan")
       .select(
-        "id, principal, status, disbursed_at, client:client_id(id, full_name, avatar_color), product:product_id(name)",
+        "id, contract_no, principal, status, disbursed_at, created_at, client:client_id(id, full_name, avatar_color), product:product_id(name)",
         { count: "exact" },
       )
       .in("status", ["draft", "submitted"])
-      .order("disbursed_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .range(from, to);
     const ids = (loans ?? []).map((l) => l.id);
     const { data: outs } = ids.length
