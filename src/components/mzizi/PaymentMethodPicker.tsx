@@ -33,7 +33,7 @@ export function PaymentMethodPicker({
   clientId?: string;
   value: PaymentMethodValue;
   onChange: (v: PaymentMethodValue) => void;
-  span?: number;
+  span?: Span;
 }) {
   const banksFn = useServerFn(listClientBankAccounts);
   const savingsFn = useServerFn(listClientSavingsAccounts);
