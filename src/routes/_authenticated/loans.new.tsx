@@ -109,19 +109,21 @@ function NewLoan() {
   const [capitalizedCharges, setCapitalizedCharges] = useState<Record<string, boolean>>({});
   const [manualAmounts, setManualAmounts] = useState<Record<string, number>>({});
   const [chargeSuppliers, setChargeSuppliers] = useState<Record<string, string>>({});
-
-
-
+  const [securities, setSecurities] = useState<
+    { key: string; security_type_id: string; values: Record<string, any>; notes: string }[]
+  >([]);
 
   const clientsFn = useServerFn(getClients);
   const productsFn = useServerFn(getProducts);
   const chargesFn = useServerFn(listLoanCharges);
+  const securityTypesFn = useServerFn(listSecurityTypes);
   const { data: clients } = useQuery({
     queryKey: ["clients", "all"],
     queryFn: () => clientsFn({ data: { filter: "all" } }),
   });
   const { data: products } = useQuery({ queryKey: ["products"], queryFn: () => productsFn() });
   const { data: allCharges } = useQuery({ queryKey: ["loan-charges"], queryFn: () => chargesFn() });
+  const { data: securityTypes } = useQuery({ queryKey: ["security-types"], queryFn: () => securityTypesFn() });
   const qc = useQueryClient();
   const submitFn = useServerFn(submitApplication);
   const hasWfFn = useServerFn(hasActiveWorkflow);
