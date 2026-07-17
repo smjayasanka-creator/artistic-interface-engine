@@ -169,6 +169,7 @@ function Admin() {
       {tab === "delegation" && <DelegationAuthorityTab />}
       {tab === "risk_profiling" && <RiskProfilingTab />}
       {tab === "screening" && <ScreeningConfigTab />}
+      {tab === "bank_directory" && <BankDirectoryTab />}
       {tab === "time_travel" && <TimeTravelTab />}
     </div>
   );
