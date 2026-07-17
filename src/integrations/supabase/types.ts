@@ -3361,6 +3361,190 @@ export type Database = {
           },
         ]
       }
+      loan_write_off: {
+        Row: {
+          branch_id: string
+          charges_recovered: number
+          charges_written_off: number
+          client_id: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          facility_no: string | null
+          id: string
+          interest_recovered: number
+          interest_written_off: number
+          is_fully_recovered: boolean
+          loan_id: string
+          principal_recovered: number
+          principal_written_off: number
+          reason: string
+          total_recovered: number
+          total_written_off: number
+          updated_at: string
+          used_provision: boolean
+          write_off_date: string
+        }
+        Insert: {
+          branch_id: string
+          charges_recovered?: number
+          charges_written_off?: number
+          client_id: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          facility_no?: string | null
+          id?: string
+          interest_recovered?: number
+          interest_written_off?: number
+          is_fully_recovered?: boolean
+          loan_id: string
+          principal_recovered?: number
+          principal_written_off?: number
+          reason: string
+          total_recovered?: number
+          total_written_off?: number
+          updated_at?: string
+          used_provision?: boolean
+          write_off_date?: string
+        }
+        Update: {
+          branch_id?: string
+          charges_recovered?: number
+          charges_written_off?: number
+          client_id?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          facility_no?: string | null
+          id?: string
+          interest_recovered?: number
+          interest_written_off?: number
+          is_fully_recovered?: boolean
+          loan_id?: string
+          principal_recovered?: number
+          principal_written_off?: number
+          reason?: string
+          total_recovered?: number
+          total_written_off?: number
+          updated_at?: string
+          used_provision?: boolean
+          write_off_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_write_off_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_write_off_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_write_off_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_write_off_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: true
+            referencedRelation: "loan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_write_off_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: true
+            referencedRelation: "v_loan_outstanding"
+            referencedColumns: ["loan_id"]
+          },
+        ]
+      }
+      loan_write_off_recovery: {
+        Row: {
+          amount: number
+          branch_id: string
+          charges_portion: number
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          interest_portion: number
+          journal_entry_id: string | null
+          notes: string | null
+          payment_method: string
+          principal_portion: number
+          recovery_date: string
+          reference: string | null
+          write_off_id: string
+        }
+        Insert: {
+          amount: number
+          branch_id: string
+          charges_portion?: number
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          interest_portion?: number
+          journal_entry_id?: string | null
+          notes?: string | null
+          payment_method: string
+          principal_portion?: number
+          recovery_date?: string
+          reference?: string | null
+          write_off_id: string
+        }
+        Update: {
+          amount?: number
+          branch_id?: string
+          charges_portion?: number
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          interest_portion?: number
+          journal_entry_id?: string | null
+          notes?: string | null
+          payment_method?: string
+          principal_portion?: number
+          recovery_date?: string
+          reference?: string | null
+          write_off_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_write_off_recovery_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_write_off_recovery_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_write_off_recovery_write_off_id_fkey"
+            columns: ["write_off_id"]
+            isOneToOne: false
+            referencedRelation: "loan_write_off"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       passbook_issue: {
         Row: {
           account_id: string
@@ -5148,6 +5332,21 @@ export type Database = {
           _reference: string
           _source_module?: string
           _source_ref?: string
+        }
+        Returns: string
+      }
+      record_write_off_recovery: {
+        Args: {
+          _amount: number
+          _charges: number
+          _idempotency_key?: string
+          _interest: number
+          _notes?: string
+          _payment_method: string
+          _principal: number
+          _recovery_date: string
+          _reference?: string
+          _write_off_id: string
         }
         Returns: string
       }
