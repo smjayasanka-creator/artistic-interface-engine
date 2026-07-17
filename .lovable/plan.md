@@ -1,62 +1,45 @@
-## What changes
 
-Loan charges get an optional **Capitalize** setting. When a capitalizable charge is applied to a loan, the user can toggle it on. If on, the charge is **not collected upfront** and **not added to the disbursement amount** — but it **is added to the amortization base** so the customer's rentals slightly increase. On each due rental, the capital portion attributable to capitalized charges is reclassified from the *Capitalized-charges receivable* GL to the normal *Loan receivable* GL.
+## Write-Off Module Redesign
 
-## Database (one migration)
+### 1. Database (migration)
 
-`public.loan_charge`
-- add `capitalize boolean not null default false`
-- add `capitalized_receivable_account_id uuid null references gl_account(id)` — asset GL debited at disbursement for capitalized amounts; credited as rentals fall due.
-- CHECK: when `capitalize = true`, `capitalized_receivable_account_id` must be set.
+New table `public.loan_write_off`:
+- `loan_id` (unique), `facility_no`, `client_id`, `company_id`, `branch_id`
+- `write_off_date`, `reason`
+- `principal_written_off`, `interest_written_off`, `charges_written_off`, `total_written_off`
+- `principal_recovered`, `interest_recovered`, `charges_recovered`, `total_recovered`
+- `is_fully_recovered` (bool), `created_by`, timestamps
+- GRANTs to `authenticated`/`service_role`; RLS scoped by `is_company_member(company_id)`; only `is_company_admin` may insert/update.
 
-`public.loan_applied_charge`
-- add `capitalize boolean not null default false` — records the per-loan decision.
+New table `public.loan_write_off_recovery`:
+- `write_off_id` FK, `recovery_date`, `amount`, `principal_portion`, `interest_portion`, `charges_portion`, `payment_method`, `reference`, `notes`, `created_by`
+- Standard grants + RLS via parent's `company_id`.
 
-## Charge setup — `LoanChargesTab.tsx`
+Update `write_off_loan` RPC (or add a wrapper trigger) so that when it runs it also inserts the master row breaking down principal / interest / charges from the loan's outstanding installments.
 
-In the charge modal:
-- New checkbox **Capitalize to loan capital**.
-- When on, show a required **Capitalized-charges receivable ledger** dropdown (asset GLs).
-- Grid gets a small "Cap." indicator column.
+New RPC `record_write_off_recovery(_write_off_id, _amount, _principal, _interest, _charges, _payment_method, _reference, _notes, _idempotency_key)` — inserts recovery row, updates parent totals, posts a GL entry (DR Cash / CR Bad Debt Recovery income) using the loan product's mapped accounts, marks `is_fully_recovered` when total_recovered ≥ total_written_off.
 
-`upsertLoanCharge` / `listLoanCharges` server fns extended with the two new fields (Zod validated; capitalized receivable required when `capitalize=true`).
+### 2. Frontend
 
-## Loan creation — `loans.new.tsx`
+**`/loans/write-off`** — becomes the full Write-Off workspace:
+- Header + list of facilities eligible for write-off (status ∈ disbursed/active/overdue) with facility no, client, outstanding principal/interest/charges, quick "Write off" action opening the existing WriteOffModal (moved out of `LoanLifecycleActions`).
+- Second section: master table of already written-off facilities with columns per spec (Facility, Date, Principal, Interest, Charges, Total, Recovered, Reason, actions: "Record collection", "View").
+- "Record collection" opens a modal capturing recovery date/amount/allocation/payment method → calls `recordWriteOffRecovery`.
 
-For each product-mapped charge that has `capitalize=true` on the master, show an extra **Capitalize** toggle next to the row (default on; disabled/unchecked for non-capitalizable charges — behavior unchanged for those).
+**Loan detail page (`loans.$id.tsx`)** — remove the write-off button from `LoanLifecycleActions` (keep Reschedule); leave a small link "Write off → available in Write-Off workspace" for discoverability.
 
-Summary strip near the schedule shows:
-- Disbursement amount (= principal, unchanged)
-- Capitalized charges total
-- **Amortization base** = principal + capitalized total
+**Transactions index (`transactions.index.tsx`)** — add new tile "Write-off Collection" (icon `HandCoins` or `Undo2`) linking to `/loans/write-off#collections` (or a dedicated `/transactions/write-off-collection` route that renders the master table + record-collection modal for quick access).
 
-Schedule generator receives `principal + capitalizedTotal` as its principal, so:
-- Rentals reflect the higher base
-- Interest is computed on the combined base
-- Disbursement/loan amount displayed to customer is still the raw principal
+### 3. Server functions (`src/lib/lifecycle.functions.ts` or new `write-off.functions.ts`)
 
-`submitApplication` persists each applied charge with its `capitalize` flag. Non-capitalized charges behave exactly as today (unchanged).
+- `listWriteOffCandidates()` — loans eligible for write-off with balances.
+- `listWriteOffs()` — master rows + recoveries summary.
+- `recordWriteOffRecovery(...)` — calls the new RPC.
 
-## Ledger reclass (schema + hook, not RPC internals)
+### 4. Files touched
 
-The per-rental reclass entry
-```
-DR  loan receivable        (capital-portion-of-charges)
-CR  capitalized receivable (capital-portion-of-charges)
-```
-belongs inside the accrual/rental-due posting logic. Since `record_repayment` / accrual are hardened Postgres RPCs owned by the backend, this migration lays down the accounts and per-loan `capitalize` flag they need; the actual reclass posting is a follow-up when the accrual RPC is next revised. The front-end passes the data through so nothing else needs to change when that RPC is updated.
+- New migration.
+- New: `src/lib/write-off.functions.ts`, `src/components/mzizi/WriteOffWorkspace.tsx`, `src/components/mzizi/RecordRecoveryModal.tsx`, `src/routes/_authenticated/transactions.write-off-collection.tsx`.
+- Modified: `src/routes/_authenticated/loans.write-off.tsx` (full workspace), `src/components/mzizi/LoanLifecycleActions.tsx` (drop write-off), `src/routes/_authenticated/transactions.index.tsx` (add tile).
 
-## Not changing
-
-- Disbursement amount / how disbursement is posted.
-- Non-capitalized charge flow (upfront collect).
-- `loan.principal` column value — it stays as the disbursed principal; the schedule math uses the augmented base internally without altering the stored principal.
-- `disburse_loan` / `record_repayment` RPC bodies (they live in the backend and are out of scope for this frontend-facing change).
-
-## Files touched
-
-- new migration under `supabase/migrations/`
-- `src/lib/loan-charges.functions.ts`
-- `src/components/mzizi/LoanChargesTab.tsx`
-- `src/lib/mzizi.functions.ts` (extend `submitApplication` input to accept `capitalize` per applied charge)
-- `src/routes/_authenticated/loans.new.tsx` (per-charge capitalize toggle + amortization base wiring)
+Confirm and I'll implement — migration first (needs your approval), then wire the UI.
