@@ -5,9 +5,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { listMaturingDeposits, processMaturity } from "@/lib/fd.functions";
 import { Card } from "@/components/mzizi/Card";
-import { btnPrimaryCls } from "@/components/mzizi/FormGrid";
+import { Modal } from "@/components/mzizi/Modal";
+import { FormGrid, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
 import { money } from "@/lib/format";
+import {
+  PaymentMethodPicker,
+  paymentMethodValid,
+  type PaymentMethodValue,
+} from "@/components/mzizi/PaymentMethodPicker";
 
 export const Route = createFileRoute("/_authenticated/fd/maturity")({
   component: MaturityDue,
@@ -20,14 +26,27 @@ function MaturityDue() {
   const matureFn = useServerFn(processMaturity);
   const { data: rows } = useQuery({ queryKey: ["fd-maturity", win], queryFn: () => listFn({ data: { window: win } }) });
 
+  const [payoutFor, setPayoutFor] = useState<any | null>(null);
+  const [pay, setPay] = useState<PaymentMethodValue>({ method: "fund_transfer" });
+
   const matureM = useMutation({
     mutationFn: (id: string) => matureFn({ data: { id } }),
     onSuccess: (r) => {
       toast.success(r.action === "renewed" ? `Renewed as ${r.new_certificate}` : `Payout ${money(r.settlement ?? 0)}`);
       qc.invalidateQueries({ queryKey: ["fd-maturity"] });
+      setPayoutFor(null);
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  function onProcess(d: any) {
+    if (d.maturity_instruction === "payout") {
+      setPayoutFor(d);
+      setPay({ method: "fund_transfer" });
+    } else {
+      matureM.mutate(d.id);
+    }
+  }
 
   return (
     <div className="animate-fadein flex flex-col gap-5">
@@ -72,7 +91,7 @@ function MaturityDue() {
                 <td className="py-2 pr-3">{d.maturity_date}</td>
                 <td className="py-2 pr-3 capitalize">{d.maturity_instruction.replace(/_/g, " ")}</td>
                 <td className="py-2 pr-3 text-right">
-                  <button className={btnPrimaryCls} onClick={() => matureM.mutate(d.id)} disabled={matureM.isPending}>
+                  <button className={btnPrimaryCls} onClick={() => onProcess(d)} disabled={matureM.isPending}>
                     Process
                   </button>
                 </td>
@@ -86,6 +105,57 @@ function MaturityDue() {
           </tbody>
         </table>
       </Card>
+
+      <Modal
+        open={!!payoutFor}
+        onClose={() => !matureM.isPending && setPayoutFor(null)}
+        title="Fixed deposit withdrawal"
+        width={560}
+      >
+        {payoutFor && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!paymentMethodValid(pay)) return toast.error("Complete payment details");
+              matureM.mutate(payoutFor.id);
+            }}
+            className="flex flex-col gap-4"
+          >
+            <div className="rounded-lg bg-secondary/40 border border-border p-3 text-[12.5px]">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Certificate</span>
+                <span className="font-mono">{payoutFor.certificate_no}</span>
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-muted-foreground">Client</span>
+                <span className="font-medium">{payoutFor.client?.full_name ?? "—"}</span>
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-muted-foreground">Principal</span>
+                <span className="font-mono font-semibold text-primary">{money(Number(payoutFor.principal))}</span>
+              </div>
+            </div>
+
+            <FormGrid>
+              <PaymentMethodPicker
+                allowed={["fund_transfer", "cheque", "sdf_savings"]}
+                clientId={payoutFor.client?.id}
+                value={pay}
+                onChange={setPay}
+              />
+            </FormGrid>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setPayoutFor(null)} disabled={matureM.isPending} className={btnSecondaryCls}>
+                Cancel
+              </button>
+              <button type="submit" disabled={matureM.isPending || !paymentMethodValid(pay)} className={btnPrimaryCls}>
+                {matureM.isPending ? "Processing…" : "Confirm payout"}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }
