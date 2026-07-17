@@ -5107,6 +5107,7 @@ export type Database = {
         Args: { _error: string; _id: string }
         Returns: undefined
       }
+      mark_savings_dormant: { Args: { _account_id: string }; Returns: string }
       next_contract_no: {
         Args: {
           _branch_id: string
@@ -5150,6 +5151,10 @@ export type Database = {
         }
         Returns: string
       }
+      reschedule_loan: {
+        Args: { _loan_id: string; _new_installments: Json; _reason: string }
+        Returns: string
+      }
       seed_default_risk_scheme: {
         Args: { _company_id: string }
         Returns: undefined
@@ -5157,6 +5162,10 @@ export type Database = {
       set_cron_job_active: {
         Args: { _active: boolean; _jobid: number }
         Returns: undefined
+      }
+      transfer_savings_to_unclaimed: {
+        Args: { _account_id: string; _idempotency_key?: string }
+        Returns: string
       }
       upsert_fd_rate_tier_version: {
         Args: {
@@ -5192,6 +5201,15 @@ export type Database = {
           _min_balance: number
           _note?: string
           _product_id: string
+        }
+        Returns: string
+      }
+      write_off_loan: {
+        Args: {
+          _idempotency_key?: string
+          _loan_id: string
+          _reason: string
+          _use_provision?: boolean
         }
         Returns: string
       }
@@ -5235,6 +5253,7 @@ export type Database = {
         | "partial"
         | "overdue"
         | "waived"
+        | "cancelled"
       interest_method: "flat" | "declining_balance"
       introducer_commission_mode: "cash" | "bank_transfer" | "credit_savings"
       loan_charge_origin: "inhouse" | "outside"
@@ -5459,6 +5478,7 @@ export const Constants = {
         "partial",
         "overdue",
         "waived",
+        "cancelled",
       ],
       interest_method: ["flat", "declining_balance"],
       introducer_commission_mode: ["cash", "bank_transfer", "credit_savings"],
