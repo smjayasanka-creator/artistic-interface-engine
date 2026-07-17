@@ -1147,7 +1147,7 @@ export const submitApplication = createServerFn({ method: "POST" })
       schedule_type?: "normal" | "structured";
       schedule_overrides?: Record<string, number>;
       initial_charges?: { charge_id: string; amount: number; capitalize?: boolean; supplier_client_id?: string | null }[];
-      securities?: { security_type_id: string; values: Record<string, unknown>; notes?: string | null }[];
+      securities?: { security_type_id: string; values: Record<string, unknown>; notes?: string | null; documents?: { path: string; name: string; size: number; kind?: string | null }[] }[];
     }) =>
       z
         .object({
