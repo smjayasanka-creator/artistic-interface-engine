@@ -425,7 +425,7 @@ async function runStepInternal(context: any, run_id: string, step: StepKey) {
   await context.supabase.rpc("eod_record_step" as any, {
     _run_id: run_id, _step_key: step, _status: "processing", _metrics: {}, _error: null,
   } as any);
-  let metrics: Record<string, unknown> = {};
+  let metrics: Record<string, any> = {};
   let error: string | null = null;
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
