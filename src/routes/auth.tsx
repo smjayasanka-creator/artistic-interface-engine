@@ -23,7 +23,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const nav = useNavigate();
   const { redirect, invited, email: invitedEmail } = useSearch({ from: "/auth" });
-  const isInvited = invited === "1" || invited === "true" || invited === true;
+  const isInvited = invited === "1" || invited === "true" || invited === true || invited === 1;
   const [mode, setMode] = useState<"in" | "up" | "forgot">(isInvited ? "up" : "in");
   const [email, setEmail] = useState(invitedEmail ?? "");
   const [password, setPassword] = useState("");
