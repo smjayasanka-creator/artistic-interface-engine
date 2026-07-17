@@ -2,34 +2,29 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { getReports, getFinancials, getSubledgerReconciliation } from "@/lib/mzizi.functions";
+import {
+  getReports,
+  getFinancials,
+  getReportFilterOptions,
+  getReportGeneralLedger,
+  getReportLoanBase,
+} from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
-import { money, getActiveCurrency } from "@/lib/format";
+import { money, getActiveCurrency, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { ArrowLeft, ArrowRight, BookOpen, FileBarChart, Scale } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   component: Reports,
 });
 
-type TabKey =
-  | "overview"
-  | "income"
-  | "balance"
-  | "trial"
-  | "ledger"
-  | "recon"
-  | "portfolio"
-  | "customer";
+type TabKey = "overview" | "income" | "balance" | "custom";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "income", label: "Income Statement" },
   { key: "balance", label: "Balance Sheet" },
-  { key: "trial", label: "Trial Balance" },
-  { key: "ledger", label: "Ledger" },
-  { key: "recon", label: "Reconciliation" },
-  { key: "portfolio", label: "Portfolio" },
-  { key: "customer", label: "Customer" },
+  { key: "custom", label: "Custom Reports" },
 ];
 
 function TabHeader({ tab, setTab }: { tab: TabKey; setTab: (t: TabKey) => void }) {
@@ -67,20 +62,10 @@ function Reports() {
   return (
     <div className="animate-fadein flex flex-col gap-4">
       <TabHeader tab={tab} setTab={setTab} />
-      {tab === "overview" &&
-        (data ? <OverviewTab data={data} /> : <Loading />)}
-      {tab === "income" &&
-        (fin ? <IncomeStatementTab data={fin.incomeStatement} /> : <Loading />)}
-      {tab === "balance" &&
-        (fin ? <BalanceSheetTab data={fin.balanceSheet} /> : <Loading />)}
-      {tab === "trial" &&
-        (fin ? <TrialBalanceTab data={fin.trialBalance} /> : <Loading />)}
-      {tab === "ledger" && <LedgerTab />}
-      {tab === "recon" && <ReconciliationTab />}
-      {tab === "portfolio" &&
-        (fin ? <PortfolioTab rows={fin.portfolio} /> : <Loading />)}
-      {tab === "customer" &&
-        (fin ? <CustomerTab rows={fin.customers} /> : <Loading />)}
+      {tab === "overview" && (data ? <OverviewTab data={data} /> : <Loading />)}
+      {tab === "income" && (fin ? <IncomeStatementTab data={fin.incomeStatement} /> : <Loading />)}
+      {tab === "balance" && (fin ? <BalanceSheetTab data={fin.balanceSheet} /> : <Loading />)}
+      {tab === "custom" && <CustomReportsTab fin={fin} />}
     </div>
   );
 }
@@ -269,7 +254,7 @@ function BalanceSheetTab({ data }: { data: any }) {
 
 /* ─── Trial Balance ─── */
 
-function TrialBalanceTab({ data }: { data: any }) {
+function TrialBalanceReport({ data }: { data: any }) {
   return (
     <Card>
       <CardTitle subtitle="All accounts · debit & credit totals">Trial Balance</CardTitle>
@@ -311,299 +296,449 @@ function TrialBalanceTab({ data }: { data: any }) {
   );
 }
 
-/* ─── Portfolio ─── */
+/* ─── Custom Reports ─── */
 
-function PortfolioTab({ rows }: { rows: any[] }) {
-  const total = rows.reduce((s, r) => s + r.outstanding, 0);
+type CustomReportKey = "trial" | "gl" | "loan-base";
+
+function CustomReportsTab({ fin }: { fin: any }) {
+  const [view, setView] = useState<CustomReportKey | null>(null);
+
+  if (view === "trial") {
+    return (
+      <div className="flex flex-col gap-3">
+        <BackHeader onBack={() => setView(null)} title="Trial Balance" />
+        {fin ? <TrialBalanceReport data={fin.trialBalance} /> : <Loading />}
+      </div>
+    );
+  }
+  if (view === "gl") {
+    return (
+      <div className="flex flex-col gap-3">
+        <BackHeader onBack={() => setView(null)} title="General Ledger View" />
+        <GeneralLedgerReport />
+      </div>
+    );
+  }
+  if (view === "loan-base") {
+    return (
+      <div className="flex flex-col gap-3">
+        <BackHeader onBack={() => setView(null)} title="Loan Base Report (As at Date)" />
+        <LoanBaseReport />
+      </div>
+    );
+  }
+
+  const tiles: { key: CustomReportKey; title: string; desc: string; icon: any; accent: string }[] = [
+    {
+      key: "trial",
+      title: "Trial Balance",
+      desc: "All accounts · debit & credit totals",
+      icon: Scale,
+      accent: "from-blue-500/15 to-blue-500/0 text-blue-600",
+    },
+    {
+      key: "gl",
+      title: "General Ledger View",
+      desc: "Transactions by account, period, branch",
+      icon: BookOpen,
+      accent: "from-violet-500/15 to-violet-500/0 text-violet-600",
+    },
+    {
+      key: "loan-base",
+      title: "Loan Base Report (As at Date)",
+      desc: "Loan portfolio snapshot at a chosen date",
+      icon: FileBarChart,
+      accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
+    },
+  ];
+
   return (
-    <Card>
-      <CardTitle subtitle="Outstanding by loan product">Portfolio breakdown</CardTitle>
-      <div
-        className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold pb-2 border-b border-border"
-        style={{ gridTemplateColumns: "2fr .8fr 1.2fr 1.2fr .8fr" }}
-      >
-        <div>Product</div>
-        <div className="text-right">Loans</div>
-        <div className="text-right">Disbursed</div>
-        <div className="text-right">Outstanding</div>
-        <div className="text-right">Share</div>
-      </div>
-      {rows.length === 0 && <EmptyRow label="No disbursed loans yet." />}
-      {rows.map((p) => (
-        <div
-          key={p.name}
-          className="grid items-center py-3 border-b border-row-divider last:border-b-0 text-[13px]"
-          style={{ gridTemplateColumns: "2fr .8fr 1.2fr 1.2fr .8fr" }}
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.color }} />
-            {p.name}
-          </div>
-          <div className="font-mono text-right text-muted-foreground">{p.count}</div>
-          <div className="font-mono text-right">{money(p.principal)}</div>
-          <div className="font-mono text-right font-semibold">{money(p.outstanding)}</div>
-          <div className="font-mono text-right text-muted-foreground">
-            {total > 0 ? ((p.outstanding / total) * 100).toFixed(1) : "0"}%
-          </div>
-        </div>
-      ))}
-      <div
-        className="grid items-center py-3 mt-1 border-t-2 border-border text-[13px] font-semibold"
-        style={{ gridTemplateColumns: "2fr .8fr 1.2fr 1.2fr .8fr" }}
-      >
-        <div>Total</div>
-        <div className="font-mono text-right">{rows.reduce((s, r) => s + r.count, 0)}</div>
-        <div className="font-mono text-right">{money(rows.reduce((s, r) => s + r.principal, 0))}</div>
-        <div className="font-mono text-right">{money(total)}</div>
-        <div className="font-mono text-right">100%</div>
-      </div>
-    </Card>
+    <div className="grid gap-3 md:grid-cols-3">
+      {tiles.map((t) => {
+        const Icon = t.icon;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setView(t.key)}
+            className="group text-left"
+          >
+            <Card className="p-3.5 hover:border-primary/40 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${t.accent}`}>
+                  <Icon size={18} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-[14px] truncate">{t.title}</div>
+                  <div className="text-[11.5px] text-muted-foreground truncate">{t.desc}</div>
+                </div>
+                <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Card>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
-/* ─── Customer ─── */
-
-function CustomerTab({ rows }: { rows: any[] }) {
-  const total = rows.reduce((s, r) => s + r.outstanding, 0);
+function BackHeader({ onBack, title }: { onBack: () => void; title: string }) {
   return (
-    <Card>
-      <CardTitle subtitle="Ranked by outstanding principal">Customer exposure</CardTitle>
-      <div
-        className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold pb-2 border-b border-border"
-        style={{ gridTemplateColumns: "2.4fr .7fr 1.2fr 1.2fr .8fr" }}
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-[12.5px] font-medium text-muted-foreground hover:text-foreground px-2 py-1.5 rounded-md hover:bg-muted"
       >
-        <div>Customer</div>
-        <div className="text-right">Loans</div>
-        <div className="text-right">Disbursed</div>
-        <div className="text-right">Outstanding</div>
-        <div className="text-right">Share</div>
-      </div>
-      {rows.length === 0 && <EmptyRow label="No customer loans yet." />}
-      {rows.map((c, i) => (
-        <div
-          key={c.name + i}
-          className="grid items-center py-3 border-b border-row-divider last:border-b-0 text-[13px]"
-          style={{ gridTemplateColumns: "2.4fr .7fr 1.2fr 1.2fr .8fr" }}
-        >
-          <div>{c.name}</div>
-          <div className="font-mono text-right text-muted-foreground">{c.loans}</div>
-          <div className="font-mono text-right">{money(c.principal)}</div>
-          <div className="font-mono text-right font-semibold">{money(c.outstanding)}</div>
-          <div className="font-mono text-right text-muted-foreground">
-            {total > 0 ? ((c.outstanding / total) * 100).toFixed(1) : "0"}%
-          </div>
-        </div>
-      ))}
-    </Card>
+        <ArrowLeft size={14} /> Custom Reports
+      </button>
+      <div className="text-[13.5px] font-semibold">{title}</div>
+    </div>
   );
 }
 
-/* ─── Ledger placeholder ─── */
-
-function LedgerTab() {
+function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <Card className="min-h-[16rem] flex flex-col items-center justify-center text-center">
-      <div className="text-sm font-medium text-muted-foreground">Ledger</div>
-      <div className="text-xs text-faint mt-1">Use the General Ledger page for full journal lines and account filters.</div>
-    </Card>
+    <div className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+      {children}
+    </div>
   );
 }
 
-/* ─── Sub-ledger vs GL Reconciliation ─── */
+/* ─── General Ledger Report ─── */
 
-function ReconciliationTab() {
+function GeneralLedgerReport() {
+  const optsFn = useServerFn(getReportFilterOptions);
+  const { data: opts } = useQuery({ queryKey: ["report-filter-options"], queryFn: () => optsFn() });
+
   const today = new Date().toISOString().slice(0, 10);
-  const [asOf, setAsOf] = useState<string>(today);
-  const [fromDate, setFromDate] = useState<string>("");
-  const reconFn = useServerFn(getSubledgerReconciliation);
-  const { data, isFetching, refetch } = useQuery({
-    queryKey: ["subledger-recon", asOf, fromDate],
-    queryFn: () => reconFn({ data: { asOf, fromDate: fromDate || undefined } }),
+  const firstOfMonth = today.slice(0, 8) + "01";
+  const [accountId, setAccountId] = useState<string>("");
+  const [branchId, setBranchId] = useState<string>("");
+  const [fromDate, setFromDate] = useState<string>(firstOfMonth);
+  const [toDate, setToDate] = useState<string>(today);
+  const [submitted, setSubmitted] = useState<{ accountId: string; branchId: string; fromDate: string; toDate: string } | null>(null);
+
+  const glFn = useServerFn(getReportGeneralLedger);
+  const { data, isFetching } = useQuery({
+    queryKey: ["report-gl", submitted],
+    queryFn: () =>
+      glFn({
+        data: {
+          accountId: submitted!.accountId || undefined,
+          branchId: submitted!.branchId || undefined,
+          fromDate: submitted!.fromDate || undefined,
+          toDate: submitted!.toDate || undefined,
+        },
+      }),
+    enabled: !!submitted,
   });
 
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-wider text-faint font-semibold">From date (optional)</label>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+          <div>
+            <FieldLabel>Account</FieldLabel>
+            <select
+              className="w-full h-9 px-2 rounded-md border border-border bg-background text-[13px]"
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+            >
+              <option value="">All accounts</option>
+              {(opts?.accounts ?? []).map((a: any) => (
+                <option key={a.id} value={a.id}>
+                  {a.code} — {a.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel>From</FieldLabel>
             <input
               type="date"
+              className="w-full h-9 px-2 rounded-md border border-border bg-background text-[13px]"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="border border-border rounded-md px-3 py-1.5 text-sm bg-background"
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-wider text-faint font-semibold">As of date</label>
+          <div>
+            <FieldLabel>To</FieldLabel>
             <input
               type="date"
-              value={asOf}
-              onChange={(e) => setAsOf(e.target.value)}
-              className="border border-border rounded-md px-3 py-1.5 text-sm bg-background"
+              className="w-full h-9 px-2 rounded-md border border-border bg-background text-[13px]"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
             />
+          </div>
+          <div>
+            <FieldLabel>Branch</FieldLabel>
+            <select
+              className="w-full h-9 px-2 rounded-md border border-border bg-background text-[13px]"
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+            >
+              <option value="">All branches</option>
+              {(opts?.branches ?? []).map((b: any) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
           </div>
           <button
             type="button"
-            onClick={() => refetch()}
-            className="px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90"
+            onClick={() => setSubmitted({ accountId, branchId, fromDate, toDate })}
+            className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-[12.5px] font-semibold"
           >
-            {isFetching ? "Refreshing…" : "Refresh"}
+            {isFetching ? "Loading…" : "Run report"}
           </button>
-          {fromDate && (
-            <button
-              type="button"
-              onClick={() => setFromDate("")}
-              className="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted"
-            >
-              Clear range
-            </button>
-          )}
-          <div className="text-xs text-faint ml-auto">
-            {fromDate ? "Period movement" : "Balance snapshot"}
-          </div>
         </div>
       </Card>
 
-      {!data ? (
-        <Loading />
-      ) : (
-        <>
-          <div className="grid grid-cols-3 gap-4">
-            <MetricCard label="Checks run" value={data.totals.checked} tone="primary" />
-            <MetricCard label="Matches" value={data.totals.checked - data.totals.breaks} tone="positive" />
-            <MetricCard label="Breaks" value={data.totals.breaks} tone={data.totals.breaks > 0 ? "negative" : "positive"} />
+      {!submitted && (
+        <Card className="min-h-[10rem] flex items-center justify-center text-sm text-muted-foreground">
+          Choose filters and click Run report.
+        </Card>
+      )}
+
+      {submitted && data && (
+        <Card padded={false}>
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+            <div>
+              <div className="text-[13px] font-semibold">
+                {data.account ? `${data.account.code} — ${data.account.name}` : "All accounts"}
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                {submitted.fromDate || "—"} → {submitted.toDate || "—"}
+              </div>
+            </div>
+            <div className="text-right text-[12px]">
+              <div className="text-muted-foreground">Opening</div>
+              <div className="font-mono font-semibold">{money(data.opening)}</div>
+            </div>
           </div>
-
-          <Card>
-            <CardTitle subtitle={fromDate ? `Movement ${fromDate} → ${data.asOf}` : `Snapshot as of ${data.asOf}`}>
-              Sub-ledger vs GL control accounts
-            </CardTitle>
+          <div
+            className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold py-2.5 px-5 border-b border-border bg-secondary/40"
+            style={{ gridTemplateColumns: ".85fr .9fr 2fr 1fr 1fr 1.1fr" }}
+          >
+            <div>Date</div>
+            <div>Txn #</div>
+            <div>Narration</div>
+            <div className="text-right">Debit</div>
+            <div className="text-right">Credit</div>
+            <div className="text-right">Balance</div>
+          </div>
+          {data.lines.length === 0 && <EmptyRow label="No transactions in this period." />}
+          {data.lines.map((r: any) => (
             <div
-              className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold pb-2 border-b border-border"
-              style={{ gridTemplateColumns: "70px 1.6fr 1.4fr 140px 140px 140px 90px" }}
+              key={r.id}
+              className="grid items-center text-[12.5px] py-2.5 px-5 border-b border-row-divider"
+              style={{ gridTemplateColumns: ".85fr .9fr 2fr 1fr 1fr 1.1fr" }}
             >
-              <div>Code</div>
-              <div>Control account</div>
-              <div>Sub-ledger</div>
-              <div className="text-right">GL balance</div>
-              <div className="text-right">Sub-ledger</div>
-              <div className="text-right">Difference</div>
-              <div className="text-right">Status</div>
+              <div className="text-muted-foreground">{shortDate(r.date)}</div>
+              <div className="font-mono text-ledger-ref">{r.reference}</div>
+              <div className="text-muted-foreground truncate">{r.description}</div>
+              <div className="text-right font-mono text-debit">{r.debit > 0 ? money(r.debit) : ""}</div>
+              <div className="text-right font-mono text-primary">{r.credit > 0 ? money(r.credit) : ""}</div>
+              <div className="text-right font-mono font-semibold">{money(r.balance)}</div>
             </div>
-            {data.rows.length === 0 && <EmptyRow label="No control accounts mapped." />}
-            {data.rows.map((r: any) => (
-              <div
-                key={r.code}
-                className={cn(
-                  "grid items-center py-3 border-b border-row-divider last:border-b-0 text-[13px]",
-                  r.status === "break" && "bg-red-50/40",
-                )}
-                style={{ gridTemplateColumns: "70px 1.6fr 1.4fr 140px 140px 140px 90px" }}
-              >
-                <div className="font-mono text-[11.5px] text-muted-foreground">{r.code}</div>
-                <div>
-                  <div>{r.name}</div>
-                  {r.note && (
-                    <div className="text-[11px] text-amber-700 mt-0.5 leading-snug">{r.note}</div>
-                  )}
-                </div>
-                <div className="text-muted-foreground text-[12.5px]">{r.subledger}</div>
-                <div className="font-mono text-right">{money(r.gl_balance)}</div>
-                <div className="font-mono text-right">{money(r.subledger_balance)}</div>
-                <div
-                  className={cn(
-                    "font-mono text-right font-semibold",
-                    r.status === "break" ? "text-red-600" : "text-emerald-600",
-                  )}
-                >
-                  {money(r.difference)}
-                </div>
-                <div className="text-right">
-                  <span
-                    className={cn(
-                      "inline-block px-2 py-0.5 rounded-full text-[10.5px] font-semibold uppercase tracking-wide",
-                      r.status === "break"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-emerald-100 text-emerald-700",
-                    )}
-                  >
-                    {r.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+          ))}
+          {data.lines.length > 0 && (
             <div
-              className="grid items-center py-3 mt-1 border-t-2 border-border text-[13px] font-semibold"
-              style={{ gridTemplateColumns: "70px 1.6fr 1.4fr 140px 140px 140px 90px" }}
+              className="grid items-center text-[13px] py-3 px-5 bg-secondary/40 font-semibold"
+              style={{ gridTemplateColumns: ".85fr .9fr 2fr 1fr 1fr 1.1fr" }}
             >
-              <div />
-              <div>Totals</div>
-              <div />
-              <div className="font-mono text-right">{money(data.totals.totalGl)}</div>
-              <div className="font-mono text-right">{money(data.totals.totalSub)}</div>
-              <div
-                className={cn(
-                  "font-mono text-right",
-                  Math.abs(data.totals.totalDiff) > 0.01 ? "text-red-600" : "text-emerald-600",
-                )}
-              >
-                {money(data.totals.totalDiff)}
-              </div>
-              <div />
+              <div className="col-span-3">Totals ({data.lines.length} lines)</div>
+              <div className="text-right font-mono text-debit">{money(data.totalDebit)}</div>
+              <div className="text-right font-mono text-primary">{money(data.totalCredit)}</div>
+              <div className="text-right font-mono">{money(data.closing)}</div>
             </div>
-          </Card>
-
-          {data.snapshot && (
-            <Card>
-              <CardTitle
-                subtitle={`Coverage: ${data.snapshot.coverage.branchesClosed}/${data.snapshot.coverage.branchesTotal} branches closed for ${data.snapshot.asOf}${data.snapshot.complete ? "" : " — partial"}`}
-              >
-                EOD snapshot (fast path)
-              </CardTitle>
-              <div className="grid grid-cols-3 gap-4">
-                <MetricCard label="Loans (closing principal)" value={data.snapshot.loans} tone="primary" />
-                <MetricCard label="Savings (closing balance)" value={data.snapshot.savings} tone="primary" />
-                <MetricCard label="FD (closing balance)" value={data.snapshot.fd} tone="primary" />
-              </div>
-              <div className="text-[11.5px] text-muted-foreground mt-3 leading-relaxed">
-                Balances above are read from the day-end snapshot tables written by the EOD close job.
-                Once a branch is closed for a date, its figures here are immutable and used as the
-                system of record — no re-scanning of raw transactions required.
-              </div>
-            </Card>
           )}
-
-          <Card>
-            <div className="text-xs text-muted-foreground leading-relaxed">
-              <strong>How this works.</strong> Each control account's GL balance is the signed sum of postings on that
-              account (respecting normal balance). The sub-ledger side aggregates the underlying business-fact tables:
-              savings uses <code>savings_transaction</code>, fixed deposits use <code>fd_transaction</code>, and loans
-              use <code>v_loan_outstanding</code> for the current snapshot (or disbursed − repayments for a historical
-              range). A non-zero difference means a posting was skipped, split incorrectly, or that a sub-ledger row was
-              written outside the ledger kernel. When an EOD close has run for the selected date, the snapshot card
-              above shows the locked closing balances.
-            </div>
-          </Card>
-        </>
+        </Card>
       )}
     </div>
   );
 }
 
-/* ─── UI atoms ─── */
+/* ─── Loan Base Report ─── */
 
-function MetricCard({ label, value, tone }: { label: string; value: number; tone: "primary" | "positive" | "negative" }) {
-  const color =
-    tone === "positive" ? "text-emerald-600" : tone === "negative" ? "text-red-600" : "text-foreground";
+function LoanBaseReport() {
+  const optsFn = useServerFn(getReportFilterOptions);
+  const { data: opts } = useQuery({ queryKey: ["report-filter-options"], queryFn: () => optsFn() });
+
+  const today = new Date().toISOString().slice(0, 10);
+  const [asOf, setAsOf] = useState<string>(today);
+  const [branchId, setBranchId] = useState<string>("");
+  const [productId, setProductId] = useState<string>("");
+  const [submitted, setSubmitted] = useState<{ asOf: string; branchId: string; productId: string } | null>({
+    asOf: today,
+    branchId: "",
+    productId: "",
+  });
+
+  const lbFn = useServerFn(getReportLoanBase);
+  const { data, isFetching } = useQuery({
+    queryKey: ["report-loan-base", submitted],
+    queryFn: () =>
+      lbFn({
+        data: {
+          asOf: submitted!.asOf,
+          branchId: submitted!.branchId || undefined,
+          productId: submitted!.productId || undefined,
+        },
+      }),
+    enabled: !!submitted,
+  });
+
+  const totals = (data?.rows ?? []).reduce(
+    (acc: any, r: any) => {
+      acc.facility += r.facility_amount;
+      acc.principal += r.principal_outstanding;
+      acc.interest += r.interest_outstanding;
+      acc.charges += r.charges_outstanding;
+      acc.total += r.total_outstanding;
+      acc.arrears += r.rental_arrears;
+      acc.accrued += r.accrued_interest;
+      return acc;
+    },
+    { facility: 0, principal: 0, interest: 0, charges: 0, total: 0, arrears: 0, accrued: 0 },
+  );
+
+  const cols = "1fr 1.4fr 1fr .5fr .5fr 1fr 1fr .9fr 1.1fr .6fr 1fr 1fr";
+
   return (
-    <Card>
-      <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">{label}</div>
-      <div className={cn("mt-2 text-xl font-mono font-semibold", color)}>{money(value)}</div>
-    </Card>
+    <div className="flex flex-col gap-4">
+      <Card>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+          <div>
+            <FieldLabel>As at date</FieldLabel>
+            <input
+              type="date"
+              className="w-full h-9 px-2 rounded-md border border-border bg-background text-[13px]"
+              value={asOf}
+              onChange={(e) => setAsOf(e.target.value)}
+            />
+          </div>
+          <div>
+            <FieldLabel>Branch</FieldLabel>
+            <select
+              className="w-full h-9 px-2 rounded-md border border-border bg-background text-[13px]"
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+            >
+              <option value="">All branches</option>
+              {(opts?.branches ?? []).map((b: any) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel>Product</FieldLabel>
+            <select
+              className="w-full h-9 px-2 rounded-md border border-border bg-background text-[13px]"
+              value={productId}
+              onChange={(e) => setProductId(e.target.value)}
+            >
+              <option value="">All products</option>
+              {(opts?.products ?? []).map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSubmitted({ asOf, branchId, productId })}
+            className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-[12.5px] font-semibold"
+          >
+            {isFetching ? "Loading…" : "Run report"}
+          </button>
+        </div>
+      </Card>
+
+      <Card padded={false}>
+        <div
+          className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2.5 px-4 border-b border-border bg-secondary/40 gap-2"
+          style={{ gridTemplateColumns: cols }}
+        >
+          <div>Contract #</div>
+          <div>Customer</div>
+          <div className="text-right">Facility</div>
+          <div className="text-right">Rate</div>
+          <div className="text-right">Term</div>
+          <div className="text-right">Cap. O/S</div>
+          <div className="text-right">Int. O/S</div>
+          <div className="text-right">Chg. O/S</div>
+          <div className="text-right">Total O/S</div>
+          <div className="text-right">DIA</div>
+          <div className="text-right">Rental Arrears</div>
+          <div className="text-right">Accrued Int.</div>
+        </div>
+        {(data?.rows ?? []).length === 0 && <EmptyRow label="No loans match these filters." />}
+        {(data?.rows ?? []).map((r: any) => (
+          <div
+            key={r.loan_id}
+            className="grid items-center text-[12px] py-2.5 px-4 border-b border-row-divider gap-2"
+            style={{ gridTemplateColumns: cols }}
+          >
+            <div className="font-mono text-ledger-ref truncate">{r.contract_no}</div>
+            <div className="truncate">{r.customer}</div>
+            <div className="text-right font-mono">{money(r.facility_amount)}</div>
+            <div className="text-right font-mono text-muted-foreground">{Number(r.rate).toFixed(2)}%</div>
+            <div className="text-right font-mono text-muted-foreground">{r.term_months}m</div>
+            <div className="text-right font-mono">{money(r.principal_outstanding)}</div>
+            <div className="text-right font-mono">{money(r.interest_outstanding)}</div>
+            <div className="text-right font-mono">{money(r.charges_outstanding)}</div>
+            <div className="text-right font-mono font-semibold">{money(r.total_outstanding)}</div>
+            <div className={cn("text-right font-mono", r.days_in_arrears > 0 ? "text-red-600 font-semibold" : "text-muted-foreground")}>{r.days_in_arrears}</div>
+            <div className="text-right font-mono">{r.rental_arrears > 0 ? money(r.rental_arrears) : "—"}</div>
+            <div className="text-right font-mono">{money(r.accrued_interest)}</div>
+          </div>
+        ))}
+        {(data?.rows ?? []).length > 0 && (
+          <div
+            className="grid items-center text-[12.5px] py-3 px-4 bg-secondary/40 font-semibold gap-2"
+            style={{ gridTemplateColumns: cols }}
+          >
+            <div className="col-span-2">Totals ({data!.rows.length})</div>
+            <div className="text-right font-mono">{money(totals.facility)}</div>
+            <div />
+            <div />
+            <div className="text-right font-mono">{money(totals.principal)}</div>
+            <div className="text-right font-mono">{money(totals.interest)}</div>
+            <div className="text-right font-mono">{money(totals.charges)}</div>
+            <div className="text-right font-mono">{money(totals.total)}</div>
+            <div />
+            <div className="text-right font-mono">{money(totals.arrears)}</div>
+            <div className="text-right font-mono">{money(totals.accrued)}</div>
+          </div>
+        )}
+      </Card>
+    </div>
   );
 }
 
+/* ─── Shared ─── */
+
 function EmptyRow({ label }: { label: string }) {
   return <div className="text-center text-faint text-sm py-8">{label}</div>;
+}
+
+function MetricCard({ label, value, tone }: { label: string; value: number; tone: "primary" | "positive" | "negative" }) {
+  const color =
+    tone === "primary"
+      ? "text-primary"
+      : tone === "positive"
+        ? "text-emerald-600"
+        : "text-red-600";
+  return (
+    <Card>
+      <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">{label}</div>
+      <div className={cn("text-[22px] font-semibold font-mono mt-1", color)}>{money(value)}</div>
+    </Card>
+  );
 }
