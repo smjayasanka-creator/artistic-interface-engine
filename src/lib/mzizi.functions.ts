@@ -1189,6 +1189,12 @@ export const submitApplication = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
+    if (!data.draft) {
+      if (!(data.principal > 0)) throw new Error("Principal must be greater than 0");
+      if (!(data.term_months > 0)) throw new Error("Term (months) must be greater than 0");
+      if (data.annual_rate_pct != null && !(data.annual_rate_pct > 0))
+        throw new Error("Annual rate must be greater than 0");
+    }
     const { data: staff } = await supabase.from("staff").select("id, branch_id").eq("user_id", context.userId).maybeSingle();
     if (!staff) throw new Error("No staff profile");
     const { data: product } = await supabase
