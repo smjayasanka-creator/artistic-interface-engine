@@ -1147,6 +1147,7 @@ export const submitApplication = createServerFn({ method: "POST" })
       schedule_type?: "normal" | "structured";
       schedule_overrides?: Record<string, number>;
       initial_charges?: { charge_id: string; amount: number; capitalize?: boolean; supplier_client_id?: string | null }[];
+      securities?: { security_type_id: string; values: Record<string, unknown>; notes?: string | null }[];
     }) =>
       z
         .object({
@@ -1161,6 +1162,15 @@ export const submitApplication = createServerFn({ method: "POST" })
           schedule_overrides: z.record(z.string(), z.number()).optional(),
           initial_charges: z
             .array(z.object({ charge_id: z.string().uuid(), amount: z.number().nonnegative(), capitalize: z.boolean().optional(), supplier_client_id: z.string().uuid().nullable().optional() }))
+            .optional(),
+          securities: z
+            .array(
+              z.object({
+                security_type_id: z.string().uuid(),
+                values: z.record(z.string(), z.any()).default({}),
+                notes: z.string().max(1000).nullable().optional(),
+              }),
+            )
             .optional(),
         })
         .parse(i),
