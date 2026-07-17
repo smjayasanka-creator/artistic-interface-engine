@@ -907,11 +907,37 @@ function NewLoan() {
                     const type = (securityTypes ?? []).find((t: any) => t.id === s.security_type_id) as any;
                     const defs: { key: string; label: string; type: "text" | "number" | "date"; required: boolean }[] =
                       Array.isArray(type?.fields?.definitions) ? type.fields.definitions : [];
+                    const summaryVal = defs.find((d) => s.values[d.key])?.key;
+                    const summary = summaryVal ? String(s.values[summaryVal]) : "";
                     return (
-                      <div key={s.key} className="border border-border rounded-lg p-3 bg-secondary/20">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
-                            Security #{idx + 1}
+                      <div key={s.key} className="border border-border rounded-lg bg-secondary/20">
+                        <div className="flex items-center gap-2 px-3 py-2">
+                          <button
+                            type="button"
+                            onClick={() => updateSecurity(idx, (r) => ({ ...r, expanded: !r.expanded }))}
+                            className="text-muted-foreground hover:text-foreground"
+                            title={s.expanded ? "Collapse" : "Expand"}
+                          >
+                            {s.expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                          </button>
+                          <div className="flex-1 min-w-0 flex items-center gap-2 text-[12px]">
+                            <span className="text-faint font-semibold uppercase tracking-wider text-[10.5px]">#{idx + 1}</span>
+                            {s.security_type_id ? (
+                              <span className="font-medium truncate">
+                                {type ? `${type.category} · ${type.kind}` : "Security"}
+                                {summary ? <span className="text-muted-foreground"> — {summary}</span> : null}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground italic">New security — select a type</span>
+                            )}
+                            {s.saved && (
+                              <span className="inline-flex items-center gap-0.5 text-[10.5px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                                <Check size={11} /> Saved
+                              </span>
+                            )}
+                            {s.documents.length > 0 && (
+                              <span className="text-[10.5px] text-muted-foreground">· {s.documents.length} doc{s.documents.length === 1 ? "" : "s"}</span>
+                            )}
                           </div>
                           <button
                             type="button"
@@ -922,6 +948,8 @@ function NewLoan() {
                             <Trash2 size={14} />
                           </button>
                         </div>
+                        {s.expanded && (
+                        <div className="px-3 pb-3 pt-1 border-t border-border/60">
                         <FormGrid>
                           <FormField label="Security type" required span={12}>
                             <select
