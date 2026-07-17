@@ -56,6 +56,7 @@ const TIERS: Tier[] = [
       { id: "cbsl-returns", label: "CBSL statutory returns data and generation", detail: "Monthly and quarterly prudential returns for a licensed NBFI must be producible from the data model (asset classification, maturity buckets, sector codes, deposit analyses). Reviewer confirms field mapping per return." },
       { id: "pdpa", label: "Sri Lanka PDPA compliance (consent, subject access, retention alignment)", detail: "Lawful-basis capture at onboarding, a subject access and erasure workflow that respects statutory retention overrides, and a breach notification procedure. Policy and workflow review." },
       { id: "master-versioning", label: "Master data deactivation and change history (no hard deletes)", detail: "Products, rate tiers and GL mappings must be deactivated or versioned once referenced, never physically deleted (deleteFdProduct and fd_rate_tier deletion currently hard-delete). Rate changes retain effective-dated history." },
+      { id: "doc-numbering", label: "Sequential document numbering with gap accountability", detail: "Certificates, contract numbers and journal references must be allocated sequentially per branch/product (as next_contract_no does) with any gaps in the sequence explainable to an auditor — e.g. a void register recording cancelled allocations. Reviewer confirms gap reporting exists." },
     ],
   },
   {
