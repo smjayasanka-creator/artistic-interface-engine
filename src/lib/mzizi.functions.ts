@@ -861,16 +861,18 @@ export const createStaff = createServerFn({ method: "POST" })
       full_name: string;
       role: "loan_officer" | "branch_manager" | "teller" | "operations" | "admin";
       branch_id: string;
-      email?: string;
+      email: string;
       phone?: string;
+      invite_origin?: string;
     }) =>
       z
         .object({
           full_name: z.string().trim().min(2).max(80),
           role: z.enum(["loan_officer", "branch_manager", "teller", "operations", "admin"]),
           branch_id: z.string().uuid(),
-          email: z.string().trim().email().optional().or(z.literal("")),
+          email: z.string().trim().email(),
           phone: z.string().trim().max(30).optional().or(z.literal("")),
+          invite_origin: z.string().url().optional(),
         })
         .parse(i),
   )
@@ -878,18 +880,82 @@ export const createStaff = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) throw new Error("Only admins can create staff");
+
+    const emailLower = data.email.toLowerCase();
+
+    // Resolve the branch's company for the invite record.
+    const { data: branchRow, error: branchErr } = await supabase
+      .from("branch")
+      .select("id, company_id, company:company_id(id, name)")
+      .eq("id", data.branch_id)
+      .maybeSingle();
+    if (branchErr) throw branchErr;
+    if (!branchRow) throw new Error("Branch not found");
+    const companyId = (branchRow as any).company_id as string;
+    const companyName = (branchRow as any).company?.name as string | undefined;
+
+    // Create the staff row (user_id stays null until they sign up).
     const { data: created, error } = await supabase
       .from("staff")
       .insert({
         full_name: data.full_name,
         role: data.role,
         branch_id: data.branch_id,
-        email: data.email || null,
+        email: emailLower,
         phone: data.phone || null,
       })
       .select()
       .single();
     if (error) throw error;
+
+    // Create (or refresh) the company_invite row so signup auto-joins the workspace.
+    const { data: existingInvite } = await supabase
+      .from("company_invite")
+      .select("id")
+      .eq("company_id", companyId)
+      .ilike("email", emailLower)
+      .is("accepted_at", null)
+      .maybeSingle();
+
+    if (existingInvite) {
+      await supabase
+        .from("company_invite")
+        .update({
+          role: data.role,
+          branch_id: data.branch_id,
+          invited_by: userId,
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .eq("id", existingInvite.id);
+    } else {
+      await supabase.from("company_invite").insert({
+        company_id: companyId,
+        email: emailLower,
+        role: data.role,
+        branch_id: data.branch_id,
+        invited_by: userId,
+      });
+    }
+
+    // Send the invitation email (best-effort — never block staff creation).
+    try {
+      const origin = data.invite_origin?.replace(/\/+$/, "") || "";
+      if (origin) {
+        const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+        const confirmationUrl = `${origin}/auth?invited=1&email=${encodeURIComponent(emailLower)}`;
+        await sendTemplateEmail("staff-invite", emailLower, {
+          templateData: {
+            siteName: companyName || "your workspace",
+            siteUrl: origin,
+            confirmationUrl,
+          },
+          idempotencyKey: `staff-invite:${companyId}:${emailLower}`,
+        });
+      }
+    } catch (e) {
+      console.error("[createStaff] invite email failed", e);
+    }
+
     return created;
   });
 
