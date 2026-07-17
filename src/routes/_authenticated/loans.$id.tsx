@@ -92,6 +92,8 @@ function LoanDetail() {
         )}
       </div>
 
+      <LoanLifecycleActions loan={loan} schedule={schedule} />
+
       {/* Tab bar */}
       <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
         {TABS.map((t) => {
