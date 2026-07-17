@@ -792,7 +792,7 @@ function NewLoan() {
               ) : (
                 <div className="flex flex-col gap-3">
                   {securities.map((s, idx) => {
-                    const type = (securityTypes ?? []).find((t: any) => t.id === s.security_type_id);
+                    const type = (securityTypes ?? []).find((t: any) => t.id === s.security_type_id) as any;
                     const defs: { key: string; label: string; type: "text" | "number" | "date"; required: boolean }[] =
                       Array.isArray(type?.fields?.definitions) ? type.fields.definitions : [];
                     return (
