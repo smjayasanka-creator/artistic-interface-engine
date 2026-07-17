@@ -78,6 +78,9 @@ function SavingsWithdrawalPage() {
               channel: methodToChannel(pay.method),
               reference: buildReference(),
               narration: narration || null,
+              payment_method: pay.method,
+              bank_account_id: pay.bank_account_id ?? null,
+              savings_account_id: pay.savings_account_id ?? null,
             },
           });
         }}
