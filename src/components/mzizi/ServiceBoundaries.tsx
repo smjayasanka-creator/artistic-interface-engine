@@ -89,13 +89,13 @@ const DOMAINS: Domain[] = [
     tag: "term deposits",
     icon: CircleDollarSign,
     summary:
-      "Term deposit lifecycle: booking, interest schedule, daily accrual, payout, maturity, renewal and premature closure.",
+      "Term deposit lifecycle: booking, interest schedule, daily accrual, payout, maturity, renewal and premature closure. Maturity payout accepts Fund Transfer, Cheque or SDF Savings, enforced server-side.",
     ownedTables: [
       "fixed_deposit", "fd_product", "fd_rate_tier",
       "fd_interest_schedule", "fd_accrual", "fd_transaction",
       "fd_nominee", "fd_number_seq",
     ],
-    serverFns: ["src/lib/fd.functions.ts"],
+    serverFns: ["src/lib/fd.functions.ts", "src/lib/payment-methods.ts (guard)"],
     publicApi: [],
     publishesEvents: [
       "fd.booked", "fd.interest_accrued", "fd.interest_paid",
