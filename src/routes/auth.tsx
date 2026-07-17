@@ -8,8 +8,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({
     redirect: z.string().optional(),
-    invited: z.union([z.literal("1"), z.literal("true"), z.boolean()]).optional(),
-    email: z.string().email().optional(),
+    invited: z.union([z.string(), z.number(), z.boolean()]).optional(),
+    email: z.string().optional(),
   }),
   head: () => ({
     meta: [
