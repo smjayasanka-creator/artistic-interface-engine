@@ -21,7 +21,7 @@ const TILES = [
     accent: "from-amber-500/15 to-amber-500/0 text-amber-600",
   },
   {
-    to: "/loans/write-off",
+    to: "/transactions/write-off-collection",
     label: "Write-off Collection",
     icon: Undo2,
     accent: "from-red-500/15 to-red-500/0 text-red-600",
