@@ -1246,6 +1246,7 @@ export const submitApplication = createServerFn({ method: "POST" })
         security_type_id: s.security_type_id,
         values: s.values ?? {},
         notes: s.notes ?? null,
+        documents: s.documents ?? [],
       }));
       const { error: secErr } = await (supabase as any).from("loan_security").insert(rows);
       if (secErr) throw new Error(secErr.message);
