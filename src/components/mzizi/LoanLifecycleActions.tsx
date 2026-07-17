@@ -126,59 +126,8 @@ function ModalShell({
   );
 }
 
-function WriteOffModal({
-  onCancel,
-  onSubmit,
-  submitting,
-}: {
-  onCancel: () => void;
-  onSubmit: (v: { reason: string; use_provision: boolean }) => void;
-  submitting: boolean;
-}) {
-  const [reason, setReason] = useState("");
-  const [useProvision, setUseProvision] = useState(false);
-  return (
-    <ModalShell title="Write off loan" onCancel={onCancel}>
-      <div className="text-[12.5px] text-muted-foreground bg-secondary/40 border border-border rounded-md px-3 py-2">
-        Marks the loan as written off, cancels remaining installments and posts the reversal
-        against the loan product's Bad Debt Expense (or Loan Loss Provision, if used) and
-        Suspended Interest accounts. Cannot be undone.
-      </div>
-      <FormGrid>
-        <FormField label="Reason" required span={12}>
-          <textarea
-            className={cn(inputCls, "min-h-[72px]")}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Explain the write-off rationale for the audit trail"
-          />
-        </FormField>
-        <FormField label="Charge to loan loss provision (ECL)" span={12}>
-          <label className="flex items-center gap-2 text-[13px]">
-            <input
-              type="checkbox"
-              checked={useProvision}
-              onChange={(e) => setUseProvision(e.target.checked)}
-            />
-            Use provision instead of expense
-          </label>
-        </FormField>
-      </FormGrid>
-      <FormActions>
-        <button className={btnSecondaryCls} onClick={onCancel} disabled={submitting}>
-          Cancel
-        </button>
-        <button
-          className={cn(btnPrimaryCls, "bg-destructive hover:bg-destructive/90")}
-          disabled={submitting || reason.trim().length < 3}
-          onClick={() => onSubmit({ reason: reason.trim(), use_provision: useProvision })}
-        >
-          {submitting ? "Writing off…" : "Confirm write off"}
-        </button>
-      </FormActions>
-    </ModalShell>
-  );
-}
+
+
 
 function RescheduleModal({
   schedule,
