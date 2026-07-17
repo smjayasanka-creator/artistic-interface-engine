@@ -1075,9 +1075,12 @@ export const runFdDailyAccrual = createServerFn({ method: "POST" })
     const today = serverToday();
     const { data: active } = await supabase
       .from("fixed_deposit")
-      .select("id,principal,rate_at_booking")
+      .select("id,principal,rate_at_booking,branch_id,product_id,company_id,certificate_no")
       .eq("status", "active");
     let inserted = 0;
+    let posted = 0;
+    // Cache resolved account sets per product to avoid N lookups.
+    const glCache = new Map<string, Awaited<ReturnType<typeof resolveFdAccounts>>>();
     for (const fd of active ?? []) {
       const { data: last } = await supabase
         .from("fd_accrual")
@@ -1094,9 +1097,40 @@ export const runFdDailyAccrual = createServerFn({ method: "POST" })
         daily_amount: daily,
         cumulative_amount: cum,
       });
-      if (!error) inserted++;
+      if (error) continue;
+      inserted++;
+
+      // GL: DR Interest Expense / CR Accrued Interest Payable (idempotent per day)
+      if (daily <= 0) continue;
+      const cacheKey = `${fd.company_id}:${fd.product_id}`;
+      let gl = glCache.get(cacheKey);
+      if (!gl) {
+        const { data: fdProd } = await supabase
+          .from("fd_product")
+          .select(FD_PRODUCT_ACCOUNT_COLUMNS)
+          .eq("id", fd.product_id)
+          .maybeSingle();
+        gl = await resolveFdAccounts(supabase, fdProd, fd.company_id);
+        glCache.set(cacheKey, gl);
+      }
+      if (gl.intr && gl.accrued) {
+        await supabase.rpc("post_entry", {
+          _entry_date: today,
+          _reference: `FD-ACC-${fd.certificate_no}-${today}`,
+          _description: `FD daily interest accrual · ${fd.certificate_no}`,
+          _lines: [
+            { account_id: gl.intr, debit: daily, credit: 0 },
+            { account_id: gl.accrued, debit: 0, credit: daily },
+          ] as any,
+          _branch_id: fd.branch_id,
+          _source_module: "fd",
+          _source_ref: fd.id,
+          _idempotency_key: `fd:accrual:${fd.id}:${today}`,
+        });
+        posted++;
+      }
     }
-    return { inserted };
+    return { inserted, posted };
   });
 
 export const runFdInterestPayouts = createServerFn({ method: "POST" })
@@ -1113,7 +1147,7 @@ export const runFdInterestPayouts = createServerFn({ method: "POST" })
     for (const row of due ?? []) {
       const { data: fd } = await supabase
         .from("fixed_deposit")
-        .select("id,status,certificate_no,payout_option,branch_id,product_id")
+        .select("id,status,certificate_no,payout_option,branch_id,product_id,company_id")
         .eq("id", row.deposit_id)
         .maybeSingle();
       if (!fd || fd.status !== "active" || fd.payout_option !== "monthly") continue;
@@ -1127,35 +1161,53 @@ export const runFdInterestPayouts = createServerFn({ method: "POST" })
         created_by: userId,
       });
 
-      // Ledger posting via kernel — DR Interest Expense / CR Cash (net) + CR WHT Liability
+      // Ledger posting via kernel — relieve accrued liability, adjust interest
+      // expense for any accrued/scheduled gap, then Cr Cash (net) + Cr WHT.
       const { data: fdProdI } = await supabase
         .from("fd_product")
-        .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+        .select(FD_PRODUCT_ACCOUNT_COLUMNS)
         .eq("id", fd.product_id)
         .maybeSingle();
-      const gli = await resolveFdAccounts(supabase, fdProdI);
+      const gli = await resolveFdAccounts(supabase, fdProdI, fd.company_id);
       const gross = Number(row.gross_interest);
       const wht = Number(row.wht_amount ?? 0);
       const net = Number(row.net_interest);
-      if (gli.cash && gli.intr && gross > 0) {
+      if (gli.cash && gli.intr && gli.accrued && gross > 0) {
+        const { data: accRows } = await supabase
+          .from("fd_accrual")
+          .select("daily_amount")
+          .eq("deposit_id", fd.id)
+          .is("released_at", null)
+          .lte("accrual_date", today);
+        const accruedAmount = Math.round(
+          ((accRows ?? []).reduce((s: number, x: any) => s + Number(x.daily_amount ?? 0), 0)) * 100,
+        ) / 100;
+        const intrAdj = Math.round((gross - accruedAmount) * 100) / 100;
+        const lines: Array<{ account_id: string; debit: number; credit: number }> = [];
+        if (accruedAmount > 0) lines.push({ account_id: gli.accrued, debit: accruedAmount, credit: 0 });
+        if (intrAdj > 0) lines.push({ account_id: gli.intr, debit: intrAdj, credit: 0 });
+        if (intrAdj < 0) lines.push({ account_id: gli.intr, debit: 0, credit: -intrAdj });
+        lines.push({ account_id: gli.cash, debit: 0, credit: net });
+        if (wht > 0 && gli.wht) lines.push({ account_id: gli.wht, debit: 0, credit: wht });
         await supabase.rpc("post_entry", {
           _entry_date: today,
           _reference: `FD-INT-${fd.certificate_no}-${row.id.slice(0, 8)}`,
           _description: `FD interest payout · ${fd.certificate_no}`,
-          _lines: [
-            { account_id: gli.intr, debit: gross, credit: 0 },
-            { account_id: gli.cash, debit: 0, credit: net },
-            ...(wht > 0 && gli.wht ? [{ account_id: gli.wht, debit: 0, credit: wht }] : []),
-          ] as any,
+          _lines: lines as any,
           _branch_id: fd.branch_id,
           _source_module: "fd",
           _source_ref: fd.id,
           _idempotency_key: `fd:interest:${row.id}`,
         });
+        await supabase
+          .from("fd_accrual")
+          .update({ released_at: new Date().toISOString(), released_ref: `fd:interest:${row.id}` })
+          .eq("deposit_id", fd.id)
+          .is("released_at", null)
+          .lte("accrual_date", today);
       }
 
       paid++;
     }
     return { paid };
-
   });
