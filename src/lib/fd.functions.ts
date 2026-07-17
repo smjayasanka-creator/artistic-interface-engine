@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { serverNow, serverToday } from "@/lib/clock-server";
 import { buildSchedule, dailyAccrual, addMonths, daysBetween, interestForPeriod } from "@/lib/fd-schedule";
+import { PAYMENT_METHODS, assertPaymentMethod } from "@/lib/payment-methods";
 
 // ─────────── Ledger kernel helper ───────────
 // Resolves GL account ids from fd_product (preferred) or falls back to
