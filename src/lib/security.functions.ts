@@ -2,8 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const KIND = z.enum(["machinery", "vehicle", "property", "gold", "deposit"]);
-const CATEGORY = z.enum(["movable", "immovable"]);
+const FIELD_TYPE = z.enum(["text", "number", "date"]);
 
 /* ---------------- Security types ---------------- */
 
@@ -25,14 +24,23 @@ async function currentCompanyId(supabase: any) {
   return data as string;
 }
 
+const fieldDefSchema = z.object({
+  key: z.string().trim().min(1).max(60),
+  label: z.string().trim().min(1).max(80),
+  type: FIELD_TYPE,
+  required: z.boolean().default(false),
+});
+
 const upsertSecurityTypeSchema = z.object({
   id: z.string().uuid().optional(),
-  name: z.string().trim().min(2).max(80),
-  category: CATEGORY,
-  kind: KIND,
-  fields: z.record(z.string(), z.any()).default({}),
+  category: z.string().trim().min(2).max(60),
+  kind: z.string().trim().min(2).max(60),
+  fields: z
+    .object({ definitions: z.array(fieldDefSchema).default([]) })
+    .default({ definitions: [] }),
   active: z.boolean().default(true),
 });
+
 
 export const upsertSecurityType = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
