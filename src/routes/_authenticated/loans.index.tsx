@@ -2,12 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight, Loader2, Truck } from "lucide-react";
+import { FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight, Loader2, Truck, Eye } from "lucide-react";
 import { getLoans } from "@/lib/mzizi.functions";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { Card } from "@/components/mzizi/Card";
 import { TablePagination } from "@/components/mzizi/TablePagination";
-import { money, shortDate } from "@/lib/format";
+import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/loans/")({
