@@ -811,8 +811,25 @@ export const listMaturingDeposits = createServerFn({ method: "GET" })
 
 export const processMaturity = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { id: string; on_date?: string }) =>
-    z.object({ id: z.string().uuid(), on_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).parse(i),
+  .inputValidator(
+    (i: {
+      id: string;
+      on_date?: string;
+      payment_method?: (typeof PAYMENT_METHODS)[number];
+      bank_account_id?: string | null;
+      savings_account_id?: string | null;
+      reference?: string | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          on_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+          payment_method: z.enum(PAYMENT_METHODS).optional(),
+          bank_account_id: z.string().uuid().optional().nullable(),
+          savings_account_id: z.string().uuid().optional().nullable(),
+          reference: z.string().trim().max(120).optional().nullable(),
+        })
+        .parse(i),
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
