@@ -292,6 +292,13 @@ export const recordDepositWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: z.infer<typeof depositMovementInput>) => depositMovementInput.parse(i))
   .handler(async ({ context, data }) => {
+    if (!data.payment_method) throw new Error("Payment method is required for FD withdrawal");
+    assertPaymentMethod("fd_withdrawal", {
+      payment_method: data.payment_method,
+      bank_account_id: data.bank_account_id ?? null,
+      savings_account_id: data.savings_account_id ?? null,
+      reference: data.reference ?? null,
+    });
     const { supabase, userId } = context;
     const { data: fd } = await supabase
       .from("fixed_deposit")
