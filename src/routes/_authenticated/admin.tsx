@@ -85,59 +85,82 @@ const TYPE_TONE: Record<AccountType, string> = {
   expense: "bg-rose-500/10 text-rose-700 border-rose-500/30",
 };
 
-type Section = { id: Tab; label: string; desc: string; icon: React.ComponentType<{ size?: number }>; accent: string };
+type Group = "general" | "savings_fd" | "loan";
+type Section = { id: Tab; label: string; desc: string; icon: React.ComponentType<{ size?: number }>; accent: string; group: Group };
 const SECTIONS: Section[] = [
-  { id: "settings",    label: "Company settings",  desc: "Workspace defaults, currency & fiscal year",       icon: Settings2, accent: "from-slate-500/15 to-slate-500/0 text-slate-600" },
-  { id: "branches",    label: "Branches",          desc: "Locations, regions & operating currency",          icon: Building2, accent: "from-sky-500/15 to-sky-500/0 text-sky-600" },
-  { id: "staff",       label: "Staff",             desc: "Employees, roles & invitations",                   icon: Users,     accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600" },
-  { id: "user_roles",  label: "User roles",        desc: "Create custom roles & assign actions",             icon: KeyRound,  accent: "from-purple-500/15 to-purple-500/0 text-purple-600" },
-  { id: "products",    label: "Loan products",     desc: "Interest methods, terms & pricing",                icon: Wallet,    accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
-  { id: "loan_charges", label: "Loan charges",     desc: "Fees applied to loan products (in-house/outside)", icon: Coins,     accent: "from-yellow-500/15 to-yellow-500/0 text-yellow-600" },
-  { id: "fd_products", label: "FD products",       desc: "Fixed deposit tenors & rates",                     icon: PiggyBank, accent: "from-teal-500/15 to-teal-500/0 text-teal-600" },
-  { id: "savings_products", label: "Savings products", desc: "Passbook accounts, interest & fees",           icon: Coins,     accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600" },
-  { id: "savings_charges",  label: "Savings charges",  desc: "Fees applied to savings products",             icon: Coins,     accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600" },
-  { id: "alco_rates",  label: "ALCO rates",        desc: "Deposit product rate proposals & approvals",       icon: LineChart, accent: "from-orange-500/15 to-orange-500/0 text-orange-600" },
-  { id: "loan_alco_rates", label: "Loan ALCO rates", desc: "Rate bands by product, security & equipment",     icon: LineChart, accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
-  { id: "accounts",    label: "Chart of accounts", desc: "General ledger accounts & posting rules",          icon: BookOpen,  accent: "from-violet-500/15 to-violet-500/0 text-violet-600" },
-  { id: "security_types", label: "Security types",  desc: "Collateral kinds (vehicle, property, gold …)",     icon: Shield,      accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600" },
-  { id: "delegation",  label: "Delegation authority", desc: "Approval bands: LTV, amount & rate ranges",     icon: ShieldCheck, accent: "from-rose-500/15 to-rose-500/0 text-rose-600" },
-  { id: "risk_profiling", label: "Risk profiling",   desc: "Customer risk factors, scoring & bands",           icon: ShieldAlert, accent: "from-orange-500/15 to-orange-500/0 text-orange-600" },
-  { id: "screening",   label: "Customer screening", desc: "FIU screening score thresholds & approval routing", icon: ScanSearch,  accent: "from-red-500/15 to-red-500/0 text-red-600" },
-  { id: "bank_directory", label: "Bank directory",  desc: "Banks & branches — CEFTS / SLIPS enablement",       icon: Landmark,    accent: "from-blue-500/15 to-blue-500/0 text-blue-600" },
-  { id: "eod",         label: "Day End Process",  desc: "Company-wide daily close, accruals & auto-schedule", icon: CalendarClock, accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600" },
-  { id: "time_travel", label: "Time travel",       desc: "Simulate a different date for testing (dev only)", icon: Clock,     accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
+  { id: "settings",    label: "Company settings",  desc: "Workspace defaults, currency & fiscal year",       icon: Settings2, accent: "from-slate-500/15 to-slate-500/0 text-slate-600", group: "general" },
+  { id: "branches",    label: "Branches",          desc: "Locations, regions & operating currency",          icon: Building2, accent: "from-sky-500/15 to-sky-500/0 text-sky-600", group: "general" },
+  { id: "staff",       label: "Staff",             desc: "Employees, roles & invitations",                   icon: Users,     accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600", group: "general" },
+  { id: "user_roles",  label: "User roles",        desc: "Create custom roles & assign actions",             icon: KeyRound,  accent: "from-purple-500/15 to-purple-500/0 text-purple-600", group: "general" },
+  { id: "accounts",    label: "Chart of accounts", desc: "General ledger accounts & posting rules",          icon: BookOpen,  accent: "from-violet-500/15 to-violet-500/0 text-violet-600", group: "general" },
+  { id: "delegation",  label: "Delegation authority", desc: "Approval bands: LTV, amount & rate ranges",     icon: ShieldCheck, accent: "from-rose-500/15 to-rose-500/0 text-rose-600", group: "general" },
+  { id: "risk_profiling", label: "Risk profiling",   desc: "Customer risk factors, scoring & bands",           icon: ShieldAlert, accent: "from-orange-500/15 to-orange-500/0 text-orange-600", group: "general" },
+  { id: "screening",   label: "Customer screening", desc: "FIU screening score thresholds & approval routing", icon: ScanSearch,  accent: "from-red-500/15 to-red-500/0 text-red-600", group: "general" },
+  { id: "bank_directory", label: "Bank directory",  desc: "Banks & branches — CEFTS / SLIPS enablement",       icon: Landmark,    accent: "from-blue-500/15 to-blue-500/0 text-blue-600", group: "general" },
+  { id: "eod",         label: "Day End Process",  desc: "Company-wide daily close, accruals & auto-schedule", icon: CalendarClock, accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600", group: "general" },
+  { id: "time_travel", label: "Time travel",       desc: "Simulate a different date for testing (dev only)", icon: Clock,     accent: "from-amber-500/15 to-amber-500/0 text-amber-600", group: "general" },
+
+  { id: "products",    label: "Loan products",     desc: "Interest methods, terms & pricing",                icon: Wallet,    accent: "from-amber-500/15 to-amber-500/0 text-amber-600", group: "loan" },
+  { id: "loan_charges", label: "Loan charges",     desc: "Fees applied to loan products (in-house/outside)", icon: Coins,     accent: "from-yellow-500/15 to-yellow-500/0 text-yellow-600", group: "loan" },
+  { id: "loan_alco_rates", label: "Loan ALCO rates", desc: "Rate bands by product, security & equipment",     icon: LineChart, accent: "from-amber-500/15 to-amber-500/0 text-amber-600", group: "loan" },
+  { id: "security_types", label: "Security types",  desc: "Collateral kinds (vehicle, property, gold …)",     icon: Shield,      accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600", group: "loan" },
+
+  { id: "fd_products", label: "FD products",       desc: "Fixed deposit tenors & rates",                     icon: PiggyBank, accent: "from-teal-500/15 to-teal-500/0 text-teal-600", group: "savings_fd" },
+  { id: "savings_products", label: "Savings products", desc: "Passbook accounts, interest & fees",           icon: Coins,     accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600", group: "savings_fd" },
+  { id: "savings_charges",  label: "Savings charges",  desc: "Fees applied to savings products",             icon: Coins,     accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600", group: "savings_fd" },
+  { id: "alco_rates",  label: "ALCO rates",        desc: "Deposit product rate proposals & approvals",       icon: LineChart, accent: "from-orange-500/15 to-orange-500/0 text-orange-600", group: "savings_fd" },
 ];
+
+const GROUPS: { id: Group; label: string }[] = [
+  { id: "general",    label: "General" },
+  { id: "savings_fd", label: "Savings / Fixed Deposit" },
+  { id: "loan",       label: "Loan" },
+];
+
 
 function Admin() {
   const [tab, setTab] = useState<Tab | null>(null);
 
   if (!tab) {
     return (
-      <div className="animate-fadein flex flex-col gap-5">
-        <div className="grid gap-3 md:grid-cols-3">
-          {SECTIONS.map((s) => {
-            const Icon = s.icon;
-            return (
-              <button key={s.id} onClick={() => setTab(s.id)} className="text-left group">
-                <Card className="p-3.5 hover:border-primary/40 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${s.accent}`}>
-                      <Icon size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-[14px] truncate">{s.label}</div>
-                      <div className="text-[11.5px] text-muted-foreground truncate">{s.desc}</div>
-                    </div>
-                    <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </Card>
-              </button>
-            );
-          })}
-        </div>
+      <div className="animate-fadein flex flex-col gap-6">
+        {GROUPS.map((g) => {
+          const items = SECTIONS.filter((s) => s.group === g.id);
+          if (!items.length) return null;
+          return (
+            <div key={g.id} className="flex flex-col gap-2.5">
+              <div className="flex items-center gap-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</div>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                {items.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <button key={s.id} onClick={() => setTab(s.id)} className="text-left group">
+                      <Card className="p-3.5 hover:border-primary/40 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${s.accent}`}>
+                            <Icon size={18} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-[14px] truncate">{s.label}</div>
+                            <div className="text-[11.5px] text-muted-foreground truncate">{s.desc}</div>
+                          </div>
+                          <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </Card>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   }
+
 
   const current = SECTIONS.find((s) => s.id === tab)!;
   const Icon = current.icon;
