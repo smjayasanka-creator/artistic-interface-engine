@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { serverNow, serverToday } from "@/lib/clock-server";
 import { generateSchedule, generateStructuredSchedule, type Frequency } from "@/lib/loan-schedule";
+import { assertPaymentMethod, PAYMENT_METHODS } from "@/lib/payment-methods";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // READS
