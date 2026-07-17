@@ -7,6 +7,12 @@ import { listSavingsAccounts, postSavingsTransaction } from "@/lib/savings.funct
 import { Card } from "@/components/mzizi/Card";
 import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
 import { money, getActiveCurrency } from "@/lib/format";
+import {
+  PaymentMethodPicker,
+  paymentMethodValid,
+  methodToChannel,
+  type PaymentMethodValue,
+} from "@/components/mzizi/PaymentMethodPicker";
 
 export const Route = createFileRoute("/_authenticated/transactions/savings-withdrawal")({
   component: SavingsWithdrawalPage,
@@ -17,8 +23,8 @@ function SavingsWithdrawalPage() {
   const qc = useQueryClient();
   const [accountId, setAccountId] = useState("");
   const [amount, setAmount] = useState("");
-  const [reference, setReference] = useState("");
   const [narration, setNarration] = useState("");
+  const [pay, setPay] = useState<PaymentMethodValue>({ method: "cash" });
 
   const listFn = useServerFn(listSavingsAccounts);
   const { data: accounts } = useQuery({
@@ -38,9 +44,23 @@ function SavingsWithdrawalPage() {
   });
 
   const selected = (accounts ?? []).find((a: any) => a.id === accountId);
+  const clientId: string | undefined = selected?.client?.id;
   const available = selected ? Number(selected.available_balance ?? selected.balance ?? 0) : 0;
   const exceeds = !!(selected && amount && Number(amount) > available);
-  const valid = accountId && amount && Number(amount) > 0 && !exceeds;
+  const valid =
+    accountId && amount && Number(amount) > 0 && !exceeds && paymentMethodValid(pay);
+
+  function buildReference(): string | null {
+    if (pay.method === "cheque") return pay.reference ? `CHQ ${pay.reference}` : null;
+    if (pay.method === "fund_transfer") {
+      const parts = ["FT"];
+      if (pay.bank_account_id) parts.push(pay.bank_account_id.slice(0, 8));
+      if (pay.reference) parts.push(pay.reference);
+      return parts.join(" · ");
+    }
+    if (pay.method === "sdf_savings") return `SDF-SAV ${pay.savings_account_id ?? ""}`.trim();
+    return null;
+  }
 
   return (
     <div className="animate-fadein flex flex-col gap-4">
@@ -55,8 +75,8 @@ function SavingsWithdrawalPage() {
               account_id: accountId,
               txn_type: "withdrawal",
               amount: Number(amount),
-              channel: "branch",
-              reference: reference || null,
+              channel: methodToChannel(pay.method),
+              reference: buildReference(),
               narration: narration || null,
             },
           });
@@ -90,10 +110,15 @@ function SavingsWithdrawalPage() {
                 className={`${inputCls} font-mono font-semibold`}
               />
             </FormField>
-            <FormField label="Reference" span={4}>
-              <input value={reference} onChange={(e) => setReference(e.target.value)} className={`${inputCls} font-mono`} maxLength={120} placeholder="Voucher / slip no." />
-            </FormField>
-            <FormField label="Narration" span={8}>
+
+            <PaymentMethodPicker
+              allowed={["cash", "fund_transfer", "cheque", "sdf_savings"]}
+              clientId={clientId}
+              value={pay}
+              onChange={setPay}
+            />
+
+            <FormField label="Narration" span={12}>
               <input value={narration} onChange={(e) => setNarration(e.target.value)} className={inputCls} maxLength={200} placeholder="Optional description" />
             </FormField>
           </FormGrid>
