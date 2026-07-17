@@ -1323,7 +1323,7 @@ export const getActiveLoansForClient = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await context.supabase
       .from("loan")
-      .select("id, principal, client:client_id(full_name)")
+      .select("id, principal, product_id, client:client_id(full_name)")
       .in("status", ["disbursed", "active"])
       .order("disbursed_at", { ascending: false })
       .limit(50);
