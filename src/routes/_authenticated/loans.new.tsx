@@ -786,7 +786,7 @@ function NewLoan() {
                   onClick={() =>
                     setSecurities((prev) => [
                       ...prev,
-                      { key: crypto.randomUUID(), security_type_id: "", values: {}, notes: "" },
+                      { key: crypto.randomUUID(), security_type_id: "", values: {}, notes: "", documents: [], autoFillCr: false, uploadingDoc: false, extracting: false },
                     ])
                   }
                   className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-[12px] font-semibold hover:bg-primary-hover inline-flex items-center gap-1"
