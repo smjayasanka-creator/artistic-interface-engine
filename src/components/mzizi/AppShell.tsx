@@ -28,7 +28,6 @@ const NAV: NavEntry[] = [
       { to: "/reports", label: "Reports", icon: LineChart },
 
       { to: "/workflows", label: "Work flow", icon: Workflow },
-      { to: "/eod", label: "Day End", icon: CalendarClock },
       { to: "/api", label: "API", icon: Plug },
       { to: "/audit-log", label: "Audit log", icon: ScrollText },
       { to: "/admin", label: "Administration", icon: Settings },
