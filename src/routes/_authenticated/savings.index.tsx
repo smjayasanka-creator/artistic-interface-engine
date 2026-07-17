@@ -44,13 +44,34 @@ const CARDS = [
 ] as const;
 
 function SavingsIndex() {
+  const qc = useQueryClient();
   const acctFn = useServerFn(listSavingsAccounts);
   const stockFn = useServerFn(listPassbookStock);
+  const dormantFn = useServerFn(markSavingsDormant);
+  const unclaimedFn = useServerFn(transferSavingsToUnclaimed);
   const { data: accounts } = useQuery({
     queryKey: ["savings-accounts", "all"],
     queryFn: () => acctFn({ data: { status: "all" } }),
   });
   const { data: stock } = useQuery({ queryKey: ["passbook-stock"], queryFn: () => stockFn() });
+
+  const dormantM = useMutation({
+    mutationFn: (id: string) => dormantFn({ data: { account_id: id } }),
+    onSuccess: () => {
+      toast.success("Account marked dormant");
+      qc.invalidateQueries({ queryKey: ["savings-accounts", "all"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const unclaimedM = useMutation({
+    mutationFn: (id: string) =>
+      unclaimedFn({ data: { account_id: id, idempotency_key: `savings:unclaimed:${id}` } }),
+    onSuccess: () => {
+      toast.success("Balance transferred to unclaimed liability");
+      qc.invalidateQueries({ queryKey: ["savings-accounts", "all"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const active = (accounts ?? []).filter((a: any) => a.status === "active");
   const totalBalance = active.reduce((s: number, a: any) => s + Number(a.balance ?? 0), 0);
