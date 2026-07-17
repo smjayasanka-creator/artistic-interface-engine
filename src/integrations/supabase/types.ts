@@ -1865,6 +1865,62 @@ export type Database = {
           },
         ]
       }
+      fx_rate: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          from_currency: string
+          id: string
+          note: string | null
+          rate: number
+          rate_type: string
+          source: string | null
+          to_currency: string
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          from_currency: string
+          id?: string
+          note?: string | null
+          rate: number
+          rate_type?: string
+          source?: string | null
+          to_currency: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          from_currency?: string
+          id?: string
+          note?: string | null
+          rate?: number
+          rate_type?: string
+          source?: string | null
+          to_currency?: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fx_rate_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gl_account: {
         Row: {
           branch_ids: string[] | null
