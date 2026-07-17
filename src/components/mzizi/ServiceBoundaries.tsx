@@ -64,12 +64,13 @@ const DOMAINS: Domain[] = [
     tag: "current & savings accounts",
     icon: PiggyBank,
     summary:
-      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, passbook stock and issue.",
+      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, passbook stock and issue. Withdrawals accept Cash, Fund Transfer (client bank account), Cheque or SDF Savings, enforced server-side.",
     ownedTables: [
       "savings_account", "savings_product", "savings_transaction",
+      "savings_charge", "savings_charge_product", "savings_alco_rate",
       "passbook_stock", "passbook_issue", "savings_number_seq",
     ],
-    serverFns: ["src/lib/savings.functions.ts"],
+    serverFns: ["src/lib/savings.functions.ts", "src/lib/payment-methods.ts (guard)"],
     publicApi: [],
     publishesEvents: [
       "savings.account_opened", "savings.deposited",
@@ -79,7 +80,7 @@ const DOMAINS: Domain[] = [
     dependsOn: ["ledger", "clients"],
     extractionReadiness: "ready",
     extractionNotes:
-      "Cleanest boundary — schema already isolated, no shared writes outside the ledger.",
+      "Cleanest boundary — schema already isolated, no shared writes outside the ledger. Payment-method guard is a pure module and travels with the service.",
     accent: "from-emerald-500/10 to-emerald-500/0 border-emerald-500/30",
   },
   {
