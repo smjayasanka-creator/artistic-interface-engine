@@ -65,6 +65,9 @@ import { Route as AuthenticatedAccountsBulkJournalRouteImport } from './routes/_
 import { Route as AuthenticatedAccountsBankReconciliationRouteImport } from './routes/_authenticated/accounts.bank-reconciliation'
 import { Route as AuthenticatedAccountsPaymentsIndexRouteImport } from './routes/_authenticated/accounts.payments.index'
 import { Route as AuthenticatedAccountsJournalIndexRouteImport } from './routes/_authenticated/accounts.journal.index'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
 import { Route as ApiPublicHooksLoanAccrueRouteImport } from './routes/api/public/hooks/loan-accrue'
 import { Route as ApiPublicHooksFdMatureRouteImport } from './routes/api/public/hooks/fd-mature'
@@ -395,6 +398,22 @@ const AuthenticatedAccountsJournalIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAccountsJournalRoute,
   } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1HealthRoute = ApiPublicV1HealthRouteImport.update({
   id: '/api/public/v1/health',
   path: '/api/public/v1/health',
@@ -548,6 +567,9 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
   '/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
   '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
@@ -617,6 +639,9 @@ export interface FileRoutesByTo {
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/accounts/journal': typeof AuthenticatedAccountsJournalIndexRoute
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsIndexRoute
   '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
@@ -692,6 +717,9 @@ export interface FileRoutesById {
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/_authenticated/accounts/journal/': typeof AuthenticatedAccountsJournalIndexRoute
   '/_authenticated/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
   '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
@@ -767,6 +795,9 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
     | '/api/public/v1/health'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
     | '/accounts/journal/'
     | '/accounts/payments/'
     | '/api/public/v1/atm/authorize'
@@ -836,6 +867,9 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
     | '/api/public/v1/health'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
     | '/accounts/journal'
     | '/accounts/payments'
     | '/api/public/v1/atm/authorize'
@@ -910,6 +944,9 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
     | '/api/public/v1/health'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
     | '/_authenticated/accounts/journal/'
     | '/_authenticated/accounts/payments/'
     | '/api/public/v1/atm/authorize'
@@ -931,6 +968,9 @@ export interface RootRouteChildren {
   ApiPublicHooksFdMatureRoute: typeof ApiPublicHooksFdMatureRoute
   ApiPublicHooksLoanAccrueRoute: typeof ApiPublicHooksLoanAccrueRoute
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiPublicV1AtmAuthorizeRoute: typeof ApiPublicV1AtmAuthorizeRoute
   ApiPublicV1CeftTransferRoute: typeof ApiPublicV1CeftTransferRoute
   ApiPublicV1ClientsCreateRoute: typeof ApiPublicV1ClientsCreateRoute
@@ -1334,6 +1374,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsJournalIndexRouteImport
       parentRoute: typeof AuthenticatedAccountsJournalRoute
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/health': {
       id: '/api/public/v1/health'
       path: '/api/public/v1/health'
@@ -1655,6 +1716,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksFdMatureRoute: ApiPublicHooksFdMatureRoute,
   ApiPublicHooksLoanAccrueRoute: ApiPublicHooksLoanAccrueRoute,
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiPublicV1AtmAuthorizeRoute: ApiPublicV1AtmAuthorizeRoute,
   ApiPublicV1CeftTransferRoute: ApiPublicV1CeftTransferRoute,
   ApiPublicV1ClientsCreateRoute: ApiPublicV1ClientsCreateRoute,
@@ -1666,13 +1730,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
