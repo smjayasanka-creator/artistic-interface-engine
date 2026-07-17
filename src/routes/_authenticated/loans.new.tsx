@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { getClients, getProducts, submitApplication } from "@/lib/mzizi.functions";
 import { hasActiveWorkflow, startWorkflow } from "@/lib/workflow.functions";
 import { listLoanCharges } from "@/lib/loan-charges.functions";
+import { listSecurityTypes } from "@/lib/security.functions";
+import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
@@ -38,10 +40,11 @@ export const Route = createFileRoute("/_authenticated/loans/new")({
   component: NewLoan,
 });
 
-type TabKey = "customer" | "application" | "documents" | "evaluations";
+type TabKey = "customer" | "application" | "securities" | "documents" | "evaluations";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "customer", label: "Customer" },
   { key: "application", label: "Application" },
+  { key: "securities", label: "Securities" },
   { key: "documents", label: "Documents" },
   { key: "evaluations", label: "Evaluations" },
 ];
@@ -106,19 +109,21 @@ function NewLoan() {
   const [capitalizedCharges, setCapitalizedCharges] = useState<Record<string, boolean>>({});
   const [manualAmounts, setManualAmounts] = useState<Record<string, number>>({});
   const [chargeSuppliers, setChargeSuppliers] = useState<Record<string, string>>({});
-
-
-
+  const [securities, setSecurities] = useState<
+    { key: string; security_type_id: string; values: Record<string, any>; notes: string }[]
+  >([]);
 
   const clientsFn = useServerFn(getClients);
   const productsFn = useServerFn(getProducts);
   const chargesFn = useServerFn(listLoanCharges);
+  const securityTypesFn = useServerFn(listSecurityTypes);
   const { data: clients } = useQuery({
     queryKey: ["clients", "all"],
     queryFn: () => clientsFn({ data: { filter: "all" } }),
   });
   const { data: products } = useQuery({ queryKey: ["products"], queryFn: () => productsFn() });
   const { data: allCharges } = useQuery({ queryKey: ["loan-charges"], queryFn: () => chargesFn() });
+  const { data: securityTypes } = useQuery({ queryKey: ["security-types"], queryFn: () => securityTypesFn() });
   const qc = useQueryClient();
   const submitFn = useServerFn(submitApplication);
   const hasWfFn = useServerFn(hasActiveWorkflow);
@@ -757,6 +762,126 @@ function NewLoan() {
             </>
           )}
 
+          {tab === "securities" && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[13px] font-semibold">Securities</div>
+                  <div className="text-[11.5px] text-muted-foreground">
+                    Attach one or more movable or immovable properties pledged as security for this facility.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSecurities((prev) => [
+                      ...prev,
+                      { key: crypto.randomUUID(), security_type_id: "", values: {}, notes: "" },
+                    ])
+                  }
+                  className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-[12px] font-semibold hover:bg-primary-hover inline-flex items-center gap-1"
+                >
+                  <Plus size={14} /> Add security
+                </button>
+              </div>
+
+              {securities.length === 0 ? (
+                <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
+                  No securities added yet. Click "Add security" to attach a property.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {securities.map((s, idx) => {
+                    const type = (securityTypes ?? []).find((t: any) => t.id === s.security_type_id) as any;
+                    const defs: { key: string; label: string; type: "text" | "number" | "date"; required: boolean }[] =
+                      Array.isArray(type?.fields?.definitions) ? type.fields.definitions : [];
+                    return (
+                      <div key={s.key} className="border border-border rounded-lg p-3 bg-secondary/20">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
+                            Security #{idx + 1}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSecurities((prev) => prev.filter((_, i) => i !== idx))}
+                            className="text-muted-foreground hover:text-destructive"
+                            title="Remove"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        <FormGrid>
+                          <FormField label="Security type" required span={12}>
+                            <select
+                              value={s.security_type_id}
+                              onChange={(e) =>
+                                setSecurities((prev) =>
+                                  prev.map((row, i) =>
+                                    i === idx ? { ...row, security_type_id: e.target.value, values: {} } : row,
+                                  ),
+                                )
+                              }
+                              className={selectCls}
+                            >
+                              <option value="">— select security type —</option>
+                              {((securityTypes ?? []) as any[])
+                                .filter((t) => t.active)
+                                .map((t: any) => (
+                                  <option key={t.id} value={t.id}>
+                                    {t.category} · {t.kind}
+                                  </option>
+                                ))}
+                            </select>
+                          </FormField>
+
+                          {s.security_type_id && defs.length === 0 && (
+                            <div className="sm:col-span-12 text-[11.5px] text-muted-foreground italic">
+                              This security type has no fields configured.
+                            </div>
+                          )}
+
+                          {defs.map((d) => (
+                            <FormField key={d.key} label={d.label} required={d.required} span={6}>
+                              <input
+                                type={d.type}
+                                value={s.values[d.key] ?? ""}
+                                onChange={(e) =>
+                                  setSecurities((prev) =>
+                                    prev.map((row, i) =>
+                                      i === idx
+                                        ? { ...row, values: { ...row.values, [d.key]: e.target.value } }
+                                        : row,
+                                    ),
+                                  )
+                                }
+                                className={inputCls}
+                              />
+                            </FormField>
+                          ))}
+
+                          <FormField label="Notes" span={12}>
+                            <input
+                              value={s.notes}
+                              onChange={(e) =>
+                                setSecurities((prev) =>
+                                  prev.map((row, i) => (i === idx ? { ...row, notes: e.target.value } : row)),
+                                )
+                              }
+                              className={inputCls}
+                              placeholder="Optional notes"
+                            />
+                          </FormField>
+                        </FormGrid>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+
+
           {tab === "documents" && (
             <div className="flex flex-col gap-3">
               {!productId ? (
@@ -925,6 +1050,22 @@ function NewLoan() {
                       toast.error(`Enter amount for "${missingManual.name}"`);
                       return;
                     }
+                    for (let i = 0; i < securities.length; i++) {
+                      const s = securities[i];
+                      if (!s.security_type_id) {
+                        toast.error(`Select a security type for security #${i + 1}`);
+                        return;
+                      }
+                      const type: any = (securityTypes ?? []).find((t: any) => t.id === s.security_type_id);
+                      const defs: any[] = Array.isArray(type?.fields?.definitions) ? type.fields.definitions : [];
+                      const missing = defs.find(
+                        (d: any) => d.required && !String(s.values[d.key] ?? "").trim(),
+                      );
+                      if (missing) {
+                        toast.error(`Fill "${missing.label}" for security #${i + 1}`);
+                        return;
+                      }
+                    }
                     submit.mutate({
                       data: {
                         client_id: clientId,
@@ -943,6 +1084,13 @@ function NewLoan() {
                             : undefined,
                         initial_charges: appliedCharges.length
                           ? appliedCharges.map((c) => ({ charge_id: c.charge_id, amount: c.amount, capitalize: c.capitalize, supplier_client_id: c.supplier_client_id }))
+                          : undefined,
+                        securities: securities.length
+                          ? securities.map((s) => ({
+                              security_type_id: s.security_type_id,
+                              values: s.values,
+                              notes: s.notes || null,
+                            }))
                           : undefined,
                       },
                     });
