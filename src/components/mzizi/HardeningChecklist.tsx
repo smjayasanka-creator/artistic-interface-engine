@@ -87,6 +87,7 @@ const TIERS: Tier[] = [
       { id: "pgbouncer", label: "Connection pooling (pgbouncer) sized for peak", detail: "All app connections go through pgbouncer in transaction mode. Pool size = (peak_qps × avg_tx_ms / 1000) with headroom, so 1000 users don't exhaust Postgres backends. Infrastructure review." },
       { id: "job-queue", label: "Job queue for batch (pg_cron or worker service)", detail: "Accruals, EOD, statement generation, and CRIB exports run on pg_cron or an external worker with retries and dead-letter handling — never inside request handlers. Verify via pg_cron.job." },
       { id: "cache", label: "Cache layer for reference data (products, rates)", detail: "loan_product, fd_product, fd_rate_tier and gl_account are read on every transaction. Cache them in-process (React Query stale-while-revalidate) or in Redis with explicit invalidation on write." },
+      { id: "pagination", label: "Server-side pagination and bounded queries on every list and report", detail: "Every register, list screen and report must paginate and filter server-side with hard row limits; no endpoint may return an unbounded dataset to the browser. The FD register paginates correctly — reviewer sweeps the remaining list screens and reports." },
     ],
   },
   {
