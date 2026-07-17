@@ -10,17 +10,23 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+async function resolveCompanyId(context: any): Promise<string> {
+  const { data: staff } = await context.supabase
+    .from("staff").select("branch:branch_id(company_id)").eq("user_id", context.userId).limit(1).maybeSingle();
+  const cid = (staff as any)?.branch?.company_id;
+  if (!cid) throw new Error("No company");
+  return cid;
+}
+
 // ---------- Company-wide auto EOD settings ----------
 export const getAutoEodSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: staff } = await context.supabase
-      .from("staff").select("company_id").eq("user_id", context.userId).maybeSingle();
-    if (!staff?.company_id) throw new Error("No company");
+    const company_id = await resolveCompanyId(context);
     const { data, error } = await context.supabase
       .from("company")
       .select("id, auto_eod_enabled, auto_eod_time, timezone")
-      .eq("id", staff.company_id)
+      .eq("id", company_id)
       .maybeSingle();
     if (error) throw new Error(error.message);
     return data;
@@ -35,18 +41,16 @@ export const updateAutoEodSettings = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { data: staff } = await context.supabase
-      .from("staff").select("company_id").eq("user_id", context.userId).maybeSingle();
-    if (!staff?.company_id) throw new Error("No company");
+    const company_id = await resolveCompanyId(context);
     const { data: admin } = await context.supabase.rpc("is_company_admin" as any, {
-      _company_id: staff.company_id,
+      _company_id: company_id,
     } as any);
     if (!admin) throw new Error("Admin only");
     const time = data.time.length === 5 ? `${data.time}:00` : data.time;
     const { error } = await context.supabase
       .from("company")
       .update({ auto_eod_enabled: data.enabled, auto_eod_time: time } as any)
-      .eq("id", staff.company_id);
+      .eq("id", company_id);
     if (error) throw new Error(error.message);
     return true;
   });
