@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AlertOctagon, CalendarClock, X } from "lucide-react";
-import { writeOffLoan, rescheduleLoan } from "@/lib/lifecycle.functions";
+import { rescheduleLoan } from "@/lib/lifecycle.functions";
 import {
   FormGrid,
   FormField,
@@ -37,29 +38,9 @@ export function LoanLifecycleActions({
   schedule: Installment[];
 }) {
   const qc = useQueryClient();
-  const [modal, setModal] = useState<null | "write-off" | "reschedule">(null);
+  const [modal, setModal] = useState<null | "reschedule">(null);
 
-  const writeOffFn = useServerFn(writeOffLoan);
   const rescheduleFn = useServerFn(rescheduleLoan);
-
-  const writeOffM = useMutation({
-    mutationFn: (v: { reason: string; use_provision: boolean }) =>
-      writeOffFn({
-        data: {
-          loan_id: loan.id,
-          reason: v.reason,
-          use_provision: v.use_provision,
-          idempotency_key: `loan:writeoff:${loan.id}`,
-        },
-      }),
-    onSuccess: () => {
-      toast.success("Loan written off");
-      setModal(null);
-      qc.invalidateQueries({ queryKey: ["loan", loan.id] });
-      qc.invalidateQueries({ queryKey: ["loans"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   const rescheduleM = useMutation({
     mutationFn: (v: {
@@ -94,21 +75,14 @@ export function LoanLifecycleActions({
         >
           <CalendarClock size={13} /> Reschedule
         </button>
-        <button
-          onClick={() => setModal("write-off")}
+        <Link
+          to="/loans/write-off"
           className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-[12px] font-semibold border border-destructive/40 text-destructive bg-background hover:bg-destructive/10"
         >
-          <AlertOctagon size={13} /> Write off
-        </button>
+          <AlertOctagon size={13} /> Write off →
+        </Link>
       </div>
 
-      {modal === "write-off" && (
-        <WriteOffModal
-          onCancel={() => setModal(null)}
-          onSubmit={(v) => writeOffM.mutate(v)}
-          submitting={writeOffM.isPending}
-        />
-      )}
       {modal === "reschedule" && (
         <RescheduleModal
           schedule={schedule}
@@ -120,6 +94,7 @@ export function LoanLifecycleActions({
     </>
   );
 }
+
 
 function ModalShell({
   title,
