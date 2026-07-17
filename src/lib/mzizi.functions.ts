@@ -1995,12 +1995,13 @@ export const listTeam = createServerFn({ method: "GET" })
 
 export const inviteMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { email: string; role: "loan_officer" | "branch_manager" | "teller" | "operations" | "admin"; branch_id?: string }) =>
+  .inputValidator((i: { email: string; role: "loan_officer" | "branch_manager" | "teller" | "operations" | "admin"; branch_id?: string; invite_origin?: string }) =>
     z
       .object({
         email: z.string().trim().email().max(255),
         role: z.enum(["loan_officer", "branch_manager", "teller", "operations", "admin"]),
         branch_id: z.string().uuid().optional(),
+        invite_origin: z.string().url().optional(),
       })
       .parse(i),
   )
@@ -2010,11 +2011,12 @@ export const inviteMember = createServerFn({ method: "POST" })
     if (!cid) throw new Error("No active company");
     const { data: isAdmin } = await supabase.rpc("is_company_admin", { _company_id: cid });
     if (!isAdmin) throw new Error("Only company admins can invite teammates");
+    const emailLower = data.email.toLowerCase();
     const { data: created, error } = await supabase
       .from("company_invite")
       .insert({
         company_id: cid,
-        email: data.email.toLowerCase(),
+        email: emailLower,
         role: data.role,
         branch_id: data.branch_id ?? null,
         invited_by: userId,
@@ -2022,7 +2024,79 @@ export const inviteMember = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw error;
+
+    const origin = data.invite_origin?.replace(/\/+$/, "") || "";
+    if (!origin) throw new Error("Invite created, but no app URL was available to send the email");
+
+    const { data: company } = await supabase.from("company").select("name").eq("id", cid).maybeSingle();
+    const confirmationUrl = `${origin}/auth?invited=1&email=${encodeURIComponent(emailLower)}`;
+    try {
+      const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+      await sendTemplateEmail("staff-invite", emailLower, {
+        templateData: {
+          siteName: company?.name || "your workspace",
+          siteUrl: origin,
+          confirmationUrl,
+        },
+        idempotencyKey: `staff-invite:${created.id}`,
+      });
+    } catch (e) {
+      console.error("[inviteMember] invite email failed", e);
+      throw new Error("Invite was created, but the email could not be sent. Please check email setup and try again.");
+    }
+
     return created;
+  });
+
+export const resendInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; invite_origin?: string }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        invite_origin: z.string().url().optional(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
+    const { data: isAdmin } = await supabase.rpc("is_company_admin", { _company_id: cid });
+    if (!isAdmin) throw new Error("Only company admins can resend invites");
+
+    const nextExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: invite, error } = await supabase
+      .from("company_invite")
+      .update({ expires_at: nextExpiry })
+      .eq("id", data.id)
+      .eq("company_id", cid)
+      .is("accepted_at", null)
+      .select("id,email,role,expires_at,company:company_id(name)")
+      .single();
+    if (error) throw error;
+
+    const origin = data.invite_origin?.replace(/\/+$/, "") || "";
+    if (!origin) throw new Error("No app URL was available to send the email");
+
+    const emailLower = invite.email.toLowerCase();
+    const confirmationUrl = `${origin}/auth?invited=1&email=${encodeURIComponent(emailLower)}`;
+    try {
+      const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+      await sendTemplateEmail("staff-invite", emailLower, {
+        templateData: {
+          siteName: (invite as any).company?.name || "your workspace",
+          siteUrl: origin,
+          confirmationUrl,
+        },
+        idempotencyKey: `staff-invite:${invite.id}:${invite.expires_at}`,
+      });
+    } catch (e) {
+      console.error("[resendInvite] invite email failed", e);
+      throw new Error("The invite email could not be sent. Please check email setup and try again.");
+    }
+
+    return invite;
   });
 
 export const revokeInvite = createServerFn({ method: "POST" })
