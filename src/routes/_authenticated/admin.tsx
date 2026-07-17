@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck, LineChart, ShieldAlert, ScanSearch, KeyRound, Mail } from "lucide-react";
+import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck, LineChart, ShieldAlert, ScanSearch, KeyRound, Mail, Landmark } from "lucide-react";
+import { BankDirectoryTab } from "@/components/mzizi/BankDirectoryTab";
 import { UserRolesTab } from "@/components/mzizi/UserRolesTab";
 import {
   getAdmin,
