@@ -4,7 +4,7 @@ import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Badge } from "@/components/mzizi/Badge";
 import {
   Landmark, PiggyBank, CircleDollarSign, GitBranch, Plug,
-  ShieldCheck, BookOpen, Users, ArrowRight, Package, Database, Radio,
+  ShieldCheck, BookOpen, Users, ArrowRight, Package, Database, Radio, Mail,
 } from "lucide-react";
 
 type Domain = {
