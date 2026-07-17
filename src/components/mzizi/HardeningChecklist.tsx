@@ -114,6 +114,7 @@ const TIERS: Tier[] = [
       { id: "card-switch", label: "Card switch / ATM network", detail: "Integration to a card switch (LankaPay, Visa/Mastercard processor) with ISO 8583 messaging and settlement file processing. External integration." },
       { id: "mobile", label: "Mobile / internet banking channel", detail: "Customer-facing apps hitting a hardened API layer with device binding, transaction signing, and rate limiting — separate from the staff console. Product review." },
       { id: "core-seam", label: "Integration seam to swap in a licensed core (Temenos/Mambu/Fern)", detail: "Domain services (ledger, loan, deposit) hidden behind interfaces so a licensed core banking product can be substituted without rewriting the app. Architecture review." },
+      { id: "api-webhooks", label: "Public API and webhook hardening", detail: "Public API endpoints require keyed authentication, versioning and rate limiting; outbound domain-event webhooks (dispatch-domain-events) must deliver idempotently with signed payloads, retries and a dead-letter record. Code and configuration review." },
     ],
   },
   {
