@@ -7,6 +7,7 @@ import { getClients, getProducts, submitApplication } from "@/lib/mzizi.function
 import { hasActiveWorkflow, startWorkflow } from "@/lib/workflow.functions";
 import { listLoanCharges } from "@/lib/loan-charges.functions";
 import { listSecurityTypes } from "@/lib/security.functions";
+import { extractSecurityFieldsFromDocument } from "@/lib/security-ai.functions";
 import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardTitle } from "@/components/mzizi/Card";
@@ -110,13 +111,23 @@ function NewLoan() {
   const [manualAmounts, setManualAmounts] = useState<Record<string, number>>({});
   const [chargeSuppliers, setChargeSuppliers] = useState<Record<string, string>>({});
   const [securities, setSecurities] = useState<
-    { key: string; security_type_id: string; values: Record<string, any>; notes: string }[]
+    {
+      key: string;
+      security_type_id: string;
+      values: Record<string, any>;
+      notes: string;
+      documents: UploadedDoc[];
+      autoFillCr: boolean;
+      uploadingDoc: boolean;
+      extracting: boolean;
+    }[]
   >([]);
 
   const clientsFn = useServerFn(getClients);
   const productsFn = useServerFn(getProducts);
   const chargesFn = useServerFn(listLoanCharges);
   const securityTypesFn = useServerFn(listSecurityTypes);
+  const extractSecurityFn = useServerFn(extractSecurityFieldsFromDocument);
   const { data: clients } = useQuery({
     queryKey: ["clients", "all"],
     queryFn: () => clientsFn({ data: { filter: "all" } }),
@@ -221,6 +232,105 @@ function NewLoan() {
       return;
     }
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  function updateSecurity(idx: number, patch: (row: typeof securities[number]) => typeof securities[number]) {
+    setSecurities((prev) => prev.map((r, i) => (i === idx ? patch(r) : r)));
+  }
+
+  async function fileToBase64(file: File): Promise<string> {
+    const buf = await file.arrayBuffer();
+    let binary = "";
+    const bytes = new Uint8Array(buf);
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  async function uploadSecurityDocFile(idx: number, file: File) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error(`${file.name} exceeds 10 MB limit.`);
+      return;
+    }
+    const sec = securities[idx];
+    if (!sec) return;
+    updateSecurity(idx, (r) => ({ ...r, uploadingDoc: true }));
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Not signed in");
+      const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";
+      const path = `${uid}/${sec.key}/${slugifyDoc(file.name.replace(/\.[^.]+$/, ""))}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("security-documents").upload(path, file, {
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+      if (error) throw error;
+      updateSecurity(idx, (r) => ({
+        ...r,
+        documents: [...r.documents, { path, name: file.name, size: file.size }],
+      }));
+      toast.success(`Uploaded ${file.name}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Upload failed");
+    } finally {
+      updateSecurity(idx, (r) => ({ ...r, uploadingDoc: false }));
+    }
+  }
+
+  async function removeSecurityDoc(idx: number, path: string) {
+    try {
+      await supabase.storage.from("security-documents").remove([path]);
+    } catch {
+      // ignore
+    }
+    updateSecurity(idx, (r) => ({ ...r, documents: r.documents.filter((d) => d.path !== path) }));
+  }
+
+  async function autoFillFromCr(idx: number, file: File) {
+    const sec = securities[idx];
+    if (!sec) return;
+    const type: any = (securityTypes ?? []).find((t: any) => t.id === sec.security_type_id);
+    const defs: any[] = Array.isArray(type?.fields?.definitions) ? type.fields.definitions : [];
+    if (defs.length === 0) {
+      toast.error("This security type has no fields to fill.");
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error(`${file.name} exceeds 10 MB limit.`);
+      return;
+    }
+    if (!/^image\//.test(file.type) && file.type !== "application/pdf") {
+      toast.error("Upload an image (JPG/PNG) or PDF of the CR.");
+      return;
+    }
+    updateSecurity(idx, (r) => ({ ...r, extracting: true }));
+    try {
+      // Upload the CR as a stored document as well.
+      await uploadSecurityDocFile(idx, file);
+      const base64 = await fileToBase64(file);
+      const res = await extractSecurityFn({
+        data: {
+          image_base64: base64,
+          mime: file.type || "image/jpeg",
+          document_kind: `${type?.category ?? ""} ${type?.kind ?? "Vehicle CR"}`.trim() || "Vehicle CR",
+          fields: defs.map((d) => ({ key: d.key, label: d.label, type: d.type })),
+        },
+      });
+      const extracted = res?.values ?? {};
+      const filled = Object.entries(extracted).filter(([, v]) => String(v ?? "").length > 0).length;
+      updateSecurity(idx, (r) => ({
+        ...r,
+        values: { ...r.values, ...Object.fromEntries(Object.entries(extracted).filter(([, v]) => String(v ?? "").length > 0)) },
+      }));
+      toast.success(filled ? `Auto-filled ${filled} field${filled === 1 ? "" : "s"} from CR` : "No fields could be read from this document");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Auto-fill failed");
+    } finally {
+      updateSecurity(idx, (r) => ({ ...r, extracting: false }));
+    }
   }
 
   const requiredDocs: string[] = Array.isArray(product?.required_documents)
@@ -776,7 +886,7 @@ function NewLoan() {
                   onClick={() =>
                     setSecurities((prev) => [
                       ...prev,
-                      { key: crypto.randomUUID(), security_type_id: "", values: {}, notes: "" },
+                      { key: crypto.randomUUID(), security_type_id: "", values: {}, notes: "", documents: [], autoFillCr: false, uploadingDoc: false, extracting: false },
                     ])
                   }
                   className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-[12px] font-semibold hover:bg-primary-hover inline-flex items-center gap-1"
@@ -872,6 +982,113 @@ function NewLoan() {
                             />
                           </FormField>
                         </FormGrid>
+
+                        {/* Documents + AI auto-fill for this security */}
+                        <div className="mt-3 rounded-md border border-border bg-background/60 p-3">
+                          <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                            <div>
+                              <div className="text-[11.5px] font-semibold">Attached documents</div>
+                              <div className="text-[10.5px] text-muted-foreground">
+                                Deed, CR, invoice or any proof — PDF or image up to 10 MB.
+                              </div>
+                            </div>
+                            <label className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={s.autoFillCr}
+                                disabled={!s.security_type_id || defs.length === 0}
+                                onChange={(e) => updateSecurity(idx, (r) => ({ ...r, autoFillCr: e.target.checked }))}
+                              />
+                              Enable AI auto-fill from Vehicle CR
+                            </label>
+                          </div>
+
+                          {s.documents.length > 0 && (
+                            <div className="mb-2 flex flex-col gap-1">
+                              {s.documents.map((d) => (
+                                <div key={d.path} className="flex items-center gap-2 text-[11.5px] border border-border rounded px-2 py-1 bg-secondary/30">
+                                  <div className="flex-1 min-w-0 truncate font-mono">{d.name}</div>
+                                  <span className="text-muted-foreground">{formatBytes(d.size)}</span>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const { data, error } = await supabase.storage
+                                        .from("security-documents")
+                                        .createSignedUrl(d.path, 60);
+                                      if (error || !data?.signedUrl) {
+                                        toast.error(error?.message ?? "Could not open file");
+                                        return;
+                                      }
+                                      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+                                    }}
+                                    className="text-primary hover:underline"
+                                  >
+                                    Preview
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSecurityDoc(idx, d.path)}
+                                    className="text-muted-foreground hover:text-destructive"
+                                    title="Remove"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            <input
+                              id={`sec-doc-${s.key}`}
+                              type="file"
+                              accept="application/pdf,image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                e.target.value = "";
+                                if (f) uploadSecurityDocFile(idx, f);
+                              }}
+                            />
+                            <label
+                              htmlFor={`sec-doc-${s.key}`}
+                              className={cn(
+                                "text-[11.5px] px-2.5 py-1 rounded-md border border-border cursor-pointer hover:bg-secondary",
+                                s.uploadingDoc && "opacity-60 pointer-events-none",
+                              )}
+                            >
+                              {s.uploadingDoc ? "Uploading…" : "Attach document"}
+                            </label>
+
+                            {s.autoFillCr && (
+                              <>
+                                <input
+                                  id={`sec-cr-${s.key}`}
+                                  type="file"
+                                  accept="application/pdf,image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    e.target.value = "";
+                                    if (f) autoFillFromCr(idx, f);
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`sec-cr-${s.key}`}
+                                  className={cn(
+                                    "text-[11.5px] px-2.5 py-1 rounded-md border border-primary/40 bg-primary/5 text-primary cursor-pointer hover:bg-primary/10",
+                                    s.extracting && "opacity-60 pointer-events-none",
+                                  )}
+                                >
+                                  {s.extracting ? "Reading CR…" : "Upload CR & auto-fill"}
+                                </label>
+                                <span className="text-[10.5px] text-muted-foreground">
+                                  AI reads the CR and fills the fields above.
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
@@ -1090,6 +1307,7 @@ function NewLoan() {
                               security_type_id: s.security_type_id,
                               values: s.values,
                               notes: s.notes || null,
+                              documents: s.documents.map((d) => ({ path: d.path, name: d.name, size: d.size })),
                             }))
                           : undefined,
                       },

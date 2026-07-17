@@ -1147,7 +1147,7 @@ export const submitApplication = createServerFn({ method: "POST" })
       schedule_type?: "normal" | "structured";
       schedule_overrides?: Record<string, number>;
       initial_charges?: { charge_id: string; amount: number; capitalize?: boolean; supplier_client_id?: string | null }[];
-      securities?: { security_type_id: string; values: Record<string, unknown>; notes?: string | null }[];
+      securities?: { security_type_id: string; values: Record<string, unknown>; notes?: string | null; documents?: { path: string; name: string; size: number; kind?: string | null }[] }[];
     }) =>
       z
         .object({
@@ -1169,6 +1169,16 @@ export const submitApplication = createServerFn({ method: "POST" })
                 security_type_id: z.string().uuid(),
                 values: z.record(z.string(), z.any()).default({}),
                 notes: z.string().max(1000).nullable().optional(),
+                documents: z
+                  .array(
+                    z.object({
+                      path: z.string().min(1),
+                      name: z.string().min(1),
+                      size: z.number().nonnegative(),
+                      kind: z.string().max(60).nullable().optional(),
+                    }),
+                  )
+                  .optional(),
               }),
             )
             .optional(),
@@ -1236,6 +1246,7 @@ export const submitApplication = createServerFn({ method: "POST" })
         security_type_id: s.security_type_id,
         values: s.values ?? {},
         notes: s.notes ?? null,
+        documents: s.documents ?? [],
       }));
       const { error: secErr } = await (supabase as any).from("loan_security").insert(rows);
       if (secErr) throw new Error(secErr.message);
