@@ -8,8 +8,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({
     redirect: z.string().optional(),
-    invited: z.union([z.literal("1"), z.literal("true"), z.boolean()]).optional(),
-    email: z.string().email().optional(),
+    invited: z.union([z.string(), z.number(), z.boolean()]).optional(),
+    email: z.string().optional(),
   }),
   head: () => ({
     meta: [
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const nav = useNavigate();
   const { redirect, invited, email: invitedEmail } = useSearch({ from: "/auth" });
-  const isInvited = invited === "1" || invited === "true" || invited === true;
+  const isInvited = invited === "1" || invited === "true" || invited === true || invited === 1;
   const [mode, setMode] = useState<"in" | "up" | "forgot">(isInvited ? "up" : "in");
   const [email, setEmail] = useState(invitedEmail ?? "");
   const [password, setPassword] = useState("");
