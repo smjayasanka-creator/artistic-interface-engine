@@ -747,7 +747,17 @@ function StaffTab() {
     if (mode === "edit" && editingId) {
       update.mutate({ data: { id: editingId, ...form } });
     } else {
-      create.mutate({ data: form });
+      if (!form.email.trim()) {
+        toast.error("Email is required — an invitation will be sent");
+        return;
+      }
+      create.mutate({
+        data: {
+          ...form,
+          email: form.email.trim(),
+          invite_origin: typeof window !== "undefined" ? window.location.origin : undefined,
+        },
+      });
     }
   }
 
@@ -776,15 +786,17 @@ function StaffTab() {
                 ))}
               </select>
             </FormField>
-            <FormField label="Email" span={4}>
-              <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} placeholder="optional" />
+            <FormField label="Email" required={!isEdit} span={4}>
+              <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} required={!isEdit} placeholder={isEdit ? "optional" : "teammate@company.com"} />
             </FormField>
             <FormField label="Phone" span={3}>
               <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputCls + " font-mono"} placeholder="optional" />
             </FormField>
           </FormGrid>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            Creates a staff profile. To let this person sign in, they still need to register with the same email — their login will then link to this profile.
+            {isEdit
+              ? "Editing an existing staff profile."
+              : "An invitation email is sent to this address. They can accept using Google or by setting a password — either way, this staff profile links to their login automatically."}
           </p>
           <FormActions>
             <button type="button" onClick={reset} className={btnSecondaryCls}>Cancel</button>
