@@ -32,6 +32,7 @@ import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFdIndexRouteImport } from './routes/_authenticated/fd.index'
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients.index'
 import { Route as AuthenticatedAccountsIndexRouteImport } from './routes/_authenticated/accounts.index'
+import { Route as AuthenticatedTransactionsWriteOffCollectionRouteImport } from './routes/_authenticated/transactions.write-off-collection'
 import { Route as AuthenticatedTransactionsSupplierPaymentRouteImport } from './routes/_authenticated/transactions.supplier-payment'
 import { Route as AuthenticatedTransactionsSavingsWithdrawalRouteImport } from './routes/_authenticated/transactions.savings-withdrawal'
 import { Route as AuthenticatedTransactionsRepaymentRouteImport } from './routes/_authenticated/transactions.repayment'
@@ -207,6 +208,12 @@ const AuthenticatedAccountsIndexRoute =
     id: '/accounts/',
     path: '/accounts/',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTransactionsWriteOffCollectionRoute =
+  AuthenticatedTransactionsWriteOffCollectionRouteImport.update({
+    id: '/write-off-collection',
+    path: '/write-off-collection',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedTransactionsSupplierPaymentRoute =
   AuthenticatedTransactionsSupplierPaymentRouteImport.update({
@@ -558,6 +565,7 @@ export interface FileRoutesByFullPath {
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
   '/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   '/transactions/supplier-payment': typeof AuthenticatedTransactionsSupplierPaymentRoute
+  '/transactions/write-off-collection': typeof AuthenticatedTransactionsWriteOffCollectionRoute
   '/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
   '/fd/': typeof AuthenticatedFdIndexRoute
@@ -631,6 +639,7 @@ export interface FileRoutesByTo {
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
   '/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   '/transactions/supplier-payment': typeof AuthenticatedTransactionsSupplierPaymentRoute
+  '/transactions/write-off-collection': typeof AuthenticatedTransactionsWriteOffCollectionRoute
   '/accounts': typeof AuthenticatedAccountsIndexRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/fd': typeof AuthenticatedFdIndexRoute
@@ -710,6 +719,7 @@ export interface FileRoutesById {
   '/_authenticated/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
   '/_authenticated/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   '/_authenticated/transactions/supplier-payment': typeof AuthenticatedTransactionsSupplierPaymentRoute
+  '/_authenticated/transactions/write-off-collection': typeof AuthenticatedTransactionsWriteOffCollectionRoute
   '/_authenticated/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/fd/': typeof AuthenticatedFdIndexRoute
@@ -789,6 +799,7 @@ export interface FileRouteTypes {
     | '/transactions/repayment'
     | '/transactions/savings-withdrawal'
     | '/transactions/supplier-payment'
+    | '/transactions/write-off-collection'
     | '/accounts/'
     | '/clients/'
     | '/fd/'
@@ -862,6 +873,7 @@ export interface FileRouteTypes {
     | '/transactions/repayment'
     | '/transactions/savings-withdrawal'
     | '/transactions/supplier-payment'
+    | '/transactions/write-off-collection'
     | '/accounts'
     | '/clients'
     | '/fd'
@@ -940,6 +952,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions/repayment'
     | '/_authenticated/transactions/savings-withdrawal'
     | '/_authenticated/transactions/supplier-payment'
+    | '/_authenticated/transactions/write-off-collection'
     | '/_authenticated/accounts/'
     | '/_authenticated/clients/'
     | '/_authenticated/fd/'
@@ -1155,6 +1168,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/accounts/'
       preLoaderRoute: typeof AuthenticatedAccountsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/transactions/write-off-collection': {
+      id: '/_authenticated/transactions/write-off-collection'
+      path: '/write-off-collection'
+      fullPath: '/transactions/write-off-collection'
+      preLoaderRoute: typeof AuthenticatedTransactionsWriteOffCollectionRouteImport
+      parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/transactions/supplier-payment': {
       id: '/_authenticated/transactions/supplier-payment'
@@ -1559,6 +1579,7 @@ interface AuthenticatedTransactionsRouteChildren {
   AuthenticatedTransactionsRepaymentRoute: typeof AuthenticatedTransactionsRepaymentRoute
   AuthenticatedTransactionsSavingsWithdrawalRoute: typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   AuthenticatedTransactionsSupplierPaymentRoute: typeof AuthenticatedTransactionsSupplierPaymentRoute
+  AuthenticatedTransactionsWriteOffCollectionRoute: typeof AuthenticatedTransactionsWriteOffCollectionRoute
   AuthenticatedTransactionsIndexRoute: typeof AuthenticatedTransactionsIndexRoute
 }
 
@@ -1586,6 +1607,8 @@ const AuthenticatedTransactionsRouteChildren: AuthenticatedTransactionsRouteChil
       AuthenticatedTransactionsSavingsWithdrawalRoute,
     AuthenticatedTransactionsSupplierPaymentRoute:
       AuthenticatedTransactionsSupplierPaymentRoute,
+    AuthenticatedTransactionsWriteOffCollectionRoute:
+      AuthenticatedTransactionsWriteOffCollectionRoute,
     AuthenticatedTransactionsIndexRoute: AuthenticatedTransactionsIndexRoute,
   }
 
