@@ -24,6 +24,7 @@ import {
   updateCompany,
   listTeam,
   inviteMember,
+  resendInvite,
   revokeInvite,
 } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
@@ -271,6 +272,7 @@ function InviteSection() {
   const qc = useQueryClient();
   const listFn = useServerFn(listTeam);
   const inviteFn = useServerFn(inviteMember);
+  const resendFn = useServerFn(resendInvite);
   const revokeFn = useServerFn(revokeInvite);
   const { data, isLoading } = useQuery({ queryKey: ["team"], queryFn: () => listFn() });
 
@@ -291,6 +293,15 @@ function InviteSection() {
     mutationFn: (id: string) => revokeFn({ data: { id } }),
     onSuccess: () => {
       toast.success("Invite revoked");
+      qc.invalidateQueries({ queryKey: ["team"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const resend = useMutation({
+    mutationFn: (id: string) => resendFn({ data: { id, invite_origin: window.location.origin } }),
+    onSuccess: () => {
+      toast.success("Invite resent");
       qc.invalidateQueries({ queryKey: ["team"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -345,9 +356,14 @@ function InviteSection() {
                 </div>
               </div>
               {!i.accepted_at && (
-                <button onClick={() => revoke.mutate(i.id)} className="text-[11.5px] text-rose-600 hover:underline">
-                  Revoke
-                </button>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => resend.mutate(i.id)} disabled={resend.isPending} className="text-[11.5px] text-primary hover:underline disabled:opacity-50">
+                    Resend
+                  </button>
+                  <button onClick={() => revoke.mutate(i.id)} className="text-[11.5px] text-rose-600 hover:underline">
+                    Revoke
+                  </button>
+                </div>
               )}
             </div>
           ))}
