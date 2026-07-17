@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { PAYMENT_METHODS, assertPaymentMethod } from "@/lib/payment-methods";
 
 // ─────────── Ledger kernel helper ───────────
 // Resolves GL account ids from savings_product (preferred) or falls back
