@@ -113,6 +113,17 @@ const TIERS: Tier[] = [
       { id: "core-seam", label: "Integration seam to swap in a licensed core (Temenos/Mambu/Fern)", detail: "Domain services (ledger, loan, deposit) hidden behind interfaces so a licensed core banking product can be substituted without rewriting the app. Architecture review." },
     ],
   },
+  {
+    id: "t7",
+    name: "Tier 7 — Testing & Verification",
+    blurb: "Proof the system computes and balances correctly before it becomes the ledger of record.",
+    items: [
+      { id: "calc-tests", label: "Unit tests for all interest, penalty and settlement calculations", detail: "Every formula tested against hand-worked examples approved by finance, covering edge cases such as end-of-month dates, leap years, premature-closure clawback and WHT rounding." },
+      { id: "simulated-month", label: "Simulated full month: sub-ledgers tie to GL to the cent", detail: "Seed a realistic book, run thirty days of EOD, payouts, maturities and closures, then prove the trial balance balances and every control-account tie-out holds. The single most valuable end-to-end test for a core system." },
+      { id: "uat-parallel", label: "Scripted UAT per process plus parallel run before cutover", detail: "Documented UAT scripts with business sign-off per module, followed by a parallel run against existing or manual computation before go-live." },
+      { id: "load-test", label: "Load test at target volume with EOD completing within its window", detail: "Test at a realistic target (for example 100k clients, 50k active contracts, five years of postings) measuring screen response, report generation and EOD duration; batch jobs must be set-based rather than per-row loops." },
+    ],
+  },
 ];
 
 type Entry = { status: Status; owner?: string | null; note?: string | null; updated_at?: string };
