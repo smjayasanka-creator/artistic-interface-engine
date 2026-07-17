@@ -364,9 +364,22 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
       external_ref?: string | null;
       narration?: string | null;
       idempotency_key?: string | null;
+      payment_method?: (typeof PAYMENT_METHODS)[number];
+      bank_account_id?: string | null;
+      savings_account_id?: string | null;
     }) => i,
   )
   .handler(async ({ context, data }) => {
+    // Server-side guard: withdrawals must use an allowed payment method.
+    if (data.txn_type === "withdrawal") {
+      if (!data.payment_method) throw new Error("Payment method is required for withdrawals");
+      assertPaymentMethod("savings_withdrawal", {
+        payment_method: data.payment_method,
+        bank_account_id: data.bank_account_id ?? null,
+        savings_account_id: data.savings_account_id ?? null,
+        reference: data.reference ?? null,
+      });
+    }
     const { supabase, userId } = context;
     const { data: cid } = await supabase.rpc("current_company_id");
     if (!cid) throw new Error("No company");
