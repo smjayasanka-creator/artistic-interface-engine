@@ -57,7 +57,7 @@ function MaturityDue() {
       setPayoutFor(d);
       setPay({ method: "fund_transfer" });
     } else {
-      matureM.mutate(d.id);
+      matureM.mutate({ id: d.id });
     }
   }
 
