@@ -19,64 +19,33 @@ import {
   btnSecondaryCls,
 } from "@/components/mzizi/FormGrid";
 
-type Kind = "machinery" | "vehicle" | "property" | "gold" | "deposit";
-type Category = "movable" | "immovable";
+type FieldType = "text" | "number" | "date";
+type FieldDef = { key: string; label: string; type: FieldType; required: boolean };
 
-type FieldDef = { key: string; label: string; type: "text" | "number" | "date" };
-
-const KIND_FIELDS: Record<Kind, FieldDef[]> = {
-  machinery: [
-    { key: "make", label: "Make", type: "text" },
-    { key: "model", label: "Model", type: "text" },
-    { key: "serial_no", label: "Serial No.", type: "text" },
-    { key: "year", label: "Year", type: "number" },
-    { key: "valuation", label: "Valuation", type: "number" },
-  ],
-  vehicle: [
-    { key: "reg_no", label: "Registration No.", type: "text" },
-    { key: "make", label: "Make", type: "text" },
-    { key: "model", label: "Model", type: "text" },
-    { key: "year", label: "Year", type: "number" },
-    { key: "chassis_no", label: "Chassis No.", type: "text" },
-    { key: "engine_no", label: "Engine No.", type: "text" },
-    { key: "valuation", label: "Valuation", type: "number" },
-  ],
-  property: [
-    { key: "deed_no", label: "Deed No.", type: "text" },
-    { key: "address", label: "Address", type: "text" },
-    { key: "extent", label: "Extent (perches)", type: "number" },
-    { key: "valuation", label: "Valuation", type: "number" },
-  ],
-  gold: [
-    { key: "weight_grams", label: "Weight (grams)", type: "number" },
-    { key: "karat", label: "Karat", type: "number" },
-    { key: "purity", label: "Purity %", type: "number" },
-    { key: "valuation", label: "Valuation", type: "number" },
-  ],
-  deposit: [
-    { key: "certificate_no", label: "Certificate No.", type: "text" },
-    { key: "bank", label: "Bank / Institution", type: "text" },
-    { key: "amount", label: "Amount", type: "number" },
-    { key: "maturity_date", label: "Maturity Date", type: "date" },
-  ],
+type FormState = {
+  id?: string;
+  category: string;
+  kind: string;
+  fields: { definitions: FieldDef[] };
+  active: boolean;
 };
 
-const KIND_TO_CATEGORY: Record<Kind, Category> = {
-  machinery: "movable",
-  vehicle: "movable",
-  gold: "movable",
-  deposit: "movable",
-  property: "immovable",
-};
-
-const EMPTY = {
-  id: undefined as string | undefined,
-  name: "",
-  category: "movable" as Category,
-  kind: "vehicle" as Kind,
-  fields: {} as Record<string, any>,
+const EMPTY: FormState = {
+  id: undefined,
+  category: "",
+  kind: "",
+  fields: { definitions: [] },
   active: true,
 };
+
+function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "")
+    .slice(0, 60);
+}
 
 export function SecurityTypesTab() {
   const qc = useQueryClient();
@@ -86,10 +55,10 @@ export function SecurityTypesTab() {
   const { data: items } = useQuery({ queryKey: ["security-types"], queryFn: () => listFn() });
 
   const [mode, setMode] = useState<"list" | "form">("list");
-  const [form, setForm] = useState<typeof EMPTY>(EMPTY);
+  const [form, setForm] = useState<FormState>(EMPTY);
 
   const save = useMutation({
-    mutationFn: (v: typeof EMPTY) => upsertFn({ data: v as any }),
+    mutationFn: (v: FormState) => upsertFn({ data: v as any }),
     onSuccess: () => {
       toast.success("Security type saved");
       qc.invalidateQueries({ queryKey: ["security-types"] });
@@ -108,8 +77,66 @@ export function SecurityTypesTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const updateField = (idx: number, patch: Partial<FieldDef>) => {
+    setForm((f) => {
+      const defs = [...f.fields.definitions];
+      const next = { ...defs[idx], ...patch };
+      if (patch.label !== undefined && !defs[idx].key) next.key = slugify(patch.label);
+      defs[idx] = next;
+      return { ...f, fields: { definitions: defs } };
+    });
+  };
+
+  const addField = () =>
+    setForm((f) => ({
+      ...f,
+      fields: {
+        definitions: [
+          ...f.fields.definitions,
+          { key: "", label: "", type: "text", required: false },
+        ],
+      },
+    }));
+
+  const removeField = (idx: number) =>
+    setForm((f) => ({
+      ...f,
+      fields: { definitions: f.fields.definitions.filter((_, i) => i !== idx) },
+    }));
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleaned: FormState = {
+      ...form,
+      category: form.category.trim(),
+      kind: form.kind.trim(),
+      fields: {
+        definitions: form.fields.definitions.map((d) => ({
+          ...d,
+          label: d.label.trim(),
+          key: (d.key || slugify(d.label)).trim(),
+        })),
+      },
+    };
+    if (!cleaned.category || !cleaned.kind) {
+      toast.error("Category and security type are required");
+      return;
+    }
+    for (const d of cleaned.fields.definitions) {
+      if (!d.label || !d.key) {
+        toast.error("Every required field needs a label");
+        return;
+      }
+    }
+    const keys = cleaned.fields.definitions.map((d) => d.key);
+    if (new Set(keys).size !== keys.length) {
+      toast.error("Field keys must be unique");
+      return;
+    }
+    save.mutate(cleaned);
+  };
+
   if (mode === "form") {
-    const fields = KIND_FIELDS[form.kind];
     return (
       <Card>
         <div className="flex items-center justify-between">
@@ -121,76 +148,107 @@ export function SecurityTypesTab() {
             ← Back to list
           </button>
         </div>
-        <form
-          onSubmit={(e) => { e.preventDefault(); save.mutate(form); }}
-          className="flex flex-col gap-4 mt-2"
-        >
+        <form onSubmit={onSubmit} className="flex flex-col gap-4 mt-2">
           <FormGrid>
-            <FormField label="Security name" required span={5}>
+            <FormField label="Security category" required span={6} hint="e.g. Movable, Immovable, Guarantor">
               <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required minLength={2} maxLength={80}
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                required minLength={2} maxLength={60}
                 className={inputCls}
+                placeholder="Movable"
               />
             </FormField>
-            <FormField label="Security type (kind)" required span={4}>
-              <select
+            <FormField label="Security type" required span={6} hint="e.g. Vehicle, Machinery, Gold, Deed">
+              <input
                 value={form.kind}
-                onChange={(e) => {
-                  const kind = e.target.value as Kind;
-                  setForm({ ...form, kind, category: KIND_TO_CATEGORY[kind], fields: {} });
-                }}
-                className={selectCls}
-              >
-                <option value="machinery">Machinery</option>
-                <option value="vehicle">Vehicle</option>
-                <option value="property">Property</option>
-                <option value="gold">Gold</option>
-                <option value="deposit">Deposit</option>
-              </select>
-            </FormField>
-            <FormField label="Category" required span={3}>
-              <select
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value as Category })}
-                className={selectCls}
-              >
-                <option value="movable">Movable</option>
-                <option value="immovable">Immovable</option>
-              </select>
+                onChange={(e) => setForm({ ...form, kind: e.target.value })}
+                required minLength={2} maxLength={60}
+                className={inputCls}
+                placeholder="Vehicle"
+              />
             </FormField>
           </FormGrid>
 
           <div className="rounded-lg border border-border p-3 bg-muted/20">
-            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">
-              {form.kind} — default fields collected on this security
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
+                Required fields shown on application
+              </div>
+              <button type="button" onClick={addField} className="text-[12px] inline-flex items-center gap-1 text-primary hover:underline">
+                <Plus size={13} /> Add field
+              </button>
             </div>
-            <FormGrid>
-              {fields.map((f) => (
-                <FormField key={f.key} label={f.label} span={4}>
-                  <input
-                    type={f.type}
-                    value={form.fields[f.key] ?? ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        fields: {
-                          ...form.fields,
-                          [f.key]: f.type === "number"
-                            ? (e.target.value === "" ? "" : Number(e.target.value))
-                            : e.target.value,
-                        },
-                      })
-                    }
-                    className={inputCls}
-                  />
-                </FormField>
-              ))}
-            </FormGrid>
-            <div className="mt-2 text-[11px] text-muted-foreground">
-              Values entered here act as defaults / template for this security type.
-            </div>
+
+            {form.fields.definitions.length === 0 ? (
+              <div className="text-[12px] text-muted-foreground text-center py-4">
+                No fields defined. Click "Add field" to build the form users will fill for this security type.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-[12.5px]">
+                  <thead>
+                    <tr className="text-left text-[10.5px] uppercase tracking-wider text-faint">
+                      <th className="py-1.5 pr-2 font-semibold">Field label</th>
+                      <th className="py-1.5 pr-2 font-semibold">Key</th>
+                      <th className="py-1.5 pr-2 font-semibold w-32">Type</th>
+                      <th className="py-1.5 pr-2 font-semibold w-20 text-center">Required</th>
+                      <th className="py-1.5 w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {form.fields.definitions.map((d, i) => (
+                      <tr key={i} className="border-t border-border">
+                        <td className="py-1.5 pr-2">
+                          <input
+                            value={d.label}
+                            onChange={(e) => updateField(i, { label: e.target.value })}
+                            className={inputCls}
+                            placeholder="Registration No."
+                          />
+                        </td>
+                        <td className="py-1.5 pr-2">
+                          <input
+                            value={d.key}
+                            onChange={(e) => updateField(i, { key: slugify(e.target.value) })}
+                            className={inputCls}
+                            placeholder="reg_no"
+                          />
+                        </td>
+                        <td className="py-1.5 pr-2">
+                          <select
+                            value={d.type}
+                            onChange={(e) => updateField(i, { type: e.target.value as FieldType })}
+                            className={selectCls}
+                          >
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                            <option value="date">Date</option>
+                          </select>
+                        </td>
+                        <td className="py-1.5 pr-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={d.required}
+                            onChange={(e) => updateField(i, { required: e.target.checked })}
+                          />
+                        </td>
+                        <td className="py-1.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => removeField(i)}
+                            className="text-muted-foreground hover:text-destructive"
+                            title="Remove"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           <label className="inline-flex items-center gap-2 text-[12px]">
@@ -229,35 +287,47 @@ export function SecurityTypesTab() {
         </button>
       </div>
       <div className="divide-y divide-border rounded-md border border-border">
-        {(items ?? []).map((it: any) => (
-          <div key={it.id} className="px-3 py-2.5 flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-semibold truncate">{it.name}</div>
-              <div className="text-[11.5px] text-muted-foreground truncate capitalize">
-                {it.kind} · {it.category} · {Object.keys(it.fields ?? {}).length} field(s)
+        {(items ?? []).map((it: any) => {
+          const defs: FieldDef[] = Array.isArray(it.fields?.definitions) ? it.fields.definitions : [];
+          return (
+            <div key={it.id} className="px-3 py-2.5 flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-semibold truncate">{it.kind}</div>
+                <div className="text-[11.5px] text-muted-foreground truncate">
+                  {it.category} · {defs.length} field(s){defs.length ? ` — ${defs.map((d) => d.label).join(", ")}` : ""}
+                </div>
               </div>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full border ${it.active ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" : "bg-muted text-muted-foreground border-border"}`}>
+                {it.active ? "active" : "inactive"}
+              </span>
+              <button
+                onClick={() => {
+                  setForm({
+                    id: it.id,
+                    category: it.category ?? "",
+                    kind: it.kind ?? "",
+                    fields: { definitions: Array.isArray(it.fields?.definitions) ? it.fields.definitions : [] },
+                    active: !!it.active,
+                  });
+                  setMode("form");
+                }}
+                className="text-[11.5px] text-primary hover:underline"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => { if (confirm(`Delete "${it.kind}"?`)) del.mutate(it.id); }}
+                className="text-muted-foreground hover:text-destructive"
+                title="Delete"
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
-            <span className={`text-[11px] px-2 py-0.5 rounded-full border ${it.active ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" : "bg-muted text-muted-foreground border-border"}`}>
-              {it.active ? "active" : "inactive"}
-            </span>
-            <button
-              onClick={() => { setForm({ id: it.id, name: it.name, category: it.category, kind: it.kind, fields: it.fields ?? {}, active: it.active }); setMode("form"); }}
-              className="text-[11.5px] text-primary hover:underline"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => { if (confirm(`Delete "${it.name}"?`)) del.mutate(it.id); }}
-              className="text-muted-foreground hover:text-destructive"
-              title="Delete"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        ))}
+          );
+        })}
         {(items?.length ?? 0) === 0 && (
           <div className="px-3 py-6 text-[12px] text-muted-foreground text-center">
-            No security types yet. Create one to enable delegation authority.
+            No security types yet. Create one to define the fields collected on loan applications.
           </div>
         )}
       </div>
