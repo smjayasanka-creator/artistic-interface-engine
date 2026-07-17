@@ -38,6 +38,7 @@ function formatBytes(n: number) {
 }
 
 export const Route = createFileRoute("/_authenticated/loans/new")({
+  validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
   component: NewLoan,
 });
 
