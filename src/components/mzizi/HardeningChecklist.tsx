@@ -53,6 +53,9 @@ const TIERS: Tier[] = [
       { id: "crib", label: "CRIB reporting integration", detail: "Sri Lanka Credit Information Bureau reporting. Requires a scheduled export of borrower repayment history in CRIB format and an inquiry API called during loan origination. External integration — reviewer confirms." },
       { id: "wht-ifrs9", label: "WHT + IFRS 9 provisioning logic", detail: "Withholding tax on FD interest must post to a WHT liability account on every accrual. IFRS 9 requires stage 1/2/3 loan classification with expected credit loss (ECL) provisions posted monthly. Business-logic review." },
       { id: "pii-masking", label: "PII masking in logs and non-prod environments", detail: "Application logs and error reports must redact NIC, phone, DOB, and address. Non-production database refreshes must scrub or hash PII before restore. Configuration review." },
+      { id: "cbsl-returns", label: "CBSL statutory returns data and generation", detail: "Monthly and quarterly prudential returns for a licensed NBFI must be producible from the data model (asset classification, maturity buckets, sector codes, deposit analyses). Reviewer confirms field mapping per return." },
+      { id: "pdpa", label: "Sri Lanka PDPA compliance (consent, subject access, retention alignment)", detail: "Lawful-basis capture at onboarding, a subject access and erasure workflow that respects statutory retention overrides, and a breach notification procedure. Policy and workflow review." },
+      { id: "master-versioning", label: "Master data deactivation and change history (no hard deletes)", detail: "Products, rate tiers and GL mappings must be deactivated or versioned once referenced, never physically deleted (deleteFdProduct and fd_rate_tier deletion currently hard-delete). Rate changes retain effective-dated history." },
     ],
   },
   {
