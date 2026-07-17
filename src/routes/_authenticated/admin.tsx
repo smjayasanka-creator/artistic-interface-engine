@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck, LineChart, ShieldAlert, ScanSearch, KeyRound, Mail, Landmark } from "lucide-react";
+import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck, LineChart, ShieldAlert, ScanSearch, KeyRound, Mail, Landmark, CalendarClock } from "lucide-react";
+import { EodTab } from "@/components/mzizi/EodTab";
 import { BankDirectoryTab } from "@/components/mzizi/BankDirectoryTab";
 import { UserRolesTab } from "@/components/mzizi/UserRolesTab";
 import {
@@ -50,7 +51,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "user_roles" | "products" | "loan_charges" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "risk_profiling" | "screening" | "bank_directory" | "time_travel";
+type Tab = "settings" | "branches" | "staff" | "user_roles" | "products" | "loan_charges" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "risk_profiling" | "screening" | "bank_directory" | "eod" | "time_travel";
 type Mode = "list" | "create" | "edit";
 type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
 const LOAN_SEGMENTS: { value: LoanSegment; label: string }[] = [
@@ -103,6 +104,7 @@ const SECTIONS: Section[] = [
   { id: "risk_profiling", label: "Risk profiling",   desc: "Customer risk factors, scoring & bands",           icon: ShieldAlert, accent: "from-orange-500/15 to-orange-500/0 text-orange-600" },
   { id: "screening",   label: "Customer screening", desc: "FIU screening score thresholds & approval routing", icon: ScanSearch,  accent: "from-red-500/15 to-red-500/0 text-red-600" },
   { id: "bank_directory", label: "Bank directory",  desc: "Banks & branches — CEFTS / SLIPS enablement",       icon: Landmark,    accent: "from-blue-500/15 to-blue-500/0 text-blue-600" },
+  { id: "eod",         label: "Day End Process",  desc: "Company-wide daily close, accruals & auto-schedule", icon: CalendarClock, accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600" },
   { id: "time_travel", label: "Time travel",       desc: "Simulate a different date for testing (dev only)", icon: Clock,     accent: "from-amber-500/15 to-amber-500/0 text-amber-600" },
 ];
 
@@ -170,6 +172,7 @@ function Admin() {
       {tab === "risk_profiling" && <RiskProfilingTab />}
       {tab === "screening" && <ScreeningConfigTab />}
       {tab === "bank_directory" && <BankDirectoryTab />}
+      {tab === "eod" && <EodTab />}
       {tab === "time_travel" && <TimeTravelTab />}
     </div>
   );

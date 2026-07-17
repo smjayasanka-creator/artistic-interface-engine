@@ -10,6 +10,101 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+async function resolveCompanyId(context: any): Promise<string> {
+  const { data: staff } = await context.supabase
+    .from("staff").select("branch:branch_id(company_id)").eq("user_id", context.userId).limit(1).maybeSingle();
+  const cid = (staff as any)?.branch?.company_id;
+  if (!cid) throw new Error("No company");
+  return cid;
+}
+
+// ---------- Company-wide auto EOD settings ----------
+export const getAutoEodSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const company_id = await resolveCompanyId(context);
+    const { data, error } = await context.supabase
+      .from("company")
+      .select("id, auto_eod_enabled, auto_eod_time, timezone")
+      .eq("id", company_id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const updateAutoEodSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { enabled: boolean; time: string }) =>
+    z.object({
+      enabled: z.boolean(),
+      time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const company_id = await resolveCompanyId(context);
+    const { data: admin } = await context.supabase.rpc("is_company_admin" as any, {
+      _company_id: company_id,
+    } as any);
+    if (!admin) throw new Error("Admin only");
+    const time = data.time.length === 5 ? `${data.time}:00` : data.time;
+    const { error } = await context.supabase
+      .from("company")
+      .update({ auto_eod_enabled: data.enabled, auto_eod_time: time } as any)
+      .eq("id", company_id);
+    if (error) throw new Error(error.message);
+    return true;
+  });
+
+// ---------- Company-wide EOD orchestration (all branches) ----------
+export const runCompanyEod = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { business_date: string }) =>
+    z.object({ business_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: branches, error: bErr } = await context.supabase
+      .from("branch").select("id, name");
+    if (bErr) throw new Error(bErr.message);
+    const results: Array<{ branch_id: string; branch_name: string; ok: boolean; run_id?: string; error?: string }> = [];
+    for (const b of branches ?? []) {
+      try {
+        // Initiate (idempotent — RPC returns existing run_id if already exists)
+        const { data: runId, error: iErr } = await context.supabase.rpc("eod_initiate" as any, {
+          _branch_id: b.id, _business_date: data.business_date,
+        } as any);
+        if (iErr) throw new Error(iErr.message);
+        // Approve & start (idempotent: only flips pending_approval → in_progress)
+        await context.supabase.rpc("eod_approve_and_run" as any, { _run_id: runId } as any).then((r: any) => {
+          if (r.error && !/in_progress|completed/i.test(r.error.message)) throw new Error(r.error.message);
+        });
+        // Execute remaining steps
+        const stepResults = await runAllStepsInternal(context, runId as string);
+        const failed = stepResults.find((s) => !s.ok);
+        results.push({ branch_id: b.id, branch_name: b.name, ok: !failed, run_id: runId as string, error: failed?.error ?? undefined });
+      } catch (e) {
+        results.push({ branch_id: b.id, branch_name: b.name, ok: false, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+    return { business_date: data.business_date, branches_total: (branches ?? []).length, results };
+  });
+
+async function runAllStepsInternal(context: any, run_id: string) {
+  const results: Array<{ step: string; ok: boolean; error?: string | null }> = [];
+  for (const step of STEPS) {
+    const { data: run } = await context.supabase.from("eod_run").select("steps, status").eq("id", run_id).maybeSingle();
+    if (!run || run.status !== "in_progress") break;
+    const st = ((run.steps as any[]) ?? []).find((s: any) => s.key === step);
+    if (st?.status === "completed" || st?.status === "skipped") continue;
+    const r = await runStepInternal(context, run_id, step);
+    results.push({ step, ok: r.ok, error: r.error });
+    if (!r.ok) {
+      await context.supabase.rpc("eod_finalize" as any, { _run_id: run_id, _status: "failed" } as any);
+      break;
+    }
+  }
+  return results;
+}
+
 const STEPS = [
   "loan_accrual",
   "fd_accrual",

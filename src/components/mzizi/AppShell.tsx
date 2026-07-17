@@ -2,7 +2,7 @@ import { Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
-import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug, Landmark, ScrollText, CalendarClock } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug, Landmark, ScrollText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
 import { setActiveCurrency, getActiveCurrency } from "@/lib/format";
@@ -28,7 +28,6 @@ const NAV: NavEntry[] = [
       { to: "/reports", label: "Reports", icon: LineChart },
 
       { to: "/workflows", label: "Work flow", icon: Workflow },
-      { to: "/eod", label: "Day End", icon: CalendarClock },
       { to: "/api", label: "API", icon: Plug },
       { to: "/audit-log", label: "Audit log", icon: ScrollText },
       { to: "/admin", label: "Administration", icon: Settings },
@@ -74,7 +73,6 @@ function TITLE(pathname: string): { title: string; sub: string } {
   if (pathname.startsWith("/fd/maturity")) return { title: "Maturity due", sub: "Deposits maturing soon" };
   if (pathname.startsWith("/fd")) return { title: "Fixed deposits", sub: "Portfolio & register" };
   
-  if (pathname.startsWith("/eod")) return { title: "Day End Process", sub: "Daily close, accruals & rollover" };
   if (pathname.startsWith("/platform-admin")) return { title: "Platform Admin", sub: "Tenant oversight & subscriptions" };
   if (pathname.startsWith("/api")) return { title: "API", sub: "Third-party integrations & endpoints" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };

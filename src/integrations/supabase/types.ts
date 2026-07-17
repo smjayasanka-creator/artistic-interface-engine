@@ -678,6 +678,8 @@ export type Database = {
       }
       company: {
         Row: {
+          auto_eod_enabled: boolean
+          auto_eod_time: string
           country: string
           created_at: string
           currency: string
@@ -692,6 +694,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_eod_enabled?: boolean
+          auto_eod_time?: string
           country?: string
           created_at?: string
           currency?: string
@@ -706,6 +710,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_eod_enabled?: boolean
+          auto_eod_time?: string
           country?: string
           created_at?: string
           currency?: string
