@@ -926,28 +926,47 @@ export const processMaturity = createServerFn({ method: "POST" })
         created_by: userId,
       });
 
-      // Ledger posting via kernel — DR FD Liability + Interest Expense / CR Cash
+      // Ledger posting via kernel — clears principal + accrued liability
       const { data: fdProdM } = await supabase
         .from("fd_product")
-        .select("cash_account_id, deposit_liability_account_id, interest_expense_account_id, wht_liability_account_id")
+        .select(FD_PRODUCT_ACCOUNT_COLUMNS)
         .eq("id", fd.product_id)
         .maybeSingle();
-      const glm = await resolveFdAccounts(supabase, fdProdM);
-      if (glm.cash && glm.liab && glm.intr && settlement > 0) {
+      const glm = await resolveFdAccounts(supabase, fdProdM, cid);
+      if (glm.cash && glm.liab && glm.intr && glm.accrued && settlement > 0) {
+        const { data: accRows } = await supabase
+          .from("fd_accrual")
+          .select("daily_amount")
+          .eq("deposit_id", fd.id)
+          .is("released_at", null)
+          .lte("accrual_date", onDate);
+        const accruedAmount = Math.round(
+          ((accRows ?? []).reduce((s: number, x: any) => s + Number(x.daily_amount ?? 0), 0)) * 100,
+        ) / 100;
+        const intrAdj = Math.round((owedNet - accruedAmount) * 100) / 100;
+        const lines: Array<{ account_id: string; debit: number; credit: number }> = [
+          { account_id: glm.liab, debit: Number(fd.principal), credit: 0 },
+        ];
+        if (accruedAmount > 0) lines.push({ account_id: glm.accrued, debit: accruedAmount, credit: 0 });
+        if (intrAdj > 0) lines.push({ account_id: glm.intr, debit: intrAdj, credit: 0 });
+        if (intrAdj < 0) lines.push({ account_id: glm.intr, debit: 0, credit: -intrAdj });
+        lines.push({ account_id: glm.cash, debit: 0, credit: settlement });
         await supabase.rpc("post_entry", {
           _entry_date: onDate,
           _reference: `FD-MAT-${fd.certificate_no}`,
           _description: `FD maturity payout · ${fd.certificate_no}`,
-          _lines: [
-            { account_id: glm.liab, debit: Number(fd.principal), credit: 0 },
-            ...(owedNet > 0 ? [{ account_id: glm.intr, debit: owedNet, credit: 0 }] : []),
-            { account_id: glm.cash, debit: 0, credit: settlement },
-          ] as any,
+          _lines: lines as any,
           _branch_id: fd.branch_id,
           _source_module: "fd",
           _source_ref: fd.id,
           _idempotency_key: `fd:maturity:${fd.id}`,
         });
+        await supabase
+          .from("fd_accrual")
+          .update({ released_at: new Date().toISOString(), released_ref: `fd:maturity:${fd.id}` })
+          .eq("deposit_id", fd.id)
+          .is("released_at", null)
+          .lte("accrual_date", onDate);
       }
 
       return { ok: true, action: "payout", settlement };
