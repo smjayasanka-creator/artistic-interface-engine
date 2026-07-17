@@ -4898,6 +4898,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      company_id_of_branch: { Args: { _branch_id: string }; Returns: string }
       current_company_id: { Args: never; Returns: string }
       current_staff_branch: { Args: never; Returns: string }
       current_staff_id: { Args: never; Returns: string }
