@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { serverNow, serverToday } from "@/lib/clock-server";
 import { buildSchedule, dailyAccrual, addMonths, daysBetween, interestForPeriod } from "@/lib/fd-schedule";
+import { PAYMENT_METHODS, assertPaymentMethod } from "@/lib/payment-methods";
 
 // ─────────── Ledger kernel helper ───────────
 // Resolves GL account ids from fd_product (preferred) or falls back to
@@ -253,7 +254,11 @@ const depositMovementInput = z.object({
   amount: z.number().positive(),
   txn_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   reference: z.string().trim().max(120).optional().nullable(),
+  payment_method: z.enum(PAYMENT_METHODS).optional(),
+  bank_account_id: z.string().uuid().optional().nullable(),
+  savings_account_id: z.string().uuid().optional().nullable(),
 });
+
 
 export const recordDepositReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -287,6 +292,13 @@ export const recordDepositWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: z.infer<typeof depositMovementInput>) => depositMovementInput.parse(i))
   .handler(async ({ context, data }) => {
+    if (!data.payment_method) throw new Error("Payment method is required for FD withdrawal");
+    assertPaymentMethod("fd_withdrawal", {
+      payment_method: data.payment_method,
+      bank_account_id: data.bank_account_id ?? null,
+      savings_account_id: data.savings_account_id ?? null,
+      reference: data.reference ?? null,
+    });
     const { supabase, userId } = context;
     const { data: fd } = await supabase
       .from("fixed_deposit")
@@ -799,8 +811,25 @@ export const listMaturingDeposits = createServerFn({ method: "GET" })
 
 export const processMaturity = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { id: string; on_date?: string }) =>
-    z.object({ id: z.string().uuid(), on_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).parse(i),
+  .inputValidator(
+    (i: {
+      id: string;
+      on_date?: string;
+      payment_method?: (typeof PAYMENT_METHODS)[number];
+      bank_account_id?: string | null;
+      savings_account_id?: string | null;
+      reference?: string | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          on_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+          payment_method: z.enum(PAYMENT_METHODS).optional(),
+          bank_account_id: z.string().uuid().optional().nullable(),
+          savings_account_id: z.string().uuid().optional().nullable(),
+          reference: z.string().trim().max(120).optional().nullable(),
+        })
+        .parse(i),
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
@@ -837,6 +866,13 @@ export const processMaturity = createServerFn({ method: "POST" })
     }
 
     if (fd.maturity_instruction === "payout") {
+      if (!data.payment_method) throw new Error("Payment method is required for FD payout");
+      assertPaymentMethod("fd_withdrawal", {
+        payment_method: data.payment_method,
+        bank_account_id: data.bank_account_id ?? null,
+        savings_account_id: data.savings_account_id ?? null,
+        reference: data.reference ?? null,
+      });
       const settlement = Math.round((Number(fd.principal) + owedNet) * 100) / 100;
       await supabase
         .from("fixed_deposit")

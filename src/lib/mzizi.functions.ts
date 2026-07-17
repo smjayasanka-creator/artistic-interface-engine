@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { serverNow, serverToday } from "@/lib/clock-server";
 import { generateSchedule, generateStructuredSchedule, type Frequency } from "@/lib/loan-schedule";
+import { assertPaymentMethod, PAYMENT_METHODS } from "@/lib/payment-methods";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // READS
@@ -1379,12 +1380,21 @@ export const approveLoan = createServerFn({ method: "POST" })
   .inputValidator((i: { loan_id: string; payment_channel?: string; payment_reference?: string; bank_account?: string }) =>
     z.object({
       loan_id: z.string().uuid(),
-      payment_channel: z.string().optional(),
+      payment_channel: z.enum(PAYMENT_METHODS).optional(),
       payment_reference: z.string().max(80).optional(),
       bank_account: z.string().max(80).optional(),
     }).parse(i))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
+    // Server-side guard: only allowed disbursement methods.
+    if (!data.payment_channel) throw new Error("Payment method is required for disbursement");
+    const isUuid = (s?: string) => !!s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+    assertPaymentMethod("loan_disbursement", {
+      payment_method: data.payment_channel,
+      bank_account_id: data.payment_channel === "fund_transfer" && isUuid(data.bank_account) ? data.bank_account! : null,
+      savings_account_id: data.payment_channel === "sdf_savings" && isUuid(data.bank_account) ? data.bank_account! : null,
+      reference: data.payment_reference ?? null,
+    });
     // The disburse_loan RPC enforces role, status, schedule generation and GL posting.
     const { data: result, error } = await supabase.rpc("disburse_loan" as any, {
       p_loan_id: data.loan_id,
