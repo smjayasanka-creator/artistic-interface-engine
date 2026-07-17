@@ -254,7 +254,11 @@ const depositMovementInput = z.object({
   amount: z.number().positive(),
   txn_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   reference: z.string().trim().max(120).optional().nullable(),
+  payment_method: z.enum(PAYMENT_METHODS).optional(),
+  bank_account_id: z.string().uuid().optional().nullable(),
+  savings_account_id: z.string().uuid().optional().nullable(),
 });
+
 
 export const recordDepositReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
