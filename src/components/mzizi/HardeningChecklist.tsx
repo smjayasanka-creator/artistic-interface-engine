@@ -56,6 +56,7 @@ const TIERS: Tier[] = [
       { id: "cbsl-returns", label: "CBSL statutory returns data and generation", detail: "Monthly and quarterly prudential returns for a licensed NBFI must be producible from the data model (asset classification, maturity buckets, sector codes, deposit analyses). Reviewer confirms field mapping per return." },
       { id: "pdpa", label: "Sri Lanka PDPA compliance (consent, subject access, retention alignment)", detail: "Lawful-basis capture at onboarding, a subject access and erasure workflow that respects statutory retention overrides, and a breach notification procedure. Policy and workflow review." },
       { id: "master-versioning", label: "Master data deactivation and change history (no hard deletes)", detail: "Products, rate tiers and GL mappings must be deactivated or versioned once referenced, never physically deleted (deleteFdProduct and fd_rate_tier deletion currently hard-delete). Rate changes retain effective-dated history." },
+      { id: "doc-numbering", label: "Sequential document numbering with gap accountability", detail: "Certificates, contract numbers and journal references must be allocated sequentially per branch/product (as next_contract_no does) with any gaps in the sequence explainable to an auditor — e.g. a void register recording cancelled allocations. Reviewer confirms gap reporting exists." },
     ],
   },
   {
@@ -72,6 +73,7 @@ const TIERS: Tier[] = [
       { id: "soc2", label: "SOC 2 / ISO 27001 controls documented", detail: "Formal control framework covering access, change management, incident response, vendor risk, and monitoring. Requires a controls register and evidence of operating effectiveness." },
       { id: "vuln-scan", label: "Dependency + container vulnerability scanning", detail: "CI pipeline runs npm audit / Snyk / Trivy on every build and blocks merges on high-severity CVEs. Runtime images are rebuilt weekly to pull security patches. CI configuration review." },
       { id: "env-separation", label: "Separate dev / test / production environments with controlled promotion", detail: "Production data never appears in development, changes are promoted through migration review, and test users cannot reach production. A single Lovable/Supabase project currently serves all purposes. Infrastructure review." },
+      { id: "session-security", label: "Session security: inactivity timeout, token rotation, revocation on role change", detail: "Staff sessions must expire on inactivity, refresh tokens must rotate, and sessions must be revocable immediately when a user's role changes or employment ends. Supabase Auth configuration plus a revocation check in the auth middleware. Configuration review." },
     ],
   },
   {
@@ -85,6 +87,7 @@ const TIERS: Tier[] = [
       { id: "pgbouncer", label: "Connection pooling (pgbouncer) sized for peak", detail: "All app connections go through pgbouncer in transaction mode. Pool size = (peak_qps × avg_tx_ms / 1000) with headroom, so 1000 users don't exhaust Postgres backends. Infrastructure review." },
       { id: "job-queue", label: "Job queue for batch (pg_cron or worker service)", detail: "Accruals, EOD, statement generation, and CRIB exports run on pg_cron or an external worker with retries and dead-letter handling — never inside request handlers. Verify via pg_cron.job." },
       { id: "cache", label: "Cache layer for reference data (products, rates)", detail: "loan_product, fd_product, fd_rate_tier and gl_account are read on every transaction. Cache them in-process (React Query stale-while-revalidate) or in Redis with explicit invalidation on write." },
+      { id: "pagination", label: "Server-side pagination and bounded queries on every list and report", detail: "Every register, list screen and report must paginate and filter server-side with hard row limits; no endpoint may return an unbounded dataset to the browser. The FD register paginates correctly — reviewer sweeps the remaining list screens and reports." },
     ],
   },
   {
@@ -111,6 +114,7 @@ const TIERS: Tier[] = [
       { id: "card-switch", label: "Card switch / ATM network", detail: "Integration to a card switch (LankaPay, Visa/Mastercard processor) with ISO 8583 messaging and settlement file processing. External integration." },
       { id: "mobile", label: "Mobile / internet banking channel", detail: "Customer-facing apps hitting a hardened API layer with device binding, transaction signing, and rate limiting — separate from the staff console. Product review." },
       { id: "core-seam", label: "Integration seam to swap in a licensed core (Temenos/Mambu/Fern)", detail: "Domain services (ledger, loan, deposit) hidden behind interfaces so a licensed core banking product can be substituted without rewriting the app. Architecture review." },
+      { id: "api-webhooks", label: "Public API and webhook hardening", detail: "Public API endpoints require keyed authentication, versioning and rate limiting; outbound domain-event webhooks (dispatch-domain-events) must deliver idempotently with signed payloads, retries and a dead-letter record. Code and configuration review." },
     ],
   },
   {
