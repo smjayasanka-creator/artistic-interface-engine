@@ -29,26 +29,158 @@ export const listLoanAlcoRates = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-/** Insert a new version (closes any currently-active version at the given effective_from). */
+/** Insert a new version — routed through workflow when `loan_alco_rate_change` is enabled. */
 export const upsertLoanAlcoRate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => upsertInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: newId, error } = await supabase.rpc("upsert_loan_alco_rate_version", {
-      _product_id: data.product_id,
-      _security_type_id: (data.security_type_id ?? null) as unknown as string,
-      _equipment_vehicle: (data.equipment_vehicle ?? null) as unknown as string,
-      _min_rate: data.min_rate,
-      _max_rate: data.max_rate,
-      _min_period_months: data.min_period_months,
-      _max_period_months: data.max_period_months,
-      _effective_from: data.effective_from ?? new Date().toISOString(),
-      _note: (data.note ?? null) as unknown as string | undefined,
-      _active: data.active ?? true,
-    });
+    const { supabase, userId } = context;
+
+    const { data: cid } = await supabase.rpc("current_company_id");
+    const companyId = cid as string | null;
+
+    let wfDefId: string | null = null;
+    if (companyId) {
+      const { data: wf } = await supabase
+        .from("workflow_definition")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("transaction_type", "loan_alco_rate_change")
+        .eq("is_enabled", true)
+        .maybeSingle();
+      wfDefId = wf?.id ?? null;
+    }
+
+    // No workflow → apply immediately (legacy behaviour).
+    if (!wfDefId || !companyId) {
+      const { data: newId, error } = await supabase.rpc("upsert_loan_alco_rate_version", {
+        _product_id: data.product_id,
+        _security_type_id: (data.security_type_id ?? null) as unknown as string,
+        _equipment_vehicle: (data.equipment_vehicle ?? null) as unknown as string,
+        _min_rate: data.min_rate,
+        _max_rate: data.max_rate,
+        _min_period_months: data.min_period_months,
+        _max_period_months: data.max_period_months,
+        _effective_from: data.effective_from ?? new Date().toISOString(),
+        _note: (data.note ?? null) as unknown as string | undefined,
+        _active: data.active ?? true,
+      });
+      if (error) throw error;
+      return { ok: true, id: newId as string, workflow_instance_id: null as string | null, pending: false };
+    }
+
+    // Workflow enabled → hold as proposal + create workflow instance.
+    const { data: prop, error: pErr } = await supabase
+      .from("loan_alco_rate_proposal")
+      .insert({
+        company_id: companyId,
+        product_id: data.product_id,
+        security_type_id: data.security_type_id ?? null,
+        equipment_vehicle: data.equipment_vehicle ?? null,
+        min_rate: data.min_rate,
+        max_rate: data.max_rate,
+        min_period_months: data.min_period_months,
+        max_period_months: data.max_period_months,
+        effective_from: data.effective_from ?? new Date().toISOString(),
+        note: data.note ?? null,
+        active: data.active ?? true,
+        status: "pending",
+        created_by: userId,
+      })
+      .select("id")
+      .single();
+    if (pErr) throw pErr;
+
+    let workflowInstanceId: string | null = null;
+    const { data: inst, error: wErr } = await supabase
+      .from("workflow_instance")
+      .insert({
+        workflow_id: wfDefId,
+        company_id: companyId,
+        transaction_type: "loan_alco_rate_change",
+        reference_id: prop.id,
+        reference_label: "Loan ALCO rate change",
+        amount: null,
+        initiated_by: userId,
+        current_step: 1,
+      })
+      .select("id")
+      .single();
+    if (!wErr && inst?.id) {
+      workflowInstanceId = inst.id;
+      await supabase.from("loan_alco_rate_proposal").update({ workflow_instance_id: inst.id }).eq("id", prop.id);
+    }
+
+    return { ok: true, id: prop.id, workflow_instance_id: workflowInstanceId, pending: true };
+  });
+
+/** List pending/recent loan ALCO proposals for the current company. */
+export const listLoanAlcoProposals = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("loan_alco_rate_proposal")
+      .select("id, status, note, created_at, applied_at, workflow_instance_id, product_id, security_type_id, equipment_vehicle, min_rate, max_rate, min_period_months, max_period_months, effective_from, active, product:product_id(name), security:security_type_id(name), workflow:workflow_instance_id(status, current_step)")
+      .order("created_at", { ascending: false })
+      .limit(50);
     if (error) throw error;
-    return { ok: true, id: newId as string };
+    return data ?? [];
+  });
+
+/** Apply an approved proposal — writes into loan_alco_rate via RPC. */
+export const applyLoanAlcoProposal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { proposal_id: string }) => z.object({ proposal_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: prop, error } = await supabase
+      .from("loan_alco_rate_proposal")
+      .select("id, status, workflow_instance_id, product_id, security_type_id, equipment_vehicle, min_rate, max_rate, min_period_months, max_period_months, effective_from, note, active, workflow:workflow_instance_id(status)")
+      .eq("id", data.proposal_id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!prop) throw new Error("Proposal not found");
+    if (prop.status === "applied") throw new Error("Already applied");
+    if (prop.status !== "pending") throw new Error(`Proposal is ${prop.status}`);
+
+    const wfStatus = (prop as any).workflow?.status;
+    if (prop.workflow_instance_id && wfStatus !== "approved") {
+      throw new Error(`Workflow not approved (current: ${wfStatus ?? "n/a"})`);
+    }
+
+    const { error: rpcErr } = await supabase.rpc("upsert_loan_alco_rate_version", {
+      _product_id: prop.product_id,
+      _security_type_id: (prop.security_type_id ?? null) as unknown as string,
+      _equipment_vehicle: (prop.equipment_vehicle ?? null) as unknown as string,
+      _min_rate: prop.min_rate,
+      _max_rate: prop.max_rate,
+      _min_period_months: prop.min_period_months,
+      _max_period_months: prop.max_period_months,
+      _effective_from: prop.effective_from,
+      _note: (prop.note ?? null) as unknown as string | undefined,
+      _active: prop.active ?? true,
+    });
+    if (rpcErr) throw rpcErr;
+
+    await supabase.from("loan_alco_rate_proposal").update({
+      status: "applied", applied_at: new Date().toISOString(), applied_by: userId,
+    }).eq("id", data.proposal_id);
+
+    return { ok: true };
+  });
+
+/** Cancel a pending proposal. */
+export const cancelLoanAlcoProposal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { proposal_id: string }) => z.object({ proposal_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("loan_alco_rate_proposal")
+      .update({ status: "cancelled" })
+      .eq("id", data.proposal_id)
+      .in("status", ["pending"]);
+    if (error) throw error;
+    return { ok: true };
   });
 
 /** Close the active version (equivalent to retiring the rate). */
