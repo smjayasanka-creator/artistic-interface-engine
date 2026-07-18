@@ -31,7 +31,7 @@ const DOMAINS: Domain[] = [
     tag: "credit facilities",
     icon: Landmark,
     summary:
-      "Origination (with draft save), disbursement, repayment, restructure, termination, write-off and legal action. Owns loan charges (fixed / variable / manual, capitalizable, inside/outside supplier), ALCO rate overrides with versioned history + workflow proposals, debit notes, attached securities with document uploads + AI auto-fill, product-driven dynamic evaluation sections, and the full write-off + recovery ledger. All money writes go through hardened Postgres RPCs (disburse_loan, record_repayment, record_write_off_recovery) — loan_installment / repayment tables are read-only to authenticated users.",
+      "Origination (with draft save), disbursement, repayment, restructure, termination, write-off and legal action. Owns loan charges (fixed / variable / manual, capitalizable, inside/outside supplier), lending ALCO rate table with immutable version history + workflow proposals (moved in from the retired standalone ALCO module), debit notes, attached securities with document uploads + AI auto-fill, product-driven dynamic evaluation sections, and the full write-off + recovery ledger. All money writes go through hardened Postgres RPCs (disburse_loan, record_repayment, record_write_off_recovery) — loan_installment / repayment tables are read-only to authenticated users.",
     ownedTables: [
       "loan", "loan_product", "loan_installment", "loan_installment_reclass",
       "repayment", "lending_group",
@@ -58,13 +58,15 @@ const DOMAINS: Domain[] = [
       "loan.transferred_to_legal", "loan.charge_capitalized",
       "loan.security_attached", "loan.debit_note_issued",
       "loan.evaluation_submitted",
+      "loan.rate_version_proposed", "loan.rate_version_applied",
     ],
-    consumesEvents: ["client.kyc_verified", "workflow.approved", "alco.loan_rate_changed"],
+    consumesEvents: ["client.kyc_verified", "workflow.approved"],
     dependsOn: ["ledger", "workflow", "clients"],
     extractionReadiness: "partial",
     extractionNotes:
-      "Ledger writes are transactional today via disburse_loan / record_repayment / record_write_off_recovery RPCs, and the capitalized-charge reclass runs inside the accrual RPC. Extract only after ledger kernel + outbox pattern is in place. Security AI extraction already calls out to Lovable AI Gateway, so that side is decoupled.",
+      "Ledger writes are transactional today via disburse_loan / record_repayment / record_write_off_recovery RPCs, and the capitalized-charge reclass runs inside the accrual RPC. Lending ALCO rate maintenance now lives inside this domain (previously a separate ALCO module) so pricing travels with the product. Extract only after ledger kernel + outbox pattern is in place.",
     accent: "from-indigo-500/10 to-indigo-500/0 border-indigo-500/30",
+
   },
   {
     id: "savings",
@@ -72,7 +74,7 @@ const DOMAINS: Domain[] = [
     tag: "current & savings accounts",
     icon: PiggyBank,
     summary:
-      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, dormancy, passbook stock and issue. Withdrawals accept Cash, Fund Transfer (client bank account), Cheque or SDF Savings, enforced server-side via payment-method guard. Dormancy sweeps unclaimed balances to the configured GL account.",
+      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, dormancy, passbook stock and issue. Withdrawals accept Cash, Fund Transfer (client bank account), Cheque or SDF Savings, enforced server-side via payment-method guard. Owns the savings ALCO rate table (moved in from the retired standalone ALCO module). Dormancy sweeps unclaimed balances to the configured GL account.",
     ownedTables: [
       "savings_account", "savings_product", "savings_transaction",
       "savings_charge", "savings_charge_product", "savings_alco_rate",
@@ -87,12 +89,13 @@ const DOMAINS: Domain[] = [
     publishesEvents: [
       "savings.account_opened", "savings.deposited",
       "savings.withdrawn", "savings.closed", "savings.dormant",
+      "savings.rate_version_applied",
     ],
-    consumesEvents: ["client.kyc_verified", "alco.savings_rate_changed"],
-    dependsOn: ["ledger", "clients"],
+    consumesEvents: ["client.kyc_verified", "workflow.approved"],
+    dependsOn: ["ledger", "clients", "workflow"],
     extractionReadiness: "ready",
     extractionNotes:
-      "Cleanest boundary — schema already isolated, no shared writes outside the ledger. Payment-method guard is a pure module and travels with the service.",
+      "Cleanest boundary — schema already isolated, no shared writes outside the ledger. Payment-method guard is a pure module and travels with the service. Savings rate maintenance is now colocated with the product.",
     accent: "from-emerald-500/10 to-emerald-500/0 border-emerald-500/30",
   },
   {
@@ -101,14 +104,16 @@ const DOMAINS: Domain[] = [
     tag: "term deposits",
     icon: CircleDollarSign,
     summary:
-      "Term deposit lifecycle: booking, interest schedule, daily accrual (posted to GL every EOD), payout, maturity, renewal, premature closure and dormancy sweep. Maturity payout accepts Fund Transfer, Cheque or SDF Savings, enforced server-side. ALCO rate changes are versioned in fd_alco_rate and applied via workflow proposal.",
+      "Term deposit lifecycle: booking, interest schedule, daily accrual (posted to GL every EOD), payout, maturity, renewal, premature closure and dormancy sweep. Maturity payout accepts Fund Transfer, Cheque or SDF Savings, enforced server-side. Owns the deposit ALCO rate table and its workflow proposals — pricing lives with the product now that the standalone ALCO module has been retired. Applied changes are written as immutable version rows in fd_alco_rate.",
     ownedTables: [
       "fixed_deposit", "fd_product", "fd_rate_tier",
       "fd_interest_schedule", "fd_accrual", "fd_transaction",
-      "fd_nominee", "fd_number_seq", "fd_alco_rate",
+      "fd_nominee", "fd_number_seq",
+      "fd_alco_rate", "alco_rate_proposal", "alco_rate_proposal_item",
     ],
     serverFns: [
       "src/lib/fd.functions.ts",
+      "src/lib/alco.functions.ts",
       "src/lib/lifecycle.functions.ts (markFdDormant)",
       "src/lib/payment-methods.ts (guard)",
     ],
@@ -116,13 +121,15 @@ const DOMAINS: Domain[] = [
     publishesEvents: [
       "fd.booked", "fd.interest_accrued", "fd.interest_paid",
       "fd.matured", "fd.renewed", "fd.premature_closed", "fd.dormant",
+      "fd.rate_version_proposed", "fd.rate_version_applied",
     ],
-    consumesEvents: ["client.kyc_verified", "alco.fd_rate_changed"],
-    dependsOn: ["ledger", "clients"],
+    consumesEvents: ["client.kyc_verified", "workflow.approved"],
+    dependsOn: ["ledger", "clients", "workflow"],
     extractionReadiness: "ready",
     extractionNotes:
-      "Accrual is idempotent per (deposit, date) and now double-entry posts each day — perfect candidate for an isolated worker.",
+      "Accrual is idempotent per (deposit, date) and now double-entry posts each day — perfect candidate for an isolated worker. Deposit rate maintenance is now inside this domain rather than a separate ALCO service.",
     accent: "from-amber-500/10 to-amber-500/0 border-amber-500/30",
+
   },
   {
     id: "workflow",
@@ -180,31 +187,6 @@ const DOMAINS: Domain[] = [
     accent: "from-rose-500/10 to-rose-500/0 border-rose-500/30",
   },
   {
-    id: "alco",
-    label: "ALCO Rates",
-    tag: "pricing committee",
-    icon: ShieldCheck,
-    summary:
-      "Asset-Liability Committee rate proposals for deposit and lending products, approved via workflow. Applied changes are written as immutable version rows in fd_alco_rate / loan_alco_rate, with previous versions retained read-only for audit.",
-    ownedTables: [
-      "alco_rate_proposal", "alco_rate_proposal_item",
-      "loan_alco_rate_proposal",
-    ],
-    serverFns: ["src/lib/alco.functions.ts", "src/lib/loan-alco.functions.ts"],
-    publicApi: [],
-    publishesEvents: [
-      "alco.rate_change_proposed", "alco.fd_rate_changed",
-      "alco.savings_rate_changed", "alco.loan_rate_changed",
-      "alco.version_applied",
-    ],
-    consumesEvents: ["workflow.approved"],
-    dependsOn: ["workflow", "fd", "savings", "loans"],
-    extractionReadiness: "ready",
-    extractionNotes:
-      "Low volume, high impact. Extract once event bus is live so downstream products can subscribe cleanly. Version history is already immutable in the fd_alco_rate / loan_alco_rate tables.",
-    accent: "from-sky-500/10 to-sky-500/0 border-sky-500/30",
-  },
-  {
     id: "ledger",
     label: "Ledger (kernel)",
     tag: "double-entry GL",
@@ -214,17 +196,13 @@ const DOMAINS: Domain[] = [
     ownedTables: [
       "gl_account", "journal_entry", "posting", "domain_event",
       "gl_eod_balance", "loan_eod_balance", "savings_eod_balance", "fd_eod_balance",
-      "eod_run", "fx_rate",
+      "fx_rate",
     ],
     serverFns: ["src/lib/api-ledger.server.ts (post_entry_system wrapper)"],
     publicApi: [
-      "/api/public/hooks/eod-close",
       "/api/public/hooks/dispatch-domain-events",
-      "/api/public/hooks/fd-accrue",
-      "/api/public/hooks/fd-mature",
-      "/api/public/hooks/loan-accrue",
     ],
-    publishesEvents: ["ledger.entry_posted", "eod.closed", "fx.rate_updated"],
+    publishesEvents: ["ledger.entry_posted", "fx.rate_updated"],
     consumesEvents: [],
     dependsOn: [],
     extractionReadiness: "coupled",
@@ -232,27 +210,35 @@ const DOMAINS: Domain[] = [
       "Do NOT extract. Ledger is the shared kernel — colocated with Postgres for ACID balance guarantees. The outbox dispatcher can move to its own worker once subscribers exist.",
     accent: "from-slate-500/10 to-slate-500/0 border-slate-500/30",
   },
+
   {
     id: "eod",
     label: "Day End (EOD)",
-    tag: "orchestration",
+    tag: "orchestration · summaries · reports",
     icon: GitBranch,
     summary:
-      "Centralized company-wide Day End orchestration — pre-day validations, loan/FD accrual, penalty + PAR/NPA classification, FD maturity, savings interest, GL posting, trial balance, report generation and date rollover. Runs across every branch in one shot; supports scheduled auto-EOD and dual-authorization manual runs from the Admin console.",
+      "Centralized company-wide Day End orchestration and all Day-End artefacts — pre-day validations, loan/FD accrual, penalty + PAR/NPA classification, FD maturity, savings interest, GL posting, trial balance, Day End Summary tables and generated reports, plus date rollover. Runs across every branch in one shot; supports scheduled auto-EOD and dual-authorization manual runs from the Admin console. Owns eod_run + eod_step_log and drives (but does not own) the month-partitioned EOD balance snapshots in the ledger.",
     ownedTables: ["eod_run", "eod_step_log"],
     serverFns: ["src/lib/eod.functions.ts"],
-    publicApi: ["/api/public/hooks/eod-close"],
+    publicApi: [
+      "/api/public/hooks/eod-close",
+      "/api/public/hooks/fd-accrue",
+      "/api/public/hooks/fd-mature",
+      "/api/public/hooks/loan-accrue",
+    ],
     publishesEvents: [
       "eod.started", "eod.step_completed",
       "eod.closed", "eod.failed", "eod.rolled_back",
+      "eod.summary_generated",
     ],
     consumesEvents: [],
     dependsOn: ["ledger", "loans", "fd", "savings"],
     extractionReadiness: "partial",
     extractionNotes:
-      "Perfect fit for a scheduled worker once outbox is live — it already reads/writes only through domain RPCs. Keep it close to the ledger until each step becomes idempotent + resumable end-to-end.",
+      "Perfect fit for a scheduled worker once outbox is live — it already reads/writes only through domain RPCs. Day End Summary + report artefacts are grouped here (not in Reports) so every generated snapshot stays traceable to the run that produced it.",
     accent: "from-orange-500/10 to-orange-500/0 border-orange-500/30",
   },
+
   {
     id: "banks",
     label: "Bank Directory",
