@@ -78,7 +78,7 @@ export const listLoanAlcoRateHistory = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("loan_alco_rate")
-      .select("id, min_rate, max_rate, min_period_months, max_period_months, active, effective_from, effective_to, note, created_by, created_at, security_type_id, equipment_vehicle")
+      .select("id, min_rate, max_rate, min_period_months, max_period_months, active, effective_from, effective_to, note, created_by, created_at, security_type_id, equipment_vehicle, creator:created_by(full_name, email)")
       .eq("product_id", data.product_id)
       .order("effective_from", { ascending: false });
     if (data.security_type_id) q = q.eq("security_type_id", data.security_type_id);
@@ -90,3 +90,4 @@ export const listLoanAlcoRateHistory = createServerFn({ method: "POST" })
     if (error) throw error;
     return rows ?? [];
   });
+
