@@ -31,7 +31,7 @@ const DOMAINS: Domain[] = [
     tag: "credit facilities",
     icon: Landmark,
     summary:
-      "Origination (with draft save), disbursement, repayment, restructure, termination, write-off and legal action. Owns loan charges (fixed / variable / manual, capitalizable, inside/outside supplier), ALCO rate overrides with versioned history + workflow proposals, debit notes, attached securities with document uploads + AI auto-fill, product-driven dynamic evaluation sections, and the full write-off + recovery ledger. All money writes go through hardened Postgres RPCs (disburse_loan, record_repayment, record_write_off_recovery) — loan_installment / repayment tables are read-only to authenticated users.",
+      "Origination (with draft save), disbursement, repayment, restructure, termination, write-off and legal action. Owns loan charges (fixed / variable / manual, capitalizable, inside/outside supplier), lending ALCO rate table with immutable version history + workflow proposals (moved in from the retired standalone ALCO module), debit notes, attached securities with document uploads + AI auto-fill, product-driven dynamic evaluation sections, and the full write-off + recovery ledger. All money writes go through hardened Postgres RPCs (disburse_loan, record_repayment, record_write_off_recovery) — loan_installment / repayment tables are read-only to authenticated users.",
     ownedTables: [
       "loan", "loan_product", "loan_installment", "loan_installment_reclass",
       "repayment", "lending_group",
@@ -58,13 +58,15 @@ const DOMAINS: Domain[] = [
       "loan.transferred_to_legal", "loan.charge_capitalized",
       "loan.security_attached", "loan.debit_note_issued",
       "loan.evaluation_submitted",
+      "loan.rate_version_proposed", "loan.rate_version_applied",
     ],
-    consumesEvents: ["client.kyc_verified", "workflow.approved", "alco.loan_rate_changed"],
+    consumesEvents: ["client.kyc_verified", "workflow.approved"],
     dependsOn: ["ledger", "workflow", "clients"],
     extractionReadiness: "partial",
     extractionNotes:
-      "Ledger writes are transactional today via disburse_loan / record_repayment / record_write_off_recovery RPCs, and the capitalized-charge reclass runs inside the accrual RPC. Extract only after ledger kernel + outbox pattern is in place. Security AI extraction already calls out to Lovable AI Gateway, so that side is decoupled.",
+      "Ledger writes are transactional today via disburse_loan / record_repayment / record_write_off_recovery RPCs, and the capitalized-charge reclass runs inside the accrual RPC. Lending ALCO rate maintenance now lives inside this domain (previously a separate ALCO module) so pricing travels with the product. Extract only after ledger kernel + outbox pattern is in place.",
     accent: "from-indigo-500/10 to-indigo-500/0 border-indigo-500/30",
+
   },
   {
     id: "savings",
