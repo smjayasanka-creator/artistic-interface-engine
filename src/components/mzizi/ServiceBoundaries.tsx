@@ -101,23 +101,27 @@ const DOMAINS: Domain[] = [
     tag: "term deposits",
     icon: CircleDollarSign,
     summary:
-      "Term deposit lifecycle: booking, interest schedule, daily accrual, payout, maturity, renewal and premature closure. Maturity payout accepts Fund Transfer, Cheque or SDF Savings, enforced server-side.",
+      "Term deposit lifecycle: booking, interest schedule, daily accrual (posted to GL every EOD), payout, maturity, renewal, premature closure and dormancy sweep. Maturity payout accepts Fund Transfer, Cheque or SDF Savings, enforced server-side. ALCO rate changes are versioned in fd_alco_rate and applied via workflow proposal.",
     ownedTables: [
       "fixed_deposit", "fd_product", "fd_rate_tier",
       "fd_interest_schedule", "fd_accrual", "fd_transaction",
-      "fd_nominee", "fd_number_seq",
+      "fd_nominee", "fd_number_seq", "fd_alco_rate",
     ],
-    serverFns: ["src/lib/fd.functions.ts", "src/lib/payment-methods.ts (guard)"],
+    serverFns: [
+      "src/lib/fd.functions.ts",
+      "src/lib/lifecycle.functions.ts (markFdDormant)",
+      "src/lib/payment-methods.ts (guard)",
+    ],
     publicApi: [],
     publishesEvents: [
       "fd.booked", "fd.interest_accrued", "fd.interest_paid",
-      "fd.matured", "fd.renewed", "fd.premature_closed",
+      "fd.matured", "fd.renewed", "fd.premature_closed", "fd.dormant",
     ],
     consumesEvents: ["client.kyc_verified", "alco.fd_rate_changed"],
     dependsOn: ["ledger", "clients"],
     extractionReadiness: "ready",
     extractionNotes:
-      "Accrual is idempotent per (deposit, date) — perfect candidate for an isolated worker.",
+      "Accrual is idempotent per (deposit, date) and now double-entry posts each day — perfect candidate for an isolated worker.",
     accent: "from-amber-500/10 to-amber-500/0 border-amber-500/30",
   },
   {
