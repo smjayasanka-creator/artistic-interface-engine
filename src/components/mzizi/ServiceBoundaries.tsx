@@ -74,7 +74,7 @@ const DOMAINS: Domain[] = [
     tag: "current & savings accounts",
     icon: PiggyBank,
     summary:
-      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, dormancy, passbook stock and issue. Withdrawals accept Cash, Fund Transfer (client bank account), Cheque or SDF Savings, enforced server-side via payment-method guard. Dormancy sweeps unclaimed balances to the configured GL account.",
+      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, dormancy, passbook stock and issue. Withdrawals accept Cash, Fund Transfer (client bank account), Cheque or SDF Savings, enforced server-side via payment-method guard. Owns the savings ALCO rate table (moved in from the retired standalone ALCO module). Dormancy sweeps unclaimed balances to the configured GL account.",
     ownedTables: [
       "savings_account", "savings_product", "savings_transaction",
       "savings_charge", "savings_charge_product", "savings_alco_rate",
@@ -89,12 +89,13 @@ const DOMAINS: Domain[] = [
     publishesEvents: [
       "savings.account_opened", "savings.deposited",
       "savings.withdrawn", "savings.closed", "savings.dormant",
+      "savings.rate_version_applied",
     ],
-    consumesEvents: ["client.kyc_verified", "alco.savings_rate_changed"],
-    dependsOn: ["ledger", "clients"],
+    consumesEvents: ["client.kyc_verified", "workflow.approved"],
+    dependsOn: ["ledger", "clients", "workflow"],
     extractionReadiness: "ready",
     extractionNotes:
-      "Cleanest boundary — schema already isolated, no shared writes outside the ledger. Payment-method guard is a pure module and travels with the service.",
+      "Cleanest boundary — schema already isolated, no shared writes outside the ledger. Payment-method guard is a pure module and travels with the service. Savings rate maintenance is now colocated with the product.",
     accent: "from-emerald-500/10 to-emerald-500/0 border-emerald-500/30",
   },
   {
@@ -103,14 +104,16 @@ const DOMAINS: Domain[] = [
     tag: "term deposits",
     icon: CircleDollarSign,
     summary:
-      "Term deposit lifecycle: booking, interest schedule, daily accrual (posted to GL every EOD), payout, maturity, renewal, premature closure and dormancy sweep. Maturity payout accepts Fund Transfer, Cheque or SDF Savings, enforced server-side. ALCO rate changes are versioned in fd_alco_rate and applied via workflow proposal.",
+      "Term deposit lifecycle: booking, interest schedule, daily accrual (posted to GL every EOD), payout, maturity, renewal, premature closure and dormancy sweep. Maturity payout accepts Fund Transfer, Cheque or SDF Savings, enforced server-side. Owns the deposit ALCO rate table and its workflow proposals — pricing lives with the product now that the standalone ALCO module has been retired. Applied changes are written as immutable version rows in fd_alco_rate.",
     ownedTables: [
       "fixed_deposit", "fd_product", "fd_rate_tier",
       "fd_interest_schedule", "fd_accrual", "fd_transaction",
-      "fd_nominee", "fd_number_seq", "fd_alco_rate",
+      "fd_nominee", "fd_number_seq",
+      "fd_alco_rate", "alco_rate_proposal", "alco_rate_proposal_item",
     ],
     serverFns: [
       "src/lib/fd.functions.ts",
+      "src/lib/alco.functions.ts",
       "src/lib/lifecycle.functions.ts (markFdDormant)",
       "src/lib/payment-methods.ts (guard)",
     ],
@@ -118,13 +121,15 @@ const DOMAINS: Domain[] = [
     publishesEvents: [
       "fd.booked", "fd.interest_accrued", "fd.interest_paid",
       "fd.matured", "fd.renewed", "fd.premature_closed", "fd.dormant",
+      "fd.rate_version_proposed", "fd.rate_version_applied",
     ],
-    consumesEvents: ["client.kyc_verified", "alco.fd_rate_changed"],
-    dependsOn: ["ledger", "clients"],
+    consumesEvents: ["client.kyc_verified", "workflow.approved"],
+    dependsOn: ["ledger", "clients", "workflow"],
     extractionReadiness: "ready",
     extractionNotes:
-      "Accrual is idempotent per (deposit, date) and now double-entry posts each day — perfect candidate for an isolated worker.",
+      "Accrual is idempotent per (deposit, date) and now double-entry posts each day — perfect candidate for an isolated worker. Deposit rate maintenance is now inside this domain rather than a separate ALCO service.",
     accent: "from-amber-500/10 to-amber-500/0 border-amber-500/30",
+
   },
   {
     id: "workflow",
