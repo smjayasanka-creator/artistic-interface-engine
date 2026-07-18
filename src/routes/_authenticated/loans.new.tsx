@@ -23,6 +23,7 @@ import {
 } from "@/components/mzizi/FormGrid";
 import { money, shortDate, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { LoanEvaluation } from "@/components/mzizi/LoanEvaluation";
 
 import { generateSchedule, generateStructuredSchedule, FREQ_META, type Frequency, type InterestMethod, type ScheduleType } from "@/lib/loan-schedule";
 
@@ -96,6 +97,7 @@ function TabHeader({ tab, setTab }: { tab: TabKey; setTab: (t: TabKey) => void }
 
 function NewLoan() {
   const nav = useNavigate();
+  const { id: editingLoanId } = Route.useSearch();
   const [tab, setTab] = useState<TabKey>("customer");
   const [clientId, setClientId] = useState("");
   const [productId, setProductId] = useState("");
@@ -1401,9 +1403,7 @@ function NewLoan() {
 
 
           {tab === "evaluations" && (
-            <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
-              Credit scoring and evaluation checks will appear here.
-            </div>
+            <LoanEvaluation loanId={editingLoanId} productId={productId || undefined} />
           )}
 
           <FormActions align="between">

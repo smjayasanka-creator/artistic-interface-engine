@@ -46,12 +46,13 @@ import { AlcoRatesPanel } from "@/components/mzizi/AlcoRatesPanel";
 import { LoanAlcoRatesPanel } from "@/components/mzizi/LoanAlcoRatesPanel";
 import { RiskProfilingTab } from "@/components/mzizi/RiskProfilingTab";
 import { ScreeningConfigTab } from "@/components/mzizi/ScreeningConfigTab";
+import { LoanProductEvaluationTab } from "@/components/mzizi/LoanProductEvaluationTab";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "user_roles" | "products" | "loan_charges" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "risk_profiling" | "screening" | "bank_directory" | "eod" | "time_travel";
+type Tab = "settings" | "branches" | "staff" | "user_roles" | "products" | "loan_charges" | "loan_evaluation" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "risk_profiling" | "screening" | "bank_directory" | "eod" | "time_travel";
 type Mode = "list" | "create" | "edit";
 type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
 const LOAN_SEGMENTS: { value: LoanSegment; label: string }[] = [
@@ -104,6 +105,7 @@ const SECTIONS: Section[] = [
   { id: "loan_charges", label: "Loan charges",     desc: "Fees applied to loan products (in-house/outside)", icon: Coins,     accent: "from-yellow-500/15 to-yellow-500/0 text-yellow-600", group: "loan" },
   { id: "loan_alco_rates", label: "Loan ALCO rates", desc: "Rate bands by product, security & equipment",     icon: LineChart, accent: "from-amber-500/15 to-amber-500/0 text-amber-600", group: "loan" },
   { id: "security_types", label: "Security types",  desc: "Collateral kinds (vehicle, property, gold …)",     icon: Shield,      accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600", group: "loan" },
+  { id: "loan_evaluation", label: "Loan product evaluation", desc: "Configure evaluation sections per loan product", icon: ShieldCheck, accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600", group: "loan" },
 
   { id: "fd_products", label: "FD products",       desc: "Fixed deposit tenors & rates",                     icon: PiggyBank, accent: "from-teal-500/15 to-teal-500/0 text-teal-600", group: "savings_fd" },
   { id: "savings_products", label: "Savings products", desc: "Passbook accounts, interest & fees",           icon: Coins,     accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600", group: "savings_fd" },
@@ -184,6 +186,7 @@ function Admin() {
       {tab === "user_roles" && <UserRolesTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "loan_charges" && <LoanChargesTab />}
+      {tab === "loan_evaluation" && <LoanProductEvaluationTab />}
       {tab === "fd_products" && <FdProductsTab />}
       {tab === "savings_products" && <SavingsProductsTab />}
       {tab === "savings_charges" && <SavingsChargesTab />}
