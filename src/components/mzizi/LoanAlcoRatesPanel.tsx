@@ -179,9 +179,15 @@ export function LoanAlcoRatesPanel() {
     });
   }, [rows, ratesById]);
 
+  const proposalsFn = useServerFn(listLoanAlcoProposals);
+  const applyProposalFn = useServerFn(applyLoanAlcoProposal);
+  const cancelProposalFn = useServerFn(cancelLoanAlcoProposal);
+  const { data: proposals } = useQuery({ queryKey: ["loan-alco", "proposals"], queryFn: () => proposalsFn() });
+
   const save = useMutation({
     mutationFn: async () => {
-      const results: string[] = [];
+      let pending = 0;
+      let applied = 0;
       for (const d of changedRows) {
         const minR = Number(d.min_rate);
         const maxR = Number(d.max_rate);
@@ -193,7 +199,7 @@ export function LoanAlcoRatesPanel() {
         }
         if (maxR < minR) throw new Error(`${label}: max rate must be ≥ min rate`);
         if (maxP < minP) throw new Error(`${label}: max period must be ≥ min period`);
-        await upsertFn({
+        const res: any = await upsertFn({
           data: {
             product_id: d.product_id,
             security_type_id: d.security_type_id || null,
@@ -207,12 +213,19 @@ export function LoanAlcoRatesPanel() {
             active: d.active,
           },
         });
-        results.push(label);
+        if (res?.pending) pending++; else applied++;
       }
-      return results;
+      return { pending, applied };
     },
-    onSuccess: (res) => {
-      toast.success(`Saved ${res.length} row(s)`);
+    onSuccess: ({ pending, applied }) => {
+      if (pending > 0 && applied === 0) {
+        toast.success(`${pending} version(s) submitted for approval`);
+      } else if (pending > 0 && applied > 0) {
+        toast.success(`${applied} applied · ${pending} submitted for approval`);
+      } else {
+        toast.success(`Saved ${applied} row(s)`);
+      }
+      setRows((prev) => prev.filter((r) => !r._new));
       qc.invalidateQueries({ queryKey: ["loan-alco"] });
     },
     onError: (e: Error) => toast.error(e.message),
