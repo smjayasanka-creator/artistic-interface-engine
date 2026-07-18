@@ -31,12 +31,15 @@ const DOMAINS: Domain[] = [
     tag: "credit facilities",
     icon: Landmark,
     summary:
-      "Origination (with draft save), disbursement, repayment, restructure, termination, write-off and legal action. Owns loan charges (fixed / variable / manual, capitalizable, inside/outside supplier), ALCO rate overrides, debit notes, and attached securities with document uploads + AI auto-fill.",
+      "Origination (with draft save), disbursement, repayment, restructure, termination, write-off and legal action. Owns loan charges (fixed / variable / manual, capitalizable, inside/outside supplier), ALCO rate overrides with versioned history + workflow proposals, debit notes, attached securities with document uploads + AI auto-fill, product-driven dynamic evaluation sections, and the full write-off + recovery ledger. All money writes go through hardened Postgres RPCs (disburse_loan, record_repayment, record_write_off_recovery) — loan_installment / repayment tables are read-only to authenticated users.",
     ownedTables: [
       "loan", "loan_product", "loan_installment", "loan_installment_reclass",
       "repayment", "lending_group",
       "loan_charge", "loan_charge_product", "loan_applied_charge",
-      "loan_alco_rate", "loan_security", "security_type",
+      "loan_alco_rate", "loan_alco_rate_proposal",
+      "loan_security", "security_type",
+      "loan_write_off", "loan_write_off_recovery",
+      "evaluation_section", "loan_product_evaluation_section", "loan_evaluation",
     ],
     serverFns: [
       "src/lib/mzizi.functions.ts (loan.*)",
@@ -44,18 +47,23 @@ const DOMAINS: Domain[] = [
       "src/lib/loan-alco.functions.ts",
       "src/lib/security.functions.ts",
       "src/lib/security-ai.functions.ts",
+      "src/lib/lifecycle.functions.ts",
+      "src/lib/write-off.functions.ts",
+      "src/lib/evaluation.functions.ts",
     ],
     publicApi: [],
     publishesEvents: [
       "loan.drafted", "loan.submitted", "loan.disbursed", "loan.repaid",
-      "loan.restructured", "loan.written_off", "loan.transferred_to_legal",
-      "loan.charge_capitalized", "loan.security_attached", "loan.debit_note_issued",
+      "loan.restructured", "loan.written_off", "loan.write_off_recovered",
+      "loan.transferred_to_legal", "loan.charge_capitalized",
+      "loan.security_attached", "loan.debit_note_issued",
+      "loan.evaluation_submitted",
     ],
     consumesEvents: ["client.kyc_verified", "workflow.approved", "alco.loan_rate_changed"],
     dependsOn: ["ledger", "workflow", "clients"],
     extractionReadiness: "partial",
     extractionNotes:
-      "Ledger writes are transactional today, and the capitalized-charge reclass runs inside the accrual RPC. Extract only after ledger kernel + outbox pattern is in place. Security AI extraction already calls out to Lovable AI Gateway, so that side is decoupled.",
+      "Ledger writes are transactional today via disburse_loan / record_repayment / record_write_off_recovery RPCs, and the capitalized-charge reclass runs inside the accrual RPC. Extract only after ledger kernel + outbox pattern is in place. Security AI extraction already calls out to Lovable AI Gateway, so that side is decoupled.",
     accent: "from-indigo-500/10 to-indigo-500/0 border-indigo-500/30",
   },
   {
@@ -64,17 +72,21 @@ const DOMAINS: Domain[] = [
     tag: "current & savings accounts",
     icon: PiggyBank,
     summary:
-      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, passbook stock and issue. Withdrawals accept Cash, Fund Transfer (client bank account), Cheque or SDF Savings, enforced server-side.",
+      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, dormancy, passbook stock and issue. Withdrawals accept Cash, Fund Transfer (client bank account), Cheque or SDF Savings, enforced server-side via payment-method guard. Dormancy sweeps unclaimed balances to the configured GL account.",
     ownedTables: [
       "savings_account", "savings_product", "savings_transaction",
       "savings_charge", "savings_charge_product", "savings_alco_rate",
       "passbook_stock", "passbook_issue", "savings_number_seq",
     ],
-    serverFns: ["src/lib/savings.functions.ts", "src/lib/payment-methods.ts (guard)"],
+    serverFns: [
+      "src/lib/savings.functions.ts",
+      "src/lib/lifecycle.functions.ts (markSavingsDormant)",
+      "src/lib/payment-methods.ts (guard)",
+    ],
     publicApi: [],
     publishesEvents: [
       "savings.account_opened", "savings.deposited",
-      "savings.withdrawn", "savings.closed",
+      "savings.withdrawn", "savings.closed", "savings.dormant",
     ],
     consumesEvents: ["client.kyc_verified", "alco.savings_rate_changed"],
     dependsOn: ["ledger", "clients"],
@@ -89,23 +101,27 @@ const DOMAINS: Domain[] = [
     tag: "term deposits",
     icon: CircleDollarSign,
     summary:
-      "Term deposit lifecycle: booking, interest schedule, daily accrual, payout, maturity, renewal and premature closure. Maturity payout accepts Fund Transfer, Cheque or SDF Savings, enforced server-side.",
+      "Term deposit lifecycle: booking, interest schedule, daily accrual (posted to GL every EOD), payout, maturity, renewal, premature closure and dormancy sweep. Maturity payout accepts Fund Transfer, Cheque or SDF Savings, enforced server-side. ALCO rate changes are versioned in fd_alco_rate and applied via workflow proposal.",
     ownedTables: [
       "fixed_deposit", "fd_product", "fd_rate_tier",
       "fd_interest_schedule", "fd_accrual", "fd_transaction",
-      "fd_nominee", "fd_number_seq",
+      "fd_nominee", "fd_number_seq", "fd_alco_rate",
     ],
-    serverFns: ["src/lib/fd.functions.ts", "src/lib/payment-methods.ts (guard)"],
+    serverFns: [
+      "src/lib/fd.functions.ts",
+      "src/lib/lifecycle.functions.ts (markFdDormant)",
+      "src/lib/payment-methods.ts (guard)",
+    ],
     publicApi: [],
     publishesEvents: [
       "fd.booked", "fd.interest_accrued", "fd.interest_paid",
-      "fd.matured", "fd.renewed", "fd.premature_closed",
+      "fd.matured", "fd.renewed", "fd.premature_closed", "fd.dormant",
     ],
     consumesEvents: ["client.kyc_verified", "alco.fd_rate_changed"],
     dependsOn: ["ledger", "clients"],
     extractionReadiness: "ready",
     extractionNotes:
-      "Accrual is idempotent per (deposit, date) — perfect candidate for an isolated worker.",
+      "Accrual is idempotent per (deposit, date) and now double-entry posts each day — perfect candidate for an isolated worker.",
     accent: "from-amber-500/10 to-amber-500/0 border-amber-500/30",
   },
   {
@@ -169,21 +185,23 @@ const DOMAINS: Domain[] = [
     tag: "pricing committee",
     icon: ShieldCheck,
     summary:
-      "Asset-Liability Committee rate proposals for deposit and lending products, approved via workflow.",
+      "Asset-Liability Committee rate proposals for deposit and lending products, approved via workflow. Applied changes are written as immutable version rows in fd_alco_rate / loan_alco_rate, with previous versions retained read-only for audit.",
     ownedTables: [
       "alco_rate_proposal", "alco_rate_proposal_item",
+      "loan_alco_rate_proposal",
     ],
-    serverFns: ["src/lib/alco.functions.ts"],
+    serverFns: ["src/lib/alco.functions.ts", "src/lib/loan-alco.functions.ts"],
     publicApi: [],
     publishesEvents: [
       "alco.rate_change_proposed", "alco.fd_rate_changed",
       "alco.savings_rate_changed", "alco.loan_rate_changed",
+      "alco.version_applied",
     ],
     consumesEvents: ["workflow.approved"],
     dependsOn: ["workflow", "fd", "savings", "loans"],
     extractionReadiness: "ready",
     extractionNotes:
-      "Low volume, high impact. Extract once event bus is live so downstream products can subscribe cleanly.",
+      "Low volume, high impact. Extract once event bus is live so downstream products can subscribe cleanly. Version history is already immutable in the fd_alco_rate / loan_alco_rate tables.",
     accent: "from-sky-500/10 to-sky-500/0 border-sky-500/30",
   },
   {
@@ -192,11 +210,11 @@ const DOMAINS: Domain[] = [
     tag: "double-entry GL",
     icon: BookOpen,
     summary:
-      "Shared kernel. Every money-moving domain posts through post_entry(). Immutable, balanced, append-only. Also owns the outbox (domain_event) and month-partitioned EOD balance snapshots.",
+      "Shared kernel. Every money-moving domain posts through post_entry(); disburse_loan, record_repayment, record_write_off_recovery and post_manual_journal are the only sanctioned write paths. loan_installment / journal_entry / posting / repayment are read-only to authenticated users — only SECURITY DEFINER RPCs mutate them. Owns the outbox (domain_event), month-partitioned EOD balance snapshots, and the fx_rate history.",
     ownedTables: [
       "gl_account", "journal_entry", "posting", "domain_event",
       "gl_eod_balance", "loan_eod_balance", "savings_eod_balance", "fd_eod_balance",
-      "eod_run",
+      "eod_run", "fx_rate",
     ],
     serverFns: ["src/lib/api-ledger.server.ts (post_entry_system wrapper)"],
     publicApi: [
@@ -206,13 +224,52 @@ const DOMAINS: Domain[] = [
       "/api/public/hooks/fd-mature",
       "/api/public/hooks/loan-accrue",
     ],
-    publishesEvents: ["ledger.entry_posted", "eod.closed"],
+    publishesEvents: ["ledger.entry_posted", "eod.closed", "fx.rate_updated"],
     consumesEvents: [],
     dependsOn: [],
     extractionReadiness: "coupled",
     extractionNotes:
       "Do NOT extract. Ledger is the shared kernel — colocated with Postgres for ACID balance guarantees. The outbox dispatcher can move to its own worker once subscribers exist.",
     accent: "from-slate-500/10 to-slate-500/0 border-slate-500/30",
+  },
+  {
+    id: "eod",
+    label: "Day End (EOD)",
+    tag: "orchestration",
+    icon: GitBranch,
+    summary:
+      "Centralized company-wide Day End orchestration — pre-day validations, loan/FD accrual, penalty + PAR/NPA classification, FD maturity, savings interest, GL posting, trial balance, report generation and date rollover. Runs across every branch in one shot; supports scheduled auto-EOD and dual-authorization manual runs from the Admin console.",
+    ownedTables: ["eod_run", "eod_step_log"],
+    serverFns: ["src/lib/eod.functions.ts"],
+    publicApi: ["/api/public/hooks/eod-close"],
+    publishesEvents: [
+      "eod.started", "eod.step_completed",
+      "eod.closed", "eod.failed", "eod.rolled_back",
+    ],
+    consumesEvents: [],
+    dependsOn: ["ledger", "loans", "fd", "savings"],
+    extractionReadiness: "partial",
+    extractionNotes:
+      "Perfect fit for a scheduled worker once outbox is live — it already reads/writes only through domain RPCs. Keep it close to the ledger until each step becomes idempotent + resumable end-to-end.",
+    accent: "from-orange-500/10 to-orange-500/0 border-orange-500/30",
+  },
+  {
+    id: "banks",
+    label: "Bank Directory",
+    tag: "CEFTS · SLIPS registry",
+    icon: Landmark,
+    summary:
+      "Master data for partner banks and their branches, with per-bank CEFTS / SLIPS enablement flags. Referenced by client bank accounts, outbound payments, cheque handling and the Public API integration surface.",
+    ownedTables: ["bank", "bank_branch"],
+    serverFns: ["src/lib/bank-directory.functions.ts"],
+    publicApi: [],
+    publishesEvents: ["bank.updated", "bank_branch.updated"],
+    consumesEvents: [],
+    dependsOn: [],
+    extractionReadiness: "ready",
+    extractionNotes:
+      "Reference data only — cache-friendly and read-heavy. Trivial to lift into a shared config service or edge KV.",
+    accent: "from-cyan-500/10 to-cyan-500/0 border-cyan-500/30",
   },
   {
     id: "clients",
