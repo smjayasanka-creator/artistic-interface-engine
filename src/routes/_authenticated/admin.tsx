@@ -105,6 +105,7 @@ const SECTIONS: Section[] = [
   { id: "loan_charges", label: "Loan charges",     desc: "Fees applied to loan products (in-house/outside)", icon: Coins,     accent: "from-yellow-500/15 to-yellow-500/0 text-yellow-600", group: "loan" },
   { id: "loan_alco_rates", label: "Loan ALCO rates", desc: "Rate bands by product, security & equipment",     icon: LineChart, accent: "from-amber-500/15 to-amber-500/0 text-amber-600", group: "loan" },
   { id: "security_types", label: "Security types",  desc: "Collateral kinds (vehicle, property, gold …)",     icon: Shield,      accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600", group: "loan" },
+  { id: "loan_evaluation", label: "Loan product evaluation", desc: "Configure evaluation sections per loan product", icon: ShieldCheck, accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600", group: "loan" },
 
   { id: "fd_products", label: "FD products",       desc: "Fixed deposit tenors & rates",                     icon: PiggyBank, accent: "from-teal-500/15 to-teal-500/0 text-teal-600", group: "savings_fd" },
   { id: "savings_products", label: "Savings products", desc: "Passbook accounts, interest & fees",           icon: Coins,     accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600", group: "savings_fd" },
