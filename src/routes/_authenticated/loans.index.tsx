@@ -1,21 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight, Loader2, Truck, Eye } from "lucide-react";
-import { getLoans } from "@/lib/mzizi.functions";
-import { Avatar } from "@/components/mzizi/Avatar";
+import { FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight, Truck, Mail, Activity, FileText } from "lucide-react";
 import { Card } from "@/components/mzizi/Card";
-import { TablePagination } from "@/components/mzizi/TablePagination";
-import { money } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/loans/")({
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData({
-      queryKey: ["loans", 1, 25],
-      queryFn: () => getLoans({ data: { page: 1, pageSize: 25 } }),
-    }),
   component: LoansList,
 });
 
@@ -76,23 +63,32 @@ const TILES = [
     icon: Gavel,
     accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600",
   },
+  {
+    to: "/loans/reminder-letters",
+    label: "Reminder Letters",
+    desc: "Generate and send reminder letters to borrowers",
+    icon: Mail,
+    accent: "from-orange-500/15 to-orange-500/0 text-orange-600",
+  },
+  {
+    to: "/loans/actions",
+    label: "Actions",
+    desc: "Track follow-up actions on facilities",
+    icon: Activity,
+    accent: "from-lime-500/15 to-lime-500/0 text-lime-600",
+  },
+  {
+    to: "/loans/account-statements",
+    label: "Account Statements",
+    desc: "View and download facility account statements",
+    icon: FileText,
+    accent: "from-blue-500/15 to-blue-500/0 text-blue-600",
+  },
 ] as const;
 
 function LoansList() {
-  const fn = useServerFn(getLoans);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const { data, isFetching, isPlaceholderData } = useQuery({
-    queryKey: ["loans", page, pageSize],
-    queryFn: () => fn({ data: { page, pageSize } }),
-    placeholderData: keepPreviousData,
-  });
-  const rows = data?.rows ?? [];
-  const totalCount = data?.totalCount ?? 0;
-
   return (
     <div className="animate-fadein space-y-6">
-
       <div className="grid gap-3 md:grid-cols-3">
         {TILES.map((t) => {
           const Icon = t.icon;
@@ -114,65 +110,6 @@ function LoansList() {
           );
         })}
       </div>
-
-      <div className="pt-2">
-        <h2 className="text-lg font-semibold text-foreground">Pending facilities</h2>
-        <p className="text-[12.5px] text-faint mt-0.5 flex items-center gap-2">
-          Applications and drafts awaiting disbursement
-          {isFetching && <Loader2 size={12} className="animate-spin" />}
-        </p>
-      </div>
-
-      <div className={cn("bg-card border border-border rounded-xl overflow-hidden", isPlaceholderData && "opacity-60 transition-opacity")}>
-        <div className="grid gap-4 text-[10.5px] uppercase tracking-wider text-faint font-semibold py-3 px-5 border-b border-border bg-secondary/40"
-             style={{ gridTemplateColumns: "1fr 1.7fr 1fr 1.4fr 60px" }}>
-          <div>Facility No.</div><div>Client</div><div>Principal</div><div>Current stage</div><div className="text-right">View</div>
-        </div>
-        {rows.map((l: any) => {
-          const isDraft = l.status === "draft";
-          const to = isDraft ? "/loans/new" : "/loans/$id";
-          const linkProps: any = isDraft
-            ? { to, search: { id: l.id } }
-            : { to, params: { id: l.id } };
-          return (
-            <Link
-              key={l.id}
-              {...linkProps}
-              className="grid gap-4 items-center text-[12.5px] py-3 px-5 border-b border-row-divider last:border-b-0 hover:bg-row-hover"
-              style={{ gridTemplateColumns: "1fr 1.7fr 1fr 1.4fr 60px" }}
-            >
-              <div className="font-mono text-[12px] font-semibold">{l.contract_no ?? "—"}</div>
-              <div className="font-semibold flex items-center gap-2.5 min-w-0">
-                <Avatar name={l.client?.full_name ?? "?"} color={l.client?.avatar_color} size={30} />
-                <span className="truncate">{l.client?.full_name}</span>
-              </div>
-              <div className="font-mono">{money(l.principal)}</div>
-              <div className="text-[11.5px] font-semibold text-secondary-foreground">
-                <span className={cn(
-                  "inline-flex items-center px-2 py-0.5 rounded-md",
-                  isDraft ? "bg-amber-500/15 text-amber-700" : "bg-primary/10 text-primary",
-                )}>
-                  {l.stage}
-                </span>
-              </div>
-              <div className="flex justify-end">
-                <span className="w-8 h-8 rounded-md border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40">
-                  <Eye size={14} />
-                </span>
-              </div>
-            </Link>
-          );
-        })}
-        {rows.length === 0 && <div className="text-center text-faint text-sm py-10">No pending facilities.</div>}
-      </div>
-      <TablePagination
-        page={page}
-        pageSize={pageSize}
-        totalCount={totalCount}
-        onPageChange={setPage}
-        onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
-        label="loans"
-      />
     </div>
   );
 }
