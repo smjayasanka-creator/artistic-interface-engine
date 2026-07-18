@@ -10,8 +10,9 @@ import {
 import { Modal } from "@/components/mzizi/Modal";
 import {
   listLoanAlcoRates, upsertLoanAlcoRate, deleteLoanAlcoRate, listLoanAlcoRateHistory,
-  listLoanAlcoProposals, applyLoanAlcoProposal, cancelLoanAlcoProposal,
+  listLoanAlcoProposals, applyLoanAlcoProposal, cancelLoanAlcoProposal, listAllLoanAlcoVersions,
 } from "@/lib/loan-alco.functions";
+
 import { getAllLoanProducts } from "@/lib/mzizi.functions";
 import { listSecurityTypes } from "@/lib/security.functions";
 
