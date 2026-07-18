@@ -45,6 +45,15 @@ export function AlcoRatesPanel() {
   const { data: rows, isLoading } = useQuery({ queryKey: ["alco", "products"], queryFn: () => listFn() });
   const { data: proposals } = useQuery({ queryKey: ["alco", "proposals"], queryFn: () => proposalsFn() });
 
+  const historyFn = useServerFn(listAlcoRateHistory);
+  const [historyFor, setHistoryFor] = useState<Row | null>(null);
+  const { data: historyRows, isFetching: historyLoading } = useQuery({
+    queryKey: ["alco", "history", historyFor?.id],
+    queryFn: () => historyFn({ data: { product_id: historyFor!.id } }),
+    enabled: !!historyFor,
+  });
+
+
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [notes, setNotes] = useState("");
   const [bulkOpen, setBulkOpen] = useState(false);
