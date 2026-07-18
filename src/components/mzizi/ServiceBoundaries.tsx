@@ -212,54 +212,33 @@ const DOMAINS: Domain[] = [
   },
 
   {
-    id: "ledger",
-    label: "Ledger (kernel)",
-    tag: "double-entry GL",
-    icon: BookOpen,
+    id: "eod",
+    label: "Day End (EOD)",
+    tag: "orchestration · summaries · reports",
+    icon: GitBranch,
     summary:
-      "Shared kernel. Every money-moving domain posts through post_entry(); disburse_loan, record_repayment, record_write_off_recovery and post_manual_journal are the only sanctioned write paths. loan_installment / journal_entry / posting / repayment are read-only to authenticated users — only SECURITY DEFINER RPCs mutate them. Owns the outbox (domain_event), month-partitioned EOD balance snapshots, and the fx_rate history.",
-    ownedTables: [
-      "gl_account", "journal_entry", "posting", "domain_event",
-      "gl_eod_balance", "loan_eod_balance", "savings_eod_balance", "fd_eod_balance",
-      "eod_run", "fx_rate",
-    ],
-    serverFns: ["src/lib/api-ledger.server.ts (post_entry_system wrapper)"],
+      "Centralized company-wide Day End orchestration and all Day-End artefacts — pre-day validations, loan/FD accrual, penalty + PAR/NPA classification, FD maturity, savings interest, GL posting, trial balance, Day End Summary tables and generated reports, plus date rollover. Runs across every branch in one shot; supports scheduled auto-EOD and dual-authorization manual runs from the Admin console. Owns eod_run + eod_step_log and drives (but does not own) the month-partitioned EOD balance snapshots in the ledger.",
+    ownedTables: ["eod_run", "eod_step_log"],
+    serverFns: ["src/lib/eod.functions.ts"],
     publicApi: [
       "/api/public/hooks/eod-close",
-      "/api/public/hooks/dispatch-domain-events",
       "/api/public/hooks/fd-accrue",
       "/api/public/hooks/fd-mature",
       "/api/public/hooks/loan-accrue",
     ],
-    publishesEvents: ["ledger.entry_posted", "eod.closed", "fx.rate_updated"],
-    consumesEvents: [],
-    dependsOn: [],
-    extractionReadiness: "coupled",
-    extractionNotes:
-      "Do NOT extract. Ledger is the shared kernel — colocated with Postgres for ACID balance guarantees. The outbox dispatcher can move to its own worker once subscribers exist.",
-    accent: "from-slate-500/10 to-slate-500/0 border-slate-500/30",
-  },
-  {
-    id: "eod",
-    label: "Day End (EOD)",
-    tag: "orchestration",
-    icon: GitBranch,
-    summary:
-      "Centralized company-wide Day End orchestration — pre-day validations, loan/FD accrual, penalty + PAR/NPA classification, FD maturity, savings interest, GL posting, trial balance, report generation and date rollover. Runs across every branch in one shot; supports scheduled auto-EOD and dual-authorization manual runs from the Admin console.",
-    ownedTables: ["eod_run", "eod_step_log"],
-    serverFns: ["src/lib/eod.functions.ts"],
-    publicApi: ["/api/public/hooks/eod-close"],
     publishesEvents: [
       "eod.started", "eod.step_completed",
       "eod.closed", "eod.failed", "eod.rolled_back",
+      "eod.summary_generated",
     ],
     consumesEvents: [],
     dependsOn: ["ledger", "loans", "fd", "savings"],
     extractionReadiness: "partial",
     extractionNotes:
-      "Perfect fit for a scheduled worker once outbox is live — it already reads/writes only through domain RPCs. Keep it close to the ledger until each step becomes idempotent + resumable end-to-end.",
+      "Perfect fit for a scheduled worker once outbox is live — it already reads/writes only through domain RPCs. Day End Summary + report artefacts are grouped here (not in Reports) so every generated snapshot stays traceable to the run that produced it.",
     accent: "from-orange-500/10 to-orange-500/0 border-orange-500/30",
   },
+
   {
     id: "banks",
     label: "Bank Directory",
