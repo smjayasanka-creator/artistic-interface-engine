@@ -187,30 +187,30 @@ const DOMAINS: Domain[] = [
     accent: "from-rose-500/10 to-rose-500/0 border-rose-500/30",
   },
   {
-    id: "alco",
-    label: "ALCO Rates",
-    tag: "pricing committee",
-    icon: ShieldCheck,
+    id: "ledger",
+    label: "Ledger (kernel)",
+    tag: "double-entry GL",
+    icon: BookOpen,
     summary:
-      "Asset-Liability Committee rate proposals for deposit and lending products, approved via workflow. Applied changes are written as immutable version rows in fd_alco_rate / loan_alco_rate, with previous versions retained read-only for audit.",
+      "Shared kernel. Every money-moving domain posts through post_entry(); disburse_loan, record_repayment, record_write_off_recovery and post_manual_journal are the only sanctioned write paths. loan_installment / journal_entry / posting / repayment are read-only to authenticated users — only SECURITY DEFINER RPCs mutate them. Owns the outbox (domain_event), month-partitioned EOD balance snapshots, and the fx_rate history.",
     ownedTables: [
-      "alco_rate_proposal", "alco_rate_proposal_item",
-      "loan_alco_rate_proposal",
+      "gl_account", "journal_entry", "posting", "domain_event",
+      "gl_eod_balance", "loan_eod_balance", "savings_eod_balance", "fd_eod_balance",
+      "fx_rate",
     ],
-    serverFns: ["src/lib/alco.functions.ts", "src/lib/loan-alco.functions.ts"],
-    publicApi: [],
-    publishesEvents: [
-      "alco.rate_change_proposed", "alco.fd_rate_changed",
-      "alco.savings_rate_changed", "alco.loan_rate_changed",
-      "alco.version_applied",
+    serverFns: ["src/lib/api-ledger.server.ts (post_entry_system wrapper)"],
+    publicApi: [
+      "/api/public/hooks/dispatch-domain-events",
     ],
-    consumesEvents: ["workflow.approved"],
-    dependsOn: ["workflow", "fd", "savings", "loans"],
-    extractionReadiness: "ready",
+    publishesEvents: ["ledger.entry_posted", "fx.rate_updated"],
+    consumesEvents: [],
+    dependsOn: [],
+    extractionReadiness: "coupled",
     extractionNotes:
-      "Low volume, high impact. Extract once event bus is live so downstream products can subscribe cleanly. Version history is already immutable in the fd_alco_rate / loan_alco_rate tables.",
-    accent: "from-sky-500/10 to-sky-500/0 border-sky-500/30",
+      "Do NOT extract. Ledger is the shared kernel — colocated with Postgres for ACID balance guarantees. The outbox dispatcher can move to its own worker once subscribers exist.",
+    accent: "from-slate-500/10 to-slate-500/0 border-slate-500/30",
   },
+
   {
     id: "ledger",
     label: "Ledger (kernel)",
