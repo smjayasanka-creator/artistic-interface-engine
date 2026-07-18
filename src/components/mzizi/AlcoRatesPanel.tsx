@@ -2,15 +2,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Upload, CheckCircle2, XCircle, Clock, Send } from "lucide-react";
+import { Upload, CheckCircle2, XCircle, Clock, Send, History } from "lucide-react";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
   FormGrid, FormField, FormActions, inputCls, btnPrimaryCls, btnSecondaryCls,
 } from "@/components/mzizi/FormGrid";
+import { Modal } from "@/components/mzizi/Modal";
 import {
   listAlcoRates, submitAlcoProposal, listAlcoProposals, applyAlcoProposal, cancelAlcoProposal,
+  listAlcoRateHistory,
 } from "@/lib/alco.functions";
 import { shortDate } from "@/lib/format";
+
 
 type Row = {
   id: string;
