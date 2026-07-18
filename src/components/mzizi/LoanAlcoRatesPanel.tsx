@@ -10,8 +10,9 @@ import {
 import { Modal } from "@/components/mzizi/Modal";
 import {
   listLoanAlcoRates, upsertLoanAlcoRate, deleteLoanAlcoRate, listLoanAlcoRateHistory,
-  listLoanAlcoProposals, applyLoanAlcoProposal, cancelLoanAlcoProposal,
+  listLoanAlcoProposals, applyLoanAlcoProposal, cancelLoanAlcoProposal, listAllLoanAlcoVersions,
 } from "@/lib/loan-alco.functions";
+
 import { getAllLoanProducts } from "@/lib/mzizi.functions";
 import { listSecurityTypes } from "@/lib/security.functions";
 
@@ -343,6 +344,12 @@ export function LoanAlcoRatesPanel() {
     }),
     enabled: !!historyFor,
   });
+
+  // All-versions panel
+  const allVersionsFn = useServerFn(listAllLoanAlcoVersions);
+  const { data: allVersions } = useQuery({ queryKey: ["loan-alco", "all-versions"], queryFn: () => allVersionsFn() });
+  const [viewVersion, setViewVersion] = useState<any | null>(null);
+
 
   if (isLoading) return <div className="text-sm text-muted-foreground">Loading loan ALCO rates…</div>;
 
@@ -680,6 +687,125 @@ export function LoanAlcoRatesPanel() {
         </div>
       )}
 
+      <div className="mt-6 border-t border-border pt-4">
+        <div className="flex items-center gap-2 mb-2">
+          <History size={14} className="text-muted-foreground" />
+          <div className="text-[13px] font-semibold">Previous versions</div>
+          <div className="text-[11px] text-muted-foreground">All historical Loan ALCO rate versions across products (read-only)</div>
+        </div>
+        <div className="overflow-auto rounded-md border border-border max-h-[420px]">
+          <table className="w-full text-[12px]">
+            <thead className="bg-muted/40 text-[10.5px] uppercase tracking-wider text-muted-foreground sticky top-0">
+              <tr>
+                <th className="text-left px-2 py-1.5 w-12">Ver</th>
+                <th className="text-left px-2 py-1.5">Product</th>
+                <th className="text-left px-2 py-1.5">Security / Equipment</th>
+                <th className="text-left px-2 py-1.5">Effective date</th>
+                <th className="text-left px-2 py-1.5 w-20">Status</th>
+                <th className="text-left px-2 py-1.5">Created by</th>
+                <th className="text-left px-2 py-1.5">Created date</th>
+                <th className="text-left px-2 py-1.5">Approved by</th>
+                <th className="text-left px-2 py-1.5">Approved date</th>
+                <th className="text-center px-2 py-1.5 w-16">View</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {(allVersions ?? []).map((v: any) => {
+                const statusCls =
+                  v.status === "active" ? "bg-emerald-500/10 text-emerald-700"
+                  : v.status === "retired" ? "bg-muted text-muted-foreground"
+                  : "bg-slate-500/10 text-slate-600";
+                return (
+                  <tr key={v.id} className={v.status === "active" ? "bg-emerald-500/5" : ""}>
+                    <td className="px-2 py-1.5 font-mono text-[11px]">v{v.version_no}</td>
+                    <td className="px-2 py-1.5">{v.product?.name ?? "—"}</td>
+                    <td className="px-2 py-1.5 text-muted-foreground">
+                      {[v.security?.name, v.equipment_vehicle].filter(Boolean).join(" · ") || "—"}
+                    </td>
+                    <td className="px-2 py-1.5 whitespace-nowrap">{new Date(v.effective_from).toLocaleDateString()}</td>
+                    <td className="px-2 py-1.5">
+                      <span className={`inline-flex px-1.5 py-0.5 rounded text-[10.5px] font-medium uppercase tracking-wide ${statusCls}`}>
+                        {v.status}
+                      </span>
+                    </td>
+                    <td className="px-2 py-1.5 whitespace-nowrap">{v.created_by_name ?? "—"}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">{v.created_at ? new Date(v.created_at).toLocaleString() : "—"}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap">{v.approved_by_name ?? "—"}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">{v.approved_at ? new Date(v.approved_at).toLocaleString() : "—"}</td>
+                    <td className="px-2 py-1.5 text-center">
+                      <button
+                        className="text-muted-foreground hover:bg-muted rounded p-1"
+                        title="Open in read-only view"
+                        onClick={() => setViewVersion(v)}
+                      >
+                        <History size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {(allVersions ?? []).length === 0 && (
+                <tr><td colSpan={10} className="px-2 py-4 text-center text-muted-foreground">No versions yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <Modal open={!!viewVersion} onClose={() => setViewVersion(null)} title={`Rate version v${viewVersion?.version_no ?? ""} — read-only`} width={640}>
+        {viewVersion && (
+          <div className="text-[12.5px] space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div><div className="text-[11px] text-muted-foreground">Product</div><div className="font-semibold">{viewVersion.product?.name ?? "—"}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Security type</div><div>{viewVersion.security?.name ?? "—"}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Equipment / Vehicle</div><div>{viewVersion.equipment_vehicle ?? "—"}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Status</div><div className="uppercase text-[11px]">{viewVersion.status}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Min rate</div><div className="font-mono">{viewVersion.min_rate}%</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Max rate</div><div className="font-mono">{viewVersion.max_rate}%</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Min period (months)</div><div className="font-mono">{viewVersion.min_period_months}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Max period (months)</div><div className="font-mono">{viewVersion.max_period_months}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Effective from</div><div>{new Date(viewVersion.effective_from).toLocaleString()}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Effective to</div><div>{viewVersion.effective_to ? new Date(viewVersion.effective_to).toLocaleString() : "—"}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Created by</div><div>{viewVersion.created_by_name ?? "—"}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Created date</div><div>{viewVersion.created_at ? new Date(viewVersion.created_at).toLocaleString() : "—"}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Approved by</div><div>{viewVersion.approved_by_name ?? "—"}</div></div>
+              <div><div className="text-[11px] text-muted-foreground">Approved date</div><div>{viewVersion.approved_at ? new Date(viewVersion.approved_at).toLocaleString() : "—"}</div></div>
+            </div>
+            {viewVersion.note && (
+              <div><div className="text-[11px] text-muted-foreground">Note</div><div>{viewVersion.note}</div></div>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                className={btnSecondaryCls}
+                title="Clone this version into an editable draft row at the bottom of the table"
+                onClick={() => {
+                  setRows((prev) => [...prev, {
+                    key: `new-${crypto.randomUUID()}`,
+                    product_id: viewVersion.product_id,
+                    security_type_id: viewVersion.security_type_id ?? "",
+                    equipment_vehicle: viewVersion.equipment_vehicle ?? "",
+                    min_rate: String(viewVersion.min_rate),
+                    max_rate: String(viewVersion.max_rate),
+                    min_period_months: String(viewVersion.min_period_months),
+                    max_period_months: String(viewVersion.max_period_months),
+                    active: true,
+                    effective_from: nowLocal(),
+                    note: "",
+                    _new: true,
+                  }]);
+                  setViewVersion(null);
+                  toast.success("Cloned into a new draft row — edit and save");
+                }}
+              >
+                <Plus size={14} className="mr-1.5" /> Create new version from this
+              </button>
+              <button className={btnPrimaryCls} onClick={() => setViewVersion(null)}>Close</button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
     </Card>
+
   );
 }
