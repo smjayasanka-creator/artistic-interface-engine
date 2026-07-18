@@ -186,6 +186,7 @@ function Admin() {
       {tab === "user_roles" && <UserRolesTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "loan_charges" && <LoanChargesTab />}
+      {tab === "loan_evaluation" && <LoanProductEvaluationTab />}
       {tab === "fd_products" && <FdProductsTab />}
       {tab === "savings_products" && <SavingsProductsTab />}
       {tab === "savings_charges" && <SavingsChargesTab />}
