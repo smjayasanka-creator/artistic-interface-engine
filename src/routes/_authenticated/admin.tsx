@@ -46,6 +46,7 @@ import { AlcoRatesPanel } from "@/components/mzizi/AlcoRatesPanel";
 import { LoanAlcoRatesPanel } from "@/components/mzizi/LoanAlcoRatesPanel";
 import { RiskProfilingTab } from "@/components/mzizi/RiskProfilingTab";
 import { ScreeningConfigTab } from "@/components/mzizi/ScreeningConfigTab";
+import { LoanProductEvaluationTab } from "@/components/mzizi/LoanProductEvaluationTab";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
