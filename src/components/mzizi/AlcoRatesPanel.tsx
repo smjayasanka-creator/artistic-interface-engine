@@ -197,6 +197,7 @@ export function AlcoRatesPanel() {
                 <th className="text-right px-3 py-2 w-32">Maximum %</th>
                 <th className="text-right px-3 py-2 w-32">CBSL max %</th>
                 <th className="text-center px-3 py-2 w-16">Δ</th>
+                <th className="text-center px-3 py-2 w-20">History</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -222,12 +223,23 @@ export function AlcoRatesPanel() {
                     <td className="px-3 py-1.5 text-center">
                       {isChanged ? <span className="text-amber-600 font-bold">●</span> : <span className="text-muted-foreground">–</span>}
                     </td>
+                    <td className="px-3 py-1.5 text-center">
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                        title="View version history"
+                        onClick={() => setHistoryFor(r)}
+                      >
+                        <History size={14} />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
               {(rows ?? []).length === 0 && (
-                <tr><td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">No active deposit products.</td></tr>
+                <tr><td colSpan={6} className="px-3 py-4 text-center text-muted-foreground">No active deposit products.</td></tr>
               )}
+
             </tbody>
           </table>
         </div>
