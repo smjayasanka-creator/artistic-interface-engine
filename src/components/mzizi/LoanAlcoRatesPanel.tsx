@@ -504,15 +504,44 @@ export function LoanAlcoRatesPanel() {
         </button>
       </FormActions>
 
-      <Modal open={!!historyFor} onClose={() => setHistoryFor(null)} title="Rate version history" width={720}>
+      <Modal open={!!historyFor} onClose={() => setHistoryFor(null)} title="Rate version history" width={880}>
         {historyFor && (
           <div>
-            <div className="text-[12px] text-muted-foreground mb-3">
-              <span className="font-semibold text-foreground">{productName(historyFor.product_id)}</span>
-              {historyFor.security_type_id && (
-                <> · {activeSecTypes.find((s: any) => s.id === historyFor.security_type_id)?.name}</>
-              )}
-              {historyFor.equipment_vehicle && <> · {historyFor.equipment_vehicle}</>}
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="text-[12px] text-muted-foreground">
+                <span className="font-semibold text-foreground">{productName(historyFor.product_id)}</span>
+                {historyFor.security_type_id && (
+                  <> · {activeSecTypes.find((s: any) => s.id === historyFor.security_type_id)?.name}</>
+                )}
+                {historyFor.equipment_vehicle && <> · {historyFor.equipment_vehicle}</>}
+                <div className="mt-1 text-[11px]">Historical versions are read-only. Create a new version to change rates — the previous version is preserved.</div>
+              </div>
+              <button
+                className={btnPrimaryCls + " h-8"}
+                title="Clone the active version into an editable draft row"
+                onClick={() => {
+                  const active = (historyRows ?? []).find((h: any) => h.effective_to === null) ?? (historyRows ?? [])[0];
+                  if (!active) return;
+                  setRows((prev) => [...prev, {
+                    key: `new-${crypto.randomUUID()}`,
+                    product_id: historyFor.product_id,
+                    security_type_id: active.security_type_id ?? "",
+                    equipment_vehicle: active.equipment_vehicle ?? "",
+                    min_rate: String(active.min_rate),
+                    max_rate: String(active.max_rate),
+                    min_period_months: String(active.min_period_months),
+                    max_period_months: String(active.max_period_months),
+                    active: true,
+                    effective_from: nowLocal(),
+                    note: "",
+                    _new: true,
+                  }]);
+                  setHistoryFor(null);
+                  toast.success("New version draft added — edit and save to create version");
+                }}
+              >
+                <Plus size={14} className="mr-1.5" /> Create new version
+              </button>
             </div>
             {historyLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
             {!historyLoading && (
@@ -520,31 +549,49 @@ export function LoanAlcoRatesPanel() {
                 <table className="w-full text-[12px]">
                   <thead className="bg-muted/40 text-[10.5px] uppercase tracking-wider text-muted-foreground">
                     <tr>
+                      <th className="text-left px-2 py-1.5 w-14">Ver</th>
                       <th className="text-left px-2 py-1.5">Effective from</th>
                       <th className="text-left px-2 py-1.5">Effective to</th>
+                      <th className="text-left px-2 py-1.5 w-20">Status</th>
                       <th className="text-right px-2 py-1.5">Min %</th>
                       <th className="text-right px-2 py-1.5">Max %</th>
                       <th className="text-right px-2 py-1.5">Min mo</th>
                       <th className="text-right px-2 py-1.5">Max mo</th>
+                      <th className="text-left px-2 py-1.5">Created by</th>
+                      <th className="text-left px-2 py-1.5">Created</th>
                       <th className="text-left px-2 py-1.5">Note</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {(historyRows ?? []).map((h: any) => (
-                      <tr key={h.id} className={h.effective_to === null ? "bg-emerald-500/5" : ""}>
-                        <td className="px-2 py-1.5 whitespace-nowrap">{new Date(h.effective_from).toLocaleString()}</td>
-                        <td className="px-2 py-1.5 whitespace-nowrap">
-                          {h.effective_to ? new Date(h.effective_to).toLocaleString() : <span className="text-emerald-600 font-medium">Active</span>}
-                        </td>
-                        <td className="px-2 py-1.5 text-right font-mono">{h.min_rate}</td>
-                        <td className="px-2 py-1.5 text-right font-mono">{h.max_rate}</td>
-                        <td className="px-2 py-1.5 text-right font-mono">{h.min_period_months}</td>
-                        <td className="px-2 py-1.5 text-right font-mono">{h.max_period_months}</td>
-                        <td className="px-2 py-1.5 text-muted-foreground">{h.note ?? ""}</td>
-                      </tr>
-                    ))}
+                    {(historyRows ?? []).map((h: any) => {
+                      const statusCls =
+                        h.status === "active" ? "bg-emerald-500/10 text-emerald-700"
+                        : h.status === "retired" ? "bg-muted text-muted-foreground"
+                        : "bg-slate-500/10 text-slate-600";
+                      return (
+                        <tr key={h.id} className={h.effective_to === null ? "bg-emerald-500/5" : ""}>
+                          <td className="px-2 py-1.5 font-mono text-[11px]">v{h.version_no}</td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">{new Date(h.effective_from).toLocaleString()}</td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">
+                            {h.effective_to ? new Date(h.effective_to).toLocaleString() : "—"}
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[10.5px] font-medium uppercase tracking-wide ${statusCls}`}>
+                              {h.status}
+                            </span>
+                          </td>
+                          <td className="px-2 py-1.5 text-right font-mono">{h.min_rate}</td>
+                          <td className="px-2 py-1.5 text-right font-mono">{h.max_rate}</td>
+                          <td className="px-2 py-1.5 text-right font-mono">{h.min_period_months}</td>
+                          <td className="px-2 py-1.5 text-right font-mono">{h.max_period_months}</td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">{h.created_by_name ?? "—"}</td>
+                          <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">{h.created_at ? new Date(h.created_at).toLocaleString() : "—"}</td>
+                          <td className="px-2 py-1.5 text-muted-foreground">{h.note ?? ""}</td>
+                        </tr>
+                      );
+                    })}
                     {(historyRows ?? []).length === 0 && (
-                      <tr><td colSpan={7} className="px-2 py-4 text-center text-muted-foreground">No history.</td></tr>
+                      <tr><td colSpan={11} className="px-2 py-4 text-center text-muted-foreground">No history.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -556,6 +603,7 @@ export function LoanAlcoRatesPanel() {
           </div>
         )}
       </Modal>
+
     </Card>
   );
 }
