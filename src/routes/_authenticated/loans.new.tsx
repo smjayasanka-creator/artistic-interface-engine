@@ -97,6 +97,7 @@ function TabHeader({ tab, setTab }: { tab: TabKey; setTab: (t: TabKey) => void }
 
 function NewLoan() {
   const nav = useNavigate();
+  const { id: editingLoanId } = Route.useSearch();
   const [tab, setTab] = useState<TabKey>("customer");
   const [clientId, setClientId] = useState("");
   const [productId, setProductId] = useState("");
