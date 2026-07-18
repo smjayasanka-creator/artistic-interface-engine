@@ -2,15 +2,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Upload, CheckCircle2, XCircle, Clock, Send } from "lucide-react";
+import { Upload, CheckCircle2, XCircle, Clock, Send, History } from "lucide-react";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
   FormGrid, FormField, FormActions, inputCls, btnPrimaryCls, btnSecondaryCls,
 } from "@/components/mzizi/FormGrid";
+import { Modal } from "@/components/mzizi/Modal";
 import {
   listAlcoRates, submitAlcoProposal, listAlcoProposals, applyAlcoProposal, cancelAlcoProposal,
+  listAlcoRateHistory,
 } from "@/lib/alco.functions";
 import { shortDate } from "@/lib/format";
+
 
 type Row = {
   id: string;
@@ -41,6 +44,15 @@ export function AlcoRatesPanel() {
 
   const { data: rows, isLoading } = useQuery({ queryKey: ["alco", "products"], queryFn: () => listFn() });
   const { data: proposals } = useQuery({ queryKey: ["alco", "proposals"], queryFn: () => proposalsFn() });
+
+  const historyFn = useServerFn(listAlcoRateHistory);
+  const [historyFor, setHistoryFor] = useState<Row | null>(null);
+  const { data: historyRows, isFetching: historyLoading } = useQuery({
+    queryKey: ["alco", "history", historyFor?.id],
+    queryFn: () => historyFn({ data: { product_id: historyFor!.id } }),
+    enabled: !!historyFor,
+  });
+
 
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [notes, setNotes] = useState("");
@@ -185,6 +197,7 @@ export function AlcoRatesPanel() {
                 <th className="text-right px-3 py-2 w-32">Maximum %</th>
                 <th className="text-right px-3 py-2 w-32">CBSL max %</th>
                 <th className="text-center px-3 py-2 w-16">Δ</th>
+                <th className="text-center px-3 py-2 w-20">History</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -210,12 +223,23 @@ export function AlcoRatesPanel() {
                     <td className="px-3 py-1.5 text-center">
                       {isChanged ? <span className="text-amber-600 font-bold">●</span> : <span className="text-muted-foreground">–</span>}
                     </td>
+                    <td className="px-3 py-1.5 text-center">
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                        title="View version history"
+                        onClick={() => setHistoryFor(r)}
+                      >
+                        <History size={14} />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
               {(rows ?? []).length === 0 && (
-                <tr><td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">No active deposit products.</td></tr>
+                <tr><td colSpan={6} className="px-3 py-4 text-center text-muted-foreground">No active deposit products.</td></tr>
               )}
+
             </tbody>
           </table>
         </div>
@@ -298,6 +322,66 @@ export function AlcoRatesPanel() {
           )}
         </div>
       </Card>
+
+      <Modal open={!!historyFor} onClose={() => setHistoryFor(null)} title="Rate version history" width={880}>
+        {historyFor && (
+          <div>
+            <div className="text-[12px] text-muted-foreground mb-2">
+              <span className="font-semibold text-foreground">{historyFor.name}</span>
+              <span className="ml-2 font-mono">{historyFor.code}</span>
+            </div>
+            {historyLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
+            {!historyLoading && (
+              <div className="overflow-auto rounded-md border border-border">
+                <table className="w-full text-[12px]">
+                  <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+                    <tr>
+                      <th className="text-left px-2 py-2 w-14">Ver</th>
+                      <th className="text-left px-2 py-2">Effective from</th>
+                      <th className="text-left px-2 py-2">Effective to</th>
+                      <th className="text-left px-2 py-2 w-24">Status</th>
+                      <th className="text-right px-2 py-2 w-20">Std %</th>
+                      <th className="text-right px-2 py-2 w-20">Max %</th>
+                      <th className="text-right px-2 py-2 w-20">CBSL %</th>
+                      <th className="text-left px-2 py-2">Created by</th>
+                      <th className="text-left px-2 py-2">Created</th>
+                      <th className="text-left px-2 py-2">Note</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {(historyRows ?? []).map((h: any) => (
+                      <tr key={h.id}>
+                        <td className="px-2 py-1.5 font-mono">v{h.version_no}</td>
+                        <td className="px-2 py-1.5">{shortDate(h.effective_from)}</td>
+                        <td className="px-2 py-1.5">{h.effective_to ? shortDate(h.effective_to) : "—"}</td>
+                        <td className="px-2 py-1.5">
+                          <span className={
+                            h.status === "active" ? "text-emerald-600 font-semibold" :
+                            h.status === "retired" ? "text-rose-600" : "text-muted-foreground"
+                          }>{h.status}</span>
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-mono">{h.standard_rate ?? "–"}</td>
+                        <td className="px-2 py-1.5 text-right font-mono">{h.maximum_rate ?? "–"}</td>
+                        <td className="px-2 py-1.5 text-right font-mono">{h.cbsl_max_rate ?? "–"}</td>
+                        <td className="px-2 py-1.5">{h.created_by_name}</td>
+                        <td className="px-2 py-1.5">{shortDate(h.created_at)}</td>
+                        <td className="px-2 py-1.5 text-muted-foreground">{h.note ?? ""}</td>
+                      </tr>
+                    ))}
+                    {(historyRows ?? []).length === 0 && (
+                      <tr><td colSpan={10} className="px-2 py-4 text-center text-muted-foreground">No history yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <FormActions align="end">
+              <button className={btnSecondaryCls} onClick={() => setHistoryFor(null)}>Close</button>
+            </FormActions>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
+

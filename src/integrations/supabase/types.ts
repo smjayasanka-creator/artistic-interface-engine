@@ -1318,6 +1318,79 @@ export type Database = {
           },
         ]
       }
+      fd_alco_rate: {
+        Row: {
+          active: boolean
+          cbsl_max_rate: number | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          maximum_rate: number | null
+          note: string | null
+          product_id: string
+          standard_rate: number | null
+          superseded_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          cbsl_max_rate?: number | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          maximum_rate?: number | null
+          note?: string | null
+          product_id: string
+          standard_rate?: number | null
+          superseded_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          cbsl_max_rate?: number | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          maximum_rate?: number | null
+          note?: string | null
+          product_id?: string
+          standard_rate?: number | null
+          superseded_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fd_alco_rate_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_alco_rate_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "fd_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fd_alco_rate_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "fd_alco_rate"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fd_eod_balance: {
         Row: {
           accrued_interest: number
@@ -5805,6 +5878,18 @@ export type Database = {
       }
       transfer_savings_to_unclaimed: {
         Args: { _account_id: string; _idempotency_key?: string }
+        Returns: string
+      }
+      upsert_fd_alco_rate_version: {
+        Args: {
+          _active?: boolean
+          _cbsl_max_rate: number
+          _effective_from?: string
+          _maximum_rate: number
+          _note?: string
+          _product_id: string
+          _standard_rate: number
+        }
         Returns: string
       }
       upsert_fd_rate_tier_version: {
