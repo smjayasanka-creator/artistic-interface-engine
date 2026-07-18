@@ -241,4 +241,61 @@ export const listLoanAlcoRateHistory = createServerFn({ method: "POST" })
     }));
   });
 
+/** All loan ALCO rate versions across products — for the "Previous versions" panel. */
+export const listAllLoanAlcoVersions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("loan_alco_rate")
+      .select("id, product_id, security_type_id, equipment_vehicle, min_rate, max_rate, min_period_months, max_period_months, active, effective_from, effective_to, note, created_by, created_at, product:product_id(name), security:security_type_id(name)")
+      .order("effective_from", { ascending: false })
+      .limit(500);
+    if (error) throw error;
+
+    const groups = new Map<string, any[]>();
+    for (const r of (rows ?? []) as any[]) {
+      const k = `${r.product_id}|${r.security_type_id ?? ""}|${(r.equipment_vehicle ?? "").toLowerCase()}`;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(r);
+    }
+    for (const arr of groups.values()) {
+      const total = arr.length;
+      arr.forEach((r, i) => { r.version_no = total - i; });
+    }
+
+    const { data: proposals } = await context.supabase
+      .from("loan_alco_rate_proposal")
+      .select("product_id, security_type_id, equipment_vehicle, effective_from, applied_by, applied_at")
+      .eq("status", "applied");
+    const propKey = (p: any) =>
+      `${p.product_id}|${p.security_type_id ?? ""}|${(p.equipment_vehicle ?? "").toLowerCase()}|${new Date(p.effective_from).toISOString()}`;
+    const propByKey = new Map<string, any>();
+    for (const p of (proposals ?? []) as any[]) propByKey.set(propKey(p), p);
+
+    const ids = new Set<string>();
+    for (const r of (rows ?? []) as any[]) if (r.created_by) ids.add(r.created_by);
+    for (const p of (proposals ?? []) as any[]) if (p.applied_by) ids.add(p.applied_by);
+    let nameById = new Map<string, string>();
+    if (ids.size > 0) {
+      const { data: staff } = await context.supabase
+        .from("staff")
+        .select("user_id, full_name, email")
+        .in("user_id", Array.from(ids));
+      nameById = new Map((staff ?? []).map((s: any) => [s.user_id, s.full_name || s.email || ""]));
+    }
+
+    return (rows ?? []).map((r: any) => {
+      const k = `${r.product_id}|${r.security_type_id ?? ""}|${(r.equipment_vehicle ?? "").toLowerCase()}|${new Date(r.effective_from).toISOString()}`;
+      const prop = propByKey.get(k);
+      return {
+        ...r,
+        status: r.effective_to === null ? (r.active ? "active" : "retired") : "historical",
+        created_by_name: r.created_by ? (nameById.get(r.created_by) ?? "—") : "System",
+        approved_by_name: prop?.applied_by ? (nameById.get(prop.applied_by) ?? "—") : null,
+        approved_at: prop?.applied_at ?? null,
+      };
+    });
+  });
+
+
 
