@@ -23,6 +23,7 @@ import {
 } from "@/components/mzizi/FormGrid";
 import { money, shortDate, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { LoanEvaluation } from "@/components/mzizi/LoanEvaluation";
 
 import { generateSchedule, generateStructuredSchedule, FREQ_META, type Frequency, type InterestMethod, type ScheduleType } from "@/lib/loan-schedule";
 
