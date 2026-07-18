@@ -629,6 +629,57 @@ export function LoanAlcoRatesPanel() {
         )}
       </Modal>
 
+      {(proposals ?? []).length > 0 && (
+        <div className="mt-6 border-t border-border pt-4">
+          <div className="text-[13px] font-semibold mb-2">Rate change proposals</div>
+          <div className="divide-y divide-border">
+            {(proposals ?? []).map((p: any) => {
+              const wfStatus = p.workflow?.status ?? (p.workflow_instance_id ? "unknown" : "no workflow");
+              const canApply = p.status === "pending" && (wfStatus === "approved" || !p.workflow_instance_id);
+              return (
+                <div key={p.id} className="py-2.5 flex items-start gap-3">
+                  <div className="mt-0.5">
+                    {p.status === "applied" ? <CheckCircle2 size={16} className="text-emerald-600" />
+                      : p.status === "declined" || p.status === "cancelled" ? <XCircle size={16} className="text-rose-600" />
+                      : <Clock size={16} className="text-amber-600" />}
+                  </div>
+                  <div className="flex-1 min-w-0 text-[12px]">
+                    <div className="font-semibold">
+                      {p.product?.name ?? "—"}
+                      {p.security?.name ? ` · ${p.security.name}` : ""}
+                      {p.equipment_vehicle ? ` · ${p.equipment_vehicle}` : ""}
+                      <span className="ml-2 text-[10.5px] uppercase tracking-wide text-muted-foreground">{p.status}</span>
+                      <span className="ml-2 text-[10.5px] text-muted-foreground">workflow: {wfStatus}</span>
+                    </div>
+                    <div className="text-[11.5px] text-muted-foreground font-mono">
+                      {p.min_rate}% – {p.max_rate}% · {p.min_period_months}–{p.max_period_months} mo · eff {new Date(p.effective_from).toLocaleString()}
+                    </div>
+                  </div>
+                  {p.status === "pending" && (
+                    <div className="flex gap-1">
+                      <button
+                        className={btnPrimaryCls + " h-8 px-3 text-[12px]"}
+                        disabled={!canApply || applyProposal.isPending}
+                        title={canApply ? "Apply the approved version" : "Waiting for workflow approval"}
+                        onClick={() => applyProposal.mutate(p.id)}
+                      >
+                        Apply
+                      </button>
+                      <button
+                        className={btnSecondaryCls + " h-8 px-3 text-[12px]"}
+                        onClick={() => cancelProposal.mutate(p.id)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
     </Card>
   );
 }
