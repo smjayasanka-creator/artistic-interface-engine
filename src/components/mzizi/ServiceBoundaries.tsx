@@ -72,17 +72,21 @@ const DOMAINS: Domain[] = [
     tag: "current & savings accounts",
     icon: PiggyBank,
     summary:
-      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, passbook stock and issue. Withdrawals accept Cash, Fund Transfer (client bank account), Cheque or SDF Savings, enforced server-side.",
+      "Opens, closes and transacts on ordinary savings accounts — deposits, withdrawals, dormancy, passbook stock and issue. Withdrawals accept Cash, Fund Transfer (client bank account), Cheque or SDF Savings, enforced server-side via payment-method guard. Dormancy sweeps unclaimed balances to the configured GL account.",
     ownedTables: [
       "savings_account", "savings_product", "savings_transaction",
       "savings_charge", "savings_charge_product", "savings_alco_rate",
       "passbook_stock", "passbook_issue", "savings_number_seq",
     ],
-    serverFns: ["src/lib/savings.functions.ts", "src/lib/payment-methods.ts (guard)"],
+    serverFns: [
+      "src/lib/savings.functions.ts",
+      "src/lib/lifecycle.functions.ts (markSavingsDormant)",
+      "src/lib/payment-methods.ts (guard)",
+    ],
     publicApi: [],
     publishesEvents: [
       "savings.account_opened", "savings.deposited",
-      "savings.withdrawn", "savings.closed",
+      "savings.withdrawn", "savings.closed", "savings.dormant",
     ],
     consumesEvents: ["client.kyc_verified", "alco.savings_rate_changed"],
     dependsOn: ["ledger", "clients"],
