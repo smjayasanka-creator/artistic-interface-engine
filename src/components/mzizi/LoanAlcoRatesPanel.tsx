@@ -244,6 +244,17 @@ export function LoanAlcoRatesPanel() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const applyProposal = useMutation({
+    mutationFn: (id: string) => applyProposalFn({ data: { proposal_id: id } }),
+    onSuccess: () => { toast.success("Version applied"); qc.invalidateQueries({ queryKey: ["loan-alco"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const cancelProposal = useMutation({
+    mutationFn: (id: string) => cancelProposalFn({ data: { proposal_id: id } }),
+    onSuccess: () => { toast.success("Proposal cancelled"); qc.invalidateQueries({ queryKey: ["loan-alco"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   function updateRow(key: string, patch: Partial<Draft>) {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   }
