@@ -1401,9 +1401,7 @@ function NewLoan() {
 
 
           {tab === "evaluations" && (
-            <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
-              Credit scoring and evaluation checks will appear here.
-            </div>
+            <LoanEvaluation loanId={editingLoanId} productId={productId || undefined} />
           )}
 
           <FormActions align="between">
