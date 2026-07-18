@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Upload, Send, Plus, Trash2, History } from "lucide-react";
+import { Upload, Send, Plus, Trash2, History, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
   FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls, btnGhostCls,
@@ -10,6 +10,7 @@ import {
 import { Modal } from "@/components/mzizi/Modal";
 import {
   listLoanAlcoRates, upsertLoanAlcoRate, deleteLoanAlcoRate, listLoanAlcoRateHistory,
+  listLoanAlcoProposals, applyLoanAlcoProposal, cancelLoanAlcoProposal,
 } from "@/lib/loan-alco.functions";
 import { getAllLoanProducts } from "@/lib/mzizi.functions";
 import { listSecurityTypes } from "@/lib/security.functions";
@@ -178,9 +179,15 @@ export function LoanAlcoRatesPanel() {
     });
   }, [rows, ratesById]);
 
+  const proposalsFn = useServerFn(listLoanAlcoProposals);
+  const applyProposalFn = useServerFn(applyLoanAlcoProposal);
+  const cancelProposalFn = useServerFn(cancelLoanAlcoProposal);
+  const { data: proposals } = useQuery({ queryKey: ["loan-alco", "proposals"], queryFn: () => proposalsFn() });
+
   const save = useMutation({
     mutationFn: async () => {
-      const results: string[] = [];
+      let pending = 0;
+      let applied = 0;
       for (const d of changedRows) {
         const minR = Number(d.min_rate);
         const maxR = Number(d.max_rate);
@@ -192,7 +199,7 @@ export function LoanAlcoRatesPanel() {
         }
         if (maxR < minR) throw new Error(`${label}: max rate must be ≥ min rate`);
         if (maxP < minP) throw new Error(`${label}: max period must be ≥ min period`);
-        await upsertFn({
+        const res: any = await upsertFn({
           data: {
             product_id: d.product_id,
             security_type_id: d.security_type_id || null,
@@ -206,12 +213,19 @@ export function LoanAlcoRatesPanel() {
             active: d.active,
           },
         });
-        results.push(label);
+        if (res?.pending) pending++; else applied++;
       }
-      return results;
+      return { pending, applied };
     },
-    onSuccess: (res) => {
-      toast.success(`Saved ${res.length} row(s)`);
+    onSuccess: ({ pending, applied }) => {
+      if (pending > 0 && applied === 0) {
+        toast.success(`${pending} version(s) submitted for approval`);
+      } else if (pending > 0 && applied > 0) {
+        toast.success(`${applied} applied · ${pending} submitted for approval`);
+      } else {
+        toast.success(`Saved ${applied} row(s)`);
+      }
+      setRows((prev) => prev.filter((r) => !r._new));
       qc.invalidateQueries({ queryKey: ["loan-alco"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -227,6 +241,17 @@ export function LoanAlcoRatesPanel() {
       qc.invalidateQueries({ queryKey: ["loan-alco"] });
       toast.success("Row removed");
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const applyProposal = useMutation({
+    mutationFn: (id: string) => applyProposalFn({ data: { proposal_id: id } }),
+    onSuccess: () => { toast.success("Version applied"); qc.invalidateQueries({ queryKey: ["loan-alco"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const cancelProposal = useMutation({
+    mutationFn: (id: string) => cancelProposalFn({ data: { proposal_id: id } }),
+    onSuccess: () => { toast.success("Proposal cancelled"); qc.invalidateQueries({ queryKey: ["loan-alco"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -603,6 +628,57 @@ export function LoanAlcoRatesPanel() {
           </div>
         )}
       </Modal>
+
+      {(proposals ?? []).length > 0 && (
+        <div className="mt-6 border-t border-border pt-4">
+          <div className="text-[13px] font-semibold mb-2">Rate change proposals</div>
+          <div className="divide-y divide-border">
+            {(proposals ?? []).map((p: any) => {
+              const wfStatus = p.workflow?.status ?? (p.workflow_instance_id ? "unknown" : "no workflow");
+              const canApply = p.status === "pending" && (wfStatus === "approved" || !p.workflow_instance_id);
+              return (
+                <div key={p.id} className="py-2.5 flex items-start gap-3">
+                  <div className="mt-0.5">
+                    {p.status === "applied" ? <CheckCircle2 size={16} className="text-emerald-600" />
+                      : p.status === "declined" || p.status === "cancelled" ? <XCircle size={16} className="text-rose-600" />
+                      : <Clock size={16} className="text-amber-600" />}
+                  </div>
+                  <div className="flex-1 min-w-0 text-[12px]">
+                    <div className="font-semibold">
+                      {p.product?.name ?? "—"}
+                      {p.security?.name ? ` · ${p.security.name}` : ""}
+                      {p.equipment_vehicle ? ` · ${p.equipment_vehicle}` : ""}
+                      <span className="ml-2 text-[10.5px] uppercase tracking-wide text-muted-foreground">{p.status}</span>
+                      <span className="ml-2 text-[10.5px] text-muted-foreground">workflow: {wfStatus}</span>
+                    </div>
+                    <div className="text-[11.5px] text-muted-foreground font-mono">
+                      {p.min_rate}% – {p.max_rate}% · {p.min_period_months}–{p.max_period_months} mo · eff {new Date(p.effective_from).toLocaleString()}
+                    </div>
+                  </div>
+                  {p.status === "pending" && (
+                    <div className="flex gap-1">
+                      <button
+                        className={btnPrimaryCls + " h-8 px-3 text-[12px]"}
+                        disabled={!canApply || applyProposal.isPending}
+                        title={canApply ? "Apply the approved version" : "Waiting for workflow approval"}
+                        onClick={() => applyProposal.mutate(p.id)}
+                      >
+                        Apply
+                      </button>
+                      <button
+                        className={btnSecondaryCls + " h-8 px-3 text-[12px]"}
+                        onClick={() => cancelProposal.mutate(p.id)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
     </Card>
   );
