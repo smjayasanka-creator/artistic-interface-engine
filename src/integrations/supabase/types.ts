@@ -1230,6 +1230,56 @@ export type Database = {
           },
         ]
       }
+      evaluation_section: {
+        Row: {
+          active: boolean
+          code: string
+          company_id: string | null
+          component_name: string
+          created_at: string
+          description: string | null
+          display_order: number
+          fields: Json
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          company_id?: string | null
+          component_name?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          fields?: Json
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          company_id?: string | null
+          component_name?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          fields?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_section_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fd_accrual: {
         Row: {
           accrual_date: string
@@ -3179,6 +3229,58 @@ export type Database = {
         }
         Relationships: []
       }
+      loan_evaluation: {
+        Row: {
+          company_id: string
+          created_at: string
+          data: Json
+          id: string
+          loan_id: string
+          product_snapshot: Json | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          data?: Json
+          id?: string
+          loan_id: string
+          product_snapshot?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          loan_id?: string
+          product_snapshot?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_evaluation_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_evaluation_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: true
+            referencedRelation: "loan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_evaluation_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: true
+            referencedRelation: "v_loan_outstanding"
+            referencedColumns: ["loan_id"]
+          },
+        ]
+      }
       loan_installment: {
         Row: {
           due_date: string
@@ -3465,6 +3567,67 @@ export type Database = {
             columns: ["suspended_interest_account_id"]
             isOneToOne: false
             referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_product_evaluation_section: {
+        Row: {
+          company_id: string
+          created_at: string
+          display_order: number
+          enabled_fields: Json | null
+          id: string
+          is_mandatory: boolean
+          is_visible: boolean
+          loan_product_id: string
+          section_id: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          display_order?: number
+          enabled_fields?: Json | null
+          id?: string
+          is_mandatory?: boolean
+          is_visible?: boolean
+          loan_product_id: string
+          section_id: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          display_order?: number
+          enabled_fields?: Json | null
+          id?: string
+          is_mandatory?: boolean
+          is_visible?: boolean
+          loan_product_id?: string
+          section_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_product_evaluation_section_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_product_evaluation_section_loan_product_id_fkey"
+            columns: ["loan_product_id"]
+            isOneToOne: false
+            referencedRelation: "loan_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_product_evaluation_section_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_section"
             referencedColumns: ["id"]
           },
         ]
