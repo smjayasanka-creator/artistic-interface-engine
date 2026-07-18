@@ -56,7 +56,9 @@ export function LoanProductEvaluationTab() {
             is_visible: existing.is_visible,
             is_mandatory: existing.is_mandatory,
             display_order: existing.display_order ?? s.display_order,
-            enabled_fields: existing.enabled_fields ?? null,
+            enabled_fields: Array.isArray(existing.enabled_fields)
+              ? (existing.enabled_fields as string[])
+              : null,
           }
         : {
             section_id: s.id,
