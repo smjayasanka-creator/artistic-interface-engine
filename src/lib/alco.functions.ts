@@ -149,15 +149,16 @@ export const applyAlcoProposal = createServerFn({ method: "POST" })
     }
 
     for (const it of (prop as any).items ?? []) {
-      const { error: uErr } = await supabase
-        .from("fd_product")
-        .update({
-          standard_rate: it.new_standard_rate,
-          maximum_rate: it.new_maximum_rate,
-          cbsl_max_rate: it.new_cbsl_max_rate,
-        })
-        .eq("id", it.product_id);
-      if (uErr) throw uErr;
+      const { error: rpcErr } = await supabase.rpc("upsert_fd_alco_rate_version", {
+        _product_id: it.product_id,
+        _standard_rate: it.new_standard_rate,
+        _maximum_rate: it.new_maximum_rate,
+        _cbsl_max_rate: it.new_cbsl_max_rate,
+        _effective_from: new Date().toISOString(),
+        _note: (prop as any).notes ?? null,
+        _active: true,
+      });
+      if (rpcErr) throw rpcErr;
     }
 
     await supabase.from("alco_rate_proposal").update({
@@ -179,3 +180,34 @@ export const cancelAlcoProposal = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+/** Full version history for one FD product's ALCO rates. */
+export const listAlcoRateHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ product_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("fd_alco_rate")
+      .select("id, standard_rate, maximum_rate, cbsl_max_rate, active, effective_from, effective_to, note, created_by, created_at")
+      .eq("product_id", data.product_id)
+      .order("effective_from", { ascending: false });
+    if (error) throw error;
+
+    const creatorIds = Array.from(new Set((rows ?? []).map((r: any) => r.created_by).filter(Boolean)));
+    let nameById = new Map<string, string>();
+    if (creatorIds.length > 0) {
+      const { data: staff } = await context.supabase
+        .from("staff")
+        .select("user_id, full_name, email")
+        .in("user_id", creatorIds);
+      nameById = new Map((staff ?? []).map((s: any) => [s.user_id, s.full_name || s.email || ""]));
+    }
+    const total = (rows ?? []).length;
+    return (rows ?? []).map((r: any, i: number) => ({
+      ...r,
+      version_no: total - i,
+      status: r.effective_to === null ? (r.active ? "active" : "retired") : "historical",
+      created_by_name: r.created_by ? (nameById.get(r.created_by) ?? "—") : "System",
+    }));
+  });
+
