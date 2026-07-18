@@ -345,6 +345,12 @@ export function LoanAlcoRatesPanel() {
     enabled: !!historyFor,
   });
 
+  // All-versions panel
+  const allVersionsFn = useServerFn(listAllLoanAlcoVersions);
+  const { data: allVersions } = useQuery({ queryKey: ["loan-alco", "all-versions"], queryFn: () => allVersionsFn() });
+  const [viewVersion, setViewVersion] = useState<any | null>(null);
+
+
   if (isLoading) return <div className="text-sm text-muted-foreground">Loading loan ALCO rates…</div>;
 
   return (
