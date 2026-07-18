@@ -210,11 +210,11 @@ const DOMAINS: Domain[] = [
     tag: "double-entry GL",
     icon: BookOpen,
     summary:
-      "Shared kernel. Every money-moving domain posts through post_entry(). Immutable, balanced, append-only. Also owns the outbox (domain_event) and month-partitioned EOD balance snapshots.",
+      "Shared kernel. Every money-moving domain posts through post_entry(); disburse_loan, record_repayment, record_write_off_recovery and post_manual_journal are the only sanctioned write paths. loan_installment / journal_entry / posting / repayment are read-only to authenticated users — only SECURITY DEFINER RPCs mutate them. Owns the outbox (domain_event), month-partitioned EOD balance snapshots, and the fx_rate history.",
     ownedTables: [
       "gl_account", "journal_entry", "posting", "domain_event",
       "gl_eod_balance", "loan_eod_balance", "savings_eod_balance", "fd_eod_balance",
-      "eod_run",
+      "eod_run", "fx_rate",
     ],
     serverFns: ["src/lib/api-ledger.server.ts (post_entry_system wrapper)"],
     publicApi: [
@@ -224,13 +224,52 @@ const DOMAINS: Domain[] = [
       "/api/public/hooks/fd-mature",
       "/api/public/hooks/loan-accrue",
     ],
-    publishesEvents: ["ledger.entry_posted", "eod.closed"],
+    publishesEvents: ["ledger.entry_posted", "eod.closed", "fx.rate_updated"],
     consumesEvents: [],
     dependsOn: [],
     extractionReadiness: "coupled",
     extractionNotes:
       "Do NOT extract. Ledger is the shared kernel — colocated with Postgres for ACID balance guarantees. The outbox dispatcher can move to its own worker once subscribers exist.",
     accent: "from-slate-500/10 to-slate-500/0 border-slate-500/30",
+  },
+  {
+    id: "eod",
+    label: "Day End (EOD)",
+    tag: "orchestration",
+    icon: GitBranch,
+    summary:
+      "Centralized company-wide Day End orchestration — pre-day validations, loan/FD accrual, penalty + PAR/NPA classification, FD maturity, savings interest, GL posting, trial balance, report generation and date rollover. Runs across every branch in one shot; supports scheduled auto-EOD and dual-authorization manual runs from the Admin console.",
+    ownedTables: ["eod_run", "eod_step_log"],
+    serverFns: ["src/lib/eod.functions.ts"],
+    publicApi: ["/api/public/hooks/eod-close"],
+    publishesEvents: [
+      "eod.started", "eod.step_completed",
+      "eod.closed", "eod.failed", "eod.rolled_back",
+    ],
+    consumesEvents: [],
+    dependsOn: ["ledger", "loans", "fd", "savings"],
+    extractionReadiness: "partial",
+    extractionNotes:
+      "Perfect fit for a scheduled worker once outbox is live — it already reads/writes only through domain RPCs. Keep it close to the ledger until each step becomes idempotent + resumable end-to-end.",
+    accent: "from-orange-500/10 to-orange-500/0 border-orange-500/30",
+  },
+  {
+    id: "banks",
+    label: "Bank Directory",
+    tag: "CEFTS · SLIPS registry",
+    icon: Landmark,
+    summary:
+      "Master data for partner banks and their branches, with per-bank CEFTS / SLIPS enablement flags. Referenced by client bank accounts, outbound payments, cheque handling and the Public API integration surface.",
+    ownedTables: ["bank", "bank_branch"],
+    serverFns: ["src/lib/bank-directory.functions.ts"],
+    publicApi: [],
+    publishesEvents: ["bank.updated", "bank_branch.updated"],
+    consumesEvents: [],
+    dependsOn: [],
+    extractionReadiness: "ready",
+    extractionNotes:
+      "Reference data only — cache-friendly and read-heavy. Trivial to lift into a shared config service or edge KV.",
+    accent: "from-cyan-500/10 to-cyan-500/0 border-cyan-500/30",
   },
   {
     id: "clients",
