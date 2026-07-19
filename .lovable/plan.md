@@ -1,71 +1,140 @@
-# Configurable Loan Evaluation Sections
 
-Make the Loan Evaluation page render only the sections enabled for the selected loan product, driven by two new configuration tables managed from Administration.
+# Loan Application Data Model
 
-## Data model (new migration)
+Separate loan **origination** (pre-disbursement) from **loan servicing** (post-disbursement). Origination lives in a new `loan_application_*` family. The existing `loan` table stays as the operational system of record, populated at disbursement.
 
-**`public.evaluation_section`** — master catalogue of available sections
-- `code` (unique, e.g. `bdo`, `employment`, `existing_facility`, `business`)
-- `name`, `description`
-- `component_name` (React component key)
-- `display_order`, `active`
-- `fields` JSONB — array of `{ key, label, type, optional }` describing the fields inside the section (used to render the form dynamically and to power the "enabled fields" checklist on the mapping screen)
+## Answers we're building against
+- Back-fill: synthetic application rows for every existing loan.
+- Cutover: copy-on-disburse — new `loan` row is created when disbursement completes, linked by `application_no`.
+- Sub-tables: all 12.
+- Numbering: single global sequence, `AP` + 6-digit zero-padded (`AP000001`).
 
-Seeded with the four sections from the spec (BDO Evaluation, Employment, Existing Facility, Business), each with its full field list. Future sections (Guarantor, Collateral, CRIB, etc.) can be inserted later without code changes.
+---
 
-**`public.loan_product_evaluation_section`** — per-product mapping
-- `loan_product_id` → `loan_product.id`
-- `section_id` → `evaluation_section.id`
-- `is_visible` (default true), `is_mandatory` (default false)
-- `display_order`
-- `enabled_fields` JSONB — array of field keys enabled for this product (null = all fields)
-- Unique on `(loan_product_id, section_id)`
+## 1. Schema (migration)
 
-**`public.loan_evaluation`** — per-loan captured evaluation data
-- `loan_id` (unique) → `loan.id`
-- `product_snapshot` JSONB — snapshot of the mapping active when the application was created (so existing applications retain their config)
-- `data` JSONB — `{ [sectionCode]: { [fieldKey]: value } }`
+### 1.1 Global sequence + generator
 
-All three tables: standard `company_id` scoping, GRANTs, RLS with company-scoped policies, `updated_at` trigger.
+```sql
+CREATE SEQUENCE public.loan_application_no_seq START 1;
 
-## Server functions
+CREATE OR REPLACE FUNCTION public.next_loan_application_no()
+RETURNS text LANGUAGE sql VOLATILE SET search_path=public AS $$
+  SELECT 'AP' || lpad(nextval('public.loan_application_no_seq')::text, 6, '0');
+$$;
+```
 
-`src/lib/evaluation.functions.ts`:
-- `listEvaluationSections()` — master list (admin)
-- `getProductEvaluationConfig({ loan_product_id })` — mapping rows joined with sections
-- `upsertProductEvaluationConfig({ loan_product_id, sections: [...] })` — replace mapping
-- `getLoanEvaluation({ loan_id })` — returns `{ sections, data }` using snapshot if present, else current product config
-- `saveLoanEvaluation({ loan_id, data })` — validates that all mandatory sections/fields are filled; on first save, writes `product_snapshot`
+### 1.2 Master
 
-## Administration UI
+```
+loan_application
+  id, application_no (unique, default next_loan_application_no())
+  company_id, branch_id, client_id, product_id
+  requested_principal, requested_tenor_months, currency
+  purpose, channel, status  -- draft|submitted|under_review|approved|rejected|disbursed|cancelled
+  submitted_at, decided_at, disbursed_at
+  loan_id (nullable, set on disburse)
+  created_by, created_at, updated_at
+```
 
-New tab under `admin.tsx` group "Loan": **Loan Product Evaluation** (`src/components/mzizi/LoanProductEvaluationTab.tsx`)
-- Left: list of loan products
-- Right: for the selected product, a table of all sections with toggles: Visible, Mandatory, Display order, plus an expandable per-section field checklist (Enabled / Mandatory per field)
-- "Save configuration" persists via `upsertProductEvaluationConfig`
+### 1.3 Related tables (all keyed by `application_id uuid → loan_application.id`, plus a denormalized `application_no` for reporting joins)
 
-## Loan Evaluation page
+| Table | Purpose |
+|---|---|
+| `loan_application_applicant` | Snapshot of applicant + co-applicants at submission time |
+| `loan_application_evaluation` | Rows keyed to `evaluation_section` (replaces current `loan_evaluation` writes for new apps) |
+| `loan_application_employment` | Employer, position, income, tenure |
+| `loan_application_business` | Business name, sector, turnover, ownership |
+| `loan_application_existing_facility` | Other lenders, outstanding, monthly commitment |
+| `loan_application_guarantor` | Guarantor party + coverage |
+| `loan_application_collateral` | Security type + dynamic fields (mirrors current securities JSON) |
+| `loan_application_document` | Attachments: type, file_name, storage_path, uploaded_by, uploaded_at, version |
+| `loan_application_approval` | Workflow instance link, per-step decisions |
+| `loan_application_note` | Free-text notes/remarks with author + timestamp |
+| `loan_application_status_history` | Every status change with actor, from/to, reason |
 
-`src/components/mzizi/LoanEvaluation.tsx` — generic renderer
-- Calls `getLoanEvaluation({ loan_id })`
-- Iterates enabled sections in display order
-- For each section, renders a `<EvaluationSection>` with fields from metadata (input types: text, textarea, number, date, select, currency)
-- Validation: only visible sections; mandatory flag enforced
-- Save button calls `saveLoanEvaluation`
+Every table:
+- `GRANT SELECT, INSERT, UPDATE, DELETE ... TO authenticated; GRANT ALL ... TO service_role;`
+- RLS: `is_company_member(company_id)` for read/write; `is_company_admin` for delete on non-master rows only. **Master `loan_application` is delete-blocked once `status <> 'draft'`** (trigger) — enforces retention.
+- `updated_at` trigger via existing `set_updated_at()`.
 
-Wire into `loans.$id.tsx` where evaluation currently lives (replace any hardcoded evaluation blocks with `<LoanEvaluation loanId={id} />`). Hidden sections are neither rendered nor validated.
+### 1.4 Retention trigger
 
-## Snapshot behaviour
-- On first save of a loan's evaluation, snapshot the current product config into `loan_evaluation.product_snapshot`.
-- Subsequent loads for that loan use the snapshot, so mid-flight config changes don't disrupt in-progress applications. New applications always use the latest config.
+```sql
+CREATE TRIGGER trg_loan_application_no_delete
+BEFORE DELETE ON public.loan_application
+FOR EACH ROW EXECUTE FUNCTION public.loan_application_block_delete();
+```
+Blocks delete unless `status='draft'` and no child rows exist.
 
-## Future extensibility
-Adding a new section (Guarantor, Collateral, CRIB, etc.) = insert a row into `evaluation_section` with its field metadata; it becomes assignable in Administration immediately, no code change. If a section needs a bespoke component beyond the generic renderer, register it by `component_name` in a small component registry map inside `LoanEvaluation.tsx`.
+### 1.5 `loan` linkage
 
-## Files touched
-- New migration (tables + grants + RLS + seed rows for 4 sections)
-- New: `src/lib/evaluation.functions.ts`
-- New: `src/components/mzizi/LoanProductEvaluationTab.tsx`
-- New: `src/components/mzizi/LoanEvaluation.tsx`
-- Edit: `src/routes/_authenticated/admin.tsx` (register new tab under Loan group)
-- Edit: `src/routes/_authenticated/loans.$id.tsx` (mount `<LoanEvaluation />`)
+Add `application_id uuid REFERENCES loan_application(id)` and `application_no text` to `public.loan`. Index both.
+
+---
+
+## 2. Back-fill (same migration, after DDL)
+
+For every existing `loan`:
+1. Insert a `loan_application` row with `status='disbursed'`, `disbursed_at = loan.disbursed_at`, snapshot of principal/tenor/purpose, new `application_no` from the global sequence.
+2. Copy any existing `loan_evaluation` rows into `loan_application_evaluation`.
+3. Copy `loan_security` rows into `loan_application_collateral`.
+4. Copy `loan_applied_charge` metadata into a `loan_application_note` summary (charges themselves stay on `loan`).
+5. Update `loan.application_id` / `loan.application_no` with the new IDs.
+
+Wrapped in a single `DO` block so it's atomic with the DDL.
+
+---
+
+## 3. Copy-on-disburse RPC
+
+New `public.disburse_loan_from_application(_application_id, _payment_channel, ...)`:
+1. Verify status `= 'approved'` and workflow complete.
+2. Insert into `loan` with values copied from application + child tables (charges, securities).
+3. Set `loan_application.status='disbursed'`, `loan_id`, `disbursed_at`.
+4. Post GL entry via `post_entry_system` (unchanged).
+5. Append `loan_application_status_history` row.
+
+Existing `disburse_loan` RPC becomes a thin wrapper that resolves the application by `loan.application_id` and calls the new function — no behavior change for callers that already pass `loan_id`.
+
+---
+
+## 4. Server functions (`src/lib/loan-application.functions.ts`)
+
+- `createLoanApplication` (draft)
+- `updateLoanApplication`
+- `submitLoanApplication` (draft → submitted, kicks approval workflow)
+- `listLoanApplications` (with status filter)
+- `getLoanApplication` (master + all children)
+- `addApplicationDocument` / `deleteApplicationDocument`
+- `addApplicationNote`
+- `recordApplicationDecision` (used by workflow)
+- `disburseApplication` (calls new RPC)
+
+All use `requireSupabaseAuth` middleware and RLS-scoped queries.
+
+---
+
+## 5. UI changes
+
+Minimal — keep the visual layout of `loans.new.tsx` and `loans.$id.tsx`:
+- `loans.new.tsx` writes to `loan_application` + children instead of `loan`. On disburse it triggers `disburseApplication`.
+- `loans.$id.tsx` reads from `loan` post-disbursement; adds an "Application" tab showing the retained origination record (read-only) linked by `application_no`.
+- `LoanEvaluation.tsx` targets `loan_application_evaluation` when an application context is present, `loan_evaluation` otherwise (back-compat for already-disbursed loans).
+- Approvals list keys on `application_no` for pre-disbursement items; on `loan.reference` for post.
+
+No new pages, no design changes.
+
+---
+
+## 6. Rollout order (single migration + code batch)
+
+1. Migration: DDL for all 12 tables + sequence + generator + trigger + `loan` FK columns + back-fill + `disburse_loan_from_application` RPC. Regenerated types afterward.
+2. New `loan-application.functions.ts`.
+3. Refactor `loans.new.tsx`, `loans.$id.tsx`, `LoanEvaluation.tsx`, disbursement page, approvals page to use application IDs.
+4. Typecheck.
+
+## Out of scope (call out for later)
+- Version comparison UI for evaluation snapshots.
+- Application → application clone (re-application).
+- Migration of write-off / reschedule records into origination history (they belong to servicing).

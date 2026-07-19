@@ -2609,6 +2609,8 @@ export type Database = {
       loan: {
         Row: {
           annual_rate_pct: number
+          application_id: string | null
+          application_no: string | null
           approved_at: string | null
           approved_by: string | null
           branch_id: string
@@ -2632,6 +2634,8 @@ export type Database = {
         }
         Insert: {
           annual_rate_pct: number
+          application_id?: string | null
+          application_no?: string | null
           approved_at?: string | null
           approved_by?: string | null
           branch_id: string
@@ -2655,6 +2659,8 @@ export type Database = {
         }
         Update: {
           annual_rate_pct?: number
+          application_id?: string | null
+          application_no?: string | null
           approved_at?: string | null
           approved_by?: string | null
           branch_id?: string
@@ -2677,6 +2683,13 @@ export type Database = {
           term_months?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "loan_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "loan_approved_by_fkey"
             columns: ["approved_by"]
@@ -2952,6 +2965,713 @@ export type Database = {
             columns: ["workflow_instance_id"]
             isOneToOne: false
             referencedRelation: "workflow_instance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application: {
+        Row: {
+          application_no: string
+          branch_id: string
+          channel: string | null
+          client_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          decided_at: string | null
+          disbursed_at: string | null
+          frequency: Database["public"]["Enums"]["repayment_frequency"] | null
+          id: string
+          loan_id: string | null
+          metadata: Json
+          officer_id: string | null
+          product_id: string | null
+          purpose: string | null
+          requested_principal: number
+          requested_rate_pct: number | null
+          requested_tenor_months: number
+          status: Database["public"]["Enums"]["loan_application_status"]
+          submitted_at: string | null
+          updated_at: string
+          workflow_instance_id: string | null
+        }
+        Insert: {
+          application_no?: string
+          branch_id: string
+          channel?: string | null
+          client_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          decided_at?: string | null
+          disbursed_at?: string | null
+          frequency?: Database["public"]["Enums"]["repayment_frequency"] | null
+          id?: string
+          loan_id?: string | null
+          metadata?: Json
+          officer_id?: string | null
+          product_id?: string | null
+          purpose?: string | null
+          requested_principal?: number
+          requested_rate_pct?: number | null
+          requested_tenor_months?: number
+          status?: Database["public"]["Enums"]["loan_application_status"]
+          submitted_at?: string | null
+          updated_at?: string
+          workflow_instance_id?: string | null
+        }
+        Update: {
+          application_no?: string
+          branch_id?: string
+          channel?: string | null
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          decided_at?: string | null
+          disbursed_at?: string | null
+          frequency?: Database["public"]["Enums"]["repayment_frequency"] | null
+          id?: string
+          loan_id?: string | null
+          metadata?: Json
+          officer_id?: string | null
+          product_id?: string | null
+          purpose?: string | null
+          requested_principal?: number
+          requested_rate_pct?: number | null
+          requested_tenor_months?: number
+          status?: Database["public"]["Enums"]["loan_application_status"]
+          submitted_at?: string | null
+          updated_at?: string
+          workflow_instance_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_application_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_application_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_application_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_application_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "v_loan_outstanding"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "loan_application_officer_id_fkey"
+            columns: ["officer_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_application_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "loan_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_application_workflow_instance_id_fkey"
+            columns: ["workflow_instance_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_instance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_applicant: {
+        Row: {
+          address: string | null
+          application_id: string
+          application_no: string
+          client_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          national_id: string | null
+          phone: string | null
+          role: string
+          snapshot: Json
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          application_id: string
+          application_no: string
+          client_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          national_id?: string | null
+          phone?: string | null
+          role?: string
+          snapshot?: Json
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          application_id?: string
+          application_no?: string
+          client_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          national_id?: string | null
+          phone?: string | null
+          role?: string
+          snapshot?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_applicant_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_application_applicant_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_approval: {
+        Row: {
+          application_id: string
+          application_no: string
+          comment: string | null
+          decided_at: string
+          decided_by: string | null
+          decision: string
+          id: string
+          metadata: Json
+          step_key: string | null
+          workflow_instance_id: string | null
+        }
+        Insert: {
+          application_id: string
+          application_no: string
+          comment?: string | null
+          decided_at?: string
+          decided_by?: string | null
+          decision: string
+          id?: string
+          metadata?: Json
+          step_key?: string | null
+          workflow_instance_id?: string | null
+        }
+        Update: {
+          application_id?: string
+          application_no?: string
+          comment?: string | null
+          decided_at?: string
+          decided_by?: string | null
+          decision?: string
+          id?: string
+          metadata?: Json
+          step_key?: string | null
+          workflow_instance_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_approval_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_application_approval_workflow_instance_id_fkey"
+            columns: ["workflow_instance_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_instance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_business: {
+        Row: {
+          application_id: string
+          application_no: string
+          business_address: string | null
+          business_name: string | null
+          created_at: string
+          extra: Json
+          id: string
+          monthly_turnover: number | null
+          ownership_type: string | null
+          registration_no: string | null
+          sector: string | null
+          updated_at: string
+          years_in_operation: number | null
+        }
+        Insert: {
+          application_id: string
+          application_no: string
+          business_address?: string | null
+          business_name?: string | null
+          created_at?: string
+          extra?: Json
+          id?: string
+          monthly_turnover?: number | null
+          ownership_type?: string | null
+          registration_no?: string | null
+          sector?: string | null
+          updated_at?: string
+          years_in_operation?: number | null
+        }
+        Update: {
+          application_id?: string
+          application_no?: string
+          business_address?: string | null
+          business_name?: string | null
+          created_at?: string
+          extra?: Json
+          id?: string
+          monthly_turnover?: number | null
+          ownership_type?: string | null
+          registration_no?: string | null
+          sector?: string | null
+          updated_at?: string
+          years_in_operation?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_business_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_collateral: {
+        Row: {
+          application_id: string
+          application_no: string
+          created_at: string
+          documents: Json
+          id: string
+          notes: string | null
+          security_type_id: string | null
+          updated_at: string
+          values: Json
+        }
+        Insert: {
+          application_id: string
+          application_no: string
+          created_at?: string
+          documents?: Json
+          id?: string
+          notes?: string | null
+          security_type_id?: string | null
+          updated_at?: string
+          values?: Json
+        }
+        Update: {
+          application_id?: string
+          application_no?: string
+          created_at?: string
+          documents?: Json
+          id?: string
+          notes?: string | null
+          security_type_id?: string | null
+          updated_at?: string
+          values?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_collateral_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_application_collateral_security_type_id_fkey"
+            columns: ["security_type_id"]
+            isOneToOne: false
+            referencedRelation: "security_type"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_document: {
+        Row: {
+          application_id: string
+          application_no: string
+          document_type: string
+          file_name: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          storage_bucket: string
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string | null
+          version: number
+        }
+        Insert: {
+          application_id: string
+          application_no: string
+          document_type: string
+          file_name: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          storage_bucket?: string
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          version?: number
+        }
+        Update: {
+          application_id?: string
+          application_no?: string
+          document_type?: string
+          file_name?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          storage_bucket?: string
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_document_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_employment: {
+        Row: {
+          application_id: string
+          application_no: string
+          created_at: string
+          employer_address: string | null
+          employer_name: string | null
+          employer_phone: string | null
+          employment_type: string | null
+          extra: Json
+          id: string
+          monthly_income: number | null
+          position: string | null
+          updated_at: string
+          years_of_service: number | null
+        }
+        Insert: {
+          application_id: string
+          application_no: string
+          created_at?: string
+          employer_address?: string | null
+          employer_name?: string | null
+          employer_phone?: string | null
+          employment_type?: string | null
+          extra?: Json
+          id?: string
+          monthly_income?: number | null
+          position?: string | null
+          updated_at?: string
+          years_of_service?: number | null
+        }
+        Update: {
+          application_id?: string
+          application_no?: string
+          created_at?: string
+          employer_address?: string | null
+          employer_name?: string | null
+          employer_phone?: string | null
+          employment_type?: string | null
+          extra?: Json
+          id?: string
+          monthly_income?: number | null
+          position?: string | null
+          updated_at?: string
+          years_of_service?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_employment_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_evaluation: {
+        Row: {
+          application_id: string
+          application_no: string
+          created_at: string
+          data: Json
+          id: string
+          product_snapshot: Json | null
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          application_no: string
+          created_at?: string
+          data?: Json
+          id?: string
+          product_snapshot?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          application_no?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          product_snapshot?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_evaluation_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: true
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_existing_facility: {
+        Row: {
+          application_id: string
+          application_no: string
+          created_at: string
+          extra: Json
+          facility_type: string | null
+          id: string
+          lender_name: string
+          maturity_date: string | null
+          monthly_instalment: number | null
+          original_amount: number | null
+          outstanding_balance: number | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          application_no: string
+          created_at?: string
+          extra?: Json
+          facility_type?: string | null
+          id?: string
+          lender_name: string
+          maturity_date?: string | null
+          monthly_instalment?: number | null
+          original_amount?: number | null
+          outstanding_balance?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          application_no?: string
+          created_at?: string
+          extra?: Json
+          facility_type?: string | null
+          id?: string
+          lender_name?: string
+          maturity_date?: string | null
+          monthly_instalment?: number | null
+          original_amount?: number | null
+          outstanding_balance?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_existing_facility_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_guarantor: {
+        Row: {
+          application_id: string
+          application_no: string
+          coverage_amount: number | null
+          created_at: string
+          extra: Json
+          full_name: string
+          guarantor_client_id: string | null
+          id: string
+          national_id: string | null
+          phone: string | null
+          relationship: string | null
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          application_no: string
+          coverage_amount?: number | null
+          created_at?: string
+          extra?: Json
+          full_name: string
+          guarantor_client_id?: string | null
+          id?: string
+          national_id?: string | null
+          phone?: string | null
+          relationship?: string | null
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          application_no?: string
+          coverage_amount?: number | null
+          created_at?: string
+          extra?: Json
+          full_name?: string
+          guarantor_client_id?: string | null
+          id?: string
+          national_id?: string | null
+          phone?: string | null
+          relationship?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_guarantor_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_application_guarantor_guarantor_client_id_fkey"
+            columns: ["guarantor_client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_note: {
+        Row: {
+          application_id: string
+          application_no: string
+          author_id: string | null
+          created_at: string
+          id: string
+          note: string
+        }
+        Insert: {
+          application_id: string
+          application_no: string
+          author_id?: string | null
+          created_at?: string
+          id?: string
+          note: string
+        }
+        Update: {
+          application_id?: string
+          application_no?: string
+          author_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_note_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_application_status_history: {
+        Row: {
+          actor_id: string | null
+          application_id: string
+          application_no: string
+          created_at: string
+          from_status:
+            | Database["public"]["Enums"]["loan_application_status"]
+            | null
+          id: string
+          reason: string | null
+          to_status: Database["public"]["Enums"]["loan_application_status"]
+        }
+        Insert: {
+          actor_id?: string | null
+          application_id: string
+          application_no: string
+          created_at?: string
+          from_status?:
+            | Database["public"]["Enums"]["loan_application_status"]
+            | null
+          id?: string
+          reason?: string | null
+          to_status: Database["public"]["Enums"]["loan_application_status"]
+        }
+        Update: {
+          actor_id?: string | null
+          application_id?: string
+          application_no?: string
+          created_at?: string
+          from_status?:
+            | Database["public"]["Enums"]["loan_application_status"]
+            | null
+          id?: string
+          reason?: string | null
+          to_status?: Database["public"]["Enums"]["loan_application_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_application_status_history_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_application"
             referencedColumns: ["id"]
           },
         ]
@@ -5651,6 +6371,7 @@ export type Database = {
       }
     }
     Functions: {
+      _app_row_company_ok: { Args: { _app_id: string }; Returns: boolean }
       claim_pending_domain_events: {
         Args: { _limit?: number }
         Returns: {
@@ -5688,6 +6409,15 @@ export type Database = {
       current_staff_role: {
         Args: never
         Returns: Database["public"]["Enums"]["staff_role"]
+      }
+      disburse_loan_from_application: {
+        Args: {
+          _application_id: string
+          _idempotency_key?: string
+          _payment_channel?: string
+          _payment_reference?: string
+        }
+        Returns: string
       }
       emit_audit: {
         Args: {
@@ -5816,6 +6546,7 @@ export type Database = {
         Returns: string
       }
       next_fd_certificate_no: { Args: { _company_id: string }; Returns: string }
+      next_loan_application_no: { Args: never; Returns: string }
       next_savings_account_no: {
         Args: { _company_id: string }
         Returns: string
@@ -5981,6 +6712,14 @@ export type Database = {
         | "cancelled"
       interest_method: "flat" | "declining_balance"
       introducer_commission_mode: "cash" | "bank_transfer" | "credit_savings"
+      loan_application_status:
+        | "draft"
+        | "submitted"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "disbursed"
+        | "cancelled"
       loan_charge_origin: "inhouse" | "outside"
       loan_charge_type: "fixed" | "variable" | "manual"
       loan_status:
@@ -6207,6 +6946,15 @@ export const Constants = {
       ],
       interest_method: ["flat", "declining_balance"],
       introducer_commission_mode: ["cash", "bank_transfer", "credit_savings"],
+      loan_application_status: [
+        "draft",
+        "submitted",
+        "under_review",
+        "approved",
+        "rejected",
+        "disbursed",
+        "cancelled",
+      ],
       loan_charge_origin: ["inhouse", "outside"],
       loan_charge_type: ["fixed", "variable", "manual"],
       loan_status: [
