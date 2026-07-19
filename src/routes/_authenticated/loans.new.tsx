@@ -1007,6 +1007,21 @@ function NewLoan() {
                   </div>
                 )}
 
+                {scheduleGlobalErrors.length > 0 && (
+                  <div className="sm:col-span-12 text-[12px] rounded-md border border-red-500/50 bg-red-500/10 text-red-700 px-3 py-2 space-y-0.5">
+                    {scheduleGlobalErrors.map((e, i) => (
+                      <div key={i}>• {e.message}</div>
+                    ))}
+                  </div>
+                )}
+
+                {scheduleType === "structured" && recalculatedAutoSeqs.length > 0 && scheduleValid && (
+                  <div className="sm:col-span-12 text-[12px] rounded-md border border-blue-500/40 bg-blue-500/10 text-blue-800 px-3 py-2">
+                    Automatic rows {recalculatedAutoSeqs.slice(0, 8).join(", ")}
+                    {recalculatedAutoSeqs.length > 8 ? ", …" : ""} recalculated to balance the loan.
+                  </div>
+                )}
+
                 {schedule && (schedule as any).warnings?.length > 0 && (
                   <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2 space-y-0.5">
                     {(schedule as any).warnings.map((w: string, i: number) => (
@@ -1014,6 +1029,7 @@ function NewLoan() {
                     ))}
                   </div>
                 )}
+
 
                 {schedule && (
                   <div className="sm:col-span-12 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px] mt-1">
