@@ -96,6 +96,8 @@ export function InstanceDetailModal({
           </div>
           {refLoading ? (
             <div className="text-[12px] text-faint">Loading…</div>
+          ) : refData?.kind === "loan" && refData?.data ? (
+            <LoanApprovalDetail loan={refData.data} />
           ) : (
             <ReferenceView kind={refData?.kind} data={refData?.data} />
           )}
