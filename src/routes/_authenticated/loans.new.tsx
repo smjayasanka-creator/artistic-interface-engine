@@ -247,6 +247,7 @@ function NewLoan() {
   const startWfFn = useServerFn(startWorkflow);
   const startDynamicFn = useServerFn(startLoanApprovalDynamic);
   const previewChainFn = useServerFn(previewLoanApprovalChain);
+  const previewChainRawFn = useServerFn(previewLoanApprovalChainRaw);
   const submit = useMutation({
     mutationFn: submitFn,
     onSuccess: async (loan: any) => {
