@@ -74,7 +74,7 @@ export function InstanceDetailModal({
   };
 
   return (
-    <Modal open onClose={onClose} title={`Approval · ${instance.reference_label}`} width={640}>
+    <Modal open onClose={onClose} title={`Approval · ${instance.reference_label}`} width={refData?.kind === "loan" ? 1000 : 640}>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[12px]">
           <MetaRow label="Transaction" value={txLabel} />
