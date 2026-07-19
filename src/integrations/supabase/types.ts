@@ -3491,6 +3491,7 @@ export type Database = {
           id: string
           metadata: Json
           step_key: string | null
+          transition_key: string | null
           workflow_instance_id: string | null
         }
         Insert: {
@@ -3503,6 +3504,7 @@ export type Database = {
           id?: string
           metadata?: Json
           step_key?: string | null
+          transition_key?: string | null
           workflow_instance_id?: string | null
         }
         Update: {
@@ -3515,6 +3517,7 @@ export type Database = {
           id?: string
           metadata?: Json
           step_key?: string | null
+          transition_key?: string | null
           workflow_instance_id?: string | null
         }
         Relationships: [
@@ -3951,6 +3954,7 @@ export type Database = {
           id: string
           reason: string | null
           to_status: Database["public"]["Enums"]["loan_application_status"]
+          transition_key: string | null
         }
         Insert: {
           actor_id?: string | null
@@ -3963,6 +3967,7 @@ export type Database = {
           id?: string
           reason?: string | null
           to_status: Database["public"]["Enums"]["loan_application_status"]
+          transition_key?: string | null
         }
         Update: {
           actor_id?: string | null
@@ -3975,6 +3980,7 @@ export type Database = {
           id?: string
           reason?: string | null
           to_status?: Database["public"]["Enums"]["loan_application_status"]
+          transition_key?: string | null
         }
         Relationships: [
           {
@@ -6713,6 +6719,14 @@ export type Database = {
     }
     Functions: {
       _app_row_company_ok: { Args: { _app_id: string }; Returns: boolean }
+      cancel_loan_application: {
+        Args: {
+          _application_id: string
+          _reason: string
+          _transition_key: string
+        }
+        Returns: Json
+      }
       claim_pending_domain_events: {
         Args: { _limit?: number }
         Returns: {
@@ -6757,6 +6771,7 @@ export type Database = {
           _comment?: string
           _decision: string
           _step_key?: string
+          _transition_key?: string
           _workflow_instance_id?: string
         }
         Returns: Json
@@ -6976,6 +6991,14 @@ export type Database = {
         }
         Returns: Json
       }
+      return_loan_application: {
+        Args: {
+          _application_id: string
+          _reason: string
+          _transition_key: string
+        }
+        Returns: Json
+      }
       seed_default_risk_scheme: {
         Args: { _company_id: string }
         Returns: undefined
@@ -6985,6 +7008,10 @@ export type Database = {
         Returns: undefined
       }
       start_dynamic_loan_workflow: { Args: { _loan_id: string }; Returns: Json }
+      submit_loan_application: {
+        Args: { _application_id: string; _transition_key: string }
+        Returns: Json
+      }
       transfer_savings_to_unclaimed: {
         Args: { _account_id: string; _idempotency_key?: string }
         Returns: string

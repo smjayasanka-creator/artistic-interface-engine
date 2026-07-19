@@ -165,77 +165,106 @@ export const getLoanApplication = createServerFn({ method: "GET" })
   });
 
 // ---------- Transitions ----------
-
-async function pushStatus(
-  supabase: any, appId: string, appNo: string,
-  from: string | null, to: string, reason?: string, actorId?: string | null,
-) {
-  await supabase.from("loan_application_status_history" as any).insert({
-    application_id: appId, application_no: appNo,
-    from_status: from as any, to_status: to as any, actor_id: actorId ?? null, reason: reason ?? null,
-  } as any);
-}
+// All status changes go through SECURITY DEFINER RPCs so that status,
+// history, approval trail, and audit event are one atomic unit. The
+// transition_key acts as an idempotency guard for retried requests.
 
 export const submitLoanApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { id: string }) => z.object({ id: z.string().uuid() }).parse(i))
+  .inputValidator((i: { id: string; transition_key?: string }) =>
+    z.object({
+      id: z.string().uuid(),
+      transition_key: z.string().min(1).optional(),
+    }).parse(i))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: app, error } = await supabase.from("loan_application" as any)
-      .select("id, application_no, status").eq("id", data.id).maybeSingle();
+    const key = data.transition_key ?? `submit:${data.id}:${Date.now()}`;
+    const { data: res, error } = await context.supabase.rpc(
+      "submit_loan_application" as any,
+      { _application_id: data.id, _transition_key: key } as any,
+    );
     if (error) throw new Error(error.message);
-    if (!app) throw new Error("Application not found");
-    if ((app as any).status !== "draft") throw new Error(`Cannot submit from status ${(app as any).status}`);
-    const now = new Date().toISOString();
-    const { error: e2 } = await supabase.from("loan_application" as any)
-      .update({ status: "submitted", submitted_at: now } as any).eq("id", data.id);
-    if (e2) throw new Error(e2.message);
-    await pushStatus(supabase, (app as any).id, (app as any).application_no, "draft", "submitted", "Submitted for review", userId);
-    return { ok: true };
+    return res as unknown as {
+      application_id: string; from_status: string; to_status: string;
+      history_id: string; audit_id?: string; idempotent: boolean;
+    };
   });
 
 export const recordApplicationDecision = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: {
-    application_id: string; decision: "approve" | "reject" | "return"; comment?: string; step_key?: string; workflow_instance_id?: string;
+    application_id: string;
+    decision: "approve" | "reject" | "return";
+    comment?: string;
+    step_key?: string;
+    workflow_instance_id?: string;
+    transition_key?: string;
   }) => z.object({
     application_id: z.string().uuid(),
     decision: z.enum(["approve", "reject", "return"]),
     comment: z.string().optional(),
     step_key: z.string().optional(),
     workflow_instance_id: z.string().uuid().optional(),
+    transition_key: z.string().min(1).optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    // Atomic authorization + writes happen server-side in the RPC.
-    const { data: res, error } = await supabase.rpc("decide_loan_application" as any, {
-      _application_id: data.application_id,
-      _decision: data.decision,
-      _comment: data.comment ?? null,
-      _step_key: data.step_key ?? null,
-      _workflow_instance_id: data.workflow_instance_id ?? null,
-    } as any);
+    const key =
+      data.transition_key ??
+      `decide:${data.application_id}:${data.workflow_instance_id ?? "_"}:${data.step_key ?? "_"}:${data.decision}`;
+    const { data: res, error } = await context.supabase.rpc(
+      "decide_loan_application" as any,
+      {
+        _application_id: data.application_id,
+        _decision: data.decision,
+        _comment: data.comment ?? null,
+        _step_key: data.step_key ?? null,
+        _workflow_instance_id: data.workflow_instance_id ?? null,
+        _transition_key: key,
+      } as any,
+    );
     if (error) throw new Error(error.message);
-    const status = (res as any)?.status as string | undefined;
-    return { ok: true, status: status ?? "under_review" };
+    return res as unknown as {
+      application_id: string; from_status: string; to_status: string;
+      history_id: string | null; decision_id: string | null;
+      audit_id?: string; idempotent: boolean;
+    };
+  });
+
+export const returnLoanApplication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; reason: string; transition_key?: string }) =>
+    z.object({
+      id: z.string().uuid(),
+      reason: z.string().min(3),
+      transition_key: z.string().min(1).optional(),
+    }).parse(i))
+  .handler(async ({ data, context }) => {
+    const key = data.transition_key ?? `return:${data.id}:${Date.now()}`;
+    const { data: res, error } = await context.supabase.rpc(
+      "return_loan_application" as any,
+      { _application_id: data.id, _reason: data.reason, _transition_key: key } as any,
+    );
+    if (error) throw new Error(error.message);
+    return res;
   });
 
 export const cancelLoanApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { id: string; reason?: string }) =>
-    z.object({ id: z.string().uuid(), reason: z.string().optional() }).parse(i))
+  .inputValidator((i: { id: string; reason: string; transition_key?: string }) =>
+    z.object({
+      id: z.string().uuid(),
+      reason: z.string().min(3, "A cancellation reason is required"),
+      transition_key: z.string().min(1).optional(),
+    }).parse(i))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: app } = await supabase.from("loan_application" as any)
-      .select("id, application_no, status").eq("id", data.id).maybeSingle();
-    if (!app) throw new Error("Application not found");
-    if ((app as any).status === "disbursed") throw new Error("Cannot cancel a disbursed application");
-    const { error } = await supabase.from("loan_application" as any)
-      .update({ status: "cancelled" } as any).eq("id", data.id);
+    const key = data.transition_key ?? `cancel:${data.id}:${Date.now()}`;
+    const { data: res, error } = await context.supabase.rpc(
+      "cancel_loan_application" as any,
+      { _application_id: data.id, _reason: data.reason, _transition_key: key } as any,
+    );
     if (error) throw new Error(error.message);
-    await pushStatus(supabase, (app as any).id, (app as any).application_no, (app as any).status, "cancelled", data.reason, userId);
-    return { ok: true };
+    return res;
   });
+
 
 // ---------- Documents ----------
 
