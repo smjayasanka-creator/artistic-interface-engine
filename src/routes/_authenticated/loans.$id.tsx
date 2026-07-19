@@ -126,9 +126,73 @@ function LoanDetail() {
       {tab === "charges" && <ChargesTab charges={appliedCharges} total={totals.charges} />}
       {tab === "accruals" && <AccrualsTab accruals={accruals} total={totals.accrued} />}
       {tab === "approvals" && <ApprovalsTab approvals={approvals} />}
+      {tab === "application" && <ApplicationTab applicationId={loan.application_id} applicationNo={loan.application_no} />}
     </div>
   );
 }
+
+function ApplicationTab({ applicationId, applicationNo }: { applicationId?: string | null; applicationNo?: string | null }) {
+  const fn = useServerFn(getLoanApplication);
+  const enabled = !!applicationId;
+  const { data, isLoading } = useQuery({
+    queryKey: ["loan-application", applicationId],
+    queryFn: () => fn({ data: { id: applicationId! } }),
+    enabled,
+  });
+  if (!enabled) {
+    return <Card><div className="text-center text-faint text-sm py-4">No origination record linked to this loan.</div></Card>;
+  }
+  if (isLoading || !data) return <Card><div className="text-sm text-faint py-4 text-center">Loading application…</div></Card>;
+  const m: any = data.master;
+  return (
+    <div className="space-y-3">
+      <Card>
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm font-semibold">Application <span className="font-mono">{applicationNo ?? m?.application_no}</span></div>
+          <StatusBadge status={m?.status ?? "—"} />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[12.5px]">
+          <Row k="Requested principal" v={money(Number(m?.requested_principal ?? 0))} />
+          <Row k="Requested tenor" v={`${m?.requested_tenor_months ?? 0} months`} />
+          <Row k="Requested rate" v={m?.requested_rate_pct != null ? `${m.requested_rate_pct}%` : "—"} />
+          <Row k="Frequency" v={m?.frequency ?? "—"} />
+          <Row k="Submitted" v={m?.submitted_at ? shortDate(m.submitted_at) : "—"} />
+          <Row k="Decided" v={m?.decided_at ? shortDate(m.decided_at) : "—"} />
+          <Row k="Disbursed" v={m?.disbursed_at ? shortDate(m.disbursed_at) : "—"} />
+          <Row k="Channel" v={m?.channel ?? "—"} />
+        </div>
+        {m?.purpose && <div className="mt-3 text-[12.5px]"><span className="text-faint">Purpose:</span> {m.purpose}</div>}
+      </Card>
+      {data.collateral?.length > 0 && (
+        <Card>
+          <div className="text-sm font-semibold mb-2">Securities ({data.collateral.length})</div>
+          <ul className="text-[12.5px] space-y-1">
+            {data.collateral.map((c: any) => (
+              <li key={c.id} className="border-b border-border/50 pb-1">
+                <span className="font-medium">{c.security_type?.name ?? "—"}</span>
+                {c.notes && <span className="text-faint"> · {c.notes}</span>}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+      {data.status_history?.length > 0 && (
+        <Card>
+          <div className="text-sm font-semibold mb-2">Status history</div>
+          <ul className="text-[12.5px] space-y-1">
+            {data.status_history.map((h: any) => (
+              <li key={h.id} className="flex items-center justify-between border-b border-border/50 pb-1">
+                <span>{h.from_status ?? "—"} → <span className="font-medium">{h.to_status}</span>{h.reason ? ` · ${h.reason}` : ""}</span>
+                <span className="text-faint">{shortDate(h.created_at)}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 
 function Overview({ loan, outstanding, arrears, nextDue, totals }: any) {
   return (
