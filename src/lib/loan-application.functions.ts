@@ -206,28 +206,18 @@ export const recordApplicationDecision = createServerFn({ method: "POST" })
     workflow_instance_id: z.string().uuid().optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: app, error } = await supabase.from("loan_application" as any)
-      .select("id, application_no, status").eq("id", data.application_id).maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!app) throw new Error("Application not found");
-    await supabase.from("loan_application_approval" as any).insert({
-      application_id: data.application_id,
-      application_no: (app as any).application_no,
-      workflow_instance_id: data.workflow_instance_id ?? null,
-      step_key: data.step_key ?? null,
-      decision: data.decision,
-      decided_by: userId,
-      comment: data.comment ?? null,
+    const { supabase } = context;
+    // Atomic authorization + writes happen server-side in the RPC.
+    const { data: res, error } = await supabase.rpc("decide_loan_application" as any, {
+      _application_id: data.application_id,
+      _decision: data.decision,
+      _comment: data.comment ?? null,
+      _step_key: data.step_key ?? null,
+      _workflow_instance_id: data.workflow_instance_id ?? null,
     } as any);
-    const next = data.decision === "approve" ? "approved"
-      : data.decision === "reject" ? "rejected" : "under_review";
-    const patch: any = { status: next };
-    if (next === "approved" || next === "rejected") patch.decided_at = new Date().toISOString();
-    const { error: e2 } = await supabase.from("loan_application" as any).update(patch).eq("id", data.application_id);
-    if (e2) throw new Error(e2.message);
-    await pushStatus(supabase, (app as any).id, (app as any).application_no, (app as any).status, next, data.comment, userId);
-    return { ok: true, status: next };
+    if (error) throw new Error(error.message);
+    const status = (res as any)?.status as string | undefined;
+    return { ok: true, status: status ?? "under_review" };
   });
 
 export const cancelLoanApplication = createServerFn({ method: "POST" })
