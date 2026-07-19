@@ -114,6 +114,8 @@ function PlatformAdmin() {
         ))}
       </div>
 
+      <PlatformProgress tab={tab} />
+
       {tab === "overview" && <OverviewTab />}
       {tab === "companies" && <CompaniesTab />}
       {tab === "plans" && <PlansTab />}
