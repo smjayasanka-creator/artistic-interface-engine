@@ -1384,8 +1384,32 @@ export const submitApplication = createServerFn({ method: "POST" })
       if (secErr) throw new Error(secErr.message);
     }
 
-    return loan;
+    // Mirror securities into origination trail for retention/audit.
+    if (data.securities && data.securities.length) {
+      const collateralRows = data.securities.map((s) => ({
+        application_id: appId,
+        application_no: appNo,
+        security_type_id: s.security_type_id,
+        values: s.values ?? {},
+        notes: s.notes ?? null,
+        documents: s.documents ?? [],
+      }));
+      await (supabase as any).from("loan_application_collateral").insert(collateralRows);
+    }
+
+    // Seed status history so the origination trail reflects the initial state.
+    await (supabase as any).from("loan_application_status_history").insert({
+      application_id: appId,
+      application_no: appNo,
+      from_status: null,
+      to_status: data.draft ? "draft" : "submitted",
+      actor_id: context.userId,
+      reason: data.draft ? "Draft saved" : "Submitted from application form",
+    });
+
+    return { ...(loan as any), application_id: appId, application_no: appNo };
   });
+
 
 export const declineLoan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
