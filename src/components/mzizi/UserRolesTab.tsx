@@ -383,7 +383,8 @@ export function UserRolesTab() {
                   checked={selectedStaff.has(s.id)}
                   onChange={(e) => {
                     const next = new Set(selectedStaff);
-                    e.target.checked ? next.add(s.id) : next.delete(s.id);
+                    if (e.target.checked) next.add(s.id);
+                    else next.delete(s.id);
                     setSelectedStaff(next);
                   }}
                 />
