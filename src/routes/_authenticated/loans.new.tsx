@@ -630,6 +630,11 @@ function NewLoan() {
         return;
       }
     }
+    if (!scheduleValid) {
+      const first = scheduleErrors[0];
+      toast.error(first ? `Schedule error: ${first.message}` : "Fix schedule errors before submitting");
+      return;
+    }
     submit.mutate({ data: buildPayload(false) as any });
   };
 
