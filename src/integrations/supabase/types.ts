@@ -6719,6 +6719,7 @@ export type Database = {
     }
     Functions: {
       _app_row_company_ok: { Args: { _app_id: string }; Returns: boolean }
+      can_backdate_repayment: { Args: { _loan_id: string }; Returns: boolean }
       cancel_loan_application: {
         Args: {
           _application_id: string
@@ -6758,6 +6759,7 @@ export type Database = {
         }
       }
       company_id_of_branch: { Args: { _branch_id: string }; Returns: string }
+      current_business_date: { Args: never; Returns: string }
       current_company_id: { Args: never; Returns: string }
       current_staff_branch: { Args: never; Returns: string }
       current_staff_id: { Args: never; Returns: string }
