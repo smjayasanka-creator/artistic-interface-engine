@@ -2917,9 +2917,13 @@ export type Database = {
           contract_no: string | null
           created_at: string
           disbursed_at: string | null
+          disbursement_channel: string | null
+          disbursement_entry_id: string | null
+          disbursement_reference: string | null
           frequency: Database["public"]["Enums"]["repayment_frequency"]
           id: string
           idempotency_key: string | null
+          net_disbursed: number | null
           officer_id: string | null
           principal: number
           product_id: string
@@ -2942,9 +2946,13 @@ export type Database = {
           contract_no?: string | null
           created_at?: string
           disbursed_at?: string | null
+          disbursement_channel?: string | null
+          disbursement_entry_id?: string | null
+          disbursement_reference?: string | null
           frequency?: Database["public"]["Enums"]["repayment_frequency"]
           id?: string
           idempotency_key?: string | null
+          net_disbursed?: number | null
           officer_id?: string | null
           principal: number
           product_id: string
@@ -2967,9 +2975,13 @@ export type Database = {
           contract_no?: string | null
           created_at?: string
           disbursed_at?: string | null
+          disbursement_channel?: string | null
+          disbursement_entry_id?: string | null
+          disbursement_reference?: string | null
           frequency?: Database["public"]["Enums"]["repayment_frequency"]
           id?: string
           idempotency_key?: string | null
+          net_disbursed?: number | null
           officer_id?: string | null
           principal?: number
           product_id?: string
