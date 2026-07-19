@@ -5284,34 +5284,52 @@ export type Database = {
       }
       repayment: {
         Row: {
+          allocated_fees: number
+          allocated_interest: number
+          allocated_principal: number
           amount: number
           channel: Database["public"]["Enums"]["payment_channel"]
           entry_id: string
           id: string
           idempotency_key: string | null
           loan_id: string
+          notes: string | null
           received_at: string
           received_by: string | null
+          reference: string | null
+          unallocated_amount: number
         }
         Insert: {
+          allocated_fees?: number
+          allocated_interest?: number
+          allocated_principal?: number
           amount: number
           channel: Database["public"]["Enums"]["payment_channel"]
           entry_id: string
           id?: string
           idempotency_key?: string | null
           loan_id: string
+          notes?: string | null
           received_at?: string
           received_by?: string | null
+          reference?: string | null
+          unallocated_amount?: number
         }
         Update: {
+          allocated_fees?: number
+          allocated_interest?: number
+          allocated_principal?: number
           amount?: number
           channel?: Database["public"]["Enums"]["payment_channel"]
           entry_id?: string
           id?: string
           idempotency_key?: string | null
           loan_id?: string
+          notes?: string | null
           received_at?: string
           received_by?: string | null
+          reference?: string | null
+          unallocated_amount?: number
         }
         Relationships: [
           {
@@ -6904,6 +6922,18 @@ export type Database = {
           _source_ref?: string
         }
         Returns: string
+      }
+      record_repayment: {
+        Args: {
+          _amount: number
+          _channel: string
+          _idempotency_key?: string
+          _loan_id: string
+          _notes?: string
+          _received_at?: string
+          _reference?: string
+        }
+        Returns: Json
       }
       record_write_off_recovery: {
         Args: {

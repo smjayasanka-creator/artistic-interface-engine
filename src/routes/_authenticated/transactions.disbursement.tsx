@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Send } from "lucide-react";
-import { approveLoan, getPendingDisbursements, getSession } from "@/lib/mzizi.functions";
+import { getPendingDisbursements, getSession } from "@/lib/mzizi.functions";
+import { disburseApplication } from "@/lib/loan-application.functions";
 import { Card } from "@/components/mzizi/Card";
 import { Modal } from "@/components/mzizi/Modal";
 import { FormGrid, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
@@ -36,11 +37,11 @@ function DisbursementPage() {
   const [selected, setSelected] = useState<any | null>(null);
   const [pay, setPay] = useState<PaymentMethodValue>({ method: "fund_transfer" });
 
-  const disburseFn = useServerFn(approveLoan);
+  const disburseFn = useServerFn(disburseApplication);
   const disburse = useMutation({
     mutationFn: disburseFn,
     onSuccess: (r: any) => {
-      toast.success(`Disbursed · ${r.reference}`);
+      toast.success(`Disbursed · loan ${r.loan_id?.slice?.(0, 8) ?? ""}`);
       setSelected(null);
       qc.invalidateQueries();
     },
@@ -56,15 +57,18 @@ function DisbursementPage() {
     e.preventDefault();
     if (!selected) return;
     if (!paymentMethodValid(pay)) return toast.error("Complete payment details");
+    // Stable idempotency key so a retried click cannot double-disburse.
+    const idem = `disburse:${selected.application_id ?? selected.id}`;
     disburse.mutate({
       data: {
-        loan_id: selected.id,
+        application_id: selected.application_id ?? selected.id,
         payment_channel: pay.method,
         payment_reference: pay.reference || undefined,
-        bank_account: pay.bank_account_id || pay.savings_account_id || undefined,
+        idempotency_key: idem,
       } as any,
     });
   }
+
 
   const loans = data ?? [];
 
@@ -101,19 +105,18 @@ function DisbursementPage() {
               className="grid items-center text-[12.5px] py-2.5 px-5 border-b border-row-divider hover:bg-secondary/30"
               style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 210px" }}
             >
-              <div className="text-muted-foreground">{l.submitted_at ? shortDate(l.submitted_at) : "—"}</div>
+              <div className="text-muted-foreground">
+                <div>{l.submitted_at ? shortDate(l.submitted_at) : "—"}</div>
+                {l.application_no && (
+                  <div className="text-[10.5px] text-faint font-mono">{l.application_no}</div>
+                )}
+              </div>
               <div className="truncate">{l.client?.full_name ?? "—"}</div>
               <div className="text-muted-foreground truncate">{l.product?.name ?? "—"}</div>
               <div className="text-muted-foreground truncate">{l.branch?.code ?? l.branch?.name ?? "—"}</div>
               <div className="text-right font-mono text-primary">{money(Number(l.principal))}</div>
               <div className="flex justify-end gap-2">
-                <Link
-                  to="/loans/$id"
-                  params={{ id: l.id }}
-                  className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12px] font-semibold hover:border-primary"
-                >
-                  View
-                </Link>
+
                 {canDisburse && (
                   <button
                     onClick={() => openModal(l)}

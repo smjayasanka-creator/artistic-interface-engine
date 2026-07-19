@@ -28,6 +28,11 @@ function RecordRepaymentPage() {
   const [reference, setReference] = useState<string>("");
   const [receivedAt, setReceivedAt] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState<string>("");
+  // One idempotency key per form session — a retried submit hits the same key
+  // and the server RPC returns the original allocation instead of double-posting.
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
+    (globalThis.crypto?.randomUUID?.() ?? `rep-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`),
+  );
 
   const listFn = useServerFn(getActiveLoansForClient);
   const { data: loans } = useQuery({ queryKey: ["active-loans"], queryFn: () => listFn() });
@@ -40,9 +45,10 @@ function RecordRepaymentPage() {
         r.allocated_fees > 0 ? `Fees ${money(r.allocated_fees)}` : null,
         r.allocated_interest > 0 ? `Interest ${money(r.allocated_interest)}` : null,
         r.allocated_principal > 0 ? `Principal ${money(r.allocated_principal)}` : null,
+        r.unallocated_amount > 0 ? `Unallocated ${money(r.unallocated_amount)}` : null,
       ].filter(Boolean).join(" · ");
       toast.success(
-        `Repayment posted${r.reference ? " · " + r.reference : ""}`,
+        `Repayment posted${r.reference ? " · " + r.reference : ""}${r.idempotent_replay ? " (replay)" : ""}`,
         { description: [parts || null, r.loan_closed ? "Loan closed" : null].filter(Boolean).join(" — ") || undefined },
       );
       qc.invalidateQueries();
@@ -51,7 +57,12 @@ function RecordRepaymentPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const valid = loanId && amount && Number(amount) > 0;
+  const referenceRequired = channel === "bank" || channel === "mpesa";
+  const valid =
+    loanId &&
+    amount &&
+    Number(amount) > 0 &&
+    (!referenceRequired || reference.trim().length > 0);
 
   return (
     <div className="animate-fadein flex flex-col gap-4">
@@ -66,12 +77,16 @@ function RecordRepaymentPage() {
               loan_id: loanId,
               amount: Number(amount),
               channel,
-              ...(reference ? { reference } : {}),
+              received_at: new Date(receivedAt).toISOString(),
+              idempotency_key: idempotencyKey,
+              ...(reference.trim() ? { reference: reference.trim() } : {}),
+              ...(notes.trim() ? { notes: notes.trim() } : {}),
             } as any,
           });
         }}
         className="flex flex-col gap-4"
       >
+
         <Card className="p-6">
           <FormGrid>
             <FormField label="Loan" required span={8}>
@@ -115,7 +130,11 @@ function RecordRepaymentPage() {
                 ))}
               </div>
             </FormField>
-            <FormField label={channel === "mpesa" ? "M-Pesa reference" : channel === "bank" ? "Bank reference" : "Receipt no."} span={7}>
+            <FormField
+              label={channel === "mpesa" ? "M-Pesa reference" : channel === "bank" ? "Bank reference" : "Receipt no."}
+              span={7}
+              required={referenceRequired}
+            >
               <input value={reference} onChange={(e) => setReference(e.target.value)} className={`${inputCls} font-mono`} maxLength={40} />
             </FormField>
             <FormField label="Notes" span={12}>
