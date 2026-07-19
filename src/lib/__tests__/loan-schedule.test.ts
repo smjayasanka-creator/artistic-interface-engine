@@ -180,13 +180,7 @@ describe("generateSchedule dates", () => {
 
 describe("timezone independence", () => {
   const restore = process.env.TZ;
-  afterEachTZ();
-  function afterEachTZ() {
-    // vitest: restore in a plain teardown
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { afterEach } = require("vitest");
-    afterEach(() => { process.env.TZ = restore; });
-  }
+  afterEach(() => { process.env.TZ = restore; });
 
   it("Sri Lanka (Asia/Colombo, +05:30) still returns Jan 31 → Feb 28", () => {
     process.env.TZ = "Asia/Colombo";
