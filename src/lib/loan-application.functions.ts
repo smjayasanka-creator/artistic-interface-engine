@@ -63,7 +63,7 @@ export const createLoanApplication = createServerFn({ method: "POST" })
       .select("id, application_no")
       .single();
     if (error) throw new Error(error.message);
-    return row as { id: string; application_no: string };
+    return row as unknown as { id: string; application_no: string };
   });
 
 export const updateLoanApplication = createServerFn({ method: "POST" })
