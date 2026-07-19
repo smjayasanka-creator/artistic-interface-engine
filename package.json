@@ -3,13 +3,19 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "packageManager": "bun@1.3.3",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
-    "lint": "eslint .",
-    "format": "prettier --write ."
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings=889",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test:run && bun run build"
   },
   "dependencies": {
     "@fontsource/ibm-plex-sans": "^5.2.8",
