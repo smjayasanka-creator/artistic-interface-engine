@@ -6501,6 +6501,7 @@ export type Database = {
         Row: {
           amount: number | null
           applied_rule_id: string | null
+          chain_snapshot: Json | null
           company_id: string
           completed_at: string | null
           created_at: string
@@ -6518,6 +6519,7 @@ export type Database = {
         Insert: {
           amount?: number | null
           applied_rule_id?: string | null
+          chain_snapshot?: Json | null
           company_id: string
           completed_at?: string | null
           created_at?: string
@@ -6535,6 +6537,7 @@ export type Database = {
         Update: {
           amount?: number | null
           applied_rule_id?: string | null
+          chain_snapshot?: Json | null
           company_id?: string
           completed_at?: string | null
           created_at?: string
@@ -6920,6 +6923,7 @@ export type Database = {
         Args: { _active: boolean; _jobid: number }
         Returns: undefined
       }
+      start_dynamic_loan_workflow: { Args: { _loan_id: string }; Returns: Json }
       transfer_savings_to_unclaimed: {
         Args: { _account_id: string; _idempotency_key?: string }
         Returns: string
