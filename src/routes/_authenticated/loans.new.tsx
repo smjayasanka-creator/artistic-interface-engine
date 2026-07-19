@@ -96,11 +96,50 @@ function TabHeader({ tab, setTab }: { tab: TabKey; setTab: (t: TabKey) => void }
   );
 }
 
-function ApprovalChainPreview({ loanId, previewFn }: { loanId: string; previewFn: (args: { data: { loan_id: string } }) => Promise<any> }) {
+type ChainPreviewProps =
+  | { mode: "existing"; loanId: string; previewFn: (args: { data: { loan_id: string } }) => Promise<any> }
+  | {
+      mode: "raw";
+      clientId: string;
+      productId: string;
+      principal: number;
+      rate: number;
+      previewRawFn: (args: {
+        data: { client_id: string; product_id: string; principal: number; annual_rate_pct: number };
+      }) => Promise<any>;
+    };
+
+function ApprovalChainPreview(props: ChainPreviewProps) {
+  const isRaw = props.mode === "raw";
+  const ready = isRaw
+    ? !!(props.clientId && props.productId && props.principal > 0 && props.rate >= 0)
+    : true;
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["chain-preview", loanId],
-    queryFn: () => previewFn({ data: { loan_id: loanId } }),
+    queryKey: isRaw
+      ? ["chain-preview-raw", props.clientId, props.productId, props.principal, props.rate]
+      : ["chain-preview", (props as any).loanId],
+    queryFn: () =>
+      isRaw
+        ? props.previewRawFn({
+            data: {
+              client_id: props.clientId,
+              product_id: props.productId,
+              principal: props.principal,
+              annual_rate_pct: props.rate,
+            },
+          })
+        : (props as any).previewFn({ data: { loan_id: (props as any).loanId } }),
+    enabled: ready,
   });
+
+  if (!ready) {
+    return (
+      <div className="mt-4 rounded-lg border border-dashed border-border p-3 text-[12px] text-muted-foreground">
+        Select a client, product, principal and rate to preview the approval chain.
+      </div>
+    );
+  }
   if (isLoading) {
     return (
       <div className="mt-4 rounded-lg border border-border bg-muted/20 p-3 text-[12px] text-muted-foreground">
