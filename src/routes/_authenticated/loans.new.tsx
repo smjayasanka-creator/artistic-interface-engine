@@ -583,8 +583,24 @@ function NewLoan() {
       termNum < Number(product.min_term_months) ||
       termNum > Number(product.max_term_months));
 
+  const scheduleErrors: { seq?: number; message: string }[] =
+    scheduleType === "structured" && schedule ? ((schedule as any).errors ?? []) : [];
+  const scheduleErrorBySeq = new Map<number, string[]>();
+  for (const e of scheduleErrors) {
+    if (e.seq !== undefined) {
+      const list = scheduleErrorBySeq.get(e.seq) ?? [];
+      list.push(e.message);
+      scheduleErrorBySeq.set(e.seq, list);
+    }
+  }
+  const scheduleGlobalErrors = scheduleErrors.filter((e) => e.seq === undefined);
+  const scheduleValid = scheduleType !== "structured" || (schedule as any)?.isValid !== false;
+  const recalculatedAutoSeqs: number[] =
+    scheduleType === "structured" && schedule ? ((schedule as any).recalculatedAutoSeqs ?? []) : [];
+
   const canSubmit =
-    !!clientId && !!productId && !!principal && term !== "" && !!rateNum && docsSatisfied && !submit.isPending;
+    !!clientId && !!productId && !!principal && term !== "" && !!rateNum && docsSatisfied && scheduleValid && !submit.isPending;
+
 
 
   const submitApp = () => {
