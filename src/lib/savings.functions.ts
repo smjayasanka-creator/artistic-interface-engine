@@ -773,7 +773,7 @@ export const issuePassbook = createServerFn({ method: "POST" })
       throw new Error("This stock batch is not available");
 
     // Determine serial: use next available (serial_from + quantity_issued) if not provided
-    let serial = data.serial_no ?? Number(stock.serial_from) + Number(stock.quantity_issued);
+    const serial = data.serial_no ?? Number(stock.serial_from) + Number(stock.quantity_issued);
     if (serial < Number(stock.serial_from) || serial > Number(stock.serial_to))
       throw new Error("Serial is outside the batch range");
 
