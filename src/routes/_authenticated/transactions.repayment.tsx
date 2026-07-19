@@ -130,7 +130,11 @@ function RecordRepaymentPage() {
                 ))}
               </div>
             </FormField>
-            <FormField label={channel === "mpesa" ? "M-Pesa reference" : channel === "bank" ? "Bank reference" : "Receipt no."} span={7}>
+            <FormField
+              label={channel === "mpesa" ? "M-Pesa reference" : channel === "bank" ? "Bank reference" : "Receipt no."}
+              span={7}
+              required={referenceRequired}
+            >
               <input value={reference} onChange={(e) => setReference(e.target.value)} className={`${inputCls} font-mono`} maxLength={40} />
             </FormField>
             <FormField label="Notes" span={12}>
