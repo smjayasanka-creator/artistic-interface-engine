@@ -231,13 +231,12 @@ export const getPlatformProgress = createServerFn({ method: "GET" })
     // this best-effort — a missing RPC in the list is the actionable signal.
     const rpcs = await Promise.all(
       CRITICAL_RPCS.map(async (r) => {
-        const { error } = await supabase.rpc(r.name as never, {} as never);
-        // "Not found" (PGRST202) or "function does not exist" (42883) mean
-        // the RPC is missing. Any other error (bad args, permission, etc.)
-        // still proves the function is defined.
+        const { error } = await (supabase.rpc as (n: string, args?: unknown) => Promise<{ error: { message: string; code?: string } | null }>)(r.name, {});
         const missing =
-          error &&
-          /(pgrst202|could not find|does not exist)/i.test(error.message + (error as any).code);
+          !!error &&
+          /(pgrst202|could not find|does not exist)/i.test(
+            (error.message ?? "") + (error.code ?? ""),
+          );
         return { ...r, present: !missing };
       }),
     );
