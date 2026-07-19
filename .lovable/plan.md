@@ -1,4 +1,3 @@
-
 # Dynamic Delegation Authority & Workflow Engine
 
 Replace the current fixed `delegation_authority` (security-type / LTV / amount / rate ranges only) with a rules-driven authority engine that resolves loan approval chains at submission time — no code changes needed to adjust limits.
@@ -6,7 +5,9 @@ Replace the current fixed `delegation_authority` (security-type / LTV / amount /
 ## 1. Data model (new tables, old kept for back-compat until cutover)
 
 ### `delegation_authority` (redesigned — MASTER)
+
 Replaces current table. Fields:
+
 - `code` (unique per company, e.g. `L1`, `BM`, `CREDIT_CMTE`)
 - `name`, `description`
 - `level` int (1 = lowest, higher = stronger; used for escalation ordering)
@@ -14,17 +15,22 @@ Replaces current table. Fields:
 - `company_id`, timestamps, `created_by`
 
 ### `delegation_authority_member`
+
 Who can act as this authority. One authority ↔ many members.
+
 - `authority_id`
 - `member_type` (`user` | `custom_role` | `staff_role`)
 - `member_ref` (uuid for user/custom_role, text for staff_role enum)
 - `is_backup` bool (used for absence delegation)
 
 ### `delegation_authority_delegate` (absence delegation)
+
 - `authority_id`, `from_user_id`, `to_user_id`, `from_date`, `to_date`, `reason`
 
 ### `delegation_rule`
+
 Configurable matcher → authority chain.
+
 - `company_id`, `name`, `active`, `priority` int (lower = evaluated first)
 - `rule_scope` enum: `user` | `branch` | `region` | `product` | `default` (drives tie-break per spec)
 - Filters (all nullable — NULL = wildcard):
@@ -36,11 +42,14 @@ Configurable matcher → authority chain.
 - `effective_from`, `effective_to`, timestamps
 
 ### `delegation_rule_step`
+
 Ordered approval chain for a rule.
+
 - `rule_id`, `seq` int, `authority_id`, `mode` (`sequential` default),
 - `sla_hours` int (for escalation), `escalate_to_authority_id` nullable
 
 ### Audit
+
 Extend existing `workflow_action` + add `workflow_instance.applied_rule_id`, `workflow_step.authority_id`, `workflow_step.escalated_at`. Existing `audit_log` captures decisions/comments.
 
 RLS: company-scoped read for members; write for company admins + `workflow.manage` permission. GRANTs to `authenticated` + `service_role`.
@@ -50,6 +59,7 @@ RLS: company-scoped read for members; write for company admins + `workflow.manag
 `resolveLoanApprovalChain({ loan_id })` — pure server function, called at loan submission.
 
 Algorithm:
+
 1. Load loan + client + product + branch + region.
 2. Query active rules in company, `effective_from <= now < effective_to`.
 3. Score each rule by scope priority per spec: `user` (1) → `branch` (2) → `region` (3) → `product` (4) → `default` (5); ties broken by rule `priority`, then most-specific (fewer NULL filters wins).
@@ -59,6 +69,7 @@ Algorithm:
 ## 3. Workflow generation
 
 Replace hard-coded `loan_disbursement` workflow lookup for loan approvals:
+
 - On `submitLoanApplication`, call `resolveLoanApprovalChain`, then create a `workflow_instance` with dynamically materialised `workflow_step` rows (`authority_id` per step).
 - Approver eligibility = user matches any `delegation_authority_member` of the current step's authority, OR is an active delegate.
 - Existing modal supports approve / reject / send-back — reuse. Add "resubmission" path on reject: initiator can edit & resubmit → re-resolves chain.
