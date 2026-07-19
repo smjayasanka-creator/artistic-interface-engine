@@ -1514,8 +1514,17 @@ function NewLoan() {
           {tab === "evaluations" && (
             <>
               <LoanEvaluation loanId={editingLoanId} productId={productId || undefined} />
-              {editingLoanId && (
-                <ApprovalChainPreview loanId={editingLoanId} previewFn={previewChainFn} />
+              {editingLoanId ? (
+                <ApprovalChainPreview mode="existing" loanId={editingLoanId} previewFn={previewChainFn} />
+              ) : (
+                <ApprovalChainPreview
+                  mode="raw"
+                  clientId={clientId}
+                  productId={productId}
+                  principal={Number(principal) || 0}
+                  rate={Number(rate) || 0}
+                  previewRawFn={previewChainRawFn}
+                />
               )}
             </>
           )}
