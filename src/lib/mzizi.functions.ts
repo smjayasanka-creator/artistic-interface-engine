@@ -1429,67 +1429,71 @@ export const declineLoan = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const approveLoan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i: { loan_id: string; payment_channel?: string; payment_reference?: string; bank_account?: string }) =>
-    z.object({
-      loan_id: z.string().uuid(),
-      payment_channel: z.enum(PAYMENT_METHODS).optional(),
-      payment_reference: z.string().max(80).optional(),
-      bank_account: z.string().max(80).optional(),
-    }).parse(i))
-  .handler(async ({ context, data }) => {
-    const { supabase } = context;
-    // Server-side guard: only allowed disbursement methods.
-    if (!data.payment_channel) throw new Error("Payment method is required for disbursement");
-    const isUuid = (s?: string) => !!s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
-    assertPaymentMethod("loan_disbursement", {
-      payment_method: data.payment_channel,
-      bank_account_id: data.payment_channel === "fund_transfer" && isUuid(data.bank_account) ? data.bank_account! : null,
-      savings_account_id: data.payment_channel === "sdf_savings" && isUuid(data.bank_account) ? data.bank_account! : null,
-      reference: data.payment_reference ?? null,
-    });
-    // The disburse_loan RPC enforces role, status, schedule generation and GL posting.
-    const { data: result, error } = await supabase.rpc("disburse_loan" as any, {
-      p_loan_id: data.loan_id,
-    } as any);
-    if (error) throw new Error(error.message);
-    const r = (result ?? {}) as any;
-    return { ok: true, reference: r.reference ?? null, ...r };
-  });
+// NOTE: The legacy `approveLoan` server fn (which called the non-existent
+// public.disburse_loan RPC) has been removed. Disbursement is now driven from
+// approved `loan_application` rows via `disburseApplication`
+// (see src/lib/loan-application.functions.ts), which calls the canonical
+// public.disburse_loan_from_application RPC.
 
 export const recordRepayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (i: { loan_id: string; amount: number; channel: "cash" | "mpesa" | "bank" | "internal"; reference?: string }) =>
+    (i: {
+      loan_id: string;
+      amount: number;
+      channel: "cash" | "mpesa" | "bank" | "internal";
+      reference?: string;
+      idempotency_key?: string;
+      received_at?: string;
+      notes?: string;
+    }) =>
       z
         .object({
           loan_id: z.string().uuid(),
           amount: z.number().positive(),
           channel: z.enum(["cash", "mpesa", "bank", "internal"]),
-          reference: z.string().max(80).optional(),
+          reference: z.string().trim().max(80).optional(),
+          idempotency_key: z.string().trim().min(8).max(80).optional(),
+          received_at: z.string().optional(),
+          notes: z.string().trim().max(300).optional(),
+        })
+        .superRefine((v, ctx) => {
+          if ((v.channel === "bank" || v.channel === "mpesa") && !v.reference) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["reference"],
+              message: `A ${v.channel === "mpesa" ? "M-Pesa" : "bank"} reference is required`,
+            });
+          }
         })
         .parse(i),
     )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { data: result, error } = await supabase.rpc("record_repayment" as any, {
-      p_loan_id: data.loan_id,
-      p_amount: data.amount,
-      p_channel: data.channel,
-      p_reference: data.reference ?? null,
+      _loan_id: data.loan_id,
+      _amount: data.amount,
+      _channel: data.channel,
+      _reference: data.reference ?? null,
+      _idempotency_key: data.idempotency_key ?? null,
+      _received_at: data.received_at ?? new Date().toISOString(),
+      _notes: data.notes ?? null,
     } as any);
     if (error) throw new Error(error.message);
     const r = (result ?? {}) as any;
     return {
       ok: true,
+      repayment_id: r.repayment_id ?? null,
       reference: r.reference ?? data.reference ?? null,
       allocated_fees: Number(r.allocated_fees ?? 0),
       allocated_interest: Number(r.allocated_interest ?? 0),
       allocated_principal: Number(r.allocated_principal ?? 0),
+      unallocated_amount: Number(r.unallocated_amount ?? 0),
       loan_closed: !!r.loan_closed,
+      idempotent_replay: !!r.idempotent_replay,
     };
   });
+
 
 
 export const getCollections = createServerFn({ method: "GET" })
