@@ -6721,6 +6721,16 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["staff_role"]
       }
+      decide_loan_application: {
+        Args: {
+          _application_id: string
+          _comment?: string
+          _decision: string
+          _step_key?: string
+          _workflow_instance_id?: string
+        }
+        Returns: Json
+      }
       disburse_loan_from_application: {
         Args: {
           _application_id: string
