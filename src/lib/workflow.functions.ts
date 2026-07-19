@@ -435,7 +435,7 @@ export const getInstanceReference = createServerFn({ method: "GET" })
     if (tx.startsWith("loan_")) {
       const { data: loan } = await supabase
         .from("loan")
-        .select("id, loan_no, principal, interest_rate, term_months, status, purpose, submitted_at, disbursed_at, client:client_id(id, full_name, national_id, phone), product:product_id(name, code), branch:branch_id(name, code)")
+        .select("id, loan_no, application_id, application_no, principal, annual_rate_pct, term_months, frequency, schedule_type, status, purpose, submitted_at, disbursed_at, client:client_id(id, full_name, national_id, phone, email, address, date_of_birth, gender, occupation, monthly_income, next_of_kin_name, next_of_kin_phone, gn_division, divisional_secretariat, district, province, risk_grade), product:product_id(id, name, code, interest_method, frequency, annual_rate_pct), branch:branch_id(name, code)")
         .eq("id", refId)
         .maybeSingle();
       return { kind: "loan" as const, data: loan };
