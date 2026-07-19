@@ -229,9 +229,15 @@ export const getPlatformProgress = createServerFn({ method: "GET" })
     // pg_proc lookup runs as platform admin via a lightweight helper RPC
     // when available; fall back to naming heuristics otherwise. We keep
     // this best-effort — a missing RPC in the list is the actionable signal.
+    type RpcInvoker = (name: string, args?: Record<string, unknown>) => Promise<{
+      data: unknown;
+      error: { message?: string; code?: string } | null;
+    }>;
+    const rpc = supabase.rpc as unknown as RpcInvoker;
+
     const rpcs = await Promise.all(
       CRITICAL_RPCS.map(async (r) => {
-        const { error } = await (supabase.rpc as (n: string, args?: unknown) => Promise<{ error: { message: string; code?: string } | null }>)(r.name, {});
+        const { error } = await rpc(r.name, {});
         const missing =
           !!error &&
           /(pgrst202|could not find|does not exist)/i.test(
@@ -241,16 +247,15 @@ export const getPlatformProgress = createServerFn({ method: "GET" })
       }),
     );
 
-    // Migration count/latest is best-effort from supabase_migrations.schema_migrations
-    // via the read_migrations helper if it exists; otherwise leave nulls.
+    // Migration count/latest is best-effort; if no helper RPC exists we
+    // leave the fields empty rather than 500-ing the whole snapshot.
     let migrations_applied = 0;
     let latest_migration: string | null = null;
     try {
-      const { data: mig } = await supabase.rpc("read_migrations" as never);
-      if (Array.isArray(mig)) {
-        migrations_applied = mig.length;
-        latest_migration = String(mig[mig.length - 1] ?? "") || null;
-      }
+      const { data } = await rpc("read_migrations");
+      const mig = Array.isArray(data) ? (data as unknown[]) : [];
+      migrations_applied = mig.length;
+      latest_migration = mig.length ? String(mig[mig.length - 1] ?? "") || null : null;
     } catch {
       // ignore
     }
