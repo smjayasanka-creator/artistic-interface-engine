@@ -10,6 +10,7 @@ import {
   CANONICAL_TX_TYPES,
 } from "@/lib/workflow.functions";
 import { Modal } from "@/components/mzizi/Modal";
+import { LoanApprovalDetail } from "@/components/mzizi/LoanApprovalDetail";
 import { btnPrimaryCls, btnSecondaryCls, inputCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
 import { money, shortDate } from "@/lib/format";
