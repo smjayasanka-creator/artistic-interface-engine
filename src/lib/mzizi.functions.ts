@@ -3,7 +3,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { serverNow, serverToday } from "@/lib/clock-server";
 import { generateSchedule, generateStructuredSchedule, type Frequency } from "@/lib/loan-schedule";
-import { assertPaymentMethod, PAYMENT_METHODS } from "@/lib/payment-methods";
+// PAYMENT_METHODS/assertPaymentMethod are no longer used here — disbursement
+// is driven from `loan_application` via `disburseApplication`, and repayment
+// channel validation happens inside the `record_repayment` RPC.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // READS
