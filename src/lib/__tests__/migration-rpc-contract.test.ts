@@ -12,9 +12,9 @@
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 
-const ROOT = resolve(__dirname, "..");
+const ROOT = process.cwd();
 
 const KNOWN_EXTERNAL_RPCS = new Set<string>([
   // pg_net / postgres extensions, if any get called by name — none today.
