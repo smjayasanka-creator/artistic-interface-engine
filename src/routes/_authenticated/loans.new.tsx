@@ -5,6 +5,7 @@ import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getClients, getProducts, submitApplication } from "@/lib/mzizi.functions";
 import { hasActiveWorkflow, startWorkflow } from "@/lib/workflow.functions";
+import { startLoanApprovalDynamic, previewLoanApprovalChain } from "@/lib/delegation.functions";
 import { listLoanCharges } from "@/lib/loan-charges.functions";
 import { listSecurityTypes } from "@/lib/security.functions";
 import { extractSecurityFieldsFromDocument } from "@/lib/security-ai.functions";
@@ -95,6 +96,64 @@ function TabHeader({ tab, setTab }: { tab: TabKey; setTab: (t: TabKey) => void }
   );
 }
 
+function ApprovalChainPreview({ loanId, previewFn }: { loanId: string; previewFn: (args: { data: { loan_id: string } }) => Promise<any> }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["chain-preview", loanId],
+    queryFn: () => previewFn({ data: { loan_id: loanId } }),
+  });
+  if (isLoading) {
+    return (
+      <div className="mt-4 rounded-lg border border-border bg-muted/20 p-3 text-[12px] text-muted-foreground">
+        Resolving approval chain…
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="mt-4 rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-[12px] text-rose-700">
+        Failed to resolve approval chain: {(error as Error).message}
+      </div>
+    );
+  }
+  const steps = (data?.steps ?? []) as any[];
+  return (
+    <div className="mt-4 rounded-lg border border-border p-3 bg-muted/10">
+      <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-2">
+        Predicted approval chain
+      </div>
+      {data?.rule_name ? (
+        <div className="text-[12px] text-muted-foreground mb-2">
+          Matched rule: <span className="font-semibold text-foreground">{data.rule_name}</span>
+        </div>
+      ) : (
+        <div className="text-[12px] text-amber-700 mb-2">
+          No delegation rule matches this application. Legacy fixed workflow will be used at submission.
+        </div>
+      )}
+      {steps.length === 0 ? null : (
+        <ol className="space-y-1.5">
+          {steps.map((s: any) => (
+            <li key={s.seq} className="flex items-center gap-3 text-[12.5px]">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-semibold text-[11px]">
+                {s.seq}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold truncate">{s.authority_name}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {s.authority_code} · Level {s.authority_level}
+                  {s.required_approvals > 1 ? ` · ${s.required_approvals} approvals` : ""}
+                  {s.sla_hours ? ` · SLA ${s.sla_hours}h` : ""}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+
 function NewLoan() {
   const nav = useNavigate();
   const { id: editingLoanId } = Route.useSearch();
@@ -147,6 +206,8 @@ function NewLoan() {
   const submitFn = useServerFn(submitApplication);
   const hasWfFn = useServerFn(hasActiveWorkflow);
   const startWfFn = useServerFn(startWorkflow);
+  const startDynamicFn = useServerFn(startLoanApprovalDynamic);
+  const previewChainFn = useServerFn(previewLoanApprovalChain);
   const submit = useMutation({
     mutationFn: submitFn,
     onSuccess: async (loan: any) => {
@@ -157,6 +218,14 @@ function NewLoan() {
         return;
       }
       try {
+        // 1) Try dynamic delegation-driven chain first.
+        const dyn = await startDynamicFn({ data: { loan_id: loan.id } });
+        if ((dyn as any)?.ok) {
+          toast.success("Application submitted — routed via delegation rules");
+          nav({ to: "/approvals" });
+          return;
+        }
+        // 2) Fallback: legacy fixed workflow_definition if configured.
         const { exists } = await hasWfFn({ data: { transaction_type: "loan_approval" } });
         if (exists) {
           await startWfFn({
@@ -1403,7 +1472,12 @@ function NewLoan() {
 
 
           {tab === "evaluations" && (
-            <LoanEvaluation loanId={editingLoanId} productId={productId || undefined} />
+            <>
+              <LoanEvaluation loanId={editingLoanId} productId={productId || undefined} />
+              {editingLoanId && (
+                <ApprovalChainPreview loanId={editingLoanId} previewFn={previewChainFn} />
+              )}
+            </>
           )}
 
           <FormActions align="between">

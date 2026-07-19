@@ -250,14 +250,13 @@ export const listInstances = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     let q = supabase
       .from("workflow_instance")
-      .select("id, transaction_type, reference_id, reference_label, amount, status, current_step, initiated_at, completed_at, workflow:workflow_id(id, name, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)")
+      .select("id, transaction_type, reference_id, reference_label, amount, status, current_step, initiated_at, completed_at, chain_snapshot, applied_rule_id, workflow:workflow_id(id, name, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)")
       .order("initiated_at", { ascending: false })
       .limit(200);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
     const { data: rows, error } = await q;
     if (error) throw error;
 
-    // If mine=true, filter to those where the current step targets this user's role/branch/user.
     let filtered = rows ?? [];
     if (data.mine) {
       const { data: staff } = await supabase
@@ -274,8 +273,34 @@ export const listInstances = createServerFn({ method: "GET" })
           .from("user_custom_role").select("role_id").eq("staff_id", staffId);
         myCustomRoleIds = new Set((crs ?? []).map((r: any) => r.role_id));
       }
+
+      // Batch has_authority checks for dynamic instances
+      const dynamicAuthorityIds = new Set<string>();
+      for (const r of filtered as any[]) {
+        if (r.status !== "pending") continue;
+        const chain = r.chain_snapshot as any[] | null;
+        if (Array.isArray(chain) && chain.length) {
+          const step = chain.find((s: any) => (s.seq ?? 0) === r.current_step);
+          if (step?.authority_id) dynamicAuthorityIds.add(step.authority_id);
+        }
+      }
+      const authOk = new Map<string, boolean>();
+      await Promise.all(
+        Array.from(dynamicAuthorityIds).map(async (aid) => {
+          const { data: ok } = await supabase.rpc("has_authority" as any, {
+            _user_id: userId, _authority_id: aid,
+          } as any);
+          authOk.set(aid, !!ok);
+        }),
+      );
+
       filtered = filtered.filter((r: any) => {
         if (r.status !== "pending") return false;
+        const chain = r.chain_snapshot as any[] | null;
+        if (Array.isArray(chain) && chain.length) {
+          const step = chain.find((s: any) => (s.seq ?? 0) === r.current_step);
+          return !!step && authOk.get(step.authority_id) === true;
+        }
         const step = (r.workflow?.steps ?? []).find((s: any) => s.step_order === r.current_step);
         if (!step) return false;
         if (step.approver_kind === "user") return step.user_id === userId;
@@ -288,14 +313,36 @@ export const listInstances = createServerFn({ method: "GET" })
       });
     }
 
-    // Enrich with SLA
+    // Enrich with SLA / step_config (chain snapshot takes precedence)
     const now = serverNow().getTime();
     return filtered.map((r: any) => {
-      const step = (r.workflow?.steps ?? []).find((s: any) => s.step_order === r.current_step);
+      const chain = r.chain_snapshot as any[] | null;
+      let step: any;
+      let totalSteps = 0;
+      if (Array.isArray(chain) && chain.length) {
+        step = chain.find((s: any) => (s.seq ?? 0) === r.current_step);
+        totalSteps = chain.length;
+        // Adapt to shape InstanceDetailModal expects
+        if (step) {
+          step = {
+            step_order: step.seq,
+            name: step.authority_name ?? `Authority ${step.authority_code ?? ""}`,
+            approver_kind: "authority",
+            required_approvals: step.required_approvals ?? 1,
+            sla_hours: step.sla_hours ?? null,
+            authority_id: step.authority_id,
+            authority_code: step.authority_code,
+            authority_name: step.authority_name,
+          };
+        }
+      } else {
+        step = (r.workflow?.steps ?? []).find((s: any) => s.step_order === r.current_step);
+        totalSteps = r.workflow?.steps?.length ?? 0;
+      }
       const dueAt = step?.sla_hours ? new Date(new Date(r.initiated_at).getTime() + step.sla_hours * 3600e3) : null;
       const overdue = dueAt ? now > dueAt.getTime() && r.status === "pending" : false;
       const approvalsForStep = (r.actions ?? []).filter((a: any) => a.step_order === r.current_step && a.decision === "approve").length;
-      return { ...r, step_config: step, due_at: dueAt?.toISOString() ?? null, overdue, approvals_recorded: approvalsForStep };
+      return { ...r, step_config: step, total_steps: totalSteps, due_at: dueAt?.toISOString() ?? null, overdue, approvals_recorded: approvalsForStep };
     });
   });
 
@@ -312,32 +359,51 @@ export const actOnInstance = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: inst, error: iErr } = await supabase
       .from("workflow_instance")
-      .select("id, status, current_step, transaction_type, reference_id, workflow:workflow_id(steps:workflow_step(step_order, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals))")
+      .select("id, status, current_step, transaction_type, reference_id, chain_snapshot, workflow:workflow_id(steps:workflow_step(step_order, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals))")
       .eq("id", data.instance_id)
       .maybeSingle();
     if (iErr) throw iErr;
     if (!inst) throw new Error("Instance not found");
     if (inst.status !== "pending") throw new Error("Instance is not pending");
 
-    const steps = ((inst as any).workflow?.steps ?? []).sort((a: any, b: any) => a.step_order - b.step_order);
-    const step = steps.find((s: any) => s.step_order === inst.current_step);
+    const chain = ((inst as any).chain_snapshot as any[] | null) ?? null;
+    const isDynamic = Array.isArray(chain) && chain.length > 0;
+
+    let step: any;
+    let stepsSorted: any[];
+    if (isDynamic) {
+      stepsSorted = [...chain].sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0));
+      step = stepsSorted.find((s: any) => (s.seq ?? 0) === inst.current_step);
+    } else {
+      stepsSorted = ((inst as any).workflow?.steps ?? []).sort((a: any, b: any) => a.step_order - b.step_order);
+      step = stepsSorted.find((s: any) => s.step_order === inst.current_step);
+    }
     if (!step) throw new Error("Step config missing");
 
     // Verify authorization
-    const { data: staff } = await supabase
-      .from("staff").select("id, role, branch_id").eq("user_id", userId).maybeSingle();
-    let hasCustomRole = false;
-    if (step.custom_role_id && staff?.id) {
-      const { data: cr } = await supabase
-        .from("user_custom_role").select("role_id")
-        .eq("staff_id", staff.id).eq("role_id", step.custom_role_id).maybeSingle();
-      hasCustomRole = !!cr;
+    if (isDynamic) {
+      const { data: ok, error: hErr } = await supabase.rpc(
+        "has_authority" as any,
+        { _user_id: userId, _authority_id: step.authority_id } as any,
+      );
+      if (hErr) throw new Error(hErr.message);
+      if (!ok) throw new Error("Not authorized for this authority");
+    } else {
+      const { data: staff } = await supabase
+        .from("staff").select("id, role, branch_id").eq("user_id", userId).maybeSingle();
+      let hasCustomRole = false;
+      if (step.custom_role_id && staff?.id) {
+        const { data: cr } = await supabase
+          .from("user_custom_role").select("role_id")
+          .eq("staff_id", staff.id).eq("role_id", step.custom_role_id).maybeSingle();
+        hasCustomRole = !!cr;
+      }
+      const roleMatches = step.custom_role_id ? hasCustomRole : step.role === staff?.role;
+      const okUser = step.approver_kind === "user" && step.user_id === userId;
+      const okRole = step.approver_kind === "role" && roleMatches;
+      const okBranchRole = step.approver_kind === "branch_role" && roleMatches && step.branch_id === staff?.branch_id;
+      if (!okUser && !okRole && !okBranchRole) throw new Error("Not authorized to act on this step");
     }
-    const roleMatches = step.custom_role_id ? hasCustomRole : step.role === staff?.role;
-    const okUser = step.approver_kind === "user" && step.user_id === userId;
-    const okRole = step.approver_kind === "role" && roleMatches;
-    const okBranchRole = step.approver_kind === "branch_role" && roleMatches && step.branch_id === staff?.branch_id;
-    if (!okUser && !okRole && !okBranchRole) throw new Error("Not authorized to act on this step");
 
     // Insert action (unique per actor/step)
     const { error: aErr } = await supabase.from("workflow_action").insert({
@@ -357,13 +423,11 @@ export const actOnInstance = createServerFn({ method: "POST" })
     }
 
     if (data.decision === "send_back") {
-      // Cancel the current instance so the initiator can revise and re-submit.
       await supabase.from("workflow_instance")
         .update({ status: "cancelled", completed_at: new Date().toISOString() })
         .eq("id", data.instance_id);
       return { ok: true, status: "sent_back" };
     }
-
 
     // Count approvals for this step
     const { data: acts } = await supabase
@@ -379,7 +443,9 @@ export const actOnInstance = createServerFn({ method: "POST" })
 
     // Advance or complete
     const nextOrder = inst.current_step + 1;
-    const hasNext = steps.some((s: any) => s.step_order === nextOrder);
+    const hasNext = isDynamic
+      ? stepsSorted.some((s: any) => (s.seq ?? 0) === nextOrder)
+      : stepsSorted.some((s: any) => s.step_order === nextOrder);
     if (hasNext) {
       await supabase.from("workflow_instance").update({ current_step: nextOrder }).eq("id", data.instance_id);
       return { ok: true, status: "pending", advanced_to: nextOrder };
@@ -388,8 +454,6 @@ export const actOnInstance = createServerFn({ method: "POST" })
       .update({ status: "approved", completed_at: new Date().toISOString() })
       .eq("id", data.instance_id);
 
-    // Loan-approval workflows: mark loan as approved so it appears on the
-    // disbursement page. Disbursement itself stays a manual teller action.
     if ((inst as any).transaction_type === "loan_approval" && (inst as any).reference_id) {
       await supabase.from("loan")
         .update({ status: "approved" })
