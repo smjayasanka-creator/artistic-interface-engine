@@ -2252,10 +2252,12 @@ export const createPayment = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { data: result, error } = await supabase.rpc("record_repayment" as any, {
-      p_loan_id: data.loan_id,
-      p_amount: data.amount,
-      p_channel: data.channel,
-      p_reference: data.reference?.trim() || null,
+      _loan_id: data.loan_id,
+      _amount: data.amount,
+      _channel: data.channel,
+      _reference: data.reference?.trim() || null,
+      _received_at: data.received_at ?? new Date().toISOString(),
+      _notes: data.notes ?? null,
     } as any);
     if (error) throw new Error(error.message);
     const r = (result ?? {}) as any;
@@ -2265,9 +2267,11 @@ export const createPayment = createServerFn({ method: "POST" })
       allocated_fees: Number(r.allocated_fees ?? 0),
       allocated_interest: Number(r.allocated_interest ?? 0),
       allocated_principal: Number(r.allocated_principal ?? 0),
+      unallocated_amount: Number(r.unallocated_amount ?? 0),
       loan_closed: !!r.loan_closed,
     };
   });
+
 
 export const createJournalEntry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
