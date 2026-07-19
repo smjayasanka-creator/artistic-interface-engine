@@ -105,19 +105,18 @@ function DisbursementPage() {
               className="grid items-center text-[12.5px] py-2.5 px-5 border-b border-row-divider hover:bg-secondary/30"
               style={{ gridTemplateColumns: "1fr 1.4fr 1fr .9fr 1fr 210px" }}
             >
-              <div className="text-muted-foreground">{l.submitted_at ? shortDate(l.submitted_at) : "—"}</div>
+              <div className="text-muted-foreground">
+                <div>{l.submitted_at ? shortDate(l.submitted_at) : "—"}</div>
+                {l.application_no && (
+                  <div className="text-[10.5px] text-faint font-mono">{l.application_no}</div>
+                )}
+              </div>
               <div className="truncate">{l.client?.full_name ?? "—"}</div>
               <div className="text-muted-foreground truncate">{l.product?.name ?? "—"}</div>
               <div className="text-muted-foreground truncate">{l.branch?.code ?? l.branch?.name ?? "—"}</div>
               <div className="text-right font-mono text-primary">{money(Number(l.principal))}</div>
               <div className="flex justify-end gap-2">
-                <Link
-                  to="/loans/$id"
-                  params={{ id: l.id }}
-                  className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12px] font-semibold hover:border-primary"
-                >
-                  View
-                </Link>
+
                 {canDisburse && (
                   <button
                     onClick={() => openModal(l)}
