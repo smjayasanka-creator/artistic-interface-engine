@@ -1437,6 +1437,39 @@ export const declineLoan = createServerFn({ method: "POST" })
 // (see src/lib/loan-application.functions.ts), which calls the canonical
 // public.disburse_loan_from_application RPC.
 
+export const getRepaymentContext = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { loan_id: string }) => z.object({ loan_id: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const [{ data: loan }, { data: bd }, { data: canBackdate }] = await Promise.all([
+      supabase
+        .from("loan")
+        .select("id, contract_no, principal, disbursed_at, status, client:client_id(full_name)")
+        .eq("id", data.loan_id)
+        .maybeSingle(),
+      supabase.rpc("current_business_date" as any),
+      supabase.rpc("can_backdate_repayment" as any, { _loan_id: data.loan_id }),
+    ]);
+    if (!loan) throw new Error("Loan not found");
+    return {
+      loan,
+      business_date: (bd as any) ?? serverToday(),
+      can_backdate: !!canBackdate,
+    };
+  });
+
+// Reference/notes normalization is applied on the client before send AND on
+// the server here — trim, cap length, and treat empty strings as null so we
+// never persist "" or accidental whitespace.
+const trimOrNull = (v: unknown, max: number): string | null => {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  if (t.length === 0) return null;
+  if (t.length > max) throw new Error(`Value exceeds ${max} characters`);
+  return t;
+};
+
 export const recordRepayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -1444,20 +1477,20 @@ export const recordRepayment = createServerFn({ method: "POST" })
       loan_id: string;
       amount: number;
       channel: "cash" | "mpesa" | "bank" | "internal";
-      reference?: string;
-      idempotency_key?: string;
-      received_at?: string;
-      notes?: string;
+      reference?: string | null;
+      idempotency_key: string;
+      received_at: string;
+      notes?: string | null;
     }) =>
       z
         .object({
           loan_id: z.string().uuid(),
-          amount: z.number().positive(),
+          amount: z.number().positive().max(1e12),
           channel: z.enum(["cash", "mpesa", "bank", "internal"]),
-          reference: z.string().trim().max(80).optional(),
-          idempotency_key: z.string().trim().min(8).max(80).optional(),
-          received_at: z.string().optional(),
-          notes: z.string().trim().max(300).optional(),
+          reference: z.string().trim().max(80).nullish().transform((v) => (v && v.length ? v : null)),
+          notes: z.string().trim().max(300).nullish().transform((v) => (v && v.length ? v : null)),
+          idempotency_key: z.string().trim().min(8).max(80),
+          received_at: z.string().datetime({ offset: true }),
         })
         .superRefine((v, ctx) => {
           if ((v.channel === "bank" || v.channel === "mpesa") && !v.reference) {
@@ -1466,6 +1499,13 @@ export const recordRepayment = createServerFn({ method: "POST" })
               path: ["reference"],
               message: `A ${v.channel === "mpesa" ? "M-Pesa" : "bank"} reference is required`,
             });
+          }
+          // Future-date guard — server clock is authoritative.
+          const t = new Date(v.received_at).getTime();
+          if (!Number.isFinite(t)) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["received_at"], message: "Invalid received_at" });
+          } else if (t - Date.now() > 60_000) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["received_at"], message: "received_at cannot be in the future" });
           }
         })
         .parse(i),
@@ -1476,10 +1516,10 @@ export const recordRepayment = createServerFn({ method: "POST" })
       _loan_id: data.loan_id,
       _amount: data.amount,
       _channel: data.channel,
-      _reference: data.reference ?? null,
-      _idempotency_key: data.idempotency_key ?? null,
-      _received_at: data.received_at ?? new Date().toISOString(),
-      _notes: data.notes ?? null,
+      _reference: trimOrNull(data.reference, 80),
+      _idempotency_key: data.idempotency_key,
+      _received_at: data.received_at,
+      _notes: trimOrNull(data.notes, 300),
     } as any);
     if (error) throw new Error(error.message);
     const r = (result ?? {}) as any;
@@ -1487,6 +1527,11 @@ export const recordRepayment = createServerFn({ method: "POST" })
       ok: true,
       repayment_id: r.repayment_id ?? null,
       reference: r.reference ?? data.reference ?? null,
+      received_at: data.received_at,
+      business_date: (data.received_at || "").slice(0, 10),
+      notes: trimOrNull(data.notes, 300),
+      amount: data.amount,
+      channel: data.channel,
       allocated_fees: Number(r.allocated_fees ?? 0),
       allocated_interest: Number(r.allocated_interest ?? 0),
       allocated_principal: Number(r.allocated_principal ?? 0),
@@ -1495,6 +1540,7 @@ export const recordRepayment = createServerFn({ method: "POST" })
       idempotent_replay: !!r.idempotent_replay,
     };
   });
+
 
 
 
