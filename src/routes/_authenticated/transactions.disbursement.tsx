@@ -37,11 +37,11 @@ function DisbursementPage() {
   const [selected, setSelected] = useState<any | null>(null);
   const [pay, setPay] = useState<PaymentMethodValue>({ method: "fund_transfer" });
 
-  const disburseFn = useServerFn(approveLoan);
+  const disburseFn = useServerFn(disburseApplication);
   const disburse = useMutation({
     mutationFn: disburseFn,
     onSuccess: (r: any) => {
-      toast.success(`Disbursed · ${r.reference}`);
+      toast.success(`Disbursed · loan ${r.loan_id?.slice?.(0, 8) ?? ""}`);
       setSelected(null);
       qc.invalidateQueries();
     },
@@ -57,15 +57,18 @@ function DisbursementPage() {
     e.preventDefault();
     if (!selected) return;
     if (!paymentMethodValid(pay)) return toast.error("Complete payment details");
+    // Stable idempotency key so a retried click cannot double-disburse.
+    const idem = `disburse:${selected.application_id ?? selected.id}`;
     disburse.mutate({
       data: {
-        loan_id: selected.id,
+        application_id: selected.application_id ?? selected.id,
         payment_channel: pay.method,
         payment_reference: pay.reference || undefined,
-        bank_account: pay.bank_account_id || pay.savings_account_id || undefined,
+        idempotency_key: idem,
       } as any,
     });
   }
+
 
   const loans = data ?? [];
 
