@@ -66,12 +66,46 @@ export const createLoanApplication = createServerFn({ method: "POST" })
     return row as unknown as { id: string; application_no: string };
   });
 
+// Fields a company member may edit while the application is still mutable
+// (draft / under_review). Sensitive fields (company_id, status,
+// application_no, created_by, submitted_at, decided_at, disbursed_at,
+// loan_id, workflow_instance_id) are intentionally excluded.
+const UpdatableAppFields = z.object({
+  client_id: z.string().uuid().nullable().optional(),
+  product_id: z.string().uuid().nullable().optional(),
+  officer_id: z.string().uuid().nullable().optional(),
+  branch_id: z.string().uuid().optional(),
+  requested_principal: z.number().nonnegative().optional(),
+  requested_tenor_months: z.number().int().nonnegative().optional(),
+  requested_rate_pct: z.number().nullable().optional(),
+  frequency: z.string().nullable().optional(),
+  currency: z.string().optional(),
+  purpose: z.string().nullable().optional(),
+  channel: z.string().nullable().optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
+}).strict();
+
 export const updateLoanApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { id: string; patch: Record<string, any> }) =>
-    z.object({ id: z.string().uuid(), patch: z.record(z.string(), z.any()) }).parse(i))
+  .inputValidator((i: { id: string; patch: Record<string, unknown> }) =>
+    z.object({
+      id: z.string().uuid(),
+      patch: UpdatableAppFields,
+    }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
+    // Guard: only mutable statuses (draft / under_review) may be edited.
+    const { data: cur, error: curErr } = await supabase
+      .from("loan_application" as any)
+      .select("status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (curErr) throw new Error(curErr.message);
+    if (!cur) throw new Error("Application not found");
+    const status = (cur as any).status as string;
+    if (!["draft", "under_review"].includes(status)) {
+      throw new Error(`Application in status '${status}' is not editable`);
+    }
     const { error } = await supabase.from("loan_application" as any)
       .update(data.patch as any).eq("id", data.id);
     if (error) throw new Error(error.message);
