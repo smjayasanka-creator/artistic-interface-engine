@@ -206,7 +206,7 @@ export const getPlatformProgress = createServerFn({ method: "GET" })
         row.aggregate_id ? ` #${String(row.aggregate_id).slice(0, 8)}` : ""
       }`;
       for (const tab of Object.keys(TAB_SCOPE) as ProgressTab[]) {
-        const doms = TAB_SCOPE[tab].domains;
+        const doms = TAB_SCOPE[tab].domains as readonly string[] | null;
         if (doms === null || doms.includes(domain)) {
           activity_by_tab[tab].push({
             id: String(row.id),
