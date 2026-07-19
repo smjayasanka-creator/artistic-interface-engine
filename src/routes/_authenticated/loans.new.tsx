@@ -148,6 +148,8 @@ function NewLoan() {
   const submitFn = useServerFn(submitApplication);
   const hasWfFn = useServerFn(hasActiveWorkflow);
   const startWfFn = useServerFn(startWorkflow);
+  const startDynamicFn = useServerFn(startLoanApprovalDynamic);
+  const previewChainFn = useServerFn(previewLoanApprovalChain);
   const submit = useMutation({
     mutationFn: submitFn,
     onSuccess: async (loan: any) => {
@@ -158,6 +160,14 @@ function NewLoan() {
         return;
       }
       try {
+        // 1) Try dynamic delegation-driven chain first.
+        const dyn = await startDynamicFn({ data: { loan_id: loan.id } });
+        if ((dyn as any)?.ok) {
+          toast.success("Application submitted — routed via delegation rules");
+          nav({ to: "/approvals" });
+          return;
+        }
+        // 2) Fallback: legacy fixed workflow_definition if configured.
         const { exists } = await hasWfFn({ data: { transaction_type: "loan_approval" } });
         if (exists) {
           await startWfFn({
