@@ -108,7 +108,7 @@ function TerminationPage() {
           .string()
           .trim()
           .max(40)
-          .regex(/^[A-Za-z0-9\-\/_ ]*$/, "Reference may only contain letters, numbers, - / _")
+          .regex(/^[A-Za-z0-9\-/_ ]*$/, "Reference may only contain letters, numbers, - / _")
           .optional(),
         reason: z.string().trim().max(300).optional(),
       }),
