@@ -1103,7 +1103,12 @@ function NewLoan() {
                                       return next;
                                     });
                                   }}
-                                  className="w-full bg-transparent border border-border rounded px-2 py-0.5 font-mono text-right focus:border-primary outline-none"
+                                  className={cn(
+                                    "w-full bg-transparent border rounded px-2 py-0.5 font-mono text-right outline-none",
+                                    scheduleErrorBySeq.has(r.seq)
+                                      ? "border-red-500 focus:border-red-600"
+                                      : "border-border focus:border-primary",
+                                  )}
                                 />
                                 {overrides[r.seq] !== undefined && (
                                   <button
