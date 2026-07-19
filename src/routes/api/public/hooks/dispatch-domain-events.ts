@@ -23,16 +23,12 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-domain-events")
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        const { data: events, error } = await supabaseAdmin.rpc(
-          "claim_pending_domain_events",
-          { _limit: 100 },
-        );
+        const { data: events, error } = await supabaseAdmin.rpc("claim_pending_domain_events", {
+          _limit: 100,
+        });
 
         if (error) {
-          return Response.json(
-            { ok: false, error: error.message },
-            { status: 500 },
-          );
+          return Response.json({ ok: false, error: error.message }, { status: 500 });
         }
 
         const claimed = events ?? [];

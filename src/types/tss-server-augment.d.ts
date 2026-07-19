@@ -7,6 +7,7 @@
 import type { RouteServerOptions } from "@tanstack/start-client-core";
 import type { AnyRoute, AnyContext } from "@tanstack/router-core";
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type */
 declare module "@tanstack/router-core" {
   interface FilebaseRouteOptionsInterface<
     TRegister,

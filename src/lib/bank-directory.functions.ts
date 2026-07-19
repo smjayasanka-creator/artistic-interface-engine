@@ -33,7 +33,16 @@ export const listBanks = createServerFn({ method: "GET" })
 
 export const upsertBank = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string | null; code: string; name: string; cefts_enabled: boolean; slips_enabled: boolean; active: boolean }) => d)
+  .inputValidator(
+    (d: {
+      id: string | null;
+      code: string;
+      name: string;
+      cefts_enabled: boolean;
+      slips_enabled: boolean;
+      active: boolean;
+    }) => d,
+  )
   .handler(async ({ data, context }) => {
     const payload = {
       code: data.code.trim(),
@@ -47,7 +56,11 @@ export const upsertBank = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       return { id: data.id };
     }
-    const { data: row, error } = await context.supabase.from("bank").insert(payload).select("id").single();
+    const { data: row, error } = await context.supabase
+      .from("bank")
+      .insert(payload)
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
     return { id: row!.id as string };
   });
@@ -76,7 +89,17 @@ export const listBankBranches = createServerFn({ method: "GET" })
 
 export const upsertBankBranch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string | null; bank_id: string; code: string; name: string; address: string | null; city: string | null; active: boolean }) => d)
+  .inputValidator(
+    (d: {
+      id: string | null;
+      bank_id: string;
+      code: string;
+      name: string;
+      address: string | null;
+      city: string | null;
+      active: boolean;
+    }) => d,
+  )
   .handler(async ({ data, context }) => {
     const payload = {
       bank_id: data.bank_id,
@@ -87,11 +110,18 @@ export const upsertBankBranch = createServerFn({ method: "POST" })
       active: data.active,
     };
     if (data.id) {
-      const { error } = await context.supabase.from("bank_branch").update(payload).eq("id", data.id);
+      const { error } = await context.supabase
+        .from("bank_branch")
+        .update(payload)
+        .eq("id", data.id);
       if (error) throw new Error(error.message);
       return { id: data.id };
     }
-    const { data: row, error } = await context.supabase.from("bank_branch").insert(payload).select("id").single();
+    const { data: row, error } = await context.supabase
+      .from("bank_branch")
+      .insert(payload)
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
     return { id: row!.id as string };
   });

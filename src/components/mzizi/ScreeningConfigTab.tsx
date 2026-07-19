@@ -34,8 +34,11 @@ export function ScreeningConfigTab() {
   }, [data]);
 
   const save = useMutation({
-    mutationFn: (v: { tier1_min_score: number; tier2_min_score: number; auto_escalate_direct: boolean }) =>
-      saveFn({ data: v }),
+    mutationFn: (v: {
+      tier1_min_score: number;
+      tier2_min_score: number;
+      auto_escalate_direct: boolean;
+    }) => saveFn({ data: v }),
     onSuccess: () => {
       toast.success("Screening thresholds saved");
       qc.invalidateQueries({ queryKey: ["screening-config"] });
@@ -51,8 +54,9 @@ export function ScreeningConfigTab() {
         Customer screening thresholds
       </h2>
       <p className="text-xs text-muted-foreground mb-4">
-        Fuzzy-match scores from the FIU screening API are routed to approval workflows using these thresholds.
-        Configure the matching workflows under <strong>Workflows</strong> using the transaction types
+        Fuzzy-match scores from the FIU screening API are routed to approval workflows using these
+        thresholds. Configure the matching workflows under <strong>Workflows</strong> using the
+        transaction types
         <code className="mx-1 px-1 rounded bg-muted">customer_screening_tier1</code> and
         <code className="mx-1 px-1 rounded bg-muted">customer_screening_tier2</code>.
       </p>
@@ -64,12 +68,21 @@ export function ScreeningConfigTab() {
             toast.error("Tier 2 must be ≥ Tier 1");
             return;
           }
-          save.mutate({ tier1_min_score: tier1, tier2_min_score: tier2, auto_escalate_direct: autoDirect });
+          save.mutate({
+            tier1_min_score: tier1,
+            tier2_min_score: tier2,
+            auto_escalate_direct: autoDirect,
+          });
         }}
         className="flex flex-col gap-4"
       >
         <FormGrid>
-          <FormField label="Tier 1 minimum score" required span={4} hint="Score ≥ this triggers first-tier review">
+          <FormField
+            label="Tier 1 minimum score"
+            required
+            span={4}
+            hint="Score ≥ this triggers first-tier review"
+          >
             <input
               type="number"
               min={0}
@@ -80,7 +93,12 @@ export function ScreeningConfigTab() {
               onChange={(e) => setTier1(Number(e.target.value))}
             />
           </FormField>
-          <FormField label="Tier 2 minimum score" required span={4} hint="Score ≥ this escalates to second-tier">
+          <FormField
+            label="Tier 2 minimum score"
+            required
+            span={4}
+            hint="Score ≥ this escalates to second-tier"
+          >
             <input
               type="number"
               min={0}
@@ -106,13 +124,17 @@ export function ScreeningConfigTab() {
         <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-[12px] text-muted-foreground">
           <div className="font-medium text-foreground mb-1">Routing preview</div>
           <ul className="list-disc pl-5 space-y-0.5">
-            <li>Score below {tier1} and no direct match → <strong>clear</strong>, no approval required.</li>
+            <li>
+              Score below {tier1} and no direct match → <strong>clear</strong>, no approval
+              required.
+            </li>
             <li>
               Score {tier1}–{Math.max(tier1, tier2 - 0.01).toFixed(1)}
               {autoDirect ? "" : " or direct match"} → <strong>Tier 1 review</strong>.
             </li>
             <li>
-              Score ≥ {tier2}{autoDirect ? " or any direct match" : ""} → <strong>Tier 2 escalation</strong>.
+              Score ≥ {tier2}
+              {autoDirect ? " or any direct match" : ""} → <strong>Tier 2 escalation</strong>.
             </li>
           </ul>
         </div>

@@ -3,7 +3,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeftRight } from "lucide-react";
 import { Card } from "@/components/mzizi/Card";
-import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
+import {
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  selectCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
+} from "@/components/mzizi/FormGrid";
 import { getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +38,9 @@ function CashBankPage() {
     if (!valid) return;
     setSubmitting(true);
     setTimeout(() => {
-      toast.success(direction === "cash_to_bank" ? "Cash deposited to bank" : "Cash withdrawn from bank");
+      toast.success(
+        direction === "cash_to_bank" ? "Cash deposited to bank" : "Cash withdrawn from bank",
+      );
       setSubmitting(false);
       navigate({ to: "/transactions" });
     }, 400);
@@ -38,7 +48,9 @@ function CashBankPage() {
 
   return (
     <div className="animate-fadein flex flex-col gap-4">
-      <Link to="/transactions" className="text-xs text-primary hover:underline">← Back to transactions</Link>
+      <Link to="/transactions" className="text-xs text-primary hover:underline">
+        ← Back to transactions
+      </Link>
 
       <form onSubmit={submit} className="flex flex-col gap-4">
         <Card className="p-6">
@@ -51,7 +63,9 @@ function CashBankPage() {
                   onClick={() => setDirection(d)}
                   className={cn(
                     "px-3.5 py-1.5 flex items-center gap-1.5 transition-colors",
-                    direction === d ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted",
+                    direction === d
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card hover:bg-muted",
                   )}
                 >
                   <ArrowLeftRight size={13} />
@@ -63,7 +77,11 @@ function CashBankPage() {
 
           <FormGrid>
             <FormField label="Bank account" required span={6}>
-              <select value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} className={selectCls}>
+              <select
+                value={bankAccount}
+                onChange={(e) => setBankAccount(e.target.value)}
+                className={selectCls}
+              >
                 <option value="">Select bank account…</option>
                 <option value="kcb_current">KCB — Current</option>
                 <option value="equity_operating">Equity — Operating</option>
@@ -72,7 +90,13 @@ function CashBankPage() {
               </select>
             </FormField>
             <FormField label="Date" required span={3}>
-              <input type="date" readOnly value={txnDate} onChange={(e) => setTxnDate(e.target.value)} className={`${inputCls} font-mono`} />
+              <input
+                type="date"
+                readOnly
+                value={txnDate}
+                onChange={(e) => setTxnDate(e.target.value)}
+                className={`${inputCls} font-mono`}
+              />
             </FormField>
             <FormField label={`Amount (${getActiveCurrency()})`} required span={3}>
               <input
@@ -84,16 +108,30 @@ function CashBankPage() {
               />
             </FormField>
             <FormField label="Slip / reference no." span={6}>
-              <input value={slipNo} onChange={(e) => setSlipNo(e.target.value)} className={`${inputCls} font-mono`} maxLength={120} placeholder="Deposit slip / withdrawal reference" />
+              <input
+                value={slipNo}
+                onChange={(e) => setSlipNo(e.target.value)}
+                className={`${inputCls} font-mono`}
+                maxLength={120}
+                placeholder="Deposit slip / withdrawal reference"
+              />
             </FormField>
             <FormField label="Narration" span={6}>
-              <input value={narration} onChange={(e) => setNarration(e.target.value)} className={inputCls} maxLength={200} placeholder="Purpose" />
+              <input
+                value={narration}
+                onChange={(e) => setNarration(e.target.value)}
+                className={inputCls}
+                maxLength={200}
+                placeholder="Purpose"
+              />
             </FormField>
           </FormGrid>
         </Card>
 
         <FormActions>
-          <Link to="/transactions" className={btnSecondaryCls}>Cancel</Link>
+          <Link to="/transactions" className={btnSecondaryCls}>
+            Cancel
+          </Link>
           <button type="submit" disabled={!valid || submitting} className={btnPrimaryCls}>
             {submitting ? "Posting…" : "Post entry"}
           </button>

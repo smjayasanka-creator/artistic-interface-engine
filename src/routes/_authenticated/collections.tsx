@@ -8,7 +8,10 @@ import { money, relTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/collections")({
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData({ queryKey: ["collections"], queryFn: () => getCollections() }),
+    context.queryClient.ensureQueryData({
+      queryKey: ["collections"],
+      queryFn: () => getCollections(),
+    }),
   component: Collections,
 });
 
@@ -20,12 +23,21 @@ function Collections() {
 
   return (
     <div className="animate-fadein flex flex-col gap-5">
-      <div className="rounded-2xl p-7 text-white" style={{ background: "linear-gradient(135deg,#0c1f24,#0f3a35)" }}>
+      <div
+        className="rounded-2xl p-7 text-white"
+        style={{ background: "linear-gradient(135deg,#0c1f24,#0f3a35)" }}
+      >
         <div className="text-xs uppercase tracking-wider opacity-70">Collected today</div>
         <div className="font-mono text-4xl font-bold mt-2">{money(data.totalToday)}</div>
         <div className="text-sm opacity-80 mt-1">of {money(data.target)} branch target</div>
-        <div className="h-2 rounded-full mt-4 overflow-hidden" style={{ background: "rgba(255,255,255,.12)" }}>
-          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "#4ade80" }} />
+        <div
+          className="h-2 rounded-full mt-4 overflow-hidden"
+          style={{ background: "rgba(255,255,255,.12)" }}
+        >
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${pct}%`, background: "#4ade80" }}
+          />
         </div>
         <Link
           to="/collections/new"
@@ -38,28 +50,54 @@ function Collections() {
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardTitle>Group collections due</CardTitle>
-          {data.groups.length === 0 && <div className="text-sm text-muted-foreground py-4">No group meetings today.</div>}
+          {data.groups.length === 0 && (
+            <div className="text-sm text-muted-foreground py-4">No group meetings today.</div>
+          )}
           {data.groups.map((g: any) => (
-            <div key={g.id} className="flex items-center gap-3 py-3 border-t border-row-divider first:border-t-0">
-              <div className="w-1.5 h-10 rounded-full" style={{ background: g.color ?? "var(--primary)" }} />
+            <div
+              key={g.id}
+              className="flex items-center gap-3 py-3 border-t border-row-divider first:border-t-0"
+            >
+              <div
+                className="w-1.5 h-10 rounded-full"
+                style={{ background: g.color ?? "var(--primary)" }}
+              />
               <div className="flex-1">
                 <div className="text-sm font-semibold">{g.name}</div>
-                <div className="text-[11.5px] text-muted-foreground">{g.meeting_place} · {g.meeting_day}</div>
+                <div className="text-[11.5px] text-muted-foreground">
+                  {g.meeting_place} · {g.meeting_day}
+                </div>
               </div>
-              <div className="font-mono text-sm font-semibold text-primary">{money(g.target_today)}</div>
+              <div className="font-mono text-sm font-semibold text-primary">
+                {money(g.target_today)}
+              </div>
             </div>
           ))}
         </Card>
 
         <Card>
           <CardTitle>Recorded today</CardTitle>
-          {data.recorded.length === 0 && <div className="text-sm text-muted-foreground py-4">No repayments recorded yet today.</div>}
+          {data.recorded.length === 0 && (
+            <div className="text-sm text-muted-foreground py-4">
+              No repayments recorded yet today.
+            </div>
+          )}
           {data.recorded.map((r: any) => (
-            <div key={r.id} className="flex items-center gap-3 py-2.5 border-t border-row-divider first:border-t-0">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-primary" style={{ background: "var(--teal-tint)" }}>↓</div>
+            <div
+              key={r.id}
+              className="flex items-center gap-3 py-2.5 border-t border-row-divider first:border-t-0"
+            >
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-primary"
+                style={{ background: "var(--teal-tint)" }}
+              >
+                ↓
+              </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium truncate">{r.loan?.client?.full_name}</div>
-                <div className="text-[11px] text-faint">{r.channel} · {relTime(r.received_at)}</div>
+                <div className="text-[11px] text-faint">
+                  {r.channel} · {relTime(r.received_at)}
+                </div>
               </div>
               <div className="font-mono font-semibold text-primary text-sm">+{money(r.amount)}</div>
             </div>

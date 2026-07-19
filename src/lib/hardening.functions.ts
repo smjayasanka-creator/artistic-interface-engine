@@ -3,7 +3,10 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function assertPlatformAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "platform_admin" });
+  const { data, error } = await supabase.rpc("has_role", {
+    _user_id: userId,
+    _role: "platform_admin",
+  });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Forbidden: platform admin only");
 }
@@ -21,13 +24,21 @@ export const listHardeningItems = createServerFn({ method: "GET" })
 
 export const upsertHardeningItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { item_id: string; status?: "done" | "partial" | "missing"; owner?: string | null; note?: string | null }) =>
-    z.object({
-      item_id: z.string().min(1),
-      status: z.enum(["done", "partial", "missing"]).optional(),
-      owner: z.string().nullable().optional(),
-      note: z.string().nullable().optional(),
-    }).parse(d),
+  .inputValidator(
+    (d: {
+      item_id: string;
+      status?: "done" | "partial" | "missing";
+      owner?: string | null;
+      note?: string | null;
+    }) =>
+      z
+        .object({
+          item_id: z.string().min(1),
+          status: z.enum(["done", "partial", "missing"]).optional(),
+          owner: z.string().nullable().optional(),
+          note: z.string().nullable().optional(),
+        })
+        .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertPlatformAdmin(context.supabase, context.userId);

@@ -178,9 +178,7 @@ export const getLoanEvaluation = createServerFn({ method: "GET" })
         const m: any = map.get(s.id);
         if (!m || !m.is_visible) return null;
         const enabled: string[] | null = m.enabled_fields ?? null;
-        const fields = (s.fields ?? []).filter(
-          (f: any) => !enabled || enabled.includes(f.key),
-        );
+        const fields = (s.fields ?? []).filter((f: any) => !enabled || enabled.includes(f.key));
         return {
           section_id: s.id,
           code: s.code,
@@ -240,9 +238,7 @@ export const saveLoanEvaluation = createServerFn({ method: "POST" })
             const m: any = map.get(s.id);
             if (!m || !m.is_visible) return null;
             const enabled: string[] | null = m.enabled_fields ?? null;
-            const fields = (s.fields ?? []).filter(
-              (f: any) => !enabled || enabled.includes(f.key),
-            );
+            const fields = (s.fields ?? []).filter((f: any) => !enabled || enabled.includes(f.key));
             return {
               section_id: s.id,
               code: s.code,

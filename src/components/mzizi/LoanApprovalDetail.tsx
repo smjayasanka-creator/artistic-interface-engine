@@ -71,9 +71,7 @@ export function LoanApprovalDetail({ loan }: { loan: any }) {
 
       <div className="max-h-[60vh] overflow-y-auto pr-1">
         {tab === "application" && <ApplicationTab loan={loan} app={app} />}
-        {tab === "customer" && (
-          <CustomerTab loan={loan} app={app} risk={riskQuery.data as any} />
-        )}
+        {tab === "customer" && <CustomerTab loan={loan} app={app} risk={riskQuery.data as any} />}
         {tab === "evaluation" && (
           <EvaluationTab evalData={evalQuery.data as any} loading={evalQuery.isLoading} />
         )}
@@ -123,7 +121,13 @@ function ApplicationTab({ loan, app }: { loan: any; app: any }) {
         <Row label="Application no" value={loan.application_no ?? m.application_no} />
         <Row
           label="Application date"
-          value={m.created_at ? shortDate(m.created_at) : loan.submitted_at ? shortDate(loan.submitted_at) : "—"}
+          value={
+            m.created_at
+              ? shortDate(m.created_at)
+              : loan.submitted_at
+                ? shortDate(loan.submitted_at)
+                : "—"
+          }
         />
         <Row label="Loan number" value={loan.loan_no} />
         <Row label="Status" value={loan.status} />
@@ -134,15 +138,30 @@ function ApplicationTab({ loan, app }: { loan: any; app: any }) {
         <Row label="Product" value={loan.product?.name} />
         <Row label="Product code" value={loan.product?.code} />
         <Row label="Interest method" value={loan.product?.interest_method} />
-        <Row label="Product base rate" value={loan.product?.annual_rate_pct != null ? `${loan.product.annual_rate_pct}%` : "—"} />
+        <Row
+          label="Product base rate"
+          value={loan.product?.annual_rate_pct != null ? `${loan.product.annual_rate_pct}%` : "—"}
+        />
       </Section>
       <Section title="Requested terms">
-        <Row label="Requested amount" value={money(Number(loan.principal ?? m.requested_principal ?? 0))} />
+        <Row
+          label="Requested amount"
+          value={money(Number(loan.principal ?? m.requested_principal ?? 0))}
+        />
         <Row
           label="Requested period"
           value={`${loan.term_months ?? m.requested_tenor_months ?? 0} months`}
         />
-        <Row label="Interest rate" value={loan.annual_rate_pct != null ? `${loan.annual_rate_pct}%` : m.requested_rate_pct != null ? `${m.requested_rate_pct}%` : "—"} />
+        <Row
+          label="Interest rate"
+          value={
+            loan.annual_rate_pct != null
+              ? `${loan.annual_rate_pct}%`
+              : m.requested_rate_pct != null
+                ? `${m.requested_rate_pct}%`
+                : "—"
+          }
+        />
         <Row label="Repayment frequency" value={loan.frequency ?? m.frequency} />
         <Row label="Schedule type" value={loan.schedule_type ?? "normal"} />
         <Row label="Currency" value={m.currency ?? "KES"} />
@@ -192,7 +211,10 @@ function CustomerTab({ loan, app, risk }: { loan: any; app: any; risk: any }) {
         <Row label="Province" value={c.province} />
       </Section>
       <Section title="Income">
-        <Row label="Monthly income" value={c.monthly_income != null ? money(Number(c.monthly_income)) : "—"} />
+        <Row
+          label="Monthly income"
+          value={c.monthly_income != null ? money(Number(c.monthly_income)) : "—"}
+        />
         <Row label="Risk grade" value={c.risk_grade} />
       </Section>
 
@@ -246,8 +268,10 @@ function CustomerTab({ loan, app, risk }: { loan: any; app: any; risk: any }) {
                   {x.lender_name ?? "—"} — {x.facility_type ?? "—"}
                 </div>
                 <div className="text-faint text-[11px]">
-                  outstanding {x.outstanding_balance != null ? money(Number(x.outstanding_balance)) : "—"} ·
-                  installment {x.monthly_installment != null ? money(Number(x.monthly_installment)) : "—"}
+                  outstanding{" "}
+                  {x.outstanding_balance != null ? money(Number(x.outstanding_balance)) : "—"} ·
+                  installment{" "}
+                  {x.monthly_installment != null ? money(Number(x.monthly_installment)) : "—"}
                 </div>
               </div>
             ))}
@@ -303,8 +327,8 @@ function EvaluationTab({ evalData, loading }: { evalData: any; loading: boolean 
                   v === undefined || v === null || v === ""
                     ? "—"
                     : typeof v === "object"
-                    ? JSON.stringify(v)
-                    : String(v);
+                      ? JSON.stringify(v)
+                      : String(v);
                 return <Row key={f.key} label={f.label} value={display} />;
               })}
             </div>
@@ -500,8 +524,8 @@ function HistoryTab({
                     a.decision === "approve"
                       ? "bg-emerald-500/10 text-emerald-700"
                       : a.decision === "reject"
-                      ? "bg-rose-500/10 text-rose-700"
-                      : "bg-amber-500/10 text-amber-700",
+                        ? "bg-rose-500/10 text-rose-700"
+                        : "bg-amber-500/10 text-amber-700",
                   )}
                 >
                   {a.decision}
@@ -532,9 +556,7 @@ function HistoryTab({
                 <span className="font-mono text-faint">
                   {h.from_status ?? "—"} → {h.to_status}
                 </span>
-                <span className="text-faint">
-                  · {h.created_at ? shortDate(h.created_at) : "—"}
-                </span>
+                <span className="text-faint">· {h.created_at ? shortDate(h.created_at) : "—"}</span>
                 {h.reason && <span className="text-muted-foreground">— {h.reason}</span>}
               </div>
             ))}

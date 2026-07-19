@@ -42,7 +42,9 @@ type Channel = (typeof CHANNELS)[number]["id"];
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-type Errors = Partial<Record<"loan_id" | "amount_paid" | "entry_date" | "reference" | "reason", string>>;
+type Errors = Partial<
+  Record<"loan_id" | "amount_paid" | "entry_date" | "reference" | "reason", string>
+>;
 
 function TerminationPage() {
   const search = useSearch({ strict: false }) as { loanId?: string };
@@ -106,7 +108,7 @@ function TerminationPage() {
           .string()
           .trim()
           .max(40)
-          .regex(/^[A-Za-z0-9\-\/_ ]*$/, "Reference may only contain letters, numbers, - / _")
+          .regex(/^[A-Za-z0-9\-/_ ]*$/, "Reference may only contain letters, numbers, - / _")
           .optional(),
         reason: z.string().trim().max(300).optional(),
       }),
@@ -151,7 +153,6 @@ function TerminationPage() {
       >
         <ArrowLeft size={14} /> Back to Loans
       </Link>
-
 
       <form
         onSubmit={(e) => {
@@ -299,7 +300,11 @@ function TerminationPage() {
                 <Row label="Borrower" value={quote.client?.full_name ?? "—"} />
                 <Row label="Product" value={quote.product?.name ?? "—"} />
                 <Row label="Status" value={String(quote.status)} />
-                <Row label="Outstanding principal" value={money(quote.outstanding_principal)} mono />
+                <Row
+                  label="Outstanding principal"
+                  value={money(quote.outstanding_principal)}
+                  mono
+                />
                 <Row label="Unpaid interest" value={money(quote.interest_unpaid)} mono />
                 <Row label="Unpaid fees" value={money(quote.fees_unpaid)} mono />
                 <Row
@@ -319,7 +324,9 @@ function TerminationPage() {
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-muted-foreground">Select a facility to see the quote.</div>
+              <div className="text-sm text-muted-foreground">
+                Select a facility to see the quote.
+              </div>
             )}
           </Card>
         )}

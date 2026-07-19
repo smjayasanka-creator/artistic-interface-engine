@@ -5,29 +5,40 @@ import { describe, it, expect } from "vitest";
 // / decide_loan_application. Kept in sync with the migration so we can
 // unit-test the allowed edges without booting a database.
 type Status =
-  | "draft" | "submitted" | "under_review"
-  | "approved" | "rejected" | "disbursed" | "cancelled";
+  | "draft"
+  | "submitted"
+  | "under_review"
+  | "approved"
+  | "rejected"
+  | "disbursed"
+  | "cancelled";
 
 type Op = "submit" | "review" | "approve" | "reject" | "return" | "cancel" | "disburse";
 
 // [from, op, to] — every other combination MUST be rejected by the RPCs.
 const ALLOWED: [Status, Op, Status][] = [
-  ["draft",        "submit",   "submitted"],
-  ["submitted",    "review",   "under_review"],
-  ["under_review", "approve",  "approved"],
-  ["under_review", "reject",   "rejected"],
-  ["under_review", "return",   "draft"],
-  ["draft",        "cancel",   "cancelled"],
-  ["submitted",    "cancel",   "cancelled"], // approvers only (RPC enforces role)
-  ["approved",     "disburse", "disbursed"], // only via disburse RPC
+  ["draft", "submit", "submitted"],
+  ["submitted", "review", "under_review"],
+  ["under_review", "approve", "approved"],
+  ["under_review", "reject", "rejected"],
+  ["under_review", "return", "draft"],
+  ["draft", "cancel", "cancelled"],
+  ["submitted", "cancel", "cancelled"], // approvers only (RPC enforces role)
+  ["approved", "disburse", "disbursed"], // only via disburse RPC
 ];
 
 const TERMINAL: Status[] = ["rejected", "cancelled", "disbursed"];
 
 const ALL: Status[] = [
-  "draft","submitted","under_review","approved","rejected","disbursed","cancelled",
+  "draft",
+  "submitted",
+  "under_review",
+  "approved",
+  "rejected",
+  "disbursed",
+  "cancelled",
 ];
-const OPS: Op[] = ["submit","review","approve","reject","return","cancel","disburse"];
+const OPS: Op[] = ["submit", "review", "approve", "reject", "return", "cancel", "disburse"];
 
 function isAllowed(from: Status, op: Op): Status | null {
   const hit = ALLOWED.find((t) => t[0] === from && t[1] === op);

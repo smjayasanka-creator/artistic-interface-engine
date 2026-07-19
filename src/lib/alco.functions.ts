@@ -26,10 +26,12 @@ export const listAlcoRates = createServerFn({ method: "GET" })
 export const submitAlcoProposal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      notes: z.string().nullable().optional(),
-      items: z.array(rateItem).min(1),
-    }).parse(d),
+    z
+      .object({
+        notes: z.string().nullable().optional(),
+        items: z.array(rateItem).min(1),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -60,7 +62,12 @@ export const submitAlcoProposal = createServerFn({ method: "POST" })
     // Create proposal
     const { data: prop, error: insErr } = await supabase
       .from("alco_rate_proposal")
-      .insert({ company_id: companyId, notes: data.notes ?? null, created_by: userId, status: "pending" })
+      .insert({
+        company_id: companyId,
+        notes: data.notes ?? null,
+        created_by: userId,
+        status: "pending",
+      })
       .select("id")
       .single();
     if (insErr) throw insErr;
@@ -108,12 +115,22 @@ export const submitAlcoProposal = createServerFn({ method: "POST" })
           .single();
         if (!wErr && inst?.id) {
           workflowInstanceId = inst.id;
-          await supabase.from("alco_rate_proposal").update({ workflow_instance_id: inst.id }).eq("id", prop.id);
+          await supabase
+            .from("alco_rate_proposal")
+            .update({ workflow_instance_id: inst.id })
+            .eq("id", prop.id);
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
-    return { ok: true, proposal_id: prop.id, workflow_instance_id: workflowInstanceId, changed_count: changed.length };
+    return {
+      ok: true,
+      proposal_id: prop.id,
+      workflow_instance_id: workflowInstanceId,
+      changed_count: changed.length,
+    };
   });
 
 export const listAlcoProposals = createServerFn({ method: "GET" })
@@ -121,7 +138,9 @@ export const listAlcoProposals = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("alco_rate_proposal")
-      .select("id, status, notes, created_at, applied_at, workflow_instance_id, items:alco_rate_proposal_item(id, product_id, old_standard_rate, old_maximum_rate, old_cbsl_max_rate, new_standard_rate, new_maximum_rate, new_cbsl_max_rate, product:product_id(name, code)), workflow:workflow_instance_id(status, current_step)")
+      .select(
+        "id, status, notes, created_at, applied_at, workflow_instance_id, items:alco_rate_proposal_item(id, product_id, old_standard_rate, old_maximum_rate, old_cbsl_max_rate, new_standard_rate, new_maximum_rate, new_cbsl_max_rate, product:product_id(name, code)), workflow:workflow_instance_id(status, current_step)",
+      )
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw error;
@@ -131,12 +150,16 @@ export const listAlcoProposals = createServerFn({ method: "GET" })
 // Apply an approved proposal — writes rates into fd_product.
 export const applyAlcoProposal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { proposal_id: string }) => z.object({ proposal_id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { proposal_id: string }) =>
+    z.object({ proposal_id: z.string().uuid() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: prop, error } = await supabase
       .from("alco_rate_proposal")
-      .select("id, status, workflow_instance_id, items:alco_rate_proposal_item(product_id, new_standard_rate, new_maximum_rate, new_cbsl_max_rate), workflow:workflow_instance_id(status)")
+      .select(
+        "id, status, workflow_instance_id, items:alco_rate_proposal_item(product_id, new_standard_rate, new_maximum_rate, new_cbsl_max_rate), workflow:workflow_instance_id(status)",
+      )
       .eq("id", data.proposal_id)
       .maybeSingle();
     if (error) throw error;
@@ -161,16 +184,23 @@ export const applyAlcoProposal = createServerFn({ method: "POST" })
       if (rpcErr) throw rpcErr;
     }
 
-    await supabase.from("alco_rate_proposal").update({
-      status: "applied", applied_at: new Date().toISOString(), applied_by: userId,
-    }).eq("id", data.proposal_id);
+    await supabase
+      .from("alco_rate_proposal")
+      .update({
+        status: "applied",
+        applied_at: new Date().toISOString(),
+        applied_by: userId,
+      })
+      .eq("id", data.proposal_id);
 
     return { ok: true };
   });
 
 export const cancelAlcoProposal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { proposal_id: string }) => z.object({ proposal_id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { proposal_id: string }) =>
+    z.object({ proposal_id: z.string().uuid() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("alco_rate_proposal")
@@ -188,12 +218,16 @@ export const listAlcoRateHistory = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("fd_alco_rate")
-      .select("id, standard_rate, maximum_rate, cbsl_max_rate, active, effective_from, effective_to, note, created_by, created_at")
+      .select(
+        "id, standard_rate, maximum_rate, cbsl_max_rate, active, effective_from, effective_to, note, created_by, created_at",
+      )
       .eq("product_id", data.product_id)
       .order("effective_from", { ascending: false });
     if (error) throw error;
 
-    const creatorIds = Array.from(new Set((rows ?? []).map((r: any) => r.created_by).filter(Boolean)));
+    const creatorIds = Array.from(
+      new Set((rows ?? []).map((r: any) => r.created_by).filter(Boolean)),
+    );
     let nameById = new Map<string, string>();
     if (creatorIds.length > 0) {
       const { data: staff } = await context.supabase
@@ -210,4 +244,3 @@ export const listAlcoRateHistory = createServerFn({ method: "POST" })
       created_by_name: r.created_by ? (nameById.get(r.created_by) ?? "—") : "System",
     }));
   });
-

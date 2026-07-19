@@ -5,7 +5,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { listActiveDeposits, recordDepositWithdrawal } from "@/lib/fd.functions";
 import { Card } from "@/components/mzizi/Card";
-import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
+import {
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  selectCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
+} from "@/components/mzizi/FormGrid";
 import { money, getActiveCurrency } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/transactions/deposit-withdrawal")({
@@ -44,7 +52,9 @@ function DepositWithdrawalPage() {
 
   return (
     <div className="animate-fadein flex flex-col gap-4">
-      <Link to="/transactions" className="text-xs text-primary hover:underline">← Back to transactions</Link>
+      <Link to="/transactions" className="text-xs text-primary hover:underline">
+        ← Back to transactions
+      </Link>
 
       <form
         onSubmit={(e) => {
@@ -64,7 +74,11 @@ function DepositWithdrawalPage() {
         <Card className="p-6">
           <FormGrid>
             <FormField label="Deposit" required span={8}>
-              <select value={depositId} onChange={(e) => setDepositId(e.target.value)} className={selectCls}>
+              <select
+                value={depositId}
+                onChange={(e) => setDepositId(e.target.value)}
+                className={selectCls}
+              >
                 <option value="">Select active deposit…</option>
                 {(deposits ?? []).map((d: any) => (
                   <option key={d.id} value={d.id}>
@@ -74,13 +88,23 @@ function DepositWithdrawalPage() {
               </select>
             </FormField>
             <FormField label="Date" required span={2}>
-              <input type="date" readOnly value={txnDate} onChange={(e) => setTxnDate(e.target.value)} className={`${inputCls} font-mono`} />
+              <input
+                type="date"
+                readOnly
+                value={txnDate}
+                onChange={(e) => setTxnDate(e.target.value)}
+                className={`${inputCls} font-mono`}
+              />
             </FormField>
             <FormField
               label={`Amount (${getActiveCurrency()})`}
               required
               span={2}
-              error={selected && amount && Number(amount) > Number(selected.principal) ? "Exceeds principal" : undefined}
+              error={
+                selected && amount && Number(amount) > Number(selected.principal)
+                  ? "Exceeds principal"
+                  : undefined
+              }
               hint={selected ? `Max ${money(Number(selected.principal))}` : undefined}
             >
               <input
@@ -92,13 +116,21 @@ function DepositWithdrawalPage() {
               />
             </FormField>
             <FormField label="Reference" span={12}>
-              <input value={reference} onChange={(e) => setReference(e.target.value)} className={`${inputCls} font-mono`} maxLength={120} placeholder="Payout voucher / bank / M-Pesa reference" />
+              <input
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                className={`${inputCls} font-mono`}
+                maxLength={120}
+                placeholder="Payout voucher / bank / M-Pesa reference"
+              />
             </FormField>
           </FormGrid>
         </Card>
 
         <FormActions>
-          <Link to="/transactions" className={btnSecondaryCls}>Cancel</Link>
+          <Link to="/transactions" className={btnSecondaryCls}>
+            Cancel
+          </Link>
           <button type="submit" disabled={!valid || post.isPending} className={btnPrimaryCls}>
             {post.isPending ? "Posting…" : "Post withdrawal"}
           </button>

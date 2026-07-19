@@ -33,7 +33,7 @@ export function LoanProductEvaluationTab() {
 
   const [selected, setSelected] = useState<string | null>(null);
 
-  const productId = selected ?? (products?.[0]?.id ?? null);
+  const productId = selected ?? products?.[0]?.id ?? null;
 
   const { data: config, isLoading } = useQuery({
     queryKey: ["product-eval-config", productId],
@@ -88,7 +88,8 @@ export function LoanProductEvaluationTab() {
 
   const toggle = (id: string) => {
     const s = new Set(expanded);
-    s.has(id) ? s.delete(id) : s.add(id);
+    if (s.has(id)) s.delete(id);
+    else s.add(id);
     setExpanded(s);
   };
 
@@ -137,8 +138,8 @@ export function LoanProductEvaluationTab() {
           </button>
         </div>
         <p className="text-[12px] text-muted-foreground -mt-1 mb-3">
-          Enable the evaluation sections that apply to this product. Only enabled sections appear
-          on the Loan Evaluation page for new applications.
+          Enable the evaluation sections that apply to this product. Only enabled sections appear on
+          the Loan Evaluation page for new applications.
         </p>
 
         {isLoading || !config ? (
@@ -186,18 +187,13 @@ export function LoanProductEvaluationTab() {
                       type="number"
                       className={inputCls + " w-20 font-mono"}
                       value={row.display_order}
-                      onChange={(e) =>
-                        update(s.id, { display_order: Number(e.target.value) })
-                      }
+                      onChange={(e) => update(s.id, { display_order: Number(e.target.value) })}
                     />
                   </div>
                   {open && (
                     <div className="px-3 pb-3 pt-1 border-t border-border grid grid-cols-2 gap-x-4 gap-y-1">
                       {(s.fields ?? []).map((f: any) => (
-                        <label
-                          key={f.key}
-                          className="flex items-center gap-2 text-[12px] py-0.5"
-                        >
+                        <label key={f.key} className="flex items-center gap-2 text-[12px] py-0.5">
                           <input
                             type="checkbox"
                             checked={enabled.includes(f.key)}

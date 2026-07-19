@@ -9,7 +9,13 @@ import { serverNow } from "@/lib/clock-server";
 
 export const APPROVER_KINDS = ["role", "branch_role", "user"] as const;
 export const SLA_ACTIONS = ["flag", "escalate"] as const;
-export const STAFF_ROLES = ["loan_officer", "branch_manager", "teller", "operations", "admin"] as const;
+export const STAFF_ROLES = [
+  "loan_officer",
+  "branch_manager",
+  "teller",
+  "operations",
+  "admin",
+] as const;
 
 // Canonical transaction types; companies can also register custom codes.
 export const CANONICAL_TX_TYPES: { code: string; label: string }[] = [
@@ -49,7 +55,9 @@ export const listWorkflows = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workflow_definition")
-      .select("id, name, transaction_type, description, is_enabled, created_at, updated_at, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)")
+      .select(
+        "id, name, transaction_type, description, is_enabled, created_at, updated_at, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)",
+      )
       .order("transaction_type", { ascending: true });
     if (error) throw error;
     return (data ?? []).map((w: any) => ({
@@ -64,7 +72,9 @@ export const getWorkflow = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: wf, error } = await context.supabase
       .from("workflow_definition")
-      .select("id, name, transaction_type, description, is_enabled, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)")
+      .select(
+        "id, name, transaction_type, description, is_enabled, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)",
+      )
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw error;
@@ -100,14 +110,16 @@ export const hasActiveWorkflow = createServerFn({ method: "GET" })
 export const upsertWorkflow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      id: z.string().uuid().nullable().optional(),
-      name: z.string().min(1),
-      transaction_type: z.string().min(1),
-      description: z.string().nullable().optional(),
-      is_enabled: z.boolean().default(true),
-      steps: z.array(stepSchema).min(1),
-    }).parse(d),
+    z
+      .object({
+        id: z.string().uuid().nullable().optional(),
+        name: z.string().min(1),
+        transaction_type: z.string().min(1),
+        description: z.string().nullable().optional(),
+        is_enabled: z.boolean().default(true),
+        steps: z.array(stepSchema).min(1),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -151,15 +163,16 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
       step_order: s.step_order,
       name: s.name,
       approver_kind: s.approver_kind,
-      role: s.approver_kind === "user" ? null : s.role ?? null,
-      custom_role_id: s.approver_kind === "user" ? null : s.custom_role_id ?? null,
-      branch_id: s.approver_kind === "branch_role" ? s.branch_id ?? null : null,
-      user_id: s.approver_kind === "user" ? s.user_id ?? null : null,
+      role: s.approver_kind === "user" ? null : (s.role ?? null),
+      custom_role_id: s.approver_kind === "user" ? null : (s.custom_role_id ?? null),
+      branch_id: s.approver_kind === "branch_role" ? (s.branch_id ?? null) : null,
+      user_id: s.approver_kind === "user" ? (s.user_id ?? null) : null,
       required_approvals: s.required_approvals ?? 1,
       sla_hours: s.sla_hours ?? null,
       sla_action: s.sla_action ?? "flag",
-      escalation_role: s.sla_action === "escalate" ? s.escalation_role ?? null : null,
-      escalation_custom_role_id: s.sla_action === "escalate" ? s.escalation_custom_role_id ?? null : null,
+      escalation_role: s.sla_action === "escalate" ? (s.escalation_role ?? null) : null,
+      escalation_custom_role_id:
+        s.sla_action === "escalate" ? (s.escalation_custom_role_id ?? null) : null,
     }));
     const { error: stErr } = await supabase.from("workflow_step").insert(rows);
     if (stErr) throw stErr;
@@ -197,12 +210,14 @@ export const deleteWorkflow = createServerFn({ method: "POST" })
 export const startWorkflow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      transaction_type: z.string().min(1),
-      reference_id: z.string().uuid().nullable().optional(),
-      reference_label: z.string().min(1),
-      amount: z.number().nullable().optional(),
-    }).parse(d),
+    z
+      .object({
+        transaction_type: z.string().min(1),
+        reference_id: z.string().uuid().nullable().optional(),
+        reference_label: z.string().min(1),
+        amount: z.number().nullable().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -241,16 +256,21 @@ export const startWorkflow = createServerFn({ method: "POST" })
 export const listInstances = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      status: z.enum(["pending", "approved", "declined", "cancelled", "all"]).default("pending"),
-      mine: z.boolean().default(false),
-    }).partial().parse(d ?? {}),
+    z
+      .object({
+        status: z.enum(["pending", "approved", "declined", "cancelled", "all"]).default("pending"),
+        mine: z.boolean().default(false),
+      })
+      .partial()
+      .parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     let q = supabase
       .from("workflow_instance")
-      .select("id, transaction_type, reference_id, reference_label, amount, status, current_step, initiated_at, completed_at, chain_snapshot, applied_rule_id, workflow:workflow_id(id, name, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)")
+      .select(
+        "id, transaction_type, reference_id, reference_label, amount, status, current_step, initiated_at, completed_at, chain_snapshot, applied_rule_id, workflow:workflow_id(id, name, steps:workflow_step(id, step_order, name, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals, sla_hours, sla_action, escalation_role, escalation_custom_role_id)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)",
+      )
       .order("initiated_at", { ascending: false })
       .limit(200);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
@@ -270,7 +290,9 @@ export const listInstances = createServerFn({ method: "GET" })
       let myCustomRoleIds = new Set<string>();
       if (staffId) {
         const { data: crs } = await supabase
-          .from("user_custom_role").select("role_id").eq("staff_id", staffId);
+          .from("user_custom_role")
+          .select("role_id")
+          .eq("staff_id", staffId);
         myCustomRoleIds = new Set((crs ?? []).map((r: any) => r.role_id));
       }
 
@@ -287,9 +309,13 @@ export const listInstances = createServerFn({ method: "GET" })
       const authOk = new Map<string, boolean>();
       await Promise.all(
         Array.from(dynamicAuthorityIds).map(async (aid) => {
-          const { data: ok } = await supabase.rpc("has_authority" as any, {
-            _user_id: userId, _authority_id: aid,
-          } as any);
+          const { data: ok } = await supabase.rpc(
+            "has_authority" as any,
+            {
+              _user_id: userId,
+              _authority_id: aid,
+            } as any,
+          );
           authOk.set(aid, !!ok);
         }),
       );
@@ -339,27 +365,42 @@ export const listInstances = createServerFn({ method: "GET" })
         step = (r.workflow?.steps ?? []).find((s: any) => s.step_order === r.current_step);
         totalSteps = r.workflow?.steps?.length ?? 0;
       }
-      const dueAt = step?.sla_hours ? new Date(new Date(r.initiated_at).getTime() + step.sla_hours * 3600e3) : null;
+      const dueAt = step?.sla_hours
+        ? new Date(new Date(r.initiated_at).getTime() + step.sla_hours * 3600e3)
+        : null;
       const overdue = dueAt ? now > dueAt.getTime() && r.status === "pending" : false;
-      const approvalsForStep = (r.actions ?? []).filter((a: any) => a.step_order === r.current_step && a.decision === "approve").length;
-      return { ...r, step_config: step, total_steps: totalSteps, due_at: dueAt?.toISOString() ?? null, overdue, approvals_recorded: approvalsForStep };
+      const approvalsForStep = (r.actions ?? []).filter(
+        (a: any) => a.step_order === r.current_step && a.decision === "approve",
+      ).length;
+      return {
+        ...r,
+        step_config: step,
+        total_steps: totalSteps,
+        due_at: dueAt?.toISOString() ?? null,
+        overdue,
+        approvals_recorded: approvalsForStep,
+      };
     });
   });
 
 export const actOnInstance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      instance_id: z.string().uuid(),
-      decision: z.enum(["approve", "decline", "send_back"]),
-      comment: z.string().nullable().optional(),
-    }).parse(d),
+    z
+      .object({
+        instance_id: z.string().uuid(),
+        decision: z.enum(["approve", "decline", "send_back"]),
+        comment: z.string().nullable().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: inst, error: iErr } = await supabase
       .from("workflow_instance")
-      .select("id, status, current_step, transaction_type, reference_id, chain_snapshot, workflow:workflow_id(steps:workflow_step(step_order, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals))")
+      .select(
+        "id, status, current_step, transaction_type, reference_id, chain_snapshot, workflow:workflow_id(steps:workflow_step(step_order, approver_kind, role, custom_role_id, branch_id, user_id, required_approvals))",
+      )
       .eq("id", data.instance_id)
       .maybeSingle();
     if (iErr) throw iErr;
@@ -375,7 +416,9 @@ export const actOnInstance = createServerFn({ method: "POST" })
       stepsSorted = [...chain].sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0));
       step = stepsSorted.find((s: any) => (s.seq ?? 0) === inst.current_step);
     } else {
-      stepsSorted = ((inst as any).workflow?.steps ?? []).sort((a: any, b: any) => a.step_order - b.step_order);
+      stepsSorted = ((inst as any).workflow?.steps ?? []).sort(
+        (a: any, b: any) => a.step_order - b.step_order,
+      );
       step = stepsSorted.find((s: any) => s.step_order === inst.current_step);
     }
     if (!step) throw new Error("Step config missing");
@@ -390,19 +433,27 @@ export const actOnInstance = createServerFn({ method: "POST" })
       if (!ok) throw new Error("Not authorized for this authority");
     } else {
       const { data: staff } = await supabase
-        .from("staff").select("id, role, branch_id").eq("user_id", userId).maybeSingle();
+        .from("staff")
+        .select("id, role, branch_id")
+        .eq("user_id", userId)
+        .maybeSingle();
       let hasCustomRole = false;
       if (step.custom_role_id && staff?.id) {
         const { data: cr } = await supabase
-          .from("user_custom_role").select("role_id")
-          .eq("staff_id", staff.id).eq("role_id", step.custom_role_id).maybeSingle();
+          .from("user_custom_role")
+          .select("role_id")
+          .eq("staff_id", staff.id)
+          .eq("role_id", step.custom_role_id)
+          .maybeSingle();
         hasCustomRole = !!cr;
       }
       const roleMatches = step.custom_role_id ? hasCustomRole : step.role === staff?.role;
       const okUser = step.approver_kind === "user" && step.user_id === userId;
       const okRole = step.approver_kind === "role" && roleMatches;
-      const okBranchRole = step.approver_kind === "branch_role" && roleMatches && step.branch_id === staff?.branch_id;
-      if (!okUser && !okRole && !okBranchRole) throw new Error("Not authorized to act on this step");
+      const okBranchRole =
+        step.approver_kind === "branch_role" && roleMatches && step.branch_id === staff?.branch_id;
+      if (!okUser && !okRole && !okBranchRole)
+        throw new Error("Not authorized to act on this step");
     }
 
     // Insert action (unique per actor/step)
@@ -416,14 +467,16 @@ export const actOnInstance = createServerFn({ method: "POST" })
     if (aErr) throw aErr;
 
     if (data.decision === "decline") {
-      await supabase.from("workflow_instance")
+      await supabase
+        .from("workflow_instance")
         .update({ status: "declined", completed_at: new Date().toISOString() })
         .eq("id", data.instance_id);
       return { ok: true, status: "declined" };
     }
 
     if (data.decision === "send_back") {
-      await supabase.from("workflow_instance")
+      await supabase
+        .from("workflow_instance")
         .update({ status: "cancelled", completed_at: new Date().toISOString() })
         .eq("id", data.instance_id);
       return { ok: true, status: "sent_back" };
@@ -431,7 +484,8 @@ export const actOnInstance = createServerFn({ method: "POST" })
 
     // Count approvals for this step
     const { data: acts } = await supabase
-      .from("workflow_action").select("id")
+      .from("workflow_action")
+      .select("id")
       .eq("instance_id", data.instance_id)
       .eq("step_order", inst.current_step)
       .eq("decision", "approve");
@@ -447,15 +501,20 @@ export const actOnInstance = createServerFn({ method: "POST" })
       ? stepsSorted.some((s: any) => (s.seq ?? 0) === nextOrder)
       : stepsSorted.some((s: any) => s.step_order === nextOrder);
     if (hasNext) {
-      await supabase.from("workflow_instance").update({ current_step: nextOrder }).eq("id", data.instance_id);
+      await supabase
+        .from("workflow_instance")
+        .update({ current_step: nextOrder })
+        .eq("id", data.instance_id);
       return { ok: true, status: "pending", advanced_to: nextOrder };
     }
-    await supabase.from("workflow_instance")
+    await supabase
+      .from("workflow_instance")
       .update({ status: "approved", completed_at: new Date().toISOString() })
       .eq("id", data.instance_id);
 
     if ((inst as any).transaction_type === "loan_approval" && (inst as any).reference_id) {
-      await supabase.from("loan")
+      await supabase
+        .from("loan")
         .update({ status: "approved" })
         .eq("id", (inst as any).reference_id)
         .eq("status", "submitted");
@@ -466,7 +525,9 @@ export const actOnInstance = createServerFn({ method: "POST" })
 
 export const cancelInstance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { instance_id: string }) => z.object({ instance_id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { instance_id: string }) =>
+    z.object({ instance_id: z.string().uuid() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("workflow_instance")
@@ -499,7 +560,9 @@ export const getInstanceReference = createServerFn({ method: "GET" })
     if (tx.startsWith("loan_")) {
       const { data: loan } = await supabase
         .from("loan")
-        .select("id, loan_no, application_id, application_no, principal, annual_rate_pct, term_months, frequency, schedule_type, status, purpose, submitted_at, disbursed_at, client:client_id(id, full_name, national_id, phone, email, address, date_of_birth, gender, occupation, monthly_income, next_of_kin_name, next_of_kin_phone, gn_division, divisional_secretariat, district, province, risk_grade), product:product_id(id, name, code, interest_method, frequency, annual_rate_pct), branch:branch_id(name, code)")
+        .select(
+          "id, loan_no, application_id, application_no, principal, annual_rate_pct, term_months, frequency, schedule_type, status, purpose, submitted_at, disbursed_at, client:client_id(id, full_name, national_id, phone, email, address, date_of_birth, gender, occupation, monthly_income, next_of_kin_name, next_of_kin_phone, gn_division, divisional_secretariat, district, province, risk_grade), product:product_id(id, name, code, interest_method, frequency, annual_rate_pct), branch:branch_id(name, code)",
+        )
         .eq("id", refId)
         .maybeSingle();
       return { kind: "loan" as const, data: loan };
@@ -507,7 +570,9 @@ export const getInstanceReference = createServerFn({ method: "GET" })
     if (tx.startsWith("fd_")) {
       const { data: fd } = await supabase
         .from("fixed_deposit")
-        .select("id, fd_no, principal, interest_rate, term_months, status, opened_at, maturity_date, client:client_id(id, full_name, national_id), product:product_id(name, code), branch:branch_id(name, code)")
+        .select(
+          "id, fd_no, principal, interest_rate, term_months, status, opened_at, maturity_date, client:client_id(id, full_name, national_id), product:product_id(name, code), branch:branch_id(name, code)",
+        )
         .eq("id", refId)
         .maybeSingle();
       return { kind: "fd" as const, data: fd };
@@ -515,7 +580,9 @@ export const getInstanceReference = createServerFn({ method: "GET" })
     if (tx === "journal_entry") {
       const { data: je } = await supabase
         .from("journal_entry")
-        .select("id, entry_no, entry_date, description, status, total_debit, total_credit, postings:posting(id, gl_account_id, debit, credit, narration)")
+        .select(
+          "id, entry_no, entry_date, description, status, total_debit, total_credit, postings:posting(id, gl_account_id, debit, credit, narration)",
+        )
         .eq("id", refId)
         .maybeSingle();
       return { kind: "journal" as const, data: je };
@@ -531,7 +598,9 @@ export const getInstanceReference = createServerFn({ method: "GET" })
     if (tx.startsWith("customer_screening")) {
       const { data: cli } = await supabase
         .from("client")
-        .select("id, full_name, national_id, phone, email, dob, occupation, kyc_status, risk_rating")
+        .select(
+          "id, full_name, national_id, phone, email, dob, occupation, kyc_status, risk_rating",
+        )
         .eq("id", refId)
         .maybeSingle();
       return { kind: "client" as const, data: cli };

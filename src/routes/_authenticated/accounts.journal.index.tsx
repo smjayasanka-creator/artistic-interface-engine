@@ -92,11 +92,21 @@ function JournalEntriesPage() {
         </div>
         <div className="flex items-center gap-1.5">
           <label className="text-[11.5px] text-faint">From</label>
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inputCls} />
+          <input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className={inputCls}
+          />
         </div>
         <div className="flex items-center gap-1.5">
           <label className="text-[11.5px] text-faint">To</label>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inputCls} />
+          <input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className={inputCls}
+          />
         </div>
         {(from || to) && (
           <button
@@ -144,7 +154,9 @@ function JournalEntriesPage() {
             <SkeletonRows count={pageSize > 10 ? 10 : pageSize} />
           ) : entries.length === 0 ? (
             <div className="text-center text-faint text-sm py-10">
-              {debouncedSearch || from || to ? "No entries match your filters." : "No journal entries yet."}
+              {debouncedSearch || from || to
+                ? "No entries match your filters."
+                : "No journal entries yet."}
             </div>
           ) : (
             <>
@@ -199,10 +211,20 @@ function JournalEntriesPage() {
           <span className="text-[12px] text-faint">
             Page {page} of {totalPages}
           </span>
-          <button onClick={() => setPage(1)} disabled={page <= 1} className={btnCls} aria-label="First page">
+          <button
+            onClick={() => setPage(1)}
+            disabled={page <= 1}
+            className={btnCls}
+            aria-label="First page"
+          >
             «
           </button>
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className={btnCls} aria-label="Previous page">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className={btnCls}
+            aria-label="Previous page"
+          >
             <ChevronLeft size={14} />
           </button>
           <button
@@ -237,7 +259,10 @@ function SkeletonRows({ count }: { count: number }) {
           style={{ gridTemplateColumns: ".8fr .9fr 2fr 1fr .6fr 1fr 1fr" }}
         >
           {Array.from({ length: 7 }).map((__, j) => (
-            <div key={j} className={cn("h-3 rounded bg-muted animate-pulse mr-3", j >= 4 && "ml-auto w-16")} />
+            <div
+              key={j}
+              className={cn("h-3 rounded bg-muted animate-pulse mr-3", j >= 4 && "ml-auto w-16")}
+            />
           ))}
         </div>
       ))}

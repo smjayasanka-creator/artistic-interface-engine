@@ -11,10 +11,7 @@ import {
   selectCls,
   btnPrimaryCls,
 } from "@/components/mzizi/FormGrid";
-import {
-  getLoanEvaluation,
-  saveLoanEvaluation,
-} from "@/lib/evaluation.functions";
+import { getLoanEvaluation, saveLoanEvaluation } from "@/lib/evaluation.functions";
 
 type Field = {
   key: string;
@@ -63,8 +60,7 @@ export function LoanEvaluation({
   const sections = (data?.sections ?? []) as Section[];
 
   const save = useMutation({
-    mutationFn: () =>
-      saveFn({ data: { loan_id: loanId!, data: values } }),
+    mutationFn: () => saveFn({ data: { loan_id: loanId!, data: values } }),
     onSuccess: () => {
       toast.success("Evaluation saved");
       qc.invalidateQueries({ queryKey: ["loan-evaluation", loanId] });
@@ -102,8 +98,8 @@ export function LoanEvaluation({
   if (sections.length === 0) {
     return (
       <div className="text-[12.5px] text-muted-foreground py-10 text-center border border-dashed border-border rounded-md">
-        No evaluation sections are enabled for this product. Configure them under
-        Administration → Loan product evaluation.
+        No evaluation sections are enabled for this product. Configure them under Administration →
+        Loan product evaluation.
       </div>
     );
   }

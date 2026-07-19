@@ -10,19 +10,45 @@ export type ApiError = { error: string; message: string; details?: unknown };
 
 export const ERRORS = {
   invalid_json: { code: 400, error: "invalid_json", message: "Request body must be valid JSON." },
-  validation_failed: { code: 400, error: "validation_failed", message: "Request body failed schema validation." },
-  missing_header: (name: string) => ({ code: 400, error: "missing_header", message: `Required header "${name}" is missing.` }),
-  idempotency_conflict: { code: 409, error: "idempotency_conflict", message: "Idempotency-Key reused with a different request body." },
-  response_shape: { code: 500, error: "internal_error", message: "Server produced a response that failed its own schema check." },
+  validation_failed: {
+    code: 400,
+    error: "validation_failed",
+    message: "Request body failed schema validation.",
+  },
+  missing_header: (name: string) => ({
+    code: 400,
+    error: "missing_header",
+    message: `Required header "${name}" is missing.`,
+  }),
+  idempotency_conflict: {
+    code: 409,
+    error: "idempotency_conflict",
+    message: "Idempotency-Key reused with a different request body.",
+  },
+  response_shape: {
+    code: 500,
+    error: "internal_error",
+    message: "Server produced a response that failed its own schema check.",
+  },
 } as const;
 
-export function errJson(e: { code: number; error: string; message: string; details?: unknown }, details?: unknown): Response {
-  const body: ApiError = { error: e.error, message: e.message, ...(details ? { details } : e.details ? { details: e.details } : {}) };
+export function errJson(
+  e: { code: number; error: string; message: string; details?: unknown },
+  details?: unknown,
+): Response {
+  const body: ApiError = {
+    error: e.error,
+    message: e.message,
+    ...(details ? { details } : e.details ? { details: e.details } : {}),
+  };
   return json(body, e.code);
 }
 
 // ---------- Header helpers ----------
-export function requireHeader(request: Request, name: string): { ok: true; value: string } | { ok: false; response: Response } {
+export function requireHeader(
+  request: Request,
+  name: string,
+): { ok: true; value: string } | { ok: false; response: Response } {
   const v = request.headers.get(name);
   if (!v || !v.trim()) return { ok: false, response: errJson(ERRORS.missing_header(name)) };
   return { ok: true, value: v.trim() };
@@ -32,11 +58,18 @@ export function requireHeader(request: Request, name: string): { ok: true; value
 export async function parseJsonBody<T extends ZodTypeAny>(
   request: Request,
   schema: T,
-): Promise<{ ok: true; data: z.infer<T>; raw: unknown } | { ok: false; response: Response; raw: unknown }> {
+): Promise<
+  { ok: true; data: z.infer<T>; raw: unknown } | { ok: false; response: Response; raw: unknown }
+> {
   let raw: unknown;
-  try { raw = await request.json(); } catch { return { ok: false, response: errJson(ERRORS.invalid_json), raw: null }; }
+  try {
+    raw = await request.json();
+  } catch {
+    return { ok: false, response: errJson(ERRORS.invalid_json), raw: null };
+  }
   const parsed = schema.safeParse(raw);
-  if (!parsed.success) return { ok: false, response: errJson(ERRORS.validation_failed, parsed.error.flatten()), raw };
+  if (!parsed.success)
+    return { ok: false, response: errJson(ERRORS.validation_failed, parsed.error.flatten()), raw };
   return { ok: true, data: parsed.data, raw };
 }
 
@@ -44,7 +77,11 @@ export async function parseJsonBody<T extends ZodTypeAny>(
 // Every route validates its own JSON response before returning it, so a
 // contract drift (typo, missing field) surfaces as a 500 in tests rather
 // than silently shipping the wrong shape.
-export function validateAndSend<T extends ZodTypeAny>(schema: T, body: z.infer<T>, status: number): Response {
+export function validateAndSend<T extends ZodTypeAny>(
+  schema: T,
+  body: z.infer<T>,
+  status: number,
+): Response {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return errJson(ERRORS.response_shape, parsed.error.flatten());
   return json(parsed.data, status);
@@ -60,9 +97,7 @@ export async function checkIdempotency(args: {
   key: string;
   body: unknown;
 }): Promise<
-  | { kind: "miss" }
-  | { kind: "replay"; status: number; response: unknown }
-  | { kind: "conflict" }
+  { kind: "miss" } | { kind: "replay"; status: number; response: unknown } | { kind: "conflict" }
 > {
   const { data } = await supabaseAdmin
     .from("api_transaction_log")
@@ -102,7 +137,10 @@ export const TransactionsInboundRequest = z.object({
   amount: z.number().positive(),
   currency: z.string().length(3),
   narrative: z.string().max(160).optional(),
-  value_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  value_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 export const TransactionsInboundResponse = z.object({
   status: z.literal("accepted"),
@@ -265,11 +303,25 @@ export const HealthResponse = z.object({
 
 // ---------- Convenience: full auth-fail logging wrapper ----------
 export async function logAndReturnAuthError(args: {
-  status: number; error: string; channel: string; endpoint: string; direction: "inbound" | "outbound";
+  status: number;
+  error: string;
+  channel: string;
+  endpoint: string;
+  direction: "inbound" | "outbound";
 }): Promise<Response> {
   await logApiCall({
-    company_id: null, api_key_id: null, channel: args.channel, direction: args.direction,
-    endpoint: args.endpoint, method: "POST", status_code: args.status, error: args.error,
+    company_id: null,
+    api_key_id: null,
+    channel: args.channel,
+    direction: args.direction,
+    endpoint: args.endpoint,
+    method: "POST",
+    status_code: args.status,
+    error: args.error,
   });
-  return errJson({ code: args.status, error: args.status === 401 ? "unauthorized" : "forbidden", message: args.error });
+  return errJson({
+    code: args.status,
+    error: args.status === 401 ? "unauthorized" : "forbidden",
+    message: args.error,
+  });
 }

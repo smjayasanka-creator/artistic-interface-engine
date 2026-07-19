@@ -24,7 +24,10 @@ function MaturityDue() {
   const qc = useQueryClient();
   const listFn = useServerFn(listMaturingDeposits);
   const matureFn = useServerFn(processMaturity);
-  const { data: rows } = useQuery({ queryKey: ["fd-maturity", win], queryFn: () => listFn({ data: { window: win } }) });
+  const { data: rows } = useQuery({
+    queryKey: ["fd-maturity", win],
+    queryFn: () => listFn({ data: { window: win } }),
+  });
 
   const [payoutFor, setPayoutFor] = useState<any | null>(null);
   const [pay, setPay] = useState<PaymentMethodValue>({ method: "fund_transfer" });
@@ -45,7 +48,11 @@ function MaturityDue() {
         } as any,
       }),
     onSuccess: (r) => {
-      toast.success(r.action === "renewed" ? `Renewed as ${r.new_certificate}` : `Payout ${money(r.settlement ?? 0)}`);
+      toast.success(
+        r.action === "renewed"
+          ? `Renewed as ${r.new_certificate}`
+          : `Payout ${money(r.settlement ?? 0)}`,
+      );
       qc.invalidateQueries({ queryKey: ["fd-maturity"] });
       setPayoutFor(null);
     },
@@ -70,7 +77,9 @@ function MaturityDue() {
             onClick={() => setWin(w)}
             className={cn(
               "px-4 py-2 rounded-md text-[13px] font-medium border",
-              win === w ? "bg-primary text-primary-foreground border-primary" : "border-input hover:bg-muted",
+              win === w
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-input hover:bg-muted",
             )}
           >
             Next {w} days
@@ -102,9 +111,15 @@ function MaturityDue() {
                 <td className="py-2 pr-3">{d.product?.name}</td>
                 <td className="py-2 pr-3 text-right font-mono">{money(Number(d.principal))}</td>
                 <td className="py-2 pr-3">{d.maturity_date}</td>
-                <td className="py-2 pr-3 capitalize">{d.maturity_instruction.replace(/_/g, " ")}</td>
+                <td className="py-2 pr-3 capitalize">
+                  {d.maturity_instruction.replace(/_/g, " ")}
+                </td>
                 <td className="py-2 pr-3 text-right">
-                  <button className={btnPrimaryCls} onClick={() => onProcess(d)} disabled={matureM.isPending}>
+                  <button
+                    className={btnPrimaryCls}
+                    onClick={() => onProcess(d)}
+                    disabled={matureM.isPending}
+                  >
                     Process
                   </button>
                 </td>
@@ -112,7 +127,9 @@ function MaturityDue() {
             ))}
             {(rows ?? []).length === 0 && (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-muted-foreground">No deposits maturing in this window.</td>
+                <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                  No deposits maturing in this window.
+                </td>
               </tr>
             )}
           </tbody>
@@ -145,7 +162,9 @@ function MaturityDue() {
               </div>
               <div className="flex justify-between mt-1">
                 <span className="text-muted-foreground">Principal</span>
-                <span className="font-mono font-semibold text-primary">{money(Number(payoutFor.principal))}</span>
+                <span className="font-mono font-semibold text-primary">
+                  {money(Number(payoutFor.principal))}
+                </span>
               </div>
             </div>
 
@@ -159,10 +178,19 @@ function MaturityDue() {
             </FormGrid>
 
             <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => setPayoutFor(null)} disabled={matureM.isPending} className={btnSecondaryCls}>
+              <button
+                type="button"
+                onClick={() => setPayoutFor(null)}
+                disabled={matureM.isPending}
+                className={btnSecondaryCls}
+              >
                 Cancel
               </button>
-              <button type="submit" disabled={matureM.isPending || !paymentMethodValid(pay)} className={btnPrimaryCls}>
+              <button
+                type="submit"
+                disabled={matureM.isPending || !paymentMethodValid(pay)}
+                className={btnPrimaryCls}
+              >
                 {matureM.isPending ? "Processing…" : "Confirm payout"}
               </button>
             </div>

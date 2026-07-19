@@ -22,9 +22,7 @@ export const extractSecurityFieldsFromDocument = createServerFn({ method: "POST"
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("AI service not configured");
 
-    const fieldList = data.fields
-      .map((f) => `- ${f.key} (${f.type}) — "${f.label}"`)
-      .join("\n");
+    const fieldList = data.fields.map((f) => `- ${f.key} (${f.type}) — "${f.label}"`).join("\n");
 
     const system = `You extract structured data from scanned identity/registration documents.
 Return ONLY valid JSON matching the requested schema. Use the exact keys given.
@@ -65,7 +63,8 @@ Respond with JSON only, no prose. Example shape: { "${data.fields[0].key}": "...
     });
 
     if (res.status === 429) throw new Error("AI rate limit reached. Please retry shortly.");
-    if (res.status === 402) throw new Error("AI credits exhausted. Add credits in workspace billing.");
+    if (res.status === 402)
+      throw new Error("AI credits exhausted. Add credits in workspace billing.");
     if (!res.ok) {
       const t = await res.text().catch(() => "");
       throw new Error(`AI extraction failed (${res.status}): ${t.slice(0, 200)}`);

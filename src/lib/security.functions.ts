@@ -41,7 +41,6 @@ const upsertSecurityTypeSchema = z.object({
   active: z.boolean().default(true),
 });
 
-
 export const upsertSecurityType = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => upsertSecurityTypeSchema.parse(d))
@@ -59,10 +58,7 @@ export const deleteSecurityType = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("security_type")
-      .delete()
-      .eq("id", data.id);
+    const { error } = await context.supabase.from("security_type").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -94,8 +90,14 @@ const upsertDelegationSchema = z
     active: z.boolean().default(true),
   })
   .refine((v) => v.ltv_min <= v.ltv_max, { message: "LTV min must be ≤ max", path: ["ltv_max"] })
-  .refine((v) => v.amount_min <= v.amount_max, { message: "Amount min must be ≤ max", path: ["amount_max"] })
-  .refine((v) => v.rate_min <= v.rate_max, { message: "Rate min must be ≤ max", path: ["rate_max"] });
+  .refine((v) => v.amount_min <= v.amount_max, {
+    message: "Amount min must be ≤ max",
+    path: ["amount_max"],
+  })
+  .refine((v) => v.rate_min <= v.rate_max, {
+    message: "Rate min must be ≤ max",
+    path: ["rate_max"],
+  });
 
 export const upsertDelegationAuthority = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

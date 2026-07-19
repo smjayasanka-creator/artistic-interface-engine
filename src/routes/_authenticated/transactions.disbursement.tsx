@@ -32,7 +32,10 @@ function DisbursementPage() {
   });
   const role = (session?.staff as any)?.role as string | undefined;
   const roles = (session as any)?.roles ?? [];
-  const canDisburse = ["branch_manager", "admin"].includes(role ?? "") || roles.includes("admin") || roles.includes("branch_manager");
+  const canDisburse =
+    ["branch_manager", "admin"].includes(role ?? "") ||
+    roles.includes("admin") ||
+    roles.includes("branch_manager");
 
   const [selected, setSelected] = useState<any | null>(null);
   const [pay, setPay] = useState<PaymentMethodValue>({ method: "fund_transfer" });
@@ -69,7 +72,6 @@ function DisbursementPage() {
     });
   }
 
-
   const loans = data ?? [];
 
   return (
@@ -97,7 +99,9 @@ function DisbursementPage() {
         {isLoading ? (
           <div className="text-center text-faint text-sm py-10">Loading…</div>
         ) : loans.length === 0 ? (
-          <div className="text-center text-faint text-sm py-10">No loans awaiting disbursement.</div>
+          <div className="text-center text-faint text-sm py-10">
+            No loans awaiting disbursement.
+          </div>
         ) : (
           loans.map((l: any) => (
             <div
@@ -113,10 +117,11 @@ function DisbursementPage() {
               </div>
               <div className="truncate">{l.client?.full_name ?? "—"}</div>
               <div className="text-muted-foreground truncate">{l.product?.name ?? "—"}</div>
-              <div className="text-muted-foreground truncate">{l.branch?.code ?? l.branch?.name ?? "—"}</div>
+              <div className="text-muted-foreground truncate">
+                {l.branch?.code ?? l.branch?.name ?? "—"}
+              </div>
               <div className="text-right font-mono text-primary">{money(Number(l.principal))}</div>
               <div className="flex justify-end gap-2">
-
                 {canDisburse && (
                   <button
                     onClick={() => openModal(l)}
@@ -134,7 +139,12 @@ function DisbursementPage() {
         )}
       </Card>
 
-      <Modal open={!!selected} onClose={() => !disburse.isPending && setSelected(null)} title="Disburse loan" width={560}>
+      <Modal
+        open={!!selected}
+        onClose={() => !disburse.isPending && setSelected(null)}
+        title="Disburse loan"
+        width={560}
+      >
         {selected && (
           <form onSubmit={submit} className="flex flex-col gap-4">
             <div className="rounded-lg bg-secondary/40 border border-border p-3 text-[12.5px]">
@@ -148,7 +158,9 @@ function DisbursementPage() {
               </div>
               <div className="flex justify-between mt-1">
                 <span className="text-muted-foreground">Principal</span>
-                <span className="font-mono font-semibold text-primary">{money(Number(selected.principal))}</span>
+                <span className="font-mono font-semibold text-primary">
+                  {money(Number(selected.principal))}
+                </span>
               </div>
             </div>
 
@@ -170,7 +182,11 @@ function DisbursementPage() {
               >
                 Cancel
               </button>
-              <button type="submit" disabled={disburse.isPending || !paymentMethodValid(pay)} className={btnPrimaryCls}>
+              <button
+                type="submit"
+                disabled={disburse.isPending || !paymentMethodValid(pay)}
+                className={btnPrimaryCls}
+              >
                 {disburse.isPending ? (
                   <span className="inline-flex items-center gap-1.5">
                     <Loader2 size={13} className="animate-spin" /> Processing…
@@ -188,4 +204,3 @@ function DisbursementPage() {
     </div>
   );
 }
-

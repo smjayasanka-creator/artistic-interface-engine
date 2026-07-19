@@ -14,17 +14,26 @@ async function resolveSavingsAccounts(supabase: any, product: any) {
     fee: { fromProduct: product?.fee_income_account_id ?? null, code: "4100" },
     intr: { fromProduct: product?.interest_expense_account_id ?? null, code: "5100" },
   };
-  const missingCodes = Object.values(need).filter((n) => !n.fromProduct).map((n) => n.code);
+  const missingCodes = Object.values(need)
+    .filter((n) => !n.fromProduct)
+    .map((n) => n.code);
   let byCode: Record<string, string> = {};
   if (missingCodes.length) {
-    const { data: accts } = await supabase.from("gl_account").select("id, code").in("code", missingCodes);
+    const { data: accts } = await supabase
+      .from("gl_account")
+      .select("id, code")
+      .in("code", missingCodes);
     byCode = Object.fromEntries((accts ?? []).map((a: any) => [a.code, a.id]));
   }
   const resolved: Record<string, string | null> = {};
   for (const [k, v] of Object.entries(need)) resolved[k] = v.fromProduct ?? byCode[v.code] ?? null;
-  return resolved as { cash: string | null; liab: string | null; fee: string | null; intr: string | null };
+  return resolved as {
+    cash: string | null;
+    liab: string | null;
+    fee: string | null;
+    intr: string | null;
+  };
 }
-
 
 // ─────────── Products ───────────
 export const listSavingsProducts = createServerFn({ method: "GET" })
@@ -92,7 +101,6 @@ export const toggleSavingsProduct = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
-
 
 // ─────────── Charges ───────────
 export const listSavingsCharges = createServerFn({ method: "GET" })
@@ -162,7 +170,9 @@ export const upsertSavingsCharge = createServerFn({ method: "POST" })
     await (supabase as any).from("savings_charge_product").delete().eq("charge_id", out.id);
     if (data.product_ids.length) {
       const rows = data.product_ids.map((pid) => ({ charge_id: out.id, product_id: pid }));
-      const { error: linkErr } = await (supabase as any).from("savings_charge_product").insert(rows);
+      const { error: linkErr } = await (supabase as any)
+        .from("savings_charge_product")
+        .insert(rows);
       if (linkErr) throw new Error(linkErr.message);
     }
     return out;
@@ -190,7 +200,6 @@ export const deleteSavingsCharge = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
-
 
 // ─────────── Accounts ───────────
 export const listSavingsAccounts = createServerFn({ method: "GET" })
@@ -363,7 +372,6 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
     return acct;
   });
 
-
 export const postSavingsTransaction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -403,7 +411,9 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
 
     const { data: acct, error } = await (supabase as any)
       .from("savings_account")
-      .select("id, account_no, branch_id, balance, available_balance, status, product:product_id(min_balance, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)")
+      .select(
+        "id, account_no, branch_id, balance, available_balance, status, product:product_id(min_balance, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)",
+      )
       .eq("id", data.account_id)
       .single();
     if (error) throw new Error(error.message);
@@ -471,14 +481,20 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
         { account_id: gl.cash!, debit: 0, credit: amt },
       ];
     } else if (data.txn_type === "fee") {
-      if (!gl.liab || !gl.fee) throw new Error("Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to post a fee.");
+      if (!gl.liab || !gl.fee)
+        throw new Error(
+          "Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to post a fee.",
+        );
       refPrefix = "SAV-FEE";
       lines = [
         { account_id: gl.liab, debit: amt, credit: 0 },
         { account_id: gl.fee, debit: 0, credit: amt },
       ];
     } else if (data.txn_type === "interest") {
-      if (!gl.liab || !gl.intr) throw new Error("Savings product is missing GL mapping (deposit-liability and interest-expense accounts) required to credit interest.");
+      if (!gl.liab || !gl.intr)
+        throw new Error(
+          "Savings product is missing GL mapping (deposit-liability and interest-expense accounts) required to credit interest.",
+        );
       refPrefix = "SAV-INT";
       lines = [
         { account_id: gl.intr, debit: amt, credit: 0 },
@@ -500,7 +516,6 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
     }
     return txn;
   });
-
 
 export const closeSavingsAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -532,7 +547,9 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
 
     const { data: acct, error } = await (supabase as any)
       .from("savings_account")
-      .select("id, account_no, branch_id, balance, status, product:product_id(closure_fee, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)")
+      .select(
+        "id, account_no, branch_id, balance, status, product:product_id(closure_fee, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)",
+      )
       .eq("id", data.account_id)
       .single();
     if (error) throw new Error(error.message);
@@ -576,7 +593,9 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
     const today = new Date().toISOString().slice(0, 10);
     if (fee > 0) {
       if (!gl.liab || !gl.fee) {
-        throw new Error("Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to post the closure fee.");
+        throw new Error(
+          "Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to post the closure fee.",
+        );
       }
       await supabase.rpc("post_entry", {
         _entry_date: today,
@@ -594,7 +613,9 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
     }
     if (balAfterFee > 0) {
       if (!gl.cash || !gl.liab) {
-        throw new Error("Savings product is missing GL mapping (cash and deposit-liability accounts) required to pay out on closure.");
+        throw new Error(
+          "Savings product is missing GL mapping (cash and deposit-liability accounts) required to pay out on closure.",
+        );
       }
       await supabase.rpc("post_entry", {
         _entry_date: today,
@@ -628,10 +649,11 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
     return closed;
   });
 
-
 export const listAccountTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { account_id: string }) => z.object({ account_id: z.string().uuid() }).parse(i))
+  .inputValidator((i: { account_id: string }) =>
+    z.object({ account_id: z.string().uuid() }).parse(i),
+  )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { data: rows } = await (supabase as any)
@@ -724,8 +746,12 @@ export const listPassbookIssues = createServerFn({ method: "GET" })
 export const issuePassbook = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (i: { stock_id: string; account_id: string; serial_no?: number | null; notes?: string | null }) =>
-      i,
+    (i: {
+      stock_id: string;
+      account_id: string;
+      serial_no?: number | null;
+      notes?: string | null;
+    }) => i,
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
@@ -747,7 +773,7 @@ export const issuePassbook = createServerFn({ method: "POST" })
       throw new Error("This stock batch is not available");
 
     // Determine serial: use next available (serial_from + quantity_issued) if not provided
-    let serial = data.serial_no ?? Number(stock.serial_from) + Number(stock.quantity_issued);
+    const serial = data.serial_no ?? Number(stock.serial_from) + Number(stock.quantity_issued);
     if (serial < Number(stock.serial_from) || serial > Number(stock.serial_to))
       throw new Error("Serial is outside the batch range");
 

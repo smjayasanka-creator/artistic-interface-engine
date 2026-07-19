@@ -30,12 +30,15 @@ function AuditLogPage() {
   const [prefix, setPrefix] = useState<string | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  useEffect(() => { setPage(1); }, [prefix, pageSize]);
+  useEffect(() => {
+    setPage(1);
+  }, [prefix, pageSize]);
 
   const fn = useServerFn(listAuditLog);
   const { data, isLoading, isFetching, isPlaceholderData } = useQuery({
     queryKey: ["audit-log", prefix ?? "all", page, pageSize],
-    queryFn: () => fn({ data: { limit: pageSize, offset: (page - 1) * pageSize, action_prefix: prefix } }),
+    queryFn: () =>
+      fn({ data: { limit: pageSize, offset: (page - 1) * pageSize, action_prefix: prefix } }),
     placeholderData: keepPreviousData,
   });
 
@@ -46,7 +49,10 @@ function AuditLogPage() {
     <div className="animate-fadein flex flex-col gap-4">
       <div>
         <h1 className="text-xl font-semibold">Audit log</h1>
-        <p className="text-sm text-muted-foreground">Append-only trail of every posted ledger entry, workflow action, and privileged operation for your company.</p>
+        <p className="text-sm text-muted-foreground">
+          Append-only trail of every posted ledger entry, workflow action, and privileged operation
+          for your company.
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-1.5 items-center">
@@ -58,7 +64,7 @@ function AuditLogPage() {
               "text-xs font-medium px-3 py-1.5 rounded-md border",
               (prefix ?? undefined) === f.prefix
                 ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card border-border hover:border-border-strong"
+                : "bg-card border-border hover:border-border-strong",
             )}
           >
             {f.label}
@@ -81,7 +87,9 @@ function AuditLogPage() {
           </div>
           {isLoading && <div className="text-center text-faint text-sm py-8">Loading…</div>}
           {!isLoading && rows.length === 0 && (
-            <div className="text-center text-faint text-sm py-8">No audit entries match this filter yet.</div>
+            <div className="text-center text-faint text-sm py-8">
+              No audit entries match this filter yet.
+            </div>
           )}
           {rows.map((r: any) => (
             <div
@@ -89,17 +97,26 @@ function AuditLogPage() {
               className="grid items-start text-[12.5px] py-2.5 px-5 border-b border-row-divider"
               style={{ gridTemplateColumns: "1.2fr 1.2fr 1.2fr 1.4fr 2fr" }}
             >
-              <div className="text-muted-foreground font-mono">{new Date(r.created_at).toLocaleString()}</div>
+              <div className="text-muted-foreground font-mono">
+                {new Date(r.created_at).toLocaleString()}
+              </div>
               <div className="font-mono text-faint truncate" title={r.actor_user_id ?? "system"}>
                 {r.actor_user_id ? r.actor_user_id.slice(0, 8) : "system"}
               </div>
               <div className="font-medium">{r.action}</div>
               <div className="text-muted-foreground truncate" title={r.entity_id ?? ""}>
                 {r.entity_type}
-                {r.entity_id ? <span className="font-mono text-faint ml-1">{r.entity_id.slice(0, 8)}</span> : null}
+                {r.entity_id ? (
+                  <span className="font-mono text-faint ml-1">{r.entity_id.slice(0, 8)}</span>
+                ) : null}
               </div>
-              <div className="font-mono text-[11.5px] text-faint truncate" title={JSON.stringify(r.metadata)}>
-                {r.metadata && Object.keys(r.metadata).length > 0 ? JSON.stringify(r.metadata) : "—"}
+              <div
+                className="font-mono text-[11.5px] text-faint truncate"
+                title={JSON.stringify(r.metadata)}
+              >
+                {r.metadata && Object.keys(r.metadata).length > 0
+                  ? JSON.stringify(r.metadata)
+                  : "—"}
               </div>
             </div>
           ))}
@@ -110,7 +127,10 @@ function AuditLogPage() {
         pageSize={pageSize}
         totalCount={totalCount}
         onPageChange={setPage}
-        onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
+        onPageSizeChange={(n) => {
+          setPageSize(n);
+          setPage(1);
+        }}
         label="entries"
       />
     </div>

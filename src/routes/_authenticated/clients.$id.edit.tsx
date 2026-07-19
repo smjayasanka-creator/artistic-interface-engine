@@ -64,7 +64,8 @@ type FieldKey = keyof FormState;
 function splitPhone(stored: string | null | undefined, cc: string | null | undefined) {
   const code = (cc ?? "+94").trim();
   const digits = (stored ?? "").toString();
-  if (code && digits.startsWith(code)) return { code, local: digits.slice(code.length).replace(/\D/g, "") };
+  if (code && digits.startsWith(code))
+    return { code, local: digits.slice(code.length).replace(/\D/g, "") };
   return { code, local: digits.replace(/\D/g, "") };
 }
 
@@ -205,21 +206,75 @@ function EditClientPage() {
             Personal details
           </h2>
           <FormGrid>
-            <FormField label="First name" required span={4} error={showError("first_name") ? errors.first_name : undefined}>
-              <input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} onBlur={() => blur("first_name")} className={cls("first_name")} maxLength={60} />
+            <FormField
+              label="First name"
+              required
+              span={4}
+              error={showError("first_name") ? errors.first_name : undefined}
+            >
+              <input
+                value={form.first_name}
+                onChange={(e) => set("first_name", e.target.value)}
+                onBlur={() => blur("first_name")}
+                className={cls("first_name")}
+                maxLength={60}
+              />
             </FormField>
-            <FormField label="Last name" required span={4} error={showError("last_name") ? errors.last_name : undefined}>
-              <input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} onBlur={() => blur("last_name")} className={cls("last_name")} maxLength={60} />
+            <FormField
+              label="Last name"
+              required
+              span={4}
+              error={showError("last_name") ? errors.last_name : undefined}
+            >
+              <input
+                value={form.last_name}
+                onChange={(e) => set("last_name", e.target.value)}
+                onBlur={() => blur("last_name")}
+                className={cls("last_name")}
+                maxLength={60}
+              />
             </FormField>
-            <FormField label="National ID" required span={4} error={showError("national_id") ? errors.national_id : undefined}>
-              <input value={form.national_id} onChange={(e) => set("national_id", e.target.value)} onBlur={() => blur("national_id")} className={cn(cls("national_id"), "font-mono")} maxLength={30} />
+            <FormField
+              label="National ID"
+              required
+              span={4}
+              error={showError("national_id") ? errors.national_id : undefined}
+            >
+              <input
+                value={form.national_id}
+                onChange={(e) => set("national_id", e.target.value)}
+                onBlur={() => blur("national_id")}
+                className={cn(cls("national_id"), "font-mono")}
+                maxLength={30}
+              />
             </FormField>
 
-            <FormField label="Date of birth" required span={4} error={showError("date_of_birth") ? errors.date_of_birth : undefined}>
-              <input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} onBlur={() => blur("date_of_birth")} className={cls("date_of_birth")} />
+            <FormField
+              label="Date of birth"
+              required
+              span={4}
+              error={showError("date_of_birth") ? errors.date_of_birth : undefined}
+            >
+              <input
+                type="date"
+                value={form.date_of_birth}
+                onChange={(e) => set("date_of_birth", e.target.value)}
+                onBlur={() => blur("date_of_birth")}
+                className={cls("date_of_birth")}
+              />
             </FormField>
-            <FormField label="Gender" required span={4} error={showError("gender") ? errors.gender : undefined}>
-              <select value={form.gender} onChange={(e) => set("gender", e.target.value as Gender)} onBlur={() => blur("gender")} className={showError("gender") ? errorInputCls : selectCls}>
+            <FormField
+              label="Gender"
+              required
+              span={4}
+              error={showError("gender") ? errors.gender : undefined}
+            >
+              <select
+                value={form.gender}
+                onChange={(e) => set("gender", e.target.value as Gender)}
+                onBlur={() => blur("gender")}
+                className={showError("gender") ? errorInputCls : selectCls}
+              >
                 <option value="">Select…</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -227,14 +282,21 @@ function EditClientPage() {
               </select>
             </FormField>
             <FormField label="Occupation" span={4}>
-              <input value={occupation} onChange={(e) => setOccupation(e.target.value)} className={inputCls} maxLength={120} />
+              <input
+                value={occupation}
+                onChange={(e) => setOccupation(e.target.value)}
+                className={inputCls}
+                maxLength={120}
+              />
             </FormField>
             <FormField label="Monthly income" span={4}>
               <input
                 type="number"
                 min={0}
                 value={monthlyIncome}
-                onChange={(e) => setMonthlyIncome(e.target.value === "" ? "" : Number(e.target.value))}
+                onChange={(e) =>
+                  setMonthlyIncome(e.target.value === "" ? "" : Number(e.target.value))
+                }
                 className={cn(inputCls, "font-mono")}
               />
             </FormField>
@@ -246,7 +308,12 @@ function EditClientPage() {
             Contact
           </h2>
           <FormGrid>
-            <FormField label="Country code" required span={3} error={showError("phone_country_code") ? errors.phone_country_code : undefined}>
+            <FormField
+              label="Country code"
+              required
+              span={3}
+              error={showError("phone_country_code") ? errors.phone_country_code : undefined}
+            >
               <select
                 value={form.phone_country_code}
                 onChange={(e) => set("phone_country_code", e.target.value)}
@@ -254,11 +321,18 @@ function EditClientPage() {
                 className={showError("phone_country_code") ? errorInputCls : selectCls}
               >
                 {COUNTRY_CODES.map((c) => (
-                  <option key={c.code} value={c.code}>{c.label}</option>
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
                 ))}
               </select>
             </FormField>
-            <FormField label="Phone" required span={5} error={showError("phone") ? errors.phone : undefined}>
+            <FormField
+              label="Phone"
+              required
+              span={5}
+              error={showError("phone") ? errors.phone : undefined}
+            >
               <input
                 value={form.phone}
                 onChange={(e) => set("phone", e.target.value.replace(/[^\d]/g, ""))}
@@ -269,7 +343,14 @@ function EditClientPage() {
               />
             </FormField>
             <FormField label="Email" span={4} error={showError("email") ? errors.email : undefined}>
-              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} onBlur={() => blur("email")} className={cls("email")} maxLength={255} />
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => set("email", e.target.value)}
+                onBlur={() => blur("email")}
+                className={cls("email")}
+                maxLength={255}
+              />
             </FormField>
           </FormGrid>
         </Card>
@@ -279,20 +360,77 @@ function EditClientPage() {
             Address
           </h2>
           <FormGrid>
-            <FormField label="Address" required span={12} error={showError("address") ? errors.address : undefined}>
-              <input value={form.address} onChange={(e) => set("address", e.target.value)} onBlur={() => blur("address")} className={cls("address")} maxLength={200} />
+            <FormField
+              label="Address"
+              required
+              span={12}
+              error={showError("address") ? errors.address : undefined}
+            >
+              <input
+                value={form.address}
+                onChange={(e) => set("address", e.target.value)}
+                onBlur={() => blur("address")}
+                className={cls("address")}
+                maxLength={200}
+              />
             </FormField>
-            <FormField label="GN Division" required span={3} error={showError("gn_division") ? errors.gn_division : undefined}>
-              <input value={form.gn_division} onChange={(e) => set("gn_division", e.target.value)} onBlur={() => blur("gn_division")} className={cls("gn_division")} maxLength={80} />
+            <FormField
+              label="GN Division"
+              required
+              span={3}
+              error={showError("gn_division") ? errors.gn_division : undefined}
+            >
+              <input
+                value={form.gn_division}
+                onChange={(e) => set("gn_division", e.target.value)}
+                onBlur={() => blur("gn_division")}
+                className={cls("gn_division")}
+                maxLength={80}
+              />
             </FormField>
-            <FormField label="Divisional Secretariat" required span={3} error={showError("divisional_secretariat") ? errors.divisional_secretariat : undefined}>
-              <input value={form.divisional_secretariat} onChange={(e) => set("divisional_secretariat", e.target.value)} onBlur={() => blur("divisional_secretariat")} className={cls("divisional_secretariat")} maxLength={80} />
+            <FormField
+              label="Divisional Secretariat"
+              required
+              span={3}
+              error={
+                showError("divisional_secretariat") ? errors.divisional_secretariat : undefined
+              }
+            >
+              <input
+                value={form.divisional_secretariat}
+                onChange={(e) => set("divisional_secretariat", e.target.value)}
+                onBlur={() => blur("divisional_secretariat")}
+                className={cls("divisional_secretariat")}
+                maxLength={80}
+              />
             </FormField>
-            <FormField label="District" required span={3} error={showError("district") ? errors.district : undefined}>
-              <input value={form.district} onChange={(e) => set("district", e.target.value)} onBlur={() => blur("district")} className={cls("district")} maxLength={80} />
+            <FormField
+              label="District"
+              required
+              span={3}
+              error={showError("district") ? errors.district : undefined}
+            >
+              <input
+                value={form.district}
+                onChange={(e) => set("district", e.target.value)}
+                onBlur={() => blur("district")}
+                className={cls("district")}
+                maxLength={80}
+              />
             </FormField>
-            <FormField label="Province" required span={3} error={showError("province") ? errors.province : undefined}>
-              <input value={form.province} onChange={(e) => set("province", e.target.value)} onBlur={() => blur("province")} className={cls("province")} maxLength={80} />
+            <FormField
+              label="Province"
+              required
+              span={3}
+              error={showError("province") ? errors.province : undefined}
+            >
+              <input
+                value={form.province}
+                onChange={(e) => set("province", e.target.value)}
+                onBlur={() => blur("province")}
+                className={cls("province")}
+                maxLength={80}
+              />
             </FormField>
           </FormGrid>
 

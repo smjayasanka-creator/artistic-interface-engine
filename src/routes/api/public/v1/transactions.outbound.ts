@@ -1,12 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateApiKey, logApiCall, generateReference } from "@/lib/api-auth.server";
 import {
-  TransactionsOutboundRequest, TransactionsOutboundResponse,
-  parseJsonBody, validateAndSend, logAndReturnAuthError,
-  checkIdempotency, withIdempotencyEnvelope, errJson, ERRORS, requireHeader,
+  TransactionsOutboundRequest,
+  TransactionsOutboundResponse,
+  parseJsonBody,
+  validateAndSend,
+  logAndReturnAuthError,
+  checkIdempotency,
+  withIdempotencyEnvelope,
+  errJson,
+  ERRORS,
+  requireHeader,
 } from "@/lib/api-schemas.server";
 import { postApiChannelEntry } from "@/lib/api-ledger.server";
-
 
 const ENDPOINT = "/api/public/v1/transactions/outbound";
 const CHANNEL = "transactions";
@@ -16,21 +22,43 @@ export const Route = createFileRoute("/api/public/v1/transactions/outbound")({
     handlers: {
       POST: async ({ request }) => {
         const auth = await authenticateApiKey(request, "transactions.outbound");
-        if (!auth.ok) return logAndReturnAuthError({ status: auth.status, error: auth.error, channel: CHANNEL, endpoint: ENDPOINT, direction: "outbound" });
+        if (!auth.ok)
+          return logAndReturnAuthError({
+            status: auth.status,
+            error: auth.error,
+            channel: CHANNEL,
+            endpoint: ENDPOINT,
+            direction: "outbound",
+          });
 
         const idemHeader = requireHeader(request, "Idempotency-Key");
         if (!idemHeader.ok) return idemHeader.response;
 
         const parsed = await parseJsonBody(request, TransactionsOutboundRequest);
         if (!parsed.ok) {
-          await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "outbound",
-            endpoint: ENDPOINT, method: "POST", status_code: 400, request: parsed.raw, error: "validation_failed" });
+          await logApiCall({
+            company_id: auth.key.company_id,
+            api_key_id: auth.key.id,
+            channel: CHANNEL,
+            direction: "outbound",
+            endpoint: ENDPOINT,
+            method: "POST",
+            status_code: 400,
+            request: parsed.raw,
+            error: "validation_failed",
+          });
           return parsed.response;
         }
 
-        const hit = await checkIdempotency({ company_id: auth.key.company_id, endpoint: ENDPOINT, key: idemHeader.value, body: parsed.data });
+        const hit = await checkIdempotency({
+          company_id: auth.key.company_id,
+          endpoint: ENDPOINT,
+          key: idemHeader.value,
+          body: parsed.data,
+        });
         if (hit.kind === "conflict") return errJson(ERRORS.idempotency_conflict);
-        if (hit.kind === "replay") return validateAndSend(TransactionsOutboundResponse, hit.response as any, hit.status);
+        if (hit.kind === "replay")
+          return validateAndSend(TransactionsOutboundResponse, hit.response as any, hit.status);
 
         const reference = generateReference("OUT");
         const response = {
@@ -40,14 +68,26 @@ export const Route = createFileRoute("/api/public/v1/transactions/outbound")({
           submitted_at: new Date().toISOString(),
         };
         await postApiChannelEntry({
-          company_id: auth.key.company_id, direction: "outbound",
-          amount: parsed.data.amount, reference,
+          company_id: auth.key.company_id,
+          direction: "outbound",
+          amount: parsed.data.amount,
+          reference,
           description: `Outbound ${parsed.data.currency} to ${parsed.data.destination.name}`,
-          source_module: "transactions", idempotency_key: idemHeader.value,
+          source_module: "transactions",
+          idempotency_key: idemHeader.value,
         });
-        await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "outbound",
-          endpoint: ENDPOINT, method: "POST", reference, status_code: 202,
-          request: withIdempotencyEnvelope(parsed.data, idemHeader.value), response });
+        await logApiCall({
+          company_id: auth.key.company_id,
+          api_key_id: auth.key.id,
+          channel: CHANNEL,
+          direction: "outbound",
+          endpoint: ENDPOINT,
+          method: "POST",
+          reference,
+          status_code: 202,
+          request: withIdempotencyEnvelope(parsed.data, idemHeader.value),
+          response,
+        });
         return validateAndSend(TransactionsOutboundResponse, response, 202);
       },
     },

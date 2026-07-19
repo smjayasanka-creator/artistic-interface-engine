@@ -51,7 +51,12 @@ export function TablePagination({
         <span className="text-[12px] text-faint">
           Page {page} of {totalPages}
         </span>
-        <button onClick={() => onPageChange(1)} disabled={page <= 1} className={btnCls} aria-label="First page">
+        <button
+          onClick={() => onPageChange(1)}
+          disabled={page <= 1}
+          className={btnCls}
+          aria-label="First page"
+        >
           «
         </button>
         <button

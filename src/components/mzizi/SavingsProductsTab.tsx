@@ -78,7 +78,6 @@ const EMPTY = {
 
 const GRID_COLS = "0.6fr 1.5fr 0.95fr 0.5fr 0.85fr 0.6fr 0.5fr 0.45fr";
 
-
 export function SavingsProductsTab() {
   const qc = useQueryClient();
   const listFn = useServerFn(listSavingsProducts);
@@ -107,14 +106,18 @@ export function SavingsProductsTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const sorted = ((products as ProductRow[]) ?? []).slice().sort((a, b) => a.code.localeCompare(b.code));
+  const sorted = ((products as ProductRow[]) ?? [])
+    .slice()
+    .sort((a, b) => a.code.localeCompare(b.code));
 
   return (
     <Card padded={false}>
       <div className="px-5 pt-4 pb-3 text-sm font-semibold flex items-center justify-between">
         <span>
           Savings products{" "}
-          <span className="text-[11px] text-muted-foreground font-normal ml-1">{sorted.length} total</span>
+          <span className="text-[11px] text-muted-foreground font-normal ml-1">
+            {sorted.length} total
+          </span>
         </span>
         <button
           onClick={() => setEditing({ values: { ...EMPTY } })}
@@ -145,12 +148,18 @@ export function SavingsProductsTab() {
           style={{ gridTemplateColumns: GRID_COLS }}
         >
           <div className="font-mono font-medium text-[11.5px]">{p.code}</div>
-          <div className="truncate" title={p.name}>{p.name}</div>
-          <div className="text-[11px] text-muted-foreground truncate">{segmentLabel(p.segment)}</div>
+          <div className="truncate" title={p.name}>
+            {p.name}
+          </div>
+          <div className="text-[11px] text-muted-foreground truncate">
+            {segmentLabel(p.segment)}
+          </div>
           <div className="font-mono text-[11px]">{p.currency}</div>
           <div className="text-muted-foreground">{money(p.min_opening_balance)}</div>
           <div className="text-muted-foreground">
-            {p.passbook_required ? `Yes${p.passbook_series_prefix ? ` · ${p.passbook_series_prefix}` : ""}` : "No"}
+            {p.passbook_required
+              ? `Yes${p.passbook_series_prefix ? ` · ${p.passbook_series_prefix}` : ""}`
+              : "No"}
           </div>
           <div className="text-right">
             <button
@@ -187,7 +196,8 @@ export function SavingsProductsTab() {
                     deposit_liability_account_id: p.deposit_liability_account_id,
                     fee_income_account_id: p.fee_income_account_id,
                     interest_expense_account_id: p.interest_expense_account_id,
-                    unclaimed_deposit_liability_account_id: p.unclaimed_deposit_liability_account_id ?? null,
+                    unclaimed_deposit_liability_account_id:
+                      p.unclaimed_deposit_liability_account_id ?? null,
                   },
                 })
               }
@@ -269,7 +279,10 @@ function ProductModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onCancel}>
+    <div
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+      onClick={onCancel}
+    >
       <div
         className="bg-card rounded-xl border border-border max-w-3xl w-full max-h-[90vh] overflow-auto"
         onClick={(e) => e.stopPropagation()}
@@ -307,28 +320,32 @@ function ProductModal({
                 onChange={(e) => setV({ ...v, currency: e.target.value })}
               >
                 {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
             </FormField>
-            <FormField label="Segment" required span={12} hint="Determines which product category this account belongs to">
+            <FormField
+              label="Segment"
+              required
+              span={12}
+              hint="Determines which product category this account belongs to"
+            >
               <select
                 className={selectCls}
                 value={v.segment}
                 onChange={(e) => setV({ ...v, segment: e.target.value as Segment })}
               >
                 {SEGMENTS.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
                 ))}
               </select>
             </FormField>
 
-
-            <FormField
-              label="Minimum opening balance"
-              required
-              span={6}
-            >
+            <FormField label="Minimum opening balance" required span={6}>
               <input
                 type="number"
                 min={0}
@@ -347,7 +364,11 @@ function ProductModal({
               />
             </FormField>
 
-            <FormField label="Dormancy days" span={4} hint="Days of inactivity before account is marked dormant">
+            <FormField
+              label="Dormancy days"
+              span={4}
+              hint="Days of inactivity before account is marked dormant"
+            >
               <input
                 type="number"
                 min={0}
@@ -372,7 +393,10 @@ function ProductModal({
                 className={inputCls}
                 value={v.passbook_series_prefix ?? ""}
                 onChange={(e) =>
-                  setV({ ...v, passbook_series_prefix: e.target.value.trim() === "" ? null : e.target.value })
+                  setV({
+                    ...v,
+                    passbook_series_prefix: e.target.value.trim() === "" ? null : e.target.value,
+                  })
                 }
                 placeholder="e.g. PB-A"
                 disabled={!v.passbook_required}
@@ -395,18 +419,31 @@ function ProductModal({
               GL account mapping
             </div>
             <p className="text-[11.5px] text-muted-foreground -mt-1 mb-2">
-              Optional overrides. Leave blank to use the default chart-of-accounts codes (2100 deposit
-              liability, 5100 interest expense). Interest rates are managed from the ALCO rates card. Cash / bank GL is selected at the transaction point.
+              Optional overrides. Leave blank to use the default chart-of-accounts codes (2100
+              deposit liability, 5100 interest expense). Interest rates are managed from the ALCO
+              rates card. Cash / bank GL is selected at the transaction point.
             </p>
             <FormGrid>
-              <FormField label="Deposit liability account" span={6}>{glSelect("deposit_liability_account_id")}</FormField>
-              <FormField label="Interest expense account" span={6}>{glSelect("interest_expense_account_id")}</FormField>
-              <FormField label="Unclaimed / dormant deposits liability" span={12} hint="Segregated liability used when a dormant balance is transferred to an unclaimed-deposits account per CBSL rules. Optional — falls back to the deposit-liability account if left blank.">{glSelect("unclaimed_deposit_liability_account_id")}</FormField>
+              <FormField label="Deposit liability account" span={6}>
+                {glSelect("deposit_liability_account_id")}
+              </FormField>
+              <FormField label="Interest expense account" span={6}>
+                {glSelect("interest_expense_account_id")}
+              </FormField>
+              <FormField
+                label="Unclaimed / dormant deposits liability"
+                span={12}
+                hint="Segregated liability used when a dormant balance is transferred to an unclaimed-deposits account per CBSL rules. Optional — falls back to the deposit-liability account if left blank."
+              >
+                {glSelect("unclaimed_deposit_liability_account_id")}
+              </FormField>
             </FormGrid>
           </div>
 
           <FormActions>
-            <button type="button" onClick={onCancel} className={btnSecondaryCls}>Cancel</button>
+            <button type="button" onClick={onCancel} className={btnSecondaryCls}>
+              Cancel
+            </button>
             <button type="submit" disabled={saving} className={btnPrimaryCls}>
               {saving ? "Saving…" : productId ? "Save changes" : "Create product"}
             </button>

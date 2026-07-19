@@ -32,8 +32,8 @@ function RescheduleLanding() {
             loan register
           </Link>{" "}
           and use the <span className="font-semibold">Reschedule</span> action on the detail page.
-          The upcoming installments are pre-loaded so you can edit dates and amounts before
-          applying the new schedule.
+          The upcoming installments are pre-loaded so you can edit dates and amounts before applying
+          the new schedule.
         </div>
       </Card>
     </div>

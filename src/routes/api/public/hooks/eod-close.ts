@@ -40,14 +40,13 @@ export const Route = createFileRoute("/api/public/hooks/eod-close")({
         if (body.branch_id) {
           branchIds = [body.branch_id];
         } else {
-          const { data: branches, error: bErr } = await supabaseAdmin
-            .from("branch")
-            .select("id");
+          const { data: branches, error: bErr } = await supabaseAdmin.from("branch").select("id");
           if (bErr) return Response.json({ ok: false, error: bErr.message }, { status: 500 });
           branchIds = (branches ?? []).map((b) => b.id as string);
         }
 
-        const results: Array<{ branch_id: string; ok: boolean; run_id?: string; error?: string }> = [];
+        const results: Array<{ branch_id: string; ok: boolean; run_id?: string; error?: string }> =
+          [];
         for (const bid of branchIds) {
           const { data: runId, error } = await supabaseAdmin.rpc("eod_close", {
             _branch_id: bid,

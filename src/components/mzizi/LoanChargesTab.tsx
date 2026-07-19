@@ -77,8 +77,14 @@ export function LoanChargesTab() {
 
   const clientsFn = useServerFn(getClients);
   const { data: charges } = useQuery({ queryKey: ["loan-charges"], queryFn: () => listFn() });
-  const { data: products } = useQuery({ queryKey: ["loan-products-all"], queryFn: () => productsFn() });
-  const { data: glAccounts } = useQuery({ queryKey: ["gl-accounts-loan-charge"], queryFn: () => glFn() });
+  const { data: products } = useQuery({
+    queryKey: ["loan-products-all"],
+    queryFn: () => productsFn(),
+  });
+  const { data: glAccounts } = useQuery({
+    queryKey: ["gl-accounts-loan-charge"],
+    queryFn: () => glFn(),
+  });
   const { data: clients } = useQuery({
     queryKey: ["clients", "all"],
     queryFn: () => clientsFn({ data: { filter: "all" } }),
@@ -111,16 +117,24 @@ export function LoanChargesTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const rows = ((charges as ChargeRow[]) ?? []).slice().sort((a, b) => a.name.localeCompare(b.name));
-  const productList = ((products as any[]) ?? []).map((p) => ({ id: p.id, code: p.code ?? "", name: p.name }));
+  const rows = ((charges as ChargeRow[]) ?? [])
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const productList = ((products as any[]) ?? []).map((p) => ({
+    id: p.id,
+    code: p.code ?? "",
+    name: p.name,
+  }));
   const productName = (id: string) => {
     const p = productList.find((x) => x.id === id);
-    return p ? (p.code || p.name) : "—";
+    return p ? p.code || p.name : "—";
   };
-  const glAll = ((glAccounts as any[]) ?? []);
+  const glAll = (glAccounts as any[]) ?? [];
   const receivableList = glAll.filter((a) => a.is_active !== false && a.type === "asset");
   // Credit side: income (in-house) or liability (outside — supplier control)
-  const creditList = glAll.filter((a) => a.is_active !== false && (a.type === "income" || a.type === "liability"));
+  const creditList = glAll.filter(
+    (a) => a.is_active !== false && (a.type === "income" || a.type === "liability"),
+  );
   const glName = (id: string) => {
     const a = glAll.find((x) => x.id === id);
     return a ? `${a.code} · ${a.name}` : "—";
@@ -137,7 +151,9 @@ export function LoanChargesTab() {
       <div className="px-5 pt-4 pb-3 text-sm font-semibold flex items-center justify-between">
         <span>
           Loan charges{" "}
-          <span className="text-[11px] text-muted-foreground font-normal ml-1">{rows.length} total</span>
+          <span className="text-[11px] text-muted-foreground font-normal ml-1">
+            {rows.length} total
+          </span>
         </span>
         <button
           onClick={() => setEditing({ values: { ...EMPTY } })}
@@ -157,7 +173,7 @@ export function LoanChargesTab() {
         <div>Amount</div>
         <div>Receivable ledger</div>
         <div>Credit account</div>
-        
+
         <div>Products</div>
         <div className="text-right">Status</div>
         <div className="text-right">Actions</div>
@@ -169,26 +185,41 @@ export function LoanChargesTab() {
           className="grid items-center text-[12px] py-1.5 px-5 border-b border-row-divider last:border-b-0"
           style={{ gridTemplateColumns: GRID_COLS }}
         >
-          <div className="truncate font-medium" title={c.name}>{c.name}</div>
+          <div className="truncate font-medium" title={c.name}>
+            {c.name}
+          </div>
           <div className="text-[11.5px] text-muted-foreground">{ORIGIN_LABEL[c.origin]}</div>
           <div className="text-[11.5px] text-muted-foreground">{TYPE_LABEL[c.charge_type]}</div>
           <div className="font-mono text-[11.5px]">
-            {c.charge_type === "manual"
-              ? <span className="text-muted-foreground italic font-sans">Manual</span>
-              : c.charge_type === "variable" ? `${Number(c.amount)}%` : money(c.amount)}
+            {c.charge_type === "manual" ? (
+              <span className="text-muted-foreground italic font-sans">Manual</span>
+            ) : c.charge_type === "variable" ? (
+              `${Number(c.amount)}%`
+            ) : (
+              money(c.amount)
+            )}
           </div>
-          <div className="text-[11px] text-muted-foreground truncate" title={glName(c.receivable_account_id)}>
+          <div
+            className="text-[11px] text-muted-foreground truncate"
+            title={glName(c.receivable_account_id)}
+          >
             {glName(c.receivable_account_id)}
           </div>
-          <div className="text-[11px] text-muted-foreground truncate" title={glName(c.credit_account_id)}>
+          <div
+            className="text-[11px] text-muted-foreground truncate"
+            title={glName(c.credit_account_id)}
+          >
             {glName(c.credit_account_id)}
           </div>
-          <div className="text-[11px] text-muted-foreground truncate" title={c.product_ids.map(productName).join(", ")}>
+          <div
+            className="text-[11px] text-muted-foreground truncate"
+            title={c.product_ids.map(productName).join(", ")}
+          >
             {c.product_ids.length === 0
               ? "—"
               : c.product_ids.length <= 2
-              ? c.product_ids.map(productName).join(", ")
-              : `${c.product_ids.length} products`}
+                ? c.product_ids.map(productName).join(", ")
+                : `${c.product_ids.length} products`}
           </div>
           <div className="text-right">
             <button
@@ -301,18 +332,29 @@ function ChargeModal({
     e.preventDefault();
     if (!v.name.trim()) return toast.error("Charge name is required");
     if (!v.receivable_account_id) return toast.error("Receivable ledger is required");
-    if (!v.credit_account_id) return toast.error(v.origin === "inhouse" ? "Income account is required" : "Supplier control account is required");
-    if (v.charge_type !== "manual" && v.amount < 0) return toast.error("Amount must be zero or positive");
-    if (v.charge_type === "variable" && v.amount > 100) return toast.error("Variable percent must be 0–100");
-    if (v.capitalize && !v.capitalized_receivable_account_id) return toast.error("Capitalized-charges receivable ledger is required");
-    
+    if (!v.credit_account_id)
+      return toast.error(
+        v.origin === "inhouse"
+          ? "Income account is required"
+          : "Supplier control account is required",
+      );
+    if (v.charge_type !== "manual" && v.amount < 0)
+      return toast.error("Amount must be zero or positive");
+    if (v.charge_type === "variable" && v.amount > 100)
+      return toast.error("Variable percent must be 0–100");
+    if (v.capitalize && !v.capitalized_receivable_account_id)
+      return toast.error("Capitalized-charges receivable ledger is required");
+
     if (v.product_ids.length === 0) return toast.error("Select at least one applicable product");
     // Normalize amount for manual to 0 (entered at application time)
     onSubmit({ ...v, amount: v.charge_type === "manual" ? 0 : v.amount });
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onCancel}>
+    <div
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+      onClick={onCancel}
+    >
       <div
         className="bg-card rounded-xl border border-border max-w-2xl w-full max-h-[90vh] overflow-auto"
         onClick={(e) => e.stopPropagation()}
@@ -346,11 +388,18 @@ function ChargeModal({
               </label>
             </FormField>
 
-            <FormField label="Origin" required span={4} hint="In-house = own income · Outside = 3rd-party pass-through">
+            <FormField
+              label="Origin"
+              required
+              span={4}
+              hint="In-house = own income · Outside = 3rd-party pass-through"
+            >
               <select
                 className={selectCls}
                 value={v.origin}
-                onChange={(e) => setV({ ...v, origin: e.target.value as LoanChargeOrigin, credit_account_id: "" })}
+                onChange={(e) =>
+                  setV({ ...v, origin: e.target.value as LoanChargeOrigin, credit_account_id: "" })
+                }
               >
                 <option value="inhouse">In-house</option>
                 <option value="outside">Outside</option>
@@ -371,7 +420,11 @@ function ChargeModal({
               label={v.charge_type === "variable" ? "Percent" : "Amount"}
               required={v.charge_type !== "manual"}
               span={4}
-              hint={v.charge_type === "manual" ? "Entered when the charge is applied to a loan" : undefined}
+              hint={
+                v.charge_type === "manual"
+                  ? "Entered when the charge is applied to a loan"
+                  : undefined
+              }
             >
               <input
                 type="number"
@@ -385,8 +438,12 @@ function ChargeModal({
               />
             </FormField>
 
-
-            <FormField label="Receivable ledger" required span={6} hint="Asset account debited when the charge is raised">
+            <FormField
+              label="Receivable ledger"
+              required
+              span={6}
+              hint="Asset account debited when the charge is raised"
+            >
               <select
                 className={selectCls}
                 value={v.receivable_account_id}
@@ -404,7 +461,11 @@ function ChargeModal({
               label={v.origin === "inhouse" ? "Income account" : "Supplier control account"}
               required
               span={6}
-              hint={v.origin === "inhouse" ? "Income GL credited on charge" : "Liability GL owed to the third party"}
+              hint={
+                v.origin === "inhouse"
+                  ? "Income GL credited on charge"
+                  : "Liability GL owed to the third party"
+              }
             >
               <select
                 className={selectCls}
@@ -420,7 +481,11 @@ function ChargeModal({
               </select>
             </FormField>
 
-            <FormField label="Capitalize" span={4} hint="Add to loan capital; don't collect upfront">
+            <FormField
+              label="Capitalize"
+              span={4}
+              hint="Add to loan capital; don't collect upfront"
+            >
               <label className="flex items-center gap-2 text-[13px] h-[34px]">
                 <input
                   type="checkbox"
@@ -429,7 +494,9 @@ function ChargeModal({
                     setV({
                       ...v,
                       capitalize: e.target.checked,
-                      capitalized_receivable_account_id: e.target.checked ? v.capitalized_receivable_account_id : null,
+                      capitalized_receivable_account_id: e.target.checked
+                        ? v.capitalized_receivable_account_id
+                        : null,
                     })
                   }
                 />
@@ -446,7 +513,9 @@ function ChargeModal({
                 className={selectCls}
                 disabled={!v.capitalize}
                 value={v.capitalized_receivable_account_id ?? ""}
-                onChange={(e) => setV({ ...v, capitalized_receivable_account_id: e.target.value || null })}
+                onChange={(e) =>
+                  setV({ ...v, capitalized_receivable_account_id: e.target.value || null })
+                }
               >
                 <option value="">— Select account —</option>
                 {receivableAccounts.map((a) => (
@@ -456,7 +525,6 @@ function ChargeModal({
                 ))}
               </select>
             </FormField>
-
 
             <FormField label="Applicable loan products" required span={12}>
               {products.length === 0 ? (
@@ -480,7 +548,8 @@ function ChargeModal({
                         )}
                       >
                         {p.code ? <span className="font-mono">{p.code}</span> : null}
-                        {p.code ? " · " : ""}{p.name}
+                        {p.code ? " · " : ""}
+                        {p.name}
                       </button>
                     );
                   })}

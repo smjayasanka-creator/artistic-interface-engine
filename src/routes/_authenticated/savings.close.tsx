@@ -139,7 +139,11 @@ function CloseSavings() {
             />
           </FormField>
           <FormField label="Payout Channel" span={6}>
-            <select className={selectCls} value={channel} onChange={(e) => setChannel(e.target.value)}>
+            <select
+              className={selectCls}
+              value={channel}
+              onChange={(e) => setChannel(e.target.value)}
+            >
               {CHANNELS.map((c) => (
                 <option key={c.v} value={c.v}>
                   {c.l}

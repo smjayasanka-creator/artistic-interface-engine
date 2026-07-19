@@ -1,5 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FilePlus2, FileMinus2, CalendarClock, ArrowRightLeft, Ban, Gavel, XCircle, ArrowRight, Truck, Mail, Activity, FileText } from "lucide-react";
+import {
+  FilePlus2,
+  FileMinus2,
+  CalendarClock,
+  ArrowRightLeft,
+  Ban,
+  Gavel,
+  XCircle,
+  ArrowRight,
+  Truck,
+  Mail,
+  Activity,
+  FileText,
+} from "lucide-react";
 import { Card } from "@/components/mzizi/Card";
 
 export const Route = createFileRoute("/_authenticated/loans/")({
@@ -96,14 +109,19 @@ function LoansList() {
             <Link key={t.to} to={t.to} className="group">
               <Card className="p-3.5 hover:border-primary/40 transition-colors h-full">
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${t.accent}`}>
+                  <div
+                    className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${t.accent}`}
+                  >
                     <Icon size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[14px] truncate">{t.label}</div>
                     <div className="text-[11.5px] text-muted-foreground truncate">{t.desc}</div>
                   </div>
-                  <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight
+                    size={16}
+                    className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform"
+                  />
                 </div>
               </Card>
             </Link>

@@ -80,15 +80,21 @@ describe("generateSchedule dates", () => {
 
   it("monthly Jan 31 uses EOM rule in leap and non-leap years", () => {
     const non = generateSchedule({
-      principal: 10000, annualRatePct: 10, termMonths: 4,
-      frequency: "monthly", method: "flat",
+      principal: 10000,
+      annualRatePct: 10,
+      termMonths: 4,
+      frequency: "monthly",
+      method: "flat",
       firstRepaymentDate: "2025-01-31",
     });
     expect(dueDates(non)).toEqual(["2025-01-31", "2025-02-28", "2025-03-31", "2025-04-30"]);
 
     const leap = generateSchedule({
-      principal: 10000, annualRatePct: 10, termMonths: 4,
-      frequency: "monthly", method: "flat",
+      principal: 10000,
+      annualRatePct: 10,
+      termMonths: 4,
+      frequency: "monthly",
+      method: "flat",
       firstRepaymentDate: "2024-01-31",
     });
     expect(dueDates(leap)).toEqual(["2024-01-31", "2024-02-29", "2024-03-31", "2024-04-30"]);
@@ -96,8 +102,11 @@ describe("generateSchedule dates", () => {
 
   it("Aug 31 → Sep 30 → Oct 31 preserves EOM anchor", () => {
     const s = generateSchedule({
-      principal: 10000, annualRatePct: 10, termMonths: 3,
-      frequency: "monthly", method: "flat",
+      principal: 10000,
+      annualRatePct: 10,
+      termMonths: 3,
+      frequency: "monthly",
+      method: "flat",
       firstRepaymentDate: "2025-08-31",
     });
     expect(dueDates(s)).toEqual(["2025-08-31", "2025-09-30", "2025-10-31"]);
@@ -105,8 +114,11 @@ describe("generateSchedule dates", () => {
 
   it("month-length variety (28/29/30/31) is respected", () => {
     const s = generateSchedule({
-      principal: 10000, annualRatePct: 10, termMonths: 12,
-      frequency: "monthly", method: "flat",
+      principal: 10000,
+      annualRatePct: 10,
+      termMonths: 12,
+      frequency: "monthly",
+      method: "flat",
       firstRepaymentDate: "2024-01-31",
     });
     // All Feb Mar Apr … end-of-month
@@ -118,8 +130,11 @@ describe("generateSchedule dates", () => {
 
   it("year-boundary crossings work", () => {
     const s = generateSchedule({
-      principal: 6000, annualRatePct: 0, termMonths: 3,
-      frequency: "monthly", method: "flat",
+      principal: 6000,
+      annualRatePct: 0,
+      termMonths: 3,
+      frequency: "monthly",
+      method: "flat",
       firstRepaymentDate: "2025-11-30",
     });
     expect(dueDates(s)).toEqual(["2025-11-30", "2025-12-31", "2026-01-31"]);
@@ -127,8 +142,11 @@ describe("generateSchedule dates", () => {
 
   it("firstRepaymentDate is installment #1 — no extra period added", () => {
     const s = generateSchedule({
-      principal: 3000, annualRatePct: 0, termMonths: 3,
-      frequency: "monthly", method: "flat",
+      principal: 3000,
+      annualRatePct: 0,
+      termMonths: 3,
+      frequency: "monthly",
+      method: "flat",
       firstRepaymentDate: "2025-06-10",
     });
     expect(s.rows[0].dueDate).toBe("2025-06-10");
@@ -136,8 +154,11 @@ describe("generateSchedule dates", () => {
 
   it("startDate (no firstRepaymentDate) yields start + one period", () => {
     const s = generateSchedule({
-      principal: 3000, annualRatePct: 0, termMonths: 2,
-      frequency: "monthly", method: "flat",
+      principal: 3000,
+      annualRatePct: 0,
+      termMonths: 2,
+      frequency: "monthly",
+      method: "flat",
       startDate: "2025-01-31",
     });
     expect(s.rows[0].dueDate).toBe("2025-02-28");
@@ -145,19 +166,40 @@ describe("generateSchedule dates", () => {
   });
 
   it("daily / weekly / biweekly unchanged", () => {
-    const d = generateSchedule({ principal: 100, annualRatePct: 0, termMonths: 1,
-      frequency: "daily", method: "flat", firstRepaymentDate: "2025-02-27" });
+    const d = generateSchedule({
+      principal: 100,
+      annualRatePct: 0,
+      termMonths: 1,
+      frequency: "daily",
+      method: "flat",
+      firstRepaymentDate: "2025-02-27",
+    });
     expect(d.rows.slice(0, 4).map((r) => r.dueDate)).toEqual([
-      "2025-02-27", "2025-02-28", "2025-03-01", "2025-03-02",
+      "2025-02-27",
+      "2025-02-28",
+      "2025-03-01",
+      "2025-03-02",
     ]);
 
-    const w = generateSchedule({ principal: 100, annualRatePct: 0, termMonths: 1,
-      frequency: "weekly", method: "flat", firstRepaymentDate: "2025-02-27" });
+    const w = generateSchedule({
+      principal: 100,
+      annualRatePct: 0,
+      termMonths: 1,
+      frequency: "weekly",
+      method: "flat",
+      firstRepaymentDate: "2025-02-27",
+    });
     expect(w.rows[0].dueDate).toBe("2025-02-27");
     expect(w.rows[1].dueDate).toBe("2025-03-06");
 
-    const b = generateSchedule({ principal: 100, annualRatePct: 0, termMonths: 2,
-      frequency: "biweekly", method: "flat", firstRepaymentDate: "2024-02-15" });
+    const b = generateSchedule({
+      principal: 100,
+      annualRatePct: 0,
+      termMonths: 2,
+      frequency: "biweekly",
+      method: "flat",
+      firstRepaymentDate: "2024-02-15",
+    });
     expect(b.rows[0].dueDate).toBe("2024-02-15");
     expect(b.rows[1].dueDate).toBe("2024-02-29");
     expect(b.rows[2].dueDate).toBe("2024-03-14");
@@ -165,8 +207,11 @@ describe("generateSchedule dates", () => {
 
   it("dates are strictly increasing", () => {
     const s = generateSchedule({
-      principal: 100000, annualRatePct: 10, termMonths: 24,
-      frequency: "monthly", method: "declining_balance",
+      principal: 100000,
+      annualRatePct: 10,
+      termMonths: 24,
+      frequency: "monthly",
+      method: "declining_balance",
       firstRepaymentDate: "2024-01-31",
     });
     for (let i = 1; i < s.rows.length; i++) {
@@ -180,13 +225,18 @@ describe("generateSchedule dates", () => {
 
 describe("timezone independence", () => {
   const restore = process.env.TZ;
-  afterEach(() => { process.env.TZ = restore; });
+  afterEach(() => {
+    process.env.TZ = restore;
+  });
 
   it("Sri Lanka (Asia/Colombo, +05:30) still returns Jan 31 → Feb 28", () => {
     process.env.TZ = "Asia/Colombo";
     const s = generateSchedule({
-      principal: 1000, annualRatePct: 0, termMonths: 2,
-      frequency: "monthly", method: "flat",
+      principal: 1000,
+      annualRatePct: 0,
+      termMonths: 2,
+      frequency: "monthly",
+      method: "flat",
       firstRepaymentDate: "2025-01-31",
     });
     expect(dueDates(s)).toEqual(["2025-01-31", "2025-02-28"]);
@@ -195,8 +245,11 @@ describe("timezone independence", () => {
   it("Pacific/Kiritimati (+14) preserves date-only", () => {
     process.env.TZ = "Pacific/Kiritimati";
     const s = generateSchedule({
-      principal: 1000, annualRatePct: 0, termMonths: 2,
-      frequency: "monthly", method: "flat",
+      principal: 1000,
+      annualRatePct: 0,
+      termMonths: 2,
+      frequency: "monthly",
+      method: "flat",
       firstRepaymentDate: "2025-01-31",
     });
     expect(dueDates(s)).toEqual(["2025-01-31", "2025-02-28"]);
@@ -205,8 +258,11 @@ describe("timezone independence", () => {
   it("America/Los_Angeles (-08) preserves date-only", () => {
     process.env.TZ = "America/Los_Angeles";
     const s = generateSchedule({
-      principal: 1000, annualRatePct: 0, termMonths: 2,
-      frequency: "monthly", method: "flat",
+      principal: 1000,
+      annualRatePct: 0,
+      termMonths: 2,
+      frequency: "monthly",
+      method: "flat",
       firstRepaymentDate: "2025-01-31",
     });
     expect(dueDates(s)).toEqual(["2025-01-31", "2025-02-28"]);
@@ -216,12 +272,17 @@ describe("timezone independence", () => {
     process.env.TZ = "America/New_York";
     // 2025-03-09 is US DST transition
     const s = generateSchedule({
-      principal: 1000, annualRatePct: 0, termMonths: 2,
-      frequency: "daily", method: "flat",
+      principal: 1000,
+      annualRatePct: 0,
+      termMonths: 2,
+      frequency: "daily",
+      method: "flat",
       firstRepaymentDate: "2025-03-08",
     });
     expect(s.rows.slice(0, 3).map((r) => r.dueDate)).toEqual([
-      "2025-03-08", "2025-03-09", "2025-03-10",
+      "2025-03-08",
+      "2025-03-09",
+      "2025-03-10",
     ]);
   });
 });
@@ -229,28 +290,34 @@ describe("timezone independence", () => {
 describe("business-day adjustment", () => {
   it("following rolls Saturday to Monday", () => {
     // 2025-01-04 is a Saturday
-    expect(adjustBusinessDay("2025-01-04", { convention: "following" }))
-      .toBe("2025-01-06");
+    expect(adjustBusinessDay("2025-01-04", { convention: "following" })).toBe("2025-01-06");
   });
   it("preceding rolls Sunday to Friday", () => {
     // 2025-01-05 Sunday → Fri 2025-01-03
-    expect(adjustBusinessDay("2025-01-05", { convention: "preceding" }))
-      .toBe("2025-01-03");
+    expect(adjustBusinessDay("2025-01-05", { convention: "preceding" })).toBe("2025-01-03");
   });
   it("modified_following flips to preceding when it would cross month-end", () => {
     // 2025-05-31 is a Saturday; following would land in June, so we roll back.
-    expect(adjustBusinessDay("2025-05-31", { convention: "modified_following" }))
-      .toBe("2025-05-30");
+    expect(adjustBusinessDay("2025-05-31", { convention: "modified_following" })).toBe(
+      "2025-05-30",
+    );
   });
   it("holidays are honoured", () => {
     // Weekday holiday
-    expect(adjustBusinessDay("2025-01-01", { convention: "following", holidays: ["2025-01-01", "2025-01-02"] }))
-      .toBe("2025-01-03");
+    expect(
+      adjustBusinessDay("2025-01-01", {
+        convention: "following",
+        holidays: ["2025-01-01", "2025-01-02"],
+      }),
+    ).toBe("2025-01-03");
   });
   it("schedule with BDC keeps strictly increasing dates", () => {
     const s = generateSchedule({
-      principal: 12000, annualRatePct: 0, termMonths: 3,
-      frequency: "monthly", method: "flat",
+      principal: 12000,
+      annualRatePct: 0,
+      termMonths: 3,
+      frequency: "monthly",
+      method: "flat",
       firstRepaymentDate: "2025-02-01", // Saturday
       businessDay: { convention: "following", holidays: [] },
     });
@@ -265,13 +332,19 @@ describe("business-day adjustment", () => {
 describe("normal vs structured parity", () => {
   it("both engines produce identical due dates for the same inputs", () => {
     const normal = generateSchedule({
-      principal: 100000, annualRatePct: 12, termMonths: 6,
-      frequency: "monthly", method: "declining_balance",
+      principal: 100000,
+      annualRatePct: 12,
+      termMonths: 6,
+      frequency: "monthly",
+      method: "declining_balance",
       firstRepaymentDate: "2024-01-31",
     });
     const structured = generateStructuredSchedule({
-      principal: 100000, annualRatePct: 12, termMonths: 6,
-      frequency: "monthly", method: "declining_balance",
+      principal: 100000,
+      annualRatePct: 12,
+      termMonths: 6,
+      frequency: "monthly",
+      method: "declining_balance",
       firstRepaymentDate: "2024-01-31",
       overrides: {},
     });
@@ -282,14 +355,23 @@ describe("normal vs structured parity", () => {
   it("structured with BDC matches normal with BDC", () => {
     const bdc = { convention: "modified_following" as const };
     const normal = generateSchedule({
-      principal: 60000, annualRatePct: 10, termMonths: 3,
-      frequency: "monthly", method: "flat",
-      firstRepaymentDate: "2025-05-31", businessDay: bdc,
+      principal: 60000,
+      annualRatePct: 10,
+      termMonths: 3,
+      frequency: "monthly",
+      method: "flat",
+      firstRepaymentDate: "2025-05-31",
+      businessDay: bdc,
     });
     const structured = generateStructuredSchedule({
-      principal: 60000, annualRatePct: 10, termMonths: 3,
-      frequency: "monthly", method: "flat",
-      firstRepaymentDate: "2025-05-31", businessDay: bdc, overrides: {},
+      principal: 60000,
+      annualRatePct: 10,
+      termMonths: 3,
+      frequency: "monthly",
+      method: "flat",
+      firstRepaymentDate: "2025-05-31",
+      businessDay: bdc,
+      overrides: {},
     });
     expect(dueDates(normal)).toEqual(dueDates(structured));
   });

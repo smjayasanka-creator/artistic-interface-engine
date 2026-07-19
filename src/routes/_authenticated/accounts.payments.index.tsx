@@ -99,11 +99,21 @@ function PaymentsPage() {
         </select>
         <div className="flex items-center gap-1.5">
           <label className="text-[11.5px] text-faint">From</label>
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inputCls} />
+          <input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className={inputCls}
+          />
         </div>
         <div className="flex items-center gap-1.5">
           <label className="text-[11.5px] text-faint">To</label>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inputCls} />
+          <input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className={inputCls}
+          />
         </div>
         {(from || to || channel) && (
           <button
@@ -120,8 +130,7 @@ function PaymentsPage() {
         <div className="ml-auto flex items-center gap-3 text-[11.5px] text-faint">
           {isFetching && <Loader2 size={13} className="animate-spin" />}
           <span>
-            Total{" "}
-            <span className="font-semibold text-primary font-mono">{money(totalAmount)}</span>
+            Total <span className="font-semibold text-primary font-mono">{money(totalAmount)}</span>
           </span>
           <span>
             {totalCount === 0
@@ -201,7 +210,12 @@ function PaymentsPage() {
           <span className="text-[12px] text-faint">
             Page {page} of {totalPages}
           </span>
-          <button onClick={() => setPage(1)} disabled={page <= 1} className={btnCls} aria-label="First page">
+          <button
+            onClick={() => setPage(1)}
+            disabled={page <= 1}
+            className={btnCls}
+            aria-label="First page"
+          >
             «
           </button>
           <button
@@ -244,7 +258,10 @@ function SkeletonRows({ count }: { count: number }) {
           style={{ gridTemplateColumns: "1fr 1.6fr .9fr .8fr 1fr 1fr" }}
         >
           {Array.from({ length: 6 }).map((__, j) => (
-            <div key={j} className={cn("h-3 rounded bg-muted animate-pulse mr-3", j === 5 && "ml-auto w-20")} />
+            <div
+              key={j}
+              className={cn("h-3 rounded bg-muted animate-pulse mr-3", j === 5 && "ml-auto w-20")}
+            />
           ))}
         </div>
       ))}

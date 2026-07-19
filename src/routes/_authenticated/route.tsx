@@ -38,7 +38,9 @@ export const Route = createFileRoute("/_authenticated")({
     if (networkFailed) {
       // Don't sign the user out on a transient network failure — surface
       // it to the errorComponent so they can retry.
-      throw new Error("Can't reach the authentication service. Check your connection and try again.");
+      throw new Error(
+        "Can't reach the authentication service. Check your connection and try again.",
+      );
     }
     // Real signed-out state — clear any stale token and bounce to /auth.
     await supabase.auth.signOut().catch(() => {});

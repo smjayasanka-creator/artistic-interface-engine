@@ -16,7 +16,9 @@ export const listWriteOffCandidates = createServerFn({ method: "GET" })
     const ids = loans.map((l) => l.id);
     const { data: inst } = await supabase
       .from("loan_installment")
-      .select("loan_id, principal_due, principal_paid, interest_due, interest_paid, fee_due, fee_paid, state")
+      .select(
+        "loan_id, principal_due, principal_paid, interest_due, interest_paid, fee_due, fee_paid, state",
+      )
       .in("loan_id", ids);
     const bal = new Map<string, { p: number; i: number; f: number }>();
     (inst ?? []).forEach((r: any) => {
@@ -76,45 +78,51 @@ export const listWriteOffRecoveries = createServerFn({ method: "GET" })
 
 export const recordWriteOffRecovery = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: {
-    write_off_id: string;
-    recovery_date: string;
-    amount: number;
-    principal: number;
-    interest: number;
-    charges: number;
-    payment_method: string;
-    reference?: string;
-    notes?: string;
-    idempotency_key?: string;
-  }) =>
-    z.object({
-      write_off_id: z.string().uuid(),
-      recovery_date: z.string(),
-      amount: z.number().positive(),
-      principal: z.number().nonnegative(),
-      interest: z.number().nonnegative(),
-      charges: z.number().nonnegative(),
-      payment_method: z.string().min(1),
-      reference: z.string().optional(),
-      notes: z.string().optional(),
-      idempotency_key: z.string().optional(),
-    }).parse(i),
+  .inputValidator(
+    (i: {
+      write_off_id: string;
+      recovery_date: string;
+      amount: number;
+      principal: number;
+      interest: number;
+      charges: number;
+      payment_method: string;
+      reference?: string;
+      notes?: string;
+      idempotency_key?: string;
+    }) =>
+      z
+        .object({
+          write_off_id: z.string().uuid(),
+          recovery_date: z.string(),
+          amount: z.number().positive(),
+          principal: z.number().nonnegative(),
+          interest: z.number().nonnegative(),
+          charges: z.number().nonnegative(),
+          payment_method: z.string().min(1),
+          reference: z.string().optional(),
+          notes: z.string().optional(),
+          idempotency_key: z.string().optional(),
+        })
+        .parse(i),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { data: r, error } = await supabase.rpc("record_write_off_recovery" as any, {
-      _write_off_id: data.write_off_id,
-      _recovery_date: data.recovery_date,
-      _amount: data.amount,
-      _principal: data.principal,
-      _interest: data.interest,
-      _charges: data.charges,
-      _payment_method: data.payment_method,
-      _reference: data.reference ?? null,
-      _notes: data.notes ?? null,
-      _idempotency_key: data.idempotency_key ?? null,
-    } as any);
+    const { data: r, error } = await supabase.rpc(
+      "record_write_off_recovery" as any,
+      {
+        _write_off_id: data.write_off_id,
+        _recovery_date: data.recovery_date,
+        _amount: data.amount,
+        _principal: data.principal,
+        _interest: data.interest,
+        _charges: data.charges,
+        _payment_method: data.payment_method,
+        _reference: data.reference ?? null,
+        _notes: data.notes ?? null,
+        _idempotency_key: data.idempotency_key ?? null,
+      } as any,
+    );
     if (error) throw new Error(error.message);
     return r as string;
   });

@@ -37,13 +37,18 @@ function AccountsIndex() {
             <Link key={c.to} to={c.to} className="group">
               <Card className="p-3.5 hover:border-primary/40 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${c.accent}`}>
+                  <div
+                    className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${c.accent}`}
+                  >
                     <Icon size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[14px] truncate">{c.title}</div>
                   </div>
-                  <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight
+                    size={16}
+                    className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform"
+                  />
                 </div>
               </Card>
             </Link>

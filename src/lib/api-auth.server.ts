@@ -12,7 +12,9 @@ export type ApiKeyRecord = {
 async function sha256Hex(input: string): Promise<string> {
   const enc = new TextEncoder().encode(input);
   const buf = await crypto.subtle.digest("SHA-256", enc);
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 // Constant-time string compare (both inputs hashed first so length differences
@@ -41,12 +43,17 @@ export function extractApiKey(request: Request): string | null {
   return xkey ? xkey.trim() : null;
 }
 
-export async function authenticateApiKey(request: Request, requiredScope: string): Promise<
-  | { ok: true; key: ApiKeyRecord }
-  | { ok: false; status: number; error: string }
-> {
+export async function authenticateApiKey(
+  request: Request,
+  requiredScope: string,
+): Promise<{ ok: true; key: ApiKeyRecord } | { ok: false; status: number; error: string }> {
   const raw = extractApiKey(request);
-  if (!raw) return { ok: false, status: 401, error: "Missing API key (Authorization: Bearer <key> or X-API-Key)" };
+  if (!raw)
+    return {
+      ok: false,
+      status: 401,
+      error: "Missing API key (Authorization: Bearer <key> or X-API-Key)",
+    };
   const hash = await sha256Hex(raw);
   const { data, error } = await supabaseAdmin
     .from("api_key")
@@ -60,7 +67,11 @@ export async function authenticateApiKey(request: Request, requiredScope: string
     return { ok: false, status: 403, error: `API key missing required scope: ${requiredScope}` };
   }
   // best-effort last-used update (fire and forget)
-  supabaseAdmin.from("api_key").update({ last_used_at: new Date().toISOString() }).eq("id", data.id).then(() => {});
+  supabaseAdmin
+    .from("api_key")
+    .update({ last_used_at: new Date().toISOString() })
+    .eq("id", data.id)
+    .then(() => {});
   return { ok: true, key: data as ApiKeyRecord };
 }
 
@@ -106,6 +117,8 @@ export function json(body: unknown, status = 200): Response {
 export function generateReference(prefix: string): string {
   const arr = new Uint8Array(6);
   crypto.getRandomValues(arr);
-  const rand = Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const rand = Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
   return `${prefix}-${Date.now().toString(36).toUpperCase()}-${rand.toUpperCase()}`;
 }

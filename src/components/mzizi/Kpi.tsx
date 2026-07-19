@@ -1,14 +1,23 @@
 import { money } from "@/lib/format";
 import { Card } from "./Card";
 
-export function Kpi({ label, value, delta, deltaTone = "positive" }: {
+export function Kpi({
+  label,
+  value,
+  delta,
+  deltaTone = "positive",
+}: {
   label: string;
   value: string | number;
   delta?: string;
   deltaTone?: "positive" | "neutral" | "negative";
 }) {
   const deltaColor =
-    deltaTone === "positive" ? "text-primary" : deltaTone === "negative" ? "text-status-danger-fg" : "text-muted-foreground";
+    deltaTone === "positive"
+      ? "text-primary"
+      : deltaTone === "negative"
+        ? "text-status-danger-fg"
+        : "text-muted-foreground";
   return (
     <Card className="px-4 py-4">
       <div className="text-[11.5px] font-medium text-muted-foreground">{label}</div>

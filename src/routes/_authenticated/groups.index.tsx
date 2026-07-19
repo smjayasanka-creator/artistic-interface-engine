@@ -24,14 +24,19 @@ function Groups() {
       {(data ?? []).map((g: any) => (
         <Card key={g.id} className="p-5">
           <div className="flex items-start gap-3 mb-4">
-            <div className="w-2 h-10 rounded-full" style={{ background: g.color ?? "var(--primary)" }} />
+            <div
+              className="w-2 h-10 rounded-full"
+              style={{ background: g.color ?? "var(--primary)" }}
+            />
             <div className="flex-1">
               <div className="text-base font-semibold">{g.name}</div>
               <div className="text-[11.5px] text-muted-foreground mt-0.5">
                 Cycle {g.cycle} · {g.members} members · {g.meeting_day ?? "no meeting set"}
               </div>
             </div>
-            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-status-active-bg text-status-active-fg">PAR 0%</span>
+            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-status-active-bg text-status-active-fg">
+              PAR 0%
+            </span>
           </div>
           <div className="grid grid-cols-2 gap-4 my-4">
             <div>
@@ -44,8 +49,13 @@ function Groups() {
             </div>
           </div>
           <div className="flex items-center justify-between pt-3 border-t border-row-divider">
-            <div className="text-[12px] text-muted-foreground">Chair: {g.leader?.full_name ?? "—"}</div>
-            <Link to="/transactions/repayment" className="bg-primary text-primary-foreground text-[11.5px] font-semibold px-3 py-1.5 rounded-md hover:bg-primary-hover">
+            <div className="text-[12px] text-muted-foreground">
+              Chair: {g.leader?.full_name ?? "—"}
+            </div>
+            <Link
+              to="/transactions/repayment"
+              className="bg-primary text-primary-foreground text-[11.5px] font-semibold px-3 py-1.5 rounded-md hover:bg-primary-hover"
+            >
               Record collection
             </Link>
           </div>

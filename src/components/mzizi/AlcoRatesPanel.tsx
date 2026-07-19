@@ -5,15 +5,23 @@ import { toast } from "sonner";
 import { Upload, CheckCircle2, XCircle, Clock, Send, History } from "lucide-react";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
-  FormGrid, FormField, FormActions, inputCls, btnPrimaryCls, btnSecondaryCls,
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
 } from "@/components/mzizi/FormGrid";
 import { Modal } from "@/components/mzizi/Modal";
 import {
-  listAlcoRates, submitAlcoProposal, listAlcoProposals, applyAlcoProposal, cancelAlcoProposal,
+  listAlcoRates,
+  submitAlcoProposal,
+  listAlcoProposals,
+  applyAlcoProposal,
+  cancelAlcoProposal,
   listAlcoRateHistory,
 } from "@/lib/alco.functions";
 import { shortDate } from "@/lib/format";
-
 
 type Row = {
   id: string;
@@ -42,8 +50,14 @@ export function AlcoRatesPanel() {
   const applyFn = useServerFn(applyAlcoProposal);
   const cancelFn = useServerFn(cancelAlcoProposal);
 
-  const { data: rows, isLoading } = useQuery({ queryKey: ["alco", "products"], queryFn: () => listFn() });
-  const { data: proposals } = useQuery({ queryKey: ["alco", "proposals"], queryFn: () => proposalsFn() });
+  const { data: rows, isLoading } = useQuery({
+    queryKey: ["alco", "products"],
+    queryFn: () => listFn(),
+  });
+  const { data: proposals } = useQuery({
+    queryKey: ["alco", "proposals"],
+    queryFn: () => proposalsFn(),
+  });
 
   const historyFn = useServerFn(listAlcoRateHistory);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
@@ -52,7 +66,6 @@ export function AlcoRatesPanel() {
     queryFn: () => historyFn({ data: { product_id: historyFor!.id } }),
     enabled: !!historyFor,
   });
-
 
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [notes, setNotes] = useState("");
@@ -80,20 +93,33 @@ export function AlcoRatesPanel() {
         (r.maximum_rate ?? null) !== max ||
         (r.cbsl_max_rate ?? null) !== cbsl;
       return changed
-        ? [{ product_id: r.id, standard_rate: std, maximum_rate: max, cbsl_max_rate: cbsl, name: r.name, code: r.code }]
+        ? [
+            {
+              product_id: r.id,
+              standard_rate: std,
+              maximum_rate: max,
+              cbsl_max_rate: cbsl,
+              name: r.name,
+              code: r.code,
+            },
+          ]
         : [];
     });
   }, [drafts, rows]);
 
   const submit = useMutation({
-    mutationFn: () => submitFn({
-      data: {
-        notes: notes.trim() || null,
-        items: changedItems.map(({ product_id, standard_rate, maximum_rate, cbsl_max_rate }) => ({
-          product_id, standard_rate, maximum_rate, cbsl_max_rate,
-        })),
-      },
-    }),
+    mutationFn: () =>
+      submitFn({
+        data: {
+          notes: notes.trim() || null,
+          items: changedItems.map(({ product_id, standard_rate, maximum_rate, cbsl_max_rate }) => ({
+            product_id,
+            standard_rate,
+            maximum_rate,
+            cbsl_max_rate,
+          })),
+        },
+      }),
     onSuccess: (res: any) => {
       toast.success(
         res.workflow_instance_id
@@ -127,17 +153,27 @@ export function AlcoRatesPanel() {
 
   function applyBulk() {
     if (!rows) return;
-    const lines = csv.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const lines = csv
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
     if (lines.length === 0) return toast.error("Empty CSV");
     const byCode = new Map(rows.map((r: Row) => [r.code.toLowerCase(), r]));
     const next: Record<string, Draft> = { ...drafts };
-    let ok = 0, skipped = 0;
+    let ok = 0,
+      skipped = 0;
     for (const line of lines) {
       const parts = line.split(/[,\t;]/).map((x) => x.trim());
       const [code, std, max, cbsl] = parts;
-      if (!code || code.toLowerCase() === "code") { skipped++; continue; }
+      if (!code || code.toLowerCase() === "code") {
+        skipped++;
+        continue;
+      }
       const row = byCode.get(code.toLowerCase()) as Row | undefined;
-      if (!row) { skipped++; continue; }
+      if (!row) {
+        skipped++;
+        continue;
+      }
       next[row.id] = { standard: std ?? "", maximum: max ?? "", cbsl: cbsl ?? "" };
       ok++;
     }
@@ -156,7 +192,8 @@ export function AlcoRatesPanel() {
           <div>
             <CardTitle>ALCO deposit rates</CardTitle>
             <p className="text-[12px] text-muted-foreground">
-              Update standard, maximum, and CBSL max rates for active deposit products. Changes are submitted to the
+              Update standard, maximum, and CBSL max rates for active deposit products. Changes are
+              submitted to the
               <code className="mx-1 px-1 rounded bg-muted text-[11px]">alco_rate_change</code>
               workflow for approval before being applied.
             </p>
@@ -172,7 +209,8 @@ export function AlcoRatesPanel() {
           <div className="mb-4 rounded-md border border-border p-3 bg-muted/30">
             <div className="text-[12px] font-semibold mb-1">Paste CSV</div>
             <div className="text-[11px] text-muted-foreground mb-2">
-              Columns: <code>code,standard_rate,maximum_rate,cbsl_max_rate</code> (header optional). Rates in % p.a. Blank = clear.
+              Columns: <code>code,standard_rate,maximum_rate,cbsl_max_rate</code> (header optional).
+              Rates in % p.a. Blank = clear.
             </div>
             <textarea
               value={csv}
@@ -182,8 +220,18 @@ export function AlcoRatesPanel() {
               className={inputCls + " font-mono text-[12px]"}
             />
             <div className="flex justify-end gap-2 mt-2">
-              <button className={btnSecondaryCls} onClick={() => { setBulkOpen(false); setCsv(""); }}>Cancel</button>
-              <button className={btnPrimaryCls} onClick={applyBulk}>Load into table</button>
+              <button
+                className={btnSecondaryCls}
+                onClick={() => {
+                  setBulkOpen(false);
+                  setCsv("");
+                }}
+              >
+                Cancel
+              </button>
+              <button className={btnPrimaryCls} onClick={applyBulk}>
+                Load into table
+              </button>
             </div>
           </div>
         )}
@@ -213,15 +261,26 @@ export function AlcoRatesPanel() {
                     {(["standard", "maximum", "cbsl"] as const).map((k) => (
                       <td key={k} className="px-2 py-1.5">
                         <input
-                          type="number" step="0.01" min="0"
+                          type="number"
+                          step="0.01"
+                          min="0"
                           value={d[k]}
-                          onChange={(e) => setDrafts((prev) => ({ ...prev, [r.id]: { ...getDraft(r), [k]: e.target.value } }))}
+                          onChange={(e) =>
+                            setDrafts((prev) => ({
+                              ...prev,
+                              [r.id]: { ...getDraft(r), [k]: e.target.value },
+                            }))
+                          }
                           className={inputCls + " text-right font-mono py-1"}
                         />
                       </td>
                     ))}
                     <td className="px-3 py-1.5 text-center">
-                      {isChanged ? <span className="text-amber-600 font-bold">●</span> : <span className="text-muted-foreground">–</span>}
+                      {isChanged ? (
+                        <span className="text-amber-600 font-bold">●</span>
+                      ) : (
+                        <span className="text-muted-foreground">–</span>
+                      )}
                     </td>
                     <td className="px-3 py-1.5 text-center">
                       <button
@@ -237,17 +296,24 @@ export function AlcoRatesPanel() {
                 );
               })}
               {(rows ?? []).length === 0 && (
-                <tr><td colSpan={6} className="px-3 py-4 text-center text-muted-foreground">No active deposit products.</td></tr>
+                <tr>
+                  <td colSpan={6} className="px-3 py-4 text-center text-muted-foreground">
+                    No active deposit products.
+                  </td>
+                </tr>
               )}
-
             </tbody>
           </table>
         </div>
 
         <FormGrid className="mt-4">
           <FormField label="Notes for approver" span={12}>
-            <input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls}
-              placeholder="e.g. Effective next Monday; aligned with CBSL circular #23/2026" />
+            <input
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className={inputCls}
+              placeholder="e.g. Effective next Monday; aligned with CBSL circular #23/2026"
+            />
           </FormField>
         </FormGrid>
         <FormActions align="between">
@@ -269,28 +335,39 @@ export function AlcoRatesPanel() {
         <CardTitle>Recent proposals</CardTitle>
         <div className="divide-y divide-border mt-2">
           {(proposals ?? []).map((p: any) => {
-            const wfStatus = p.workflow?.status ?? (p.workflow_instance_id ? "unknown" : "no workflow");
-            const canApply = p.status === "pending" && (wfStatus === "approved" || !p.workflow_instance_id);
+            const wfStatus =
+              p.workflow?.status ?? (p.workflow_instance_id ? "unknown" : "no workflow");
+            const canApply =
+              p.status === "pending" && (wfStatus === "approved" || !p.workflow_instance_id);
             return (
               <div key={p.id} className="py-3 flex items-start gap-3">
                 <div className="mt-0.5">
-                  {p.status === "applied" ? <CheckCircle2 size={16} className="text-emerald-600" />
-                    : p.status === "declined" || p.status === "cancelled" ? <XCircle size={16} className="text-rose-600" />
-                    : <Clock size={16} className="text-amber-600" />}
+                  {p.status === "applied" ? (
+                    <CheckCircle2 size={16} className="text-emerald-600" />
+                  ) : p.status === "declined" || p.status === "cancelled" ? (
+                    <XCircle size={16} className="text-rose-600" />
+                  ) : (
+                    <Clock size={16} className="text-amber-600" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-semibold">
-                    {p.items?.length ?? 0} product change(s) · <span className="uppercase text-[11px]">{p.status}</span>
-                    <span className="ml-2 text-[11px] text-muted-foreground">workflow: {wfStatus}</span>
+                    {p.items?.length ?? 0} product change(s) ·{" "}
+                    <span className="uppercase text-[11px]">{p.status}</span>
+                    <span className="ml-2 text-[11px] text-muted-foreground">
+                      workflow: {wfStatus}
+                    </span>
                   </div>
                   <div className="text-[11.5px] text-muted-foreground">
-                    {shortDate(p.created_at)}{p.applied_at ? ` · applied ${shortDate(p.applied_at)}` : ""}
+                    {shortDate(p.created_at)}
+                    {p.applied_at ? ` · applied ${shortDate(p.applied_at)}` : ""}
                     {p.notes ? ` · ${p.notes}` : ""}
                   </div>
                   <div className="mt-1.5 text-[11.5px] text-muted-foreground">
                     {(p.items ?? []).slice(0, 4).map((it: any) => (
                       <span key={it.id} className="inline-block mr-3">
-                        <span className="font-mono">{it.product?.code}</span>: {it.old_standard_rate ?? "–"} → <b>{it.new_standard_rate ?? "–"}</b>
+                        <span className="font-mono">{it.product?.code}</span>:{" "}
+                        {it.old_standard_rate ?? "–"} → <b>{it.new_standard_rate ?? "–"}</b>
                       </span>
                     ))}
                     {(p.items?.length ?? 0) > 4 && <span>…</span>}
@@ -323,7 +400,12 @@ export function AlcoRatesPanel() {
         </div>
       </Card>
 
-      <Modal open={!!historyFor} onClose={() => setHistoryFor(null)} title="Rate version history" width={880}>
+      <Modal
+        open={!!historyFor}
+        onClose={() => setHistoryFor(null)}
+        title="Rate version history"
+        width={880}
+      >
         {historyFor && (
           <div>
             <div className="text-[12px] text-muted-foreground mb-2">
@@ -353,30 +435,51 @@ export function AlcoRatesPanel() {
                       <tr key={h.id}>
                         <td className="px-2 py-1.5 font-mono">v{h.version_no}</td>
                         <td className="px-2 py-1.5">{shortDate(h.effective_from)}</td>
-                        <td className="px-2 py-1.5">{h.effective_to ? shortDate(h.effective_to) : "—"}</td>
                         <td className="px-2 py-1.5">
-                          <span className={
-                            h.status === "active" ? "text-emerald-600 font-semibold" :
-                            h.status === "retired" ? "text-rose-600" : "text-muted-foreground"
-                          }>{h.status}</span>
+                          {h.effective_to ? shortDate(h.effective_to) : "—"}
                         </td>
-                        <td className="px-2 py-1.5 text-right font-mono">{h.standard_rate ?? "–"}</td>
-                        <td className="px-2 py-1.5 text-right font-mono">{h.maximum_rate ?? "–"}</td>
-                        <td className="px-2 py-1.5 text-right font-mono">{h.cbsl_max_rate ?? "–"}</td>
+                        <td className="px-2 py-1.5">
+                          <span
+                            className={
+                              h.status === "active"
+                                ? "text-emerald-600 font-semibold"
+                                : h.status === "retired"
+                                  ? "text-rose-600"
+                                  : "text-muted-foreground"
+                            }
+                          >
+                            {h.status}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-mono">
+                          {h.standard_rate ?? "–"}
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-mono">
+                          {h.maximum_rate ?? "–"}
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-mono">
+                          {h.cbsl_max_rate ?? "–"}
+                        </td>
                         <td className="px-2 py-1.5">{h.created_by_name}</td>
                         <td className="px-2 py-1.5">{shortDate(h.created_at)}</td>
                         <td className="px-2 py-1.5 text-muted-foreground">{h.note ?? ""}</td>
                       </tr>
                     ))}
                     {(historyRows ?? []).length === 0 && (
-                      <tr><td colSpan={10} className="px-2 py-4 text-center text-muted-foreground">No history yet.</td></tr>
+                      <tr>
+                        <td colSpan={10} className="px-2 py-4 text-center text-muted-foreground">
+                          No history yet.
+                        </td>
+                      </tr>
                     )}
                   </tbody>
                 </table>
               </div>
             )}
             <FormActions align="end">
-              <button className={btnSecondaryCls} onClick={() => setHistoryFor(null)}>Close</button>
+              <button className={btnSecondaryCls} onClick={() => setHistoryFor(null)}>
+                Close
+              </button>
             </FormActions>
           </div>
         )}
@@ -384,4 +487,3 @@ export function AlcoRatesPanel() {
     </div>
   );
 }
-

@@ -24,13 +24,29 @@ function formattersFor(code: string) {
     const locale = LOCALE_BY_CURRENCY[cur] ?? "en-US";
     try {
       f = {
-        whole: new Intl.NumberFormat(locale, { style: "currency", currency: cur, maximumFractionDigits: 0 }),
-        dec: new Intl.NumberFormat(locale, { style: "currency", currency: cur, minimumFractionDigits: 2 }),
+        whole: new Intl.NumberFormat(locale, {
+          style: "currency",
+          currency: cur,
+          maximumFractionDigits: 0,
+        }),
+        dec: new Intl.NumberFormat(locale, {
+          style: "currency",
+          currency: cur,
+          minimumFractionDigits: 2,
+        }),
       };
     } catch {
       f = {
-        whole: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }),
-        dec: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }),
+        whole: new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          maximumFractionDigits: 0,
+        }),
+        dec: new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 2,
+        }),
       };
     }
     cache.set(cur, f);
@@ -87,9 +103,16 @@ export function initials(name: string): string {
 }
 
 const AVATAR_COLORS = [
-  "#0f766e", "#0369a1", "#7c3aed", "#c2410c",
-  "#b45309", "#065f46", "#9333ea", "#be185d",
-  "#1d4ed8", "#a16207",
+  "#0f766e",
+  "#0369a1",
+  "#7c3aed",
+  "#c2410c",
+  "#b45309",
+  "#065f46",
+  "#9333ea",
+  "#be185d",
+  "#1d4ed8",
+  "#a16207",
 ];
 
 export function avatarColor(seed: string): string {

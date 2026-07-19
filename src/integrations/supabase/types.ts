@@ -6759,6 +6759,17 @@ export type Database = {
         }
       }
       company_id_of_branch: { Args: { _branch_id: string }; Returns: string }
+      compute_trial_balance: {
+        Args: { _as_at: string; _company_id: string }
+        Returns: {
+          account_id: string
+          balance: number
+          code: string
+          credits: number
+          debits: number
+          name: string
+        }[]
+      }
       current_business_date: { Args: never; Returns: string }
       current_company_id: { Args: never; Returns: string }
       current_staff_branch: { Args: never; Returns: string }
@@ -6951,6 +6962,15 @@ export type Database = {
           _source_ref?: string
         }
         Returns: string
+      }
+      post_manual_journal: {
+        Args: {
+          p_description: string
+          p_entry_date: string
+          p_lines: Json
+          p_reference: string
+        }
+        Returns: Json
       }
       record_repayment: {
         Args: {

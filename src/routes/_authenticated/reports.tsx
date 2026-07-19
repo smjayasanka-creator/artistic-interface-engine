@@ -83,13 +83,22 @@ function OverviewTab({ data }: { data: any }) {
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-4">
         <Card>
-          <CardTitle subtitle={`Last 6 months · ${getActiveCurrency()}`}>Disbursement volume</CardTitle>
+          <CardTitle subtitle={`Last 6 months · ${getActiveCurrency()}`}>
+            Disbursement volume
+          </CardTitle>
           <div className="flex items-end gap-3 h-40 mt-3">
             {data.disbursement.map((m: any, i: number) => {
               const isCurrent = i === data.disbursement.length - 1;
               return (
                 <div key={m.label} className="flex-1 flex flex-col items-center gap-2">
-                  <div className="w-full rounded-t-md" style={{ height: `${(m.total / disbMax) * 100}%`, background: isCurrent ? "var(--primary)" : "var(--teal-soft)", minHeight: 4 }} />
+                  <div
+                    className="w-full rounded-t-md"
+                    style={{
+                      height: `${(m.total / disbMax) * 100}%`,
+                      background: isCurrent ? "var(--primary)" : "var(--teal-soft)",
+                      minHeight: 4,
+                    }}
+                  />
                   <div className="text-[11px] text-muted-foreground">{m.label}</div>
                 </div>
               );
@@ -101,7 +110,14 @@ function OverviewTab({ data }: { data: any }) {
           <div className="flex items-end gap-3 h-40 mt-3">
             {data.par.map((p: any) => (
               <div key={p.label} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full rounded-t-md" style={{ height: `${(p.value / parMax) * 100}%`, background: "#f59e0b", minHeight: 4 }} />
+                <div
+                  className="w-full rounded-t-md"
+                  style={{
+                    height: `${(p.value / parMax) * 100}%`,
+                    background: "#f59e0b",
+                    minHeight: 4,
+                  }}
+                />
                 <div className="text-[11px] text-muted-foreground">{p.label}</div>
               </div>
             ))}
@@ -110,20 +126,35 @@ function OverviewTab({ data }: { data: any }) {
       </div>
       <Card>
         <CardTitle>Portfolio by product</CardTitle>
-        <div className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold pb-2.5 border-b border-border"
-             style={{ gridTemplateColumns: "2fr 1.2fr .7fr .8fr" }}>
-          <div>Product</div><div>Outstanding</div><div>Loans</div><div>Share</div>
+        <div
+          className="grid text-[10.5px] uppercase tracking-wider text-faint font-semibold pb-2.5 border-b border-border"
+          style={{ gridTemplateColumns: "2fr 1.2fr .7fr .8fr" }}
+        >
+          <div>Product</div>
+          <div>Outstanding</div>
+          <div>Loans</div>
+          <div>Share</div>
         </div>
         {data.products.map((p: any) => (
-          <div key={p.name} className="grid items-center py-3 border-b border-row-divider last:border-b-0 text-[13px]"
-               style={{ gridTemplateColumns: "2fr 1.2fr .7fr .8fr" }}>
-            <div className="flex items-center gap-2.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: p.color }} />{p.name}</div>
+          <div
+            key={p.name}
+            className="grid items-center py-3 border-b border-row-divider last:border-b-0 text-[13px]"
+            style={{ gridTemplateColumns: "2fr 1.2fr .7fr .8fr" }}
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.color }} />
+              {p.name}
+            </div>
             <div className="font-mono font-semibold">{money(p.out)}</div>
             <div className="font-mono text-muted-foreground">{p.count}</div>
-            <div className="font-mono text-muted-foreground">{totalPortfolio > 0 ? ((p.out / totalPortfolio) * 100).toFixed(1) : "0"}%</div>
+            <div className="font-mono text-muted-foreground">
+              {totalPortfolio > 0 ? ((p.out / totalPortfolio) * 100).toFixed(1) : "0"}%
+            </div>
           </div>
         ))}
-        {data.products.length === 0 && <div className="text-center text-faint text-sm py-8">No disbursed loans yet.</div>}
+        {data.products.length === 0 && (
+          <div className="text-center text-faint text-sm py-8">No disbursed loans yet.</div>
+        )}
       </Card>
     </div>
   );
@@ -131,7 +162,17 @@ function OverviewTab({ data }: { data: any }) {
 
 /* ─── Statement helpers ─── */
 
-function StatementRow({ code, name, amount, bold }: { code?: string; name: string; amount: number; bold?: boolean }) {
+function StatementRow({
+  code,
+  name,
+  amount,
+  bold,
+}: {
+  code?: string;
+  name: string;
+  amount: number;
+  bold?: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -168,7 +209,11 @@ function IncomeStatementTab({ data }: { data: any }) {
       <div className="grid grid-cols-3 gap-4">
         <MetricCard label="Total income" value={data.totalIncome} tone="positive" />
         <MetricCard label="Total expense" value={data.totalExpense} tone="negative" />
-        <MetricCard label="Net profit" value={data.netIncome} tone={data.netIncome >= 0 ? "primary" : "negative"} />
+        <MetricCard
+          label="Net profit"
+          value={data.netIncome}
+          tone={data.netIncome >= 0 ? "primary" : "negative"}
+        />
       </div>
       <Card>
         <CardTitle subtitle="Revenue accounts">Income</CardTitle>
@@ -191,7 +236,12 @@ function IncomeStatementTab({ data }: { data: any }) {
       <Card>
         <div className="flex items-center justify-between py-1">
           <div className="text-sm font-semibold">Net profit / (loss)</div>
-          <div className={cn("font-mono text-base font-semibold", data.netIncome < 0 ? "text-red-600" : "text-emerald-600")}>
+          <div
+            className={cn(
+              "font-mono text-base font-semibold",
+              data.netIncome < 0 ? "text-red-600" : "text-emerald-600",
+            )}
+          >
             {money(data.netIncome)}
           </div>
         </div>
@@ -241,11 +291,15 @@ function BalanceSheetTab({ data }: { data: any }) {
       <Card>
         <div className="flex items-center justify-between py-1 text-sm">
           <div className="font-semibold">Liabilities + Equity</div>
-          <div className="font-mono font-semibold">{money(data.totalLiab + totalEquityWithNet)}</div>
+          <div className="font-mono font-semibold">
+            {money(data.totalLiab + totalEquityWithNet)}
+          </div>
         </div>
         <div className="flex items-center justify-between py-1 text-xs text-muted-foreground">
           <div>Balance check (Assets − L&amp;E)</div>
-          <div className="font-mono">{money(data.totalAssets - (data.totalLiab + totalEquityWithNet))}</div>
+          <div className="font-mono">
+            {money(data.totalAssets - (data.totalLiab + totalEquityWithNet))}
+          </div>
         </div>
       </Card>
     </div>
@@ -328,29 +382,30 @@ function CustomReportsTab({ fin }: { fin: any }) {
     );
   }
 
-  const tiles: { key: CustomReportKey; title: string; desc: string; icon: any; accent: string }[] = [
-    {
-      key: "trial",
-      title: "Trial Balance",
-      desc: "All accounts · debit & credit totals",
-      icon: Scale,
-      accent: "from-blue-500/15 to-blue-500/0 text-blue-600",
-    },
-    {
-      key: "gl",
-      title: "General Ledger View",
-      desc: "Transactions by account, period, branch",
-      icon: BookOpen,
-      accent: "from-violet-500/15 to-violet-500/0 text-violet-600",
-    },
-    {
-      key: "loan-base",
-      title: "Loan Base Report (As at Date)",
-      desc: "Loan portfolio snapshot at a chosen date",
-      icon: FileBarChart,
-      accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
-    },
-  ];
+  const tiles: { key: CustomReportKey; title: string; desc: string; icon: any; accent: string }[] =
+    [
+      {
+        key: "trial",
+        title: "Trial Balance",
+        desc: "All accounts · debit & credit totals",
+        icon: Scale,
+        accent: "from-blue-500/15 to-blue-500/0 text-blue-600",
+      },
+      {
+        key: "gl",
+        title: "General Ledger View",
+        desc: "Transactions by account, period, branch",
+        icon: BookOpen,
+        accent: "from-violet-500/15 to-violet-500/0 text-violet-600",
+      },
+      {
+        key: "loan-base",
+        title: "Loan Base Report (As at Date)",
+        desc: "Loan portfolio snapshot at a chosen date",
+        icon: FileBarChart,
+        accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
+      },
+    ];
 
   return (
     <div className="grid gap-3 md:grid-cols-3">
@@ -365,14 +420,19 @@ function CustomReportsTab({ fin }: { fin: any }) {
           >
             <Card className="p-3.5 hover:border-primary/40 transition-colors">
               <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${t.accent}`}>
+                <div
+                  className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${t.accent}`}
+                >
                   <Icon size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-[14px] truncate">{t.title}</div>
                   <div className="text-[11.5px] text-muted-foreground truncate">{t.desc}</div>
                 </div>
-                <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight
+                  size={16}
+                  className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform"
+                />
               </div>
             </Card>
           </button>
@@ -417,7 +477,12 @@ function GeneralLedgerReport() {
   const [branchId, setBranchId] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>(firstOfMonth);
   const [toDate, setToDate] = useState<string>(today);
-  const [submitted, setSubmitted] = useState<{ accountId: string; branchId: string; fromDate: string; toDate: string } | null>(null);
+  const [submitted, setSubmitted] = useState<{
+    accountId: string;
+    branchId: string;
+    fromDate: string;
+    toDate: string;
+  } | null>(null);
 
   const glFn = useServerFn(getReportGeneralLedger);
   const { data, isFetching } = useQuery({
@@ -539,8 +604,12 @@ function GeneralLedgerReport() {
               <div className="text-muted-foreground">{shortDate(r.date)}</div>
               <div className="font-mono text-ledger-ref">{r.reference}</div>
               <div className="text-muted-foreground truncate">{r.description}</div>
-              <div className="text-right font-mono text-debit">{r.debit > 0 ? money(r.debit) : ""}</div>
-              <div className="text-right font-mono text-primary">{r.credit > 0 ? money(r.credit) : ""}</div>
+              <div className="text-right font-mono text-debit">
+                {r.debit > 0 ? money(r.debit) : ""}
+              </div>
+              <div className="text-right font-mono text-primary">
+                {r.credit > 0 ? money(r.credit) : ""}
+              </div>
               <div className="text-right font-mono font-semibold">{money(r.balance)}</div>
             </div>
           ))}
@@ -571,7 +640,11 @@ function LoanBaseReport() {
   const [asOf, setAsOf] = useState<string>(today);
   const [branchId, setBranchId] = useState<string>("");
   const [productId, setProductId] = useState<string>("");
-  const [submitted, setSubmitted] = useState<{ asOf: string; branchId: string; productId: string } | null>({
+  const [submitted, setSubmitted] = useState<{
+    asOf: string;
+    branchId: string;
+    productId: string;
+  } | null>({
     asOf: today,
     branchId: "",
     productId: "",
@@ -688,14 +761,25 @@ function LoanBaseReport() {
             <div className="font-mono text-ledger-ref truncate">{r.contract_no}</div>
             <div className="truncate">{r.customer}</div>
             <div className="text-right font-mono">{money(r.facility_amount)}</div>
-            <div className="text-right font-mono text-muted-foreground">{Number(r.rate).toFixed(2)}%</div>
+            <div className="text-right font-mono text-muted-foreground">
+              {Number(r.rate).toFixed(2)}%
+            </div>
             <div className="text-right font-mono text-muted-foreground">{r.term_months}m</div>
             <div className="text-right font-mono">{money(r.principal_outstanding)}</div>
             <div className="text-right font-mono">{money(r.interest_outstanding)}</div>
             <div className="text-right font-mono">{money(r.charges_outstanding)}</div>
             <div className="text-right font-mono font-semibold">{money(r.total_outstanding)}</div>
-            <div className={cn("text-right font-mono", r.days_in_arrears > 0 ? "text-red-600 font-semibold" : "text-muted-foreground")}>{r.days_in_arrears}</div>
-            <div className="text-right font-mono">{r.rental_arrears > 0 ? money(r.rental_arrears) : "—"}</div>
+            <div
+              className={cn(
+                "text-right font-mono",
+                r.days_in_arrears > 0 ? "text-red-600 font-semibold" : "text-muted-foreground",
+              )}
+            >
+              {r.days_in_arrears}
+            </div>
+            <div className="text-right font-mono">
+              {r.rental_arrears > 0 ? money(r.rental_arrears) : "—"}
+            </div>
             <div className="text-right font-mono">{money(r.accrued_interest)}</div>
           </div>
         ))}
@@ -728,13 +812,17 @@ function EmptyRow({ label }: { label: string }) {
   return <div className="text-center text-faint text-sm py-8">{label}</div>;
 }
 
-function MetricCard({ label, value, tone }: { label: string; value: number; tone: "primary" | "positive" | "negative" }) {
+function MetricCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "primary" | "positive" | "negative";
+}) {
   const color =
-    tone === "primary"
-      ? "text-primary"
-      : tone === "positive"
-        ? "text-emerald-600"
-        : "text-red-600";
+    tone === "primary" ? "text-primary" : tone === "positive" ? "text-emerald-600" : "text-red-600";
   return (
     <Card>
       <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">{label}</div>

@@ -1,7 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { HandCoins, Banknote, Send, ArrowRight, PiggyBank, Wallet, Smartphone, Landmark, FileCheck2, Lock, ArrowDownFromLine, Truck, Undo2 } from "lucide-react";
+import {
+  HandCoins,
+  Banknote,
+  Send,
+  ArrowRight,
+  PiggyBank,
+  Wallet,
+  Smartphone,
+  Landmark,
+  FileCheck2,
+  Lock,
+  ArrowDownFromLine,
+  Truck,
+  Undo2,
+} from "lucide-react";
 import { Card } from "@/components/mzizi/Card";
-
 
 export const Route = createFileRoute("/_authenticated/transactions/")({
   component: TransactionsIndex,
@@ -77,7 +90,6 @@ const TILES = [
   },
 ] as const;
 
-
 function TransactionsIndex() {
   return (
     <div className="animate-fadein flex flex-col gap-5">
@@ -88,13 +100,18 @@ function TransactionsIndex() {
             <Link key={t.to} to={t.to} className="group">
               <Card className="p-3.5 hover:border-primary/40 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${t.accent}`}>
+                  <div
+                    className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${t.accent}`}
+                  >
                     <Icon size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[14px] truncate">{t.label}</div>
                   </div>
-                  <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight
+                    size={16}
+                    className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform"
+                  />
                 </div>
               </Card>
             </Link>

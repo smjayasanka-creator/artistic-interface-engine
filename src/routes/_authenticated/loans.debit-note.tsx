@@ -35,7 +35,16 @@ const daysBetween = (a: string, b: string) =>
   Math.round((new Date(a).getTime() - new Date(b).getTime()) / 86_400_000);
 
 type Errors = Partial<
-  Record<"loan_id" | "charge_id" | "amount" | "supplier_client_id" | "entry_date" | "reference" | "description", string>
+  Record<
+    | "loan_id"
+    | "charge_id"
+    | "amount"
+    | "supplier_client_id"
+    | "entry_date"
+    | "reference"
+    | "description",
+    string
+  >
 >;
 
 function DebitNotePage() {
@@ -132,8 +141,9 @@ function DebitNotePage() {
     if (!entryDate) e.entry_date = "Entry date required";
     else if (daysBetween(entryDate, today()) > 0) e.entry_date = "Cannot be in the future";
     else if (daysBetween(today(), entryDate) > 365) e.entry_date = "Too far in the past";
-    if (reference && !/^[A-Za-z0-9\-\/_ ]*$/.test(reference)) e.reference = "Invalid characters";
-    if (selectedCharge?.origin === "outside" && !supplierId) e.supplier_client_id = "Select a supplier";
+    if (reference && !/^[A-Za-z0-9\-/_ ]*$/.test(reference)) e.reference = "Invalid characters";
+    if (selectedCharge?.origin === "outside" && !supplierId)
+      e.supplier_client_id = "Select a supplier";
     if (description && description.length > 300) e.description = "Keep under 300 characters";
     setErrors(e);
     return Object.keys(e).length === 0;

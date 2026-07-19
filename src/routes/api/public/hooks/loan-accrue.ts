@@ -48,7 +48,9 @@ export const Route = createFileRoute("/api/public/hooks/loan-accrue")({
             accrual_skipped++;
             continue;
           }
-          const disbursed = (l.disbursed_at ? new Date(l.disbursed_at).toISOString().slice(0, 10) : null);
+          const disbursed = l.disbursed_at
+            ? new Date(l.disbursed_at).toISOString().slice(0, 10)
+            : null;
           if (!disbursed || today <= disbursed) {
             accrual_skipped++;
             continue;
@@ -59,12 +61,17 @@ export const Route = createFileRoute("/api/public/hooks/loan-accrue")({
             .from("loan_installment")
             .select("principal_paid")
             .eq("loan_id", l.id);
-          const paid = (insts ?? []).reduce((s: number, r: any) => s + Number(r.principal_paid ?? 0), 0);
+          const paid = (insts ?? []).reduce(
+            (s: number, r: any) => s + Number(r.principal_paid ?? 0),
+            0,
+          );
           const outstanding = Math.max(0, Number(l.principal) - paid);
           if (outstanding <= 0) {
             accrual_skipped++;
           } else {
-            const daily = Number(((outstanding * Number(l.annual_rate_pct)) / 100 / 365).toFixed(2));
+            const daily = Number(
+              ((outstanding * Number(l.annual_rate_pct)) / 100 / 365).toFixed(2),
+            );
             if (daily > 0) {
               // Check idempotency (already accrued today).
               const { data: existing } = await supabaseAdmin
@@ -83,24 +90,29 @@ export const Route = createFileRoute("/api/public/hooks/loan-accrue")({
                   .order("accrual_date", { ascending: false })
                   .limit(1)
                   .maybeSingle();
-                const cumulative = Number((Number(prev?.cumulative_amount ?? 0) + daily).toFixed(2));
+                const cumulative = Number(
+                  (Number(prev?.cumulative_amount ?? 0) + daily).toFixed(2),
+                );
 
                 const idem = `loan-accrue:${l.id}:${today}`;
-                const { data: entryId, error: postErr } = await supabaseAdmin.rpc("post_entry_system", {
-                  _company_id: companyId,
-                  _entry_date: today,
-                  _reference: `ACR-${today}`,
-                  _description: `Daily interest accrual`,
-                  _lines: [
-                    { account_id: accruedAcc, debit: daily, credit: 0 },
-                    { account_id: incomeAcc, debit: 0, credit: daily },
-                  ] as any,
-                  _branch_id: l.branch_id,
-                  _source_module: "loans",
-                  _source_ref: l.id,
-                  _idempotency_key: idem,
-                  _loan_id: l.id,
-                });
+                const { data: entryId, error: postErr } = await supabaseAdmin.rpc(
+                  "post_entry_system",
+                  {
+                    _company_id: companyId,
+                    _entry_date: today,
+                    _reference: `ACR-${today}`,
+                    _description: `Daily interest accrual`,
+                    _lines: [
+                      { account_id: accruedAcc, debit: daily, credit: 0 },
+                      { account_id: incomeAcc, debit: 0, credit: daily },
+                    ] as any,
+                    _branch_id: l.branch_id,
+                    _source_module: "loans",
+                    _source_ref: l.id,
+                    _idempotency_key: idem,
+                    _loan_id: l.id,
+                  },
+                );
                 if (postErr) {
                   accrual_skipped++;
                 } else {

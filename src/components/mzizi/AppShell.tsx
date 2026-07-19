@@ -2,13 +2,35 @@ import { Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
-import { LayoutDashboard, Users, Wallet, ArrowLeftRight, PiggyBank, BookOpen, LineChart, Workflow, Settings, ShieldCheck, Search, Circle, LogOut, CheckSquare, Plug, Landmark, ScrollText } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Wallet,
+  ArrowLeftRight,
+  PiggyBank,
+  BookOpen,
+  LineChart,
+  Workflow,
+  Settings,
+  ShieldCheck,
+  Search,
+  Circle,
+  LogOut,
+  CheckSquare,
+  Plug,
+  Landmark,
+  ScrollText,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession, getDashboard, getCompany } from "@/lib/mzizi.functions";
 import { setActiveCurrency, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+};
 type NavSection = { section: string; items: NavItem[] };
 type NavEntry = NavItem | NavSection;
 
@@ -35,46 +57,71 @@ const NAV: NavEntry[] = [
   },
   {
     section: "User",
-    items: [
-      { to: "/platform-admin", label: "Platform Admin Control", icon: ShieldCheck },
-    ],
+    items: [{ to: "/platform-admin", label: "Platform Admin Control", icon: ShieldCheck }],
   },
 ];
 
 function TITLE(pathname: string): { title: string; sub: string } {
-  if (pathname.startsWith("/dashboard")) return { title: "Dashboard", sub: "Today's operating view" };
+  if (pathname.startsWith("/dashboard"))
+    return { title: "Dashboard", sub: "Today's operating view" };
   if (pathname.startsWith("/clients")) return { title: "Clients", sub: "Member directory & KYC" };
-  if (pathname.startsWith("/loans/new")) return { title: "New application", sub: "Loan origination wizard" };
+  if (pathname.startsWith("/loans/new"))
+    return { title: "New application", sub: "Loan origination wizard" };
   if (pathname.startsWith("/loans")) return { title: "Loans", sub: "Portfolio & receivables" };
-  if (pathname.startsWith("/collections")) return { title: "Collections", sub: "Daily repayment tracking" };
+  if (pathname.startsWith("/collections"))
+    return { title: "Collections", sub: "Daily repayment tracking" };
   if (pathname.startsWith("/groups")) return { title: "Groups", sub: "Group-lending management" };
-  if (pathname.startsWith("/reports")) return { title: "Reports & analytics", sub: "Portfolio performance" };
-  if (pathname.startsWith("/ledger")) return { title: "General ledger", sub: "Journal entries & postings" };
-  if (pathname.startsWith("/accounts/journal")) return { title: "Journal Entries", sub: "Accounting entries & postings" };
-  if (pathname.startsWith("/accounts/bulk-journal")) return { title: "Bulk Journal Upload", sub: "Upload many entries via Excel/CSV" };
-  if (pathname.startsWith("/accounts/bank-reconciliation")) return { title: "Bank Reconciliation", sub: "Match statement lines with ledger" };
-  if (pathname.startsWith("/accounts/payments")) return { title: "Payments", sub: "Received repayments" };
-  if (pathname.startsWith("/accounts")) return { title: "Accounts", sub: "General ledger workspace" };
-  if (pathname.startsWith("/transactions/repayment")) return { title: "Loan Repayment", sub: "Record customer repayments" };
-  if (pathname.startsWith("/transactions/payments")) return { title: "Payments", sub: "Post incoming payments" };
-  if (pathname.startsWith("/transactions/disbursement")) return { title: "Disbursement", sub: "Release approved loans" };
-  if (pathname.startsWith("/transactions/deposit-receipt")) return { title: "Deposit Receipt", sub: "Record money received into a deposit" };
-  if (pathname.startsWith("/transactions/deposit-withdrawal")) return { title: "Deposit Withdrawal", sub: "Record money paid out from a deposit" };
-  if (pathname.startsWith("/transactions/cash-wallet")) return { title: "Cash ↔ Wallet Transfer", sub: "Move cash to or from mobile wallets" };
-  if (pathname.startsWith("/transactions/cash-bank")) return { title: "Cash ↔ Bank", sub: "Bank deposits and cash withdrawals" };
-  if (pathname.startsWith("/transactions/cheque-bank")) return { title: "Cheque → Bank", sub: "Deposit and clear cheques" };
-  if (pathname.startsWith("/transactions/close-cashier")) return { title: "Close Cashier", sub: "Day-end denomination count" };
-  if (pathname.startsWith("/transactions")) return { title: "Transactions", sub: "Money movement across the workspace" };
-  if (pathname.startsWith("/savings/new")) return { title: "New Savings", sub: "Open a savings account" };
-  if (pathname.startsWith("/savings/close")) return { title: "Close Savings Account", sub: "Payout & closure" };
-  if (pathname.startsWith("/savings/passbook")) return { title: "Passbook Stock", sub: "Stock, distribution & serials" };
+  if (pathname.startsWith("/reports"))
+    return { title: "Reports & analytics", sub: "Portfolio performance" };
+  if (pathname.startsWith("/ledger"))
+    return { title: "General ledger", sub: "Journal entries & postings" };
+  if (pathname.startsWith("/accounts/journal"))
+    return { title: "Journal Entries", sub: "Accounting entries & postings" };
+  if (pathname.startsWith("/accounts/bulk-journal"))
+    return { title: "Bulk Journal Upload", sub: "Upload many entries via Excel/CSV" };
+  if (pathname.startsWith("/accounts/bank-reconciliation"))
+    return { title: "Bank Reconciliation", sub: "Match statement lines with ledger" };
+  if (pathname.startsWith("/accounts/payments"))
+    return { title: "Payments", sub: "Received repayments" };
+  if (pathname.startsWith("/accounts"))
+    return { title: "Accounts", sub: "General ledger workspace" };
+  if (pathname.startsWith("/transactions/repayment"))
+    return { title: "Loan Repayment", sub: "Record customer repayments" };
+  if (pathname.startsWith("/transactions/payments"))
+    return { title: "Payments", sub: "Post incoming payments" };
+  if (pathname.startsWith("/transactions/disbursement"))
+    return { title: "Disbursement", sub: "Release approved loans" };
+  if (pathname.startsWith("/transactions/deposit-receipt"))
+    return { title: "Deposit Receipt", sub: "Record money received into a deposit" };
+  if (pathname.startsWith("/transactions/deposit-withdrawal"))
+    return { title: "Deposit Withdrawal", sub: "Record money paid out from a deposit" };
+  if (pathname.startsWith("/transactions/cash-wallet"))
+    return { title: "Cash ↔ Wallet Transfer", sub: "Move cash to or from mobile wallets" };
+  if (pathname.startsWith("/transactions/cash-bank"))
+    return { title: "Cash ↔ Bank", sub: "Bank deposits and cash withdrawals" };
+  if (pathname.startsWith("/transactions/cheque-bank"))
+    return { title: "Cheque → Bank", sub: "Deposit and clear cheques" };
+  if (pathname.startsWith("/transactions/close-cashier"))
+    return { title: "Close Cashier", sub: "Day-end denomination count" };
+  if (pathname.startsWith("/transactions"))
+    return { title: "Transactions", sub: "Money movement across the workspace" };
+  if (pathname.startsWith("/savings/new"))
+    return { title: "New Savings", sub: "Open a savings account" };
+  if (pathname.startsWith("/savings/close"))
+    return { title: "Close Savings Account", sub: "Payout & closure" };
+  if (pathname.startsWith("/savings/passbook"))
+    return { title: "Passbook Stock", sub: "Stock, distribution & serials" };
   if (pathname.startsWith("/savings")) return { title: "Savings", sub: "Member savings accounts" };
-  if (pathname.startsWith("/fd/new")) return { title: "New fixed deposit", sub: "Deposit acceptance" };
-  if (pathname.startsWith("/fd/maturity")) return { title: "Maturity due", sub: "Deposits maturing soon" };
+  if (pathname.startsWith("/fd/new"))
+    return { title: "New fixed deposit", sub: "Deposit acceptance" };
+  if (pathname.startsWith("/fd/maturity"))
+    return { title: "Maturity due", sub: "Deposits maturing soon" };
   if (pathname.startsWith("/fd")) return { title: "Fixed deposits", sub: "Portfolio & register" };
-  
-  if (pathname.startsWith("/platform-admin")) return { title: "Platform Admin", sub: "Tenant oversight & subscriptions" };
-  if (pathname.startsWith("/api")) return { title: "API", sub: "Third-party integrations & endpoints" };
+
+  if (pathname.startsWith("/platform-admin"))
+    return { title: "Platform Admin", sub: "Tenant oversight & subscriptions" };
+  if (pathname.startsWith("/api"))
+    return { title: "API", sub: "Third-party integrations & endpoints" };
   if (pathname.startsWith("/admin")) return { title: "Administration", sub: "Branch & staff" };
   return { title: "Mzizi Core", sub: "" };
 }
@@ -85,11 +132,26 @@ function ShellInner() {
   const router = useRouter();
   const qc = useQueryClient();
   const sessionFn = useServerFn(getSession);
-  const { data: session } = useQuery({ queryKey: ["session"], queryFn: () => sessionFn(), staleTime: 5 * 60_000, gcTime: 30 * 60_000 });
+  const { data: session } = useQuery({
+    queryKey: ["session"],
+    queryFn: () => sessionFn(),
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+  });
   const dashFn = useServerFn(getDashboard);
-  const { data: dash } = useQuery({ queryKey: ["dashboard"], queryFn: () => dashFn(), staleTime: 60_000, gcTime: 10 * 60_000 });
+  const { data: dash } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => dashFn(),
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+  });
   const companyFn = useServerFn(getCompany);
-  const { data: company } = useQuery({ queryKey: ["company"], queryFn: () => companyFn(), staleTime: 10 * 60_000, gcTime: 30 * 60_000 });
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: () => companyFn(),
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
+  });
   // Sync active currency during render so first paint uses the company currency,
   // and invalidate cached queries only when it actually changes.
   if (company?.currency && company.currency.toUpperCase() !== getActiveCurrency()) {
@@ -122,14 +184,19 @@ function ShellInner() {
         to={n.to}
         className={cn(
           "flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13px]",
-          active ? "text-white font-semibold" : "text-rail-foreground/85 font-medium hover:bg-white/5",
+          active
+            ? "text-white font-semibold"
+            : "text-rail-foreground/85 font-medium hover:bg-white/5",
         )}
         style={active ? { background: "var(--rail-active)" } : undefined}
       >
         <Icon size={18} className="flex-none" />
         <span className="flex-1">{n.label}</span>
         {n.to === "/loans" && approvalsCount > 0 && (
-          <span className="text-[10.5px] font-semibold font-mono px-1.5 py-0.5 rounded-full" style={{ background: "#f59e0b", color: "#3a2606" }}>
+          <span
+            className="text-[10.5px] font-semibold font-mono px-1.5 py-0.5 rounded-full"
+            style={{ background: "#f59e0b", color: "#3a2606" }}
+          >
             {approvalsCount}
           </span>
         )}
@@ -142,21 +209,29 @@ function ShellInner() {
       {/* Rail */}
       <aside className="w-[232px] flex-none bg-rail text-rail-foreground flex flex-col">
         <div className="flex items-center gap-3 px-5 pt-5 pb-4">
-          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center font-bold text-white text-[17px]" style={{ background: "linear-gradient(140deg,#14b8a6,#0f766e)" }}>
+          <div
+            className="w-9 h-9 rounded-[10px] flex items-center justify-center font-bold text-white text-[17px]"
+            style={{ background: "linear-gradient(140deg,#14b8a6,#0f766e)" }}
+          >
             M
           </div>
           <div className="min-w-0">
-            <div className="font-bold text-white text-base tracking-tight truncate">{company?.name ?? "Mzizi"}</div>
+            <div className="font-bold text-white text-base tracking-tight truncate">
+              {company?.name ?? "Mzizi"}
+            </div>
             <div className="text-[10.5px] text-rail-muted tracking-wider uppercase">Workspace</div>
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">
           {NAV.map((entry) => {
             if ("section" in entry) {
-              if (entry.section === "User" && !(session?.roles ?? []).includes("platform_admin")) return null;
+              if (entry.section === "User" && !(session?.roles ?? []).includes("platform_admin"))
+                return null;
               return (
                 <div key={entry.section} className="mt-3 mb-1">
-                  <div className="px-3 text-[10px] font-semibold tracking-wider uppercase text-rail-muted mb-1">{entry.section}</div>
+                  <div className="px-3 text-[10px] font-semibold tracking-wider uppercase text-rail-muted mb-1">
+                    {entry.section}
+                  </div>
                   {entry.items.map((n) => renderNav(n))}
                 </div>
               );
@@ -174,10 +249,18 @@ function ShellInner() {
               .toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[12.5px] font-semibold text-white truncate">{session?.staff?.full_name ?? "…"}</div>
-            <div className="text-[10.5px] text-rail-muted capitalize">{(session?.staff?.role ?? "").replace("_", " ")}</div>
+            <div className="text-[12.5px] font-semibold text-white truncate">
+              {session?.staff?.full_name ?? "…"}
+            </div>
+            <div className="text-[10.5px] text-rail-muted capitalize">
+              {(session?.staff?.role ?? "").replace("_", " ")}
+            </div>
           </div>
-          <button onClick={signOut} title="Sign out" className="text-rail-muted hover:text-white p-1">
+          <button
+            onClick={signOut}
+            title="Sign out"
+            className="text-rail-muted hover:text-white p-1"
+          >
             <LogOut size={16} />
           </button>
         </div>

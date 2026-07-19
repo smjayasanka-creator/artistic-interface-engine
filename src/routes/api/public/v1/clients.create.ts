@@ -1,16 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateApiKey, logApiCall } from "@/lib/api-auth.server";
 import {
-  ClientCreateRequest, ClientCreateResponse,
-  parseJsonBody, validateAndSend, logAndReturnAuthError,
-  checkIdempotency, withIdempotencyEnvelope, errJson, ERRORS,
+  ClientCreateRequest,
+  ClientCreateResponse,
+  parseJsonBody,
+  validateAndSend,
+  logAndReturnAuthError,
+  checkIdempotency,
+  withIdempotencyEnvelope,
+  errJson,
+  ERRORS,
 } from "@/lib/api-schemas.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ENDPOINT = "/api/public/v1/clients/create";
 const CHANNEL = "clients";
 
-const AVATAR_COLORS = ["#0f766e", "#0369a1", "#7c3aed", "#c2410c", "#b45309", "#065f46", "#9333ea", "#be185d"];
+const AVATAR_COLORS = [
+  "#0f766e",
+  "#0369a1",
+  "#7c3aed",
+  "#c2410c",
+  "#b45309",
+  "#065f46",
+  "#9333ea",
+  "#be185d",
+];
 
 export const Route = createFileRoute("/api/public/v1/clients/create")({
   server: {
@@ -19,15 +34,26 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
         const auth = await authenticateApiKey(request, "clients.create");
         if (!auth.ok) {
           return logAndReturnAuthError({
-            status: auth.status, error: auth.error, channel: CHANNEL, endpoint: ENDPOINT, direction: "inbound",
+            status: auth.status,
+            error: auth.error,
+            channel: CHANNEL,
+            endpoint: ENDPOINT,
+            direction: "inbound",
           });
         }
 
         const parsed = await parseJsonBody(request, ClientCreateRequest);
         if (!parsed.ok) {
           await logApiCall({
-            company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
-            endpoint: ENDPOINT, method: "POST", status_code: 400, request: parsed.raw, error: "validation_failed",
+            company_id: auth.key.company_id,
+            api_key_id: auth.key.id,
+            channel: CHANNEL,
+            direction: "inbound",
+            endpoint: ENDPOINT,
+            method: "POST",
+            status_code: 400,
+            request: parsed.raw,
+            error: "validation_failed",
           });
           return parsed.response;
         }
@@ -35,52 +61,90 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
         const idem = request.headers.get("Idempotency-Key");
         if (idem) {
           const hit = await checkIdempotency({
-            company_id: auth.key.company_id, endpoint: ENDPOINT, key: idem, body: parsed.data,
+            company_id: auth.key.company_id,
+            endpoint: ENDPOINT,
+            key: idem,
+            body: parsed.data,
           });
           if (hit.kind === "conflict") return errJson(ERRORS.idempotency_conflict);
-          if (hit.kind === "replay") return validateAndSend(ClientCreateResponse, hit.response as any, hit.status);
+          if (hit.kind === "replay")
+            return validateAndSend(ClientCreateResponse, hit.response as any, hit.status);
         }
 
         // Resolve branch: explicit branch_id (must belong to company) or the earliest branch of the company.
         let branchId = parsed.data.branch_id ?? null;
         if (branchId) {
           const { data: b } = await supabaseAdmin
-            .from("branch").select("id").eq("id", branchId).eq("company_id", auth.key.company_id).maybeSingle();
+            .from("branch")
+            .select("id")
+            .eq("id", branchId)
+            .eq("company_id", auth.key.company_id)
+            .maybeSingle();
           if (!b) {
-            const resp = errJson({ code: 400, error: "invalid_branch", message: "branch_id does not belong to this company." });
+            const resp = errJson({
+              code: 400,
+              error: "invalid_branch",
+              message: "branch_id does not belong to this company.",
+            });
             await logApiCall({
-              company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
-              endpoint: ENDPOINT, method: "POST", status_code: 400, request: parsed.data, error: "invalid_branch",
+              company_id: auth.key.company_id,
+              api_key_id: auth.key.id,
+              channel: CHANNEL,
+              direction: "inbound",
+              endpoint: ENDPOINT,
+              method: "POST",
+              status_code: 400,
+              request: parsed.data,
+              error: "invalid_branch",
             });
             return resp;
           }
         } else {
           const { data: b } = await supabaseAdmin
-            .from("branch").select("id").eq("company_id", auth.key.company_id)
-            .order("created_at", { ascending: true }).limit(1).maybeSingle();
+            .from("branch")
+            .select("id")
+            .eq("company_id", auth.key.company_id)
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .maybeSingle();
           branchId = b?.id ?? null;
         }
         if (!branchId) {
-          return errJson({ code: 400, error: "no_branch", message: "Company has no branch configured." });
+          return errJson({
+            code: 400,
+            error: "no_branch",
+            message: "Company has no branch configured.",
+          });
         }
 
         // Duplicate national_id guard within the company's branches
         const { data: dup } = await supabaseAdmin
-          .from("client").select("id, branch:branch_id(company_id)")
-          .eq("national_id", parsed.data.national_id).maybeSingle();
+          .from("client")
+          .select("id, branch:branch_id(company_id)")
+          .eq("national_id", parsed.data.national_id)
+          .maybeSingle();
         if (dup && (dup as any).branch?.company_id === auth.key.company_id) {
-          return errJson({ code: 409, error: "duplicate_national_id", message: "A client with this national ID already exists." });
+          return errJson({
+            code: 409,
+            error: "duplicate_national_id",
+            message: "A client with this national ID already exists.",
+          });
         }
 
         // Best-effort officer: the API key creator's staff record, if any, within this company
         let officerId: string | null = null;
         if (auth.key.company_id && (auth as any).key) {
           const { data: creator } = await supabaseAdmin
-            .from("api_key").select("created_by").eq("id", auth.key.id).maybeSingle();
+            .from("api_key")
+            .select("created_by")
+            .eq("id", auth.key.id)
+            .maybeSingle();
           if (creator?.created_by) {
             const { data: s } = await supabaseAdmin
-              .from("staff").select("id, branch:branch_id(company_id)")
-              .eq("user_id", creator.created_by).maybeSingle();
+              .from("staff")
+              .select("id, branch:branch_id(company_id)")
+              .eq("user_id", creator.created_by)
+              .maybeSingle();
             if (s && (s as any).branch?.company_id === auth.key.company_id) officerId = s.id;
           }
         }
@@ -106,20 +170,29 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
           externalPersonId = (call.result?.ID as string) ?? null;
           externalClientId = call.result?.clientID != null ? String(call.result.clientID) : null;
           await supabaseAdmin.from("api_transaction_log").insert({
-            company_id: auth.key.company_id, api_key_id: auth.key.id,
-            channel: "instafin", direction: "outbound",
-            endpoint: "/submit/instafin.CreatePerson", method: "POST",
-            status_code: call.status, reference: externalPersonId,
-            request: call.requestBody as any, response: call.responseBody as any,
+            company_id: auth.key.company_id,
+            api_key_id: auth.key.id,
+            channel: "instafin",
+            direction: "outbound",
+            endpoint: "/submit/instafin.CreatePerson",
+            method: "POST",
+            status_code: call.status,
+            reference: externalPersonId,
+            request: call.requestBody as any,
+            response: call.responseBody as any,
           });
         } catch (e) {
           const err = e as InstanceType<typeof InstafinError> | Error;
           const status = (err as any).status ?? 0;
           await supabaseAdmin.from("api_transaction_log").insert({
-            company_id: auth.key.company_id, api_key_id: auth.key.id,
-            channel: "instafin", direction: "outbound",
-            endpoint: "/submit/instafin.CreatePerson", method: "POST",
-            status_code: status, response: (err as any).body ?? null,
+            company_id: auth.key.company_id,
+            api_key_id: auth.key.id,
+            channel: "instafin",
+            direction: "outbound",
+            endpoint: "/submit/instafin.CreatePerson",
+            method: "POST",
+            status_code: status,
+            response: (err as any).body ?? null,
             error: err.message,
           });
           return errJson({ code: 502, error: "instafin_failed", message: err.message });
@@ -165,10 +238,21 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
 
         if (error || !created) {
           await logApiCall({
-            company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
-            endpoint: ENDPOINT, method: "POST", status_code: 500, request: parsed.data, error: error?.message ?? "insert_failed",
+            company_id: auth.key.company_id,
+            api_key_id: auth.key.id,
+            channel: CHANNEL,
+            direction: "inbound",
+            endpoint: ENDPOINT,
+            method: "POST",
+            status_code: 500,
+            request: parsed.data,
+            error: error?.message ?? "insert_failed",
           });
-          return errJson({ code: 500, error: "insert_failed", message: error?.message ?? "Failed to create client." });
+          return errJson({
+            code: 500,
+            error: "insert_failed",
+            message: error?.message ?? "Failed to create client.",
+          });
         }
 
         if (parsed.data.bank_accounts && parsed.data.bank_accounts.length > 0) {
@@ -196,9 +280,16 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
         };
 
         await logApiCall({
-          company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
-          endpoint: ENDPOINT, method: "POST", reference: created.id, status_code: 201,
-          request: withIdempotencyEnvelope(parsed.data, idem), response,
+          company_id: auth.key.company_id,
+          api_key_id: auth.key.id,
+          channel: CHANNEL,
+          direction: "inbound",
+          endpoint: ENDPOINT,
+          method: "POST",
+          reference: created.id,
+          status_code: 201,
+          request: withIdempotencyEnvelope(parsed.data, idem),
+          response,
         });
 
         return validateAndSend(ClientCreateResponse, response, 201);

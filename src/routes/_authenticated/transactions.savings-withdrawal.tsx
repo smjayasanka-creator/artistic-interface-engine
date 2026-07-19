@@ -5,7 +5,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { listSavingsAccounts, postSavingsTransaction } from "@/lib/savings.functions";
 import { Card } from "@/components/mzizi/Card";
-import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
+import {
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  selectCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
+} from "@/components/mzizi/FormGrid";
 import { money, getActiveCurrency } from "@/lib/format";
 import {
   PaymentMethodPicker,
@@ -47,8 +55,7 @@ function SavingsWithdrawalPage() {
   const clientId: string | undefined = selected?.client?.id;
   const available = selected ? Number(selected.available_balance ?? selected.balance ?? 0) : 0;
   const exceeds = !!(selected && amount && Number(amount) > available);
-  const valid =
-    accountId && amount && Number(amount) > 0 && !exceeds && paymentMethodValid(pay);
+  const valid = accountId && amount && Number(amount) > 0 && !exceeds && paymentMethodValid(pay);
 
   function buildReference(): string | null {
     if (pay.method === "cheque") return pay.reference ? `CHQ ${pay.reference}` : null;
@@ -64,7 +71,9 @@ function SavingsWithdrawalPage() {
 
   return (
     <div className="animate-fadein flex flex-col gap-4">
-      <Link to="/transactions" className="text-xs text-primary hover:underline">← Back to transactions</Link>
+      <Link to="/transactions" className="text-xs text-primary hover:underline">
+        ← Back to transactions
+      </Link>
 
       <form
         onSubmit={(e) => {
@@ -89,7 +98,11 @@ function SavingsWithdrawalPage() {
         <Card className="p-6">
           <FormGrid>
             <FormField label="Savings account" required span={8}>
-              <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={selectCls}>
+              <select
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+                className={selectCls}
+              >
                 <option value="">Select active account…</option>
                 {(accounts ?? []).map((a: any) => (
                   <option key={a.id} value={a.id}>
@@ -122,13 +135,21 @@ function SavingsWithdrawalPage() {
             />
 
             <FormField label="Narration" span={12}>
-              <input value={narration} onChange={(e) => setNarration(e.target.value)} className={inputCls} maxLength={200} placeholder="Optional description" />
+              <input
+                value={narration}
+                onChange={(e) => setNarration(e.target.value)}
+                className={inputCls}
+                maxLength={200}
+                placeholder="Optional description"
+              />
             </FormField>
           </FormGrid>
         </Card>
 
         <FormActions>
-          <Link to="/transactions" className={btnSecondaryCls}>Cancel</Link>
+          <Link to="/transactions" className={btnSecondaryCls}>
+            Cancel
+          </Link>
           <button type="submit" disabled={!valid || post.isPending} className={btnPrimaryCls}>
             {post.isPending ? "Posting…" : "Post withdrawal"}
           </button>

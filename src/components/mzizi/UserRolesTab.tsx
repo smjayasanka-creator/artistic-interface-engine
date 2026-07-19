@@ -4,9 +4,22 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { KeyRound, Trash2, Users2, Pencil, Check } from "lucide-react";
 import { Card, CardTitle } from "./Card";
-import { FormGrid, FormField, FormActions, inputCls, btnPrimaryCls, btnSecondaryCls } from "./FormGrid";
+import {
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
+} from "./FormGrid";
 import { cn } from "@/lib/utils";
-import { listPermissions, listCustomRoles, upsertCustomRole, deleteCustomRole, setRoleAssignees } from "@/lib/roles.functions";
+import {
+  listPermissions,
+  listCustomRoles,
+  upsertCustomRole,
+  deleteCustomRole,
+  setRoleAssignees,
+} from "@/lib/roles.functions";
 import { listTeam } from "@/lib/mzizi.functions";
 
 type Mode = "list" | "create" | "edit";
@@ -113,7 +126,8 @@ export function UserRolesTab() {
 
   function togglePerm(code: string) {
     const next = new Set(form.permissions);
-    next.has(code) ? next.delete(code) : next.add(code);
+    if (next.has(code)) next.delete(code);
+    else next.add(code);
     setForm({ ...form, permissions: next });
   }
 
@@ -142,21 +156,42 @@ export function UserRolesTab() {
         >
           <FormGrid>
             <FormField label="Role name" required span={4}>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} required minLength={2} maxLength={60} />
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className={inputCls}
+                required
+                minLength={2}
+                maxLength={60}
+              />
             </FormField>
             <FormField label="Description" span={6}>
-              <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={inputCls} maxLength={400} />
+              <input
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className={inputCls}
+                maxLength={400}
+              />
             </FormField>
             <FormField label="Status" span={2}>
               <label className="flex items-center gap-2 text-[12px] pt-2">
-                <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
+                <input
+                  type="checkbox"
+                  checked={form.active}
+                  onChange={(e) => setForm({ ...form, active: e.target.checked })}
+                />
                 Active
               </label>
             </FormField>
           </FormGrid>
 
           <div className="flex flex-col gap-3">
-            <div className="text-[12px] font-semibold">Permissions <span className="text-muted-foreground font-normal">({form.permissions.size} selected)</span></div>
+            <div className="text-[12px] font-semibold">
+              Permissions{" "}
+              <span className="text-muted-foreground font-normal">
+                ({form.permissions.size} selected)
+              </span>
+            </div>
             <div className="grid gap-3 md:grid-cols-2">
               {grouped.map(([mod, list]) => {
                 const codes = (list ?? []).map((p) => p.code);
@@ -166,20 +201,40 @@ export function UserRolesTab() {
                   <div key={mod} className="border border-border rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-[12px] font-semibold">{mod}</div>
-                      <button type="button" onClick={() => toggleModule(mod, codes)} className={cn(
-                        "text-[10.5px] px-2 py-0.5 rounded border transition-colors",
-                        allOn ? "border-primary bg-primary/10 text-primary" : someOn ? "border-primary/40 text-primary" : "border-border text-muted-foreground hover:border-primary/40"
-                      )}>
+                      <button
+                        type="button"
+                        onClick={() => toggleModule(mod, codes)}
+                        className={cn(
+                          "text-[10.5px] px-2 py-0.5 rounded border transition-colors",
+                          allOn
+                            ? "border-primary bg-primary/10 text-primary"
+                            : someOn
+                              ? "border-primary/40 text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/40",
+                        )}
+                      >
                         {allOn ? "All selected" : someOn ? "Select all" : "Select all"}
                       </button>
                     </div>
                     <div className="flex flex-col gap-1.5">
                       {(list ?? []).map((p) => (
-                        <label key={p.code} className="flex items-start gap-2 text-[12px] cursor-pointer">
-                          <input type="checkbox" checked={form.permissions.has(p.code)} onChange={() => togglePerm(p.code)} className="mt-0.5" />
+                        <label
+                          key={p.code}
+                          className="flex items-start gap-2 text-[12px] cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={form.permissions.has(p.code)}
+                            onChange={() => togglePerm(p.code)}
+                            className="mt-0.5"
+                          />
                           <span className="flex-1">
                             <span className="font-medium">{p.label}</span>
-                            {p.description && <span className="text-muted-foreground text-[11px] block leading-tight">{p.description}</span>}
+                            {p.description && (
+                              <span className="text-muted-foreground text-[11px] block leading-tight">
+                                {p.description}
+                              </span>
+                            )}
                             <span className="font-mono text-[10px] text-faint">{p.code}</span>
                           </span>
                         </label>
@@ -192,7 +247,16 @@ export function UserRolesTab() {
           </div>
 
           <FormActions>
-            <button type="button" onClick={() => { setMode("list"); setForm(emptyForm()); }} className={btnSecondaryCls}>Cancel</button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("list");
+                setForm(emptyForm());
+              }}
+              className={btnSecondaryCls}
+            >
+              Cancel
+            </button>
             <button type="submit" disabled={save.isPending} className={btnPrimaryCls}>
               {save.isPending ? "Saving…" : form.id ? "Save role" : "Create role"}
             </button>
@@ -209,13 +273,27 @@ export function UserRolesTab() {
       <Card padded={false}>
         <div className="flex items-center justify-between px-5 py-3 border-b border-border">
           <div>
-            <div className="text-[13px] font-semibold flex items-center gap-2"><KeyRound size={14} /> User roles</div>
-            <div className="text-[11.5px] text-muted-foreground">Custom roles with specific actions your team can perform.</div>
+            <div className="text-[13px] font-semibold flex items-center gap-2">
+              <KeyRound size={14} /> User roles
+            </div>
+            <div className="text-[11.5px] text-muted-foreground">
+              Custom roles with specific actions your team can perform.
+            </div>
           </div>
-          <button onClick={() => { setForm(emptyForm()); setMode("create"); }} className={btnPrimaryCls}>New role</button>
+          <button
+            onClick={() => {
+              setForm(emptyForm());
+              setMode("create");
+            }}
+            className={btnPrimaryCls}
+          >
+            New role
+          </button>
         </div>
         {(roles ?? []).length === 0 && (
-          <div className="text-center text-faint text-sm py-8">No custom roles yet. Create one to grant specific actions.</div>
+          <div className="text-center text-faint text-sm py-8">
+            No custom roles yet. Create one to grant specific actions.
+          </div>
         )}
         <div className="divide-y divide-border">
           {(roles ?? []).map((r: any) => (
@@ -224,31 +302,61 @@ export function UserRolesTab() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <div className="text-[13px] font-semibold">{r.name}</div>
-                    <span className={cn("text-[10px] px-2 py-0.5 rounded-full border", r.active ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700" : "border-muted bg-muted text-muted-foreground")}>
+                    <span
+                      className={cn(
+                        "text-[10px] px-2 py-0.5 rounded-full border",
+                        r.active
+                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                          : "border-muted bg-muted text-muted-foreground",
+                      )}
+                    >
                       {r.active ? "Active" : "Inactive"}
                     </span>
                   </div>
-                  {r.description && <div className="text-[11.5px] text-muted-foreground">{r.description}</div>}
+                  {r.description && (
+                    <div className="text-[11.5px] text-muted-foreground">{r.description}</div>
+                  )}
                   <div className="mt-1.5 text-[11px] text-muted-foreground">
-                    {r.permissions.length} permission{r.permissions.length === 1 ? "" : "s"} · {r.assignees.length} staff assigned
+                    {r.permissions.length} permission{r.permissions.length === 1 ? "" : "s"} ·{" "}
+                    {r.assignees.length} staff assigned
                   </div>
                   {r.assignees.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {r.assignees.slice(0, 6).map((a: any) => (
-                        <span key={a.staff_id} className="text-[10.5px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">{a.full_name}</span>
+                        <span
+                          key={a.staff_id}
+                          className="text-[10.5px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground"
+                        >
+                          {a.full_name}
+                        </span>
                       ))}
-                      {r.assignees.length > 6 && <span className="text-[10.5px] text-muted-foreground">+{r.assignees.length - 6} more</span>}
+                      {r.assignees.length > 6 && (
+                        <span className="text-[10.5px] text-muted-foreground">
+                          +{r.assignees.length - 6} more
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <button onClick={() => openAssign(r)} className="text-[11px] px-2 py-1 rounded border border-border hover:border-primary hover:text-primary flex items-center gap-1">
+                  <button
+                    onClick={() => openAssign(r)}
+                    className="text-[11px] px-2 py-1 rounded border border-border hover:border-primary hover:text-primary flex items-center gap-1"
+                  >
                     <Users2 size={12} /> Assign
                   </button>
-                  <button onClick={() => startEdit(r)} className="text-[11px] px-2 py-1 rounded border border-border hover:border-primary hover:text-primary flex items-center gap-1">
+                  <button
+                    onClick={() => startEdit(r)}
+                    className="text-[11px] px-2 py-1 rounded border border-border hover:border-primary hover:text-primary flex items-center gap-1"
+                  >
                     <Pencil size={12} /> Edit
                   </button>
-                  <button onClick={() => { if (confirm(`Delete role "${r.name}"?`)) remove.mutate(r.id); }} className="text-[11px] px-2 py-1 rounded border border-border hover:border-rose-500 hover:text-rose-600 flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      if (confirm(`Delete role "${r.name}"?`)) remove.mutate(r.id);
+                    }}
+                    className="text-[11px] px-2 py-1 rounded border border-border hover:border-rose-500 hover:text-rose-600 flex items-center gap-1"
+                  >
                     <Trash2 size={12} />
                   </button>
                 </div>
@@ -261,16 +369,22 @@ export function UserRolesTab() {
       {assignRoleId && assignRole && (
         <Card>
           <CardTitle>Assign staff — {assignRole.name}</CardTitle>
-          <p className="text-[12px] text-muted-foreground -mt-1 mb-3">Pick which staff members are granted this role.</p>
+          <p className="text-[12px] text-muted-foreground -mt-1 mb-3">
+            Pick which staff members are granted this role.
+          </p>
           <div className="flex flex-col gap-1.5 max-h-80 overflow-auto border border-border rounded-lg p-2">
             {(team?.members ?? []).map((s: any) => (
-              <label key={s.id} className="flex items-center gap-2 text-[12px] px-2 py-1 rounded hover:bg-secondary/50 cursor-pointer">
+              <label
+                key={s.id}
+                className="flex items-center gap-2 text-[12px] px-2 py-1 rounded hover:bg-secondary/50 cursor-pointer"
+              >
                 <input
                   type="checkbox"
                   checked={selectedStaff.has(s.id)}
                   onChange={(e) => {
                     const next = new Set(selectedStaff);
-                    e.target.checked ? next.add(s.id) : next.delete(s.id);
+                    if (e.target.checked) next.add(s.id);
+                    else next.delete(s.id);
                     setSelectedStaff(next);
                   }}
                 />
@@ -278,14 +392,26 @@ export function UserRolesTab() {
                   <span className="font-medium">{s.full_name}</span>
                   <span className="text-muted-foreground ml-2 text-[11px]">{s.email ?? ""}</span>
                 </span>
-                <span className="text-[10.5px] text-muted-foreground capitalize">{String(s.role ?? "").replace("_", " ")}</span>
+                <span className="text-[10.5px] text-muted-foreground capitalize">
+                  {String(s.role ?? "").replace("_", " ")}
+                </span>
               </label>
             ))}
-            {(team?.members ?? []).length === 0 && <div className="text-[12px] text-muted-foreground text-center py-4">No staff yet.</div>}
+            {(team?.members ?? []).length === 0 && (
+              <div className="text-[12px] text-muted-foreground text-center py-4">
+                No staff yet.
+              </div>
+            )}
           </div>
           <FormActions>
-            <button onClick={() => setAssignRoleId(null)} className={btnSecondaryCls}>Cancel</button>
-            <button onClick={() => assign.mutate()} disabled={assign.isPending} className={btnPrimaryCls}>
+            <button onClick={() => setAssignRoleId(null)} className={btnSecondaryCls}>
+              Cancel
+            </button>
+            <button
+              onClick={() => assign.mutate()}
+              disabled={assign.isPending}
+              className={btnPrimaryCls}
+            >
               <Check size={14} className="inline -mt-0.5 mr-1" />
               {assign.isPending ? "Saving…" : "Save assignments"}
             </button>

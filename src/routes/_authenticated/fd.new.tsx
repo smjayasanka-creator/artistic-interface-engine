@@ -31,7 +31,13 @@ export const Route = createFileRoute("/_authenticated/fd/new")({
   component: NewFd,
 });
 
-type Nominee = { client_id: string | null; name: string; nic: string; relationship: string; percentage: number };
+type Nominee = {
+  client_id: string | null;
+  name: string;
+  nic: string;
+  relationship: string;
+  percentage: number;
+};
 
 function NewFd() {
   const navigate = useNavigate();
@@ -46,7 +52,10 @@ function NewFd() {
   const moFn = useServerFn(listMarketingOfficers);
 
   const { data: products } = useQuery({ queryKey: ["fd-products"], queryFn: () => prodFn() });
-  const { data: clients } = useQuery({ queryKey: ["clients", "active"], queryFn: () => clientFn({ data: { filter: "active" } }) });
+  const { data: clients } = useQuery({
+    queryKey: ["clients", "active"],
+    queryFn: () => clientFn({ data: { filter: "active" } }),
+  });
   const { data: glAccounts } = useQuery({ queryKey: ["gl_accounts"], queryFn: () => glFn() });
   const { data: introducers } = useQuery({ queryKey: ["introducers"], queryFn: () => introFn() });
   const { data: officers } = useQuery({ queryKey: ["marketing-officers"], queryFn: () => moFn() });
@@ -58,19 +67,27 @@ function NewFd() {
   const [principal, setPrincipal] = useState<number | "">("");
   const [payoutOption, setPayoutOption] = useState<"monthly" | "at_maturity">("at_maturity");
   const [settlement, setSettlement] = useState("");
-  const [maturityInstr, setMaturityInstr] = useState<"payout" | "renew_principal" | "renew_principal_interest">("payout");
+  const [maturityInstr, setMaturityInstr] = useState<
+    "payout" | "renew_principal" | "renew_principal_interest"
+  >("payout");
   const [valueDate, setValueDate] = useState(today);
-  const [nominees, setNominees] = useState<Nominee[]>([{ client_id: null, name: "", nic: "", relationship: "", percentage: 100 }]);
+  const [nominees, setNominees] = useState<Nominee[]>([
+    { client_id: null, name: "", nic: "", relationship: "", percentage: 100 },
+  ]);
   const [rate, setRate] = useState<number | null>(null);
 
   const [dispatchOption, setDispatchOption] = useState<"post" | "branch" | "digital">("branch");
   const [payoutBankAcct, setPayoutBankAcct] = useState<string>("");
-  const [interestMode, setInterestMode] = useState<"bank_transfer" | "credit_savings">("credit_savings");
+  const [interestMode, setInterestMode] = useState<"bank_transfer" | "credit_savings">(
+    "credit_savings",
+  );
   const [interestSavingsAcct, setInterestSavingsAcct] = useState<string>("");
   const [marketingOfficer, setMarketingOfficer] = useState<string>("");
   const [introducerId, setIntroducerId] = useState<string>("");
   const [introCommission, setIntroCommission] = useState<number | "">("");
-  const [introPayMode, setIntroPayMode] = useState<"cash" | "bank_transfer" | "credit_savings">("cash");
+  const [introPayMode, setIntroPayMode] = useState<"cash" | "bank_transfer" | "credit_savings">(
+    "cash",
+  );
 
   const { data: clientBanks } = useQuery({
     queryKey: ["client-banks", clientId],
@@ -96,16 +113,25 @@ function NewFd() {
       return;
     }
     const intro = introducers?.find((i) => i.id === introducerId);
-    if (intro?.default_commission_amount != null) setIntroCommission(Number(intro.default_commission_amount));
+    if (intro?.default_commission_amount != null)
+      setIntroCommission(Number(intro.default_commission_amount));
     else if (intro?.default_commission_pct != null && principal) {
-      setIntroCommission(Math.round(Number(principal) * (Number(intro.default_commission_pct) / 100) * 100) / 100);
+      setIntroCommission(
+        Math.round(Number(principal) * (Number(intro.default_commission_pct) / 100) * 100) / 100,
+      );
     }
   }, [introducerId, introducers, principal]);
 
-  const product = useMemo(() => products?.find((p) => p.id === productId) ?? null, [products, productId]);
+  const product = useMemo(
+    () => products?.find((p) => p.id === productId) ?? null,
+    [products, productId],
+  );
   // Tenure is validated against the product's min/max range; rates come from ALCO.
 
-  const maturity = useMemo(() => (tenure && valueDate ? addMonths(valueDate, Number(tenure)) : ""), [tenure, valueDate]);
+  const maturity = useMemo(
+    () => (tenure && valueDate ? addMonths(valueDate, Number(tenure)) : ""),
+    [tenure, valueDate],
+  );
 
   async function refreshRate(p = productId, t = tenure, d = valueDate) {
     if (!p || !t || !d) {
@@ -144,7 +170,11 @@ function NewFd() {
           interest_savings_account_id: needSavingsAccount ? interestSavingsAcct || null : null,
           marketing_officer_id: marketingOfficer || null,
           introducer_id: introducerId || null,
-          introducer_commission_amount: introducerId ? (introCommission === "" ? null : Number(introCommission)) : null,
+          introducer_commission_amount: introducerId
+            ? introCommission === ""
+              ? null
+              : Number(introCommission)
+            : null,
           introducer_commission_payment_mode: introducerId ? introPayMode : null,
         },
       }),
@@ -171,7 +201,11 @@ function NewFd() {
         <div className="text-[15px] font-semibold mb-4">New fixed deposit</div>
         <FormGrid>
           <FormField label="Customer" required span={6}>
-            <select className={selectCls} value={clientId} onChange={(e) => setClientId(e.target.value)}>
+            <select
+              className={selectCls}
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+            >
               <option value="">Select customer…</option>
               {(clients ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
@@ -232,12 +266,17 @@ function NewFd() {
             />
             {product && (
               <span className="text-[11px] text-muted-foreground mt-1">
-                Allowed: {(product as any).min_tenure_months ?? 1}–{(product as any).max_tenure_months ?? "—"} months
+                Allowed: {(product as any).min_tenure_months ?? 1}–
+                {(product as any).max_tenure_months ?? "—"} months
               </span>
             )}
           </FormField>
           <FormField label="Applicable rate (%)" span={3}>
-            <input className={inputCls + " bg-muted/40 font-mono"} value={rate == null ? "—" : rate.toFixed(3)} readOnly />
+            <input
+              className={inputCls + " bg-muted/40 font-mono"}
+              value={rate == null ? "—" : rate.toFixed(3)}
+              readOnly
+            />
           </FormField>
 
           <FormField label={`Principal (${getActiveCurrency()})`} required span={4}>
@@ -250,12 +289,17 @@ function NewFd() {
             />
             {product && (
               <span className="text-[11px] text-muted-foreground mt-1">
-                Min {money(Number(product.min_amount))} · Max {product.max_amount == null ? "—" : money(Number(product.max_amount))}
+                Min {money(Number(product.min_amount))} · Max{" "}
+                {product.max_amount == null ? "—" : money(Number(product.max_amount))}
               </span>
             )}
           </FormField>
           <FormField label="Marketing officer" span={4}>
-            <select className={selectCls} value={marketingOfficer} onChange={(e) => setMarketingOfficer(e.target.value)}>
+            <select
+              className={selectCls}
+              value={marketingOfficer}
+              onChange={(e) => setMarketingOfficer(e.target.value)}
+            >
               <option value="">— none —</option>
               {(officers ?? []).map((o) => (
                 <option key={o.id} value={o.id}>
@@ -266,7 +310,11 @@ function NewFd() {
           </FormField>
 
           <FormField label="Settlement GL account" span={12}>
-            <select className={selectCls} value={settlement} onChange={(e) => setSettlement(e.target.value)}>
+            <select
+              className={selectCls}
+              value={settlement}
+              onChange={(e) => setSettlement(e.target.value)}
+            >
               <option value="">— none —</option>
               {(glAccounts ?? []).map((a) => (
                 <option key={a.id} value={a.id}>
@@ -293,7 +341,11 @@ function NewFd() {
               </select>
             </FormField>
             <FormField label="Certificate dispatch" required span={6}>
-              <select className={selectCls} value={dispatchOption} onChange={(e) => setDispatchOption(e.target.value as typeof dispatchOption)}>
+              <select
+                className={selectCls}
+                value={dispatchOption}
+                onChange={(e) => setDispatchOption(e.target.value as typeof dispatchOption)}
+              >
                 <option value="branch">Collect from branch</option>
                 <option value="post">Post</option>
                 <option value="digital">Digital certificate</option>
@@ -301,8 +353,15 @@ function NewFd() {
             </FormField>
             {maturityInstr === "payout" && (
               <FormField label="Pay-out bank account" required span={12}>
-                <select className={selectCls} value={payoutBankAcct} onChange={(e) => setPayoutBankAcct(e.target.value)} disabled={!clientId}>
-                  <option value="">{clientId ? "Select bank account…" : "Select customer first"}</option>
+                <select
+                  className={selectCls}
+                  value={payoutBankAcct}
+                  onChange={(e) => setPayoutBankAcct(e.target.value)}
+                  disabled={!clientId}
+                >
+                  <option value="">
+                    {clientId ? "Select bank account…" : "Select customer first"}
+                  </option>
                   {(clientBanks ?? []).map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.bank_name} · {b.account_no} · {b.account_name}
@@ -341,15 +400,26 @@ function NewFd() {
               </select>
             </FormField>
             <FormField label="Payment mode" required span={6}>
-              <select className={selectCls} value={interestMode} onChange={(e) => setInterestMode(e.target.value as typeof interestMode)}>
+              <select
+                className={selectCls}
+                value={interestMode}
+                onChange={(e) => setInterestMode(e.target.value as typeof interestMode)}
+              >
                 <option value="credit_savings">Credit to SDF account</option>
                 <option value="bank_transfer">Bank transfer</option>
               </select>
             </FormField>
             {interestMode === "bank_transfer" && (
               <FormField label="Bank account (interest transfer)" required span={12}>
-                <select className={selectCls} value={payoutBankAcct} onChange={(e) => setPayoutBankAcct(e.target.value)} disabled={!clientId}>
-                  <option value="">{clientId ? "Select bank account…" : "Select customer first"}</option>
+                <select
+                  className={selectCls}
+                  value={payoutBankAcct}
+                  onChange={(e) => setPayoutBankAcct(e.target.value)}
+                  disabled={!clientId}
+                >
+                  <option value="">
+                    {clientId ? "Select bank account…" : "Select customer first"}
+                  </option>
                   {(clientBanks ?? []).map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.bank_name} · {b.account_no} · {b.account_name}
@@ -366,8 +436,15 @@ function NewFd() {
             )}
             {interestMode === "credit_savings" && (
               <FormField label="SDF savings account" required span={12}>
-                <select className={selectCls} value={interestSavingsAcct} onChange={(e) => setInterestSavingsAcct(e.target.value)} disabled={!clientId}>
-                  <option value="">{clientId ? "Select savings account…" : "Select customer first"}</option>
+                <select
+                  className={selectCls}
+                  value={interestSavingsAcct}
+                  onChange={(e) => setInterestSavingsAcct(e.target.value)}
+                  disabled={!clientId}
+                >
+                  <option value="">
+                    {clientId ? "Select savings account…" : "Select customer first"}
+                  </option>
                   {(clientSavings ?? []).map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.account_no} · {(s.product as { name?: string } | null)?.name ?? "Savings"}
@@ -389,7 +466,11 @@ function NewFd() {
           <div className="text-[13px] font-semibold mb-2">Introducer (optional)</div>
           <FormGrid>
             <FormField label="Introducer" span={6}>
-              <select className={selectCls} value={introducerId} onChange={(e) => setIntroducerId(e.target.value)}>
+              <select
+                className={selectCls}
+                value={introducerId}
+                onChange={(e) => setIntroducerId(e.target.value)}
+              >
                 <option value="">— none —</option>
                 {(introducers ?? []).map((i) => (
                   <option key={i.id} value={i.id}>
@@ -408,7 +489,9 @@ function NewFd() {
                 step="0.01"
                 className={inputCls}
                 value={introCommission}
-                onChange={(e) => setIntroCommission(e.target.value === "" ? "" : Number(e.target.value))}
+                onChange={(e) =>
+                  setIntroCommission(e.target.value === "" ? "" : Number(e.target.value))
+                }
                 disabled={!introducerId}
               />
             </FormField>
@@ -432,11 +515,19 @@ function NewFd() {
           <div className="flex items-center justify-between mb-2">
             <div>
               <div className="text-[13px] font-semibold">Nominees</div>
-              <div className="text-[11px] text-muted-foreground">Pick from registered customers. Percentages must total 100 — currently {nomineeTotal}%</div>
+              <div className="text-[11px] text-muted-foreground">
+                Pick from registered customers. Percentages must total 100 — currently{" "}
+                {nomineeTotal}%
+              </div>
             </div>
             <button
               className={btnSecondaryCls}
-              onClick={() => setNominees([...nominees, { client_id: null, name: "", nic: "", relationship: "", percentage: 0 }])}
+              onClick={() =>
+                setNominees([
+                  ...nominees,
+                  { client_id: null, name: "", nic: "", relationship: "", percentage: 0 },
+                ])
+              }
             >
               <Plus size={13} className="mr-1" /> Add nominee
             </button>
@@ -464,8 +555,18 @@ function NewFd() {
                     </option>
                   ))}
                 </select>
-                <input placeholder="NIC" className={inputCls + " col-span-3"} value={n.nic} onChange={(e) => update(i, { nic: e.target.value })} />
-                <input placeholder="Relationship" className={inputCls + " col-span-3"} value={n.relationship} onChange={(e) => update(i, { relationship: e.target.value })} />
+                <input
+                  placeholder="NIC"
+                  className={inputCls + " col-span-3"}
+                  value={n.nic}
+                  onChange={(e) => update(i, { nic: e.target.value })}
+                />
+                <input
+                  placeholder="Relationship"
+                  className={inputCls + " col-span-3"}
+                  value={n.relationship}
+                  onChange={(e) => update(i, { relationship: e.target.value })}
+                />
                 <input
                   type="number"
                   placeholder="%"
@@ -473,7 +574,11 @@ function NewFd() {
                   value={n.percentage}
                   onChange={(e) => update(i, { percentage: Number(e.target.value) })}
                 />
-                <button className="col-span-1 text-destructive hover:text-destructive/80 flex justify-center" onClick={() => setNominees(nominees.filter((_, j) => j !== i))} disabled={nominees.length === 1}>
+                <button
+                  className="col-span-1 text-destructive hover:text-destructive/80 flex justify-center"
+                  onClick={() => setNominees(nominees.filter((_, j) => j !== i))}
+                  disabled={nominees.length === 1}
+                >
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -482,7 +587,9 @@ function NewFd() {
         </div>
 
         <FormActions>
-          <button className={btnSecondaryCls} onClick={() => navigate({ to: "/fd" })}>Cancel</button>
+          <button className={btnSecondaryCls} onClick={() => navigate({ to: "/fd" })}>
+            Cancel
+          </button>
           <button
             className={btnPrimaryCls}
             disabled={createM.isPending || !canSubmit}

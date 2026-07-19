@@ -35,7 +35,10 @@ export function NewPaymentPage() {
   const loansFn = useServerFn(getActiveLoansForClient);
 
   const { data: session } = useQuery({ queryKey: ["session"], queryFn: () => sessionFn() });
-  const { data: branches } = useQuery({ queryKey: ["company-branches"], queryFn: () => branchesFn() });
+  const { data: branches } = useQuery({
+    queryKey: ["company-branches"],
+    queryFn: () => branchesFn(),
+  });
   const { data: loans } = useQuery({ queryKey: ["active-loans"], queryFn: () => loansFn() });
 
   const [branchId, setBranchId] = useState("");
@@ -59,11 +62,14 @@ export function NewPaymentPage() {
         r.allocated_fees > 0 ? `Fees ${money(r.allocated_fees)}` : null,
         r.allocated_interest > 0 ? `Interest ${money(r.allocated_interest)}` : null,
         r.allocated_principal > 0 ? `Principal ${money(r.allocated_principal)}` : null,
-      ].filter(Boolean).join(" · ");
-      toast.success(
-        `Payment posted${r.reference ? " · " + r.reference : ""}`,
-        { description: [parts || null, r.loan_closed ? "Loan closed" : null].filter(Boolean).join(" — ") || undefined },
-      );
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      toast.success(`Payment posted${r.reference ? " · " + r.reference : ""}`, {
+        description:
+          [parts || null, r.loan_closed ? "Loan closed" : null].filter(Boolean).join(" — ") ||
+          undefined,
+      });
       qc.invalidateQueries();
       navigate({ to: "/accounts/payments" });
     },
@@ -99,7 +105,11 @@ export function NewPaymentPage() {
         <Card className="p-6">
           <FormGrid>
             <FormField label="Branch" required span={6}>
-              <select value={branchId} onChange={(e) => setBranchId(e.target.value)} className={selectCls}>
+              <select
+                value={branchId}
+                onChange={(e) => setBranchId(e.target.value)}
+                className={selectCls}
+              >
                 <option value="">Select branch…</option>
                 {(branches ?? []).map((b: any) => (
                   <option key={b.id} value={b.id}>
@@ -128,7 +138,11 @@ export function NewPaymentPage() {
             </FormField>
 
             <FormField label="Loan" required span={12}>
-              <select value={loanId} onChange={(e) => setLoanId(e.target.value)} className={selectCls}>
+              <select
+                value={loanId}
+                onChange={(e) => setLoanId(e.target.value)}
+                className={selectCls}
+              >
                 <option value="">Select loan…</option>
                 {(loans ?? []).map((l: any) => (
                   <option key={l.id} value={l.id}>
@@ -159,7 +173,11 @@ export function NewPaymentPage() {
             </FormField>
             <FormField
               label={
-                channel === "mpesa" ? "M-Pesa reference" : channel === "bank" ? "Bank reference" : "Receipt no."
+                channel === "mpesa"
+                  ? "M-Pesa reference"
+                  : channel === "bank"
+                    ? "Bank reference"
+                    : "Receipt no."
               }
               span={7}
             >

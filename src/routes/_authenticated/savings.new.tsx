@@ -68,7 +68,10 @@ function NewSavings() {
   const [narration, setNarration] = useState("");
 
   const filteredProducts = useMemo(
-    () => (products ?? []).filter((p: any) => p.active !== false && (p.segment ?? "normal") === segment),
+    () =>
+      (products ?? []).filter(
+        (p: any) => p.active !== false && (p.segment ?? "normal") === segment,
+      ),
     [products, segment],
   );
   const product = useMemo(
@@ -97,7 +100,10 @@ function NewSavings() {
   });
 
   const canSubmit =
-    clientId && branchId && productId && Number(amount) >= Number(product?.min_opening_balance ?? 0);
+    clientId &&
+    branchId &&
+    productId &&
+    Number(amount) >= Number(product?.min_opening_balance ?? 0);
 
   return (
     <div className="animate-fadein flex flex-col gap-4">
@@ -110,7 +116,11 @@ function NewSavings() {
         </div>
         <FormGrid>
           <FormField label="Customer" required span={6}>
-            <select className={selectCls} value={clientId} onChange={(e) => setClientId(e.target.value)}>
+            <select
+              className={selectCls}
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+            >
               <option value="">Select customer…</option>
               {(clients ?? []).map((c: any) => (
                 <option key={c.id} value={c.id}>
@@ -120,7 +130,11 @@ function NewSavings() {
             </select>
           </FormField>
           <FormField label="Branch" required span={3}>
-            <select className={selectCls} value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+            <select
+              className={selectCls}
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+            >
               <option value="">Select branch…</option>
               {(branches ?? []).map((b: any) => (
                 <option key={b.id} value={b.id}>
@@ -139,7 +153,9 @@ function NewSavings() {
               }}
             >
               {SEGMENTS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
               ))}
             </select>
           </FormField>
@@ -183,7 +199,11 @@ function NewSavings() {
             />
           </FormField>
           <FormField label="Channel" span={3}>
-            <select className={selectCls} value={channel} onChange={(e) => setChannel(e.target.value)}>
+            <select
+              className={selectCls}
+              value={channel}
+              onChange={(e) => setChannel(e.target.value)}
+            >
               {CHANNELS.map((c) => (
                 <option key={c.v} value={c.v}>
                   {c.l}
@@ -191,7 +211,11 @@ function NewSavings() {
               ))}
             </select>
           </FormField>
-          <FormField label="External Reference" span={6} hint="Third-party transaction / channel ref">
+          <FormField
+            label="External Reference"
+            span={6}
+            hint="Third-party transaction / channel ref"
+          >
             <input
               className={inputCls}
               value={externalRef}
