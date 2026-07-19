@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.3
+      - name: Install (frozen lockfile)
+        run: bun install --frozen-lockfile
+      - name: Format check
+        run: bun run format:check
+      - name: Lint
+        run: bun run lint
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Unit tests
+        run: bun run test:run
+      - name: Build
+        env:
+          # Secrets are supplied via GitHub Actions environment configuration
+          # and are never committed. Empty defaults here so preview builds
+          # don't crash if a secret is absent in a fork.
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: bun run build
