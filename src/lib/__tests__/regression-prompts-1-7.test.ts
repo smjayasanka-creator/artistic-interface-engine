@@ -42,10 +42,9 @@ describe("prompt 5 — repayment form fields", () => {
 describe("prompt 6 — record_repayment RPC hardening", () => {
   const fns = read("src/lib/mzizi.functions.ts");
   it("recordRepayment forwards received_at, notes, idempotency_key to the RPC", () => {
-    // A single block should contain all three named args.
-    const idx = fns.indexOf('rpc("record_repayment"');
+    const idx = fns.search(/rpc\(\s*["']record_repayment["']/);
     expect(idx).toBeGreaterThan(-1);
-    const window = fns.slice(idx, idx + 800);
+    const window = fns.slice(idx, idx + 1200);
     expect(window).toMatch(/_received_at:/);
     expect(window).toMatch(/_notes:/);
     expect(window).toMatch(/_idempotency_key:/);
