@@ -1126,7 +1126,12 @@ function NewLoan() {
                                     ✕
                                   </button>
                                 )}
+                            {editable && scheduleErrorBySeq.has(r.seq) && (
+                              <div className="text-[11px] text-red-600 mt-0.5 text-right">
+                                {scheduleErrorBySeq.get(r.seq)!.join(" · ")}
                               </div>
+                            )}
+                          </div>
                             ) : (
                               money(r.payment, true)
                             )}
