@@ -1306,6 +1306,33 @@ export const submitApplication = createServerFn({ method: "POST" })
     });
     if (cerr) throw new Error(cerr.message);
 
+    // Origination-first: create a loan_application row alongside the operational loan.
+    const nowIso = new Date().toISOString();
+    const { data: appRow, error: appErr } = await (supabase as any)
+      .from("loan_application")
+      .insert({
+        company_id: (product as any).company_id,
+        branch_id: staff.branch_id,
+        client_id: data.client_id,
+        product_id: data.product_id,
+        officer_id: staff.id,
+        requested_principal: data.principal,
+        requested_tenor_months: data.term_months,
+        requested_rate_pct: data.annual_rate_pct ?? (product as any).annual_rate_pct,
+        frequency: (data.frequency ?? (product as any).frequency) as any,
+        currency: "KES",
+        purpose: data.purpose ?? null,
+        channel: "branch",
+        status: data.draft ? "draft" : "submitted",
+        submitted_at: data.draft ? null : nowIso,
+        created_by: context.userId,
+      })
+      .select("id, application_no")
+      .single();
+    if (appErr) throw new Error(appErr.message);
+    const appId = (appRow as any).id as string;
+    const appNo = (appRow as any).application_no as string;
+
     const { data: loan, error } = await supabase
       .from("loan")
       .insert({
@@ -1325,10 +1352,13 @@ export const submitApplication = createServerFn({ method: "POST" })
             ? (data.schedule_overrides as Record<string, number>)
             : null,
         contract_no: contractNo,
+        application_id: appId,
+        application_no: appNo,
       } as never)
       .select()
       .single();
     if (error) throw error;
+
 
     if (data.initial_charges && data.initial_charges.length) {
       const rows = data.initial_charges.map((c) => ({
