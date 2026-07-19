@@ -29,9 +29,23 @@ const LABELS: Record<string, string> = {
   draft: "Draft",
 };
 
-export function Badge({ tone = "neutral", children, className }: { tone?: Tone; children: React.ReactNode; className?: string }) {
+export function Badge({
+  tone = "neutral",
+  children,
+  className,
+}: {
+  tone?: Tone;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap", TONE[tone], className)}>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap",
+        TONE[tone],
+        className,
+      )}
+    >
       {children}
     </span>
   );
@@ -39,7 +53,14 @@ export function Badge({ tone = "neutral", children, className }: { tone?: Tone; 
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {
   if (!status) return null;
-  const tone: Tone = status === "active" || status === "disbursed" ? "active" : status === "pending_kyc" || status === "submitted" ? "pending" : status === "rejected" || status === "blacklisted" ? "danger" : "neutral";
+  const tone: Tone =
+    status === "active" || status === "disbursed"
+      ? "active"
+      : status === "pending_kyc" || status === "submitted"
+        ? "pending"
+        : status === "rejected" || status === "blacklisted"
+          ? "danger"
+          : "neutral";
   return <Badge tone={tone}>{LABELS[status] ?? status}</Badge>;
 }
 

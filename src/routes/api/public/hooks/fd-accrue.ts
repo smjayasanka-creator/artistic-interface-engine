@@ -30,8 +30,13 @@ export const Route = createFileRoute("/api/public/hooks/fd-accrue")({
         let accrued = 0;
         let skipped = 0;
         for (const d of deposits ?? []) {
-          if (today < d.value_date || today > d.maturity_date) { skipped++; continue; }
-          const daily = Number(((Number(d.principal) * Number(d.rate_at_booking)) / 365).toFixed(2));
+          if (today < d.value_date || today > d.maturity_date) {
+            skipped++;
+            continue;
+          }
+          const daily = Number(
+            ((Number(d.principal) * Number(d.rate_at_booking)) / 365).toFixed(2),
+          );
 
           const { data: prev } = await supabaseAdmin
             .from("fd_accrual")
@@ -40,11 +45,16 @@ export const Route = createFileRoute("/api/public/hooks/fd-accrue")({
             .order("accrual_date", { ascending: false })
             .limit(1)
             .maybeSingle();
-          const cumulative = Number(((Number(prev?.cumulative_amount ?? 0)) + daily).toFixed(2));
+          const cumulative = Number((Number(prev?.cumulative_amount ?? 0) + daily).toFixed(2));
 
           const { error: insErr } = await supabaseAdmin
             .from("fd_accrual")
-            .insert({ deposit_id: d.id, accrual_date: today, daily_amount: daily, cumulative_amount: cumulative });
+            .insert({
+              deposit_id: d.id,
+              accrual_date: today,
+              daily_amount: daily,
+              cumulative_amount: cumulative,
+            });
           if (insErr) {
             // Duplicate (already accrued today) is fine; anything else is a real error.
             if (!/duplicate|unique/i.test(insErr.message)) skipped++;
@@ -63,15 +73,13 @@ export const Route = createFileRoute("/api/public/hooks/fd-accrue")({
 
         let paid = 0;
         for (const row of due ?? []) {
-          const { error: txErr } = await supabaseAdmin
-            .from("fd_transaction")
-            .insert({
-              deposit_id: row.deposit_id,
-              type: "interest_payout",
-              amount: row.net_interest,
-              txn_date: row.due_date,
-              reference: `FD-INT-${row.seq}`,
-            });
+          const { error: txErr } = await supabaseAdmin.from("fd_transaction").insert({
+            deposit_id: row.deposit_id,
+            type: "interest_payout",
+            amount: row.net_interest,
+            txn_date: row.due_date,
+            reference: `FD-INT-${row.seq}`,
+          });
           if (txErr) continue;
           await supabaseAdmin
             .from("fd_interest_schedule")

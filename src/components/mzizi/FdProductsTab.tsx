@@ -127,7 +127,9 @@ export function FdProductsTab() {
       <div className="px-5 pt-4 pb-3 text-sm font-semibold flex items-center justify-between">
         <span>
           Fixed Deposit products{" "}
-          <span className="text-[11px] text-muted-foreground font-normal ml-1">{products?.length ?? 0} total</span>
+          <span className="text-[11px] text-muted-foreground font-normal ml-1">
+            {products?.length ?? 0} total
+          </span>
         </span>
         <button
           onClick={() => setEditing({ values: { ...EMPTY }, rateTiers: [] })}
@@ -164,13 +166,18 @@ export function FdProductsTab() {
             style={{ gridTemplateColumns: GRID_COLS }}
           >
             <div className="font-mono font-medium text-[11.5px]">{product.code}</div>
-            <div className="truncate" title={product.name}>{product.name}</div>
+            <div className="truncate" title={product.name}>
+              {product.name}
+            </div>
             <div className="text-muted-foreground">
               <span className="text-foreground">{money(product.min_amount)}</span>
               {" - "}
               {product.max_amount != null ? money(product.max_amount) : "—"}
             </div>
-            <div className="text-muted-foreground truncate" title={payoutParts.join(" · ") || "None"}>
+            <div
+              className="text-muted-foreground truncate"
+              title={payoutParts.join(" · ") || "None"}
+            >
               {payoutParts.join(" · ") || "—"}
             </div>
             <div className="font-mono text-[11px]">{product.wht_rate}%</div>
@@ -181,7 +188,9 @@ export function FdProductsTab() {
             </div>
             <div className="text-right">
               <button
-                onClick={() => updateM.mutate({ id: product.id, patch: { active: !product.active } })}
+                onClick={() =>
+                  updateM.mutate({ id: product.id, patch: { active: !product.active } })
+                }
                 className={cn(
                   "text-[10px] px-2 py-0.5 rounded-full border",
                   product.active
@@ -212,12 +221,17 @@ export function FdProductsTab() {
                       auto_renewal_default: product.auto_renewal_default,
                       active: product.active,
                       capital_account_id: (product as any).capital_account_id ?? null,
-                      interest_payable_account_id: (product as any).interest_payable_account_id ?? null,
-                      interest_expense_account_id: (product as any).interest_expense_account_id ?? null,
+                      interest_payable_account_id:
+                        (product as any).interest_payable_account_id ?? null,
+                      interest_expense_account_id:
+                        (product as any).interest_expense_account_id ?? null,
                       wht_payable_account_id: (product as any).wht_payable_account_id ?? null,
-                      introducer_commission_account_id: (product as any).introducer_commission_account_id ?? null,
-                      marketing_incentive_account_id: (product as any).marketing_incentive_account_id ?? null,
-                      unclaimed_deposit_liability_account_id: (product as any).unclaimed_deposit_liability_account_id ?? null,
+                      introducer_commission_account_id:
+                        (product as any).introducer_commission_account_id ?? null,
+                      marketing_incentive_account_id:
+                        (product as any).marketing_incentive_account_id ?? null,
+                      unclaimed_deposit_liability_account_id:
+                        (product as any).unclaimed_deposit_liability_account_id ?? null,
                     },
                     rateTiers: product.rate_tiers,
                   })
@@ -240,7 +254,9 @@ export function FdProductsTab() {
           initial={editing.values}
           productId={editing.id}
           onCancel={() => setEditing(null)}
-          onSubmit={(v) => (editing.id ? updateM.mutate({ id: editing.id, patch: v }) : createM.mutate(v))}
+          onSubmit={(v) =>
+            editing.id ? updateM.mutate({ id: editing.id, patch: v }) : createM.mutate(v)
+          }
           onDelete={editing.id ? () => deleteM.mutate(editing.id!) : undefined}
         />
       )}
@@ -296,15 +312,19 @@ function ProductModal({
 
   void productId;
 
-
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onCancel}>
+    <div
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+      onClick={onCancel}
+    >
       <div
         className="bg-card rounded-xl border border-border max-w-3xl w-full max-h-[90vh] overflow-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
-          <div className="font-semibold text-[15px]">{productId ? "Edit FD product" : "New FD product"}</div>
+          <div className="font-semibold text-[15px]">
+            {productId ? "Edit FD product" : "New FD product"}
+          </div>
           <button onClick={onCancel} className="text-muted-foreground hover:text-foreground">
             <X size={16} />
           </button>
@@ -312,10 +332,18 @@ function ProductModal({
         <div className="p-5 flex flex-col gap-5">
           <FormGrid>
             <FormField label="Code" required span={3}>
-              <input className={inputCls} value={v.code} onChange={(e) => setV({ ...v, code: e.target.value })} />
+              <input
+                className={inputCls}
+                value={v.code}
+                onChange={(e) => setV({ ...v, code: e.target.value })}
+              />
             </FormField>
             <FormField label="Name" required span={9}>
-              <input className={inputCls} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />
+              <input
+                className={inputCls}
+                value={v.name}
+                onChange={(e) => setV({ ...v, name: e.target.value })}
+              />
             </FormField>
             <FormField label="Minimum amount" required span={4}>
               <input
@@ -330,7 +358,9 @@ function ProductModal({
                 type="number"
                 className={inputCls}
                 value={v.max_amount ?? ""}
-                onChange={(e) => setV({ ...v, max_amount: e.target.value === "" ? null : Number(e.target.value) })}
+                onChange={(e) =>
+                  setV({ ...v, max_amount: e.target.value === "" ? null : Number(e.target.value) })
+                }
                 placeholder="No limit"
               />
             </FormField>
@@ -385,7 +415,9 @@ function ProductModal({
               <select
                 className={selectCls}
                 value={v.auto_renewal_default}
-                onChange={(e) => setV({ ...v, auto_renewal_default: e.target.value as MaturityInstr })}
+                onChange={(e) =>
+                  setV({ ...v, auto_renewal_default: e.target.value as MaturityInstr })
+                }
               >
                 <option value="payout">Pay out at maturity</option>
                 <option value="renew_principal">Renew principal only</option>
@@ -413,7 +445,11 @@ function ProductModal({
             </FormField>
             <FormField label="Active" span={12}>
               <label className="flex items-center gap-2 text-[13px]">
-                <input type="checkbox" checked={v.active} onChange={(e) => setV({ ...v, active: e.target.checked })} />
+                <input
+                  type="checkbox"
+                  checked={v.active}
+                  onChange={(e) => setV({ ...v, active: e.target.checked })}
+                />
                 Available for new deposits
               </label>
             </FormField>
@@ -424,28 +460,49 @@ function ProductModal({
               GL account mapping
             </div>
             <FormGrid>
-              <FormField label="Capital account" span={6}>{glSelect("capital_account_id")}</FormField>
-              <FormField label="Interest payable account" span={6}>{glSelect("interest_payable_account_id")}</FormField>
-              <FormField label="Interest expense account" span={6}>{glSelect("interest_expense_account_id")}</FormField>
-              <FormField label="WHT payable account" span={6}>{glSelect("wht_payable_account_id")}</FormField>
-              <FormField label="Introducer commission account" span={6}>{glSelect("introducer_commission_account_id")}</FormField>
-              <FormField label="Marketing incentive account" span={6}>{glSelect("marketing_incentive_account_id")}</FormField>
-              <FormField label="Unclaimed / dormant deposits liability" span={12} hint="Segregated liability for matured / unclaimed FD balances aged into dormancy. Optional — falls back to the deposit-liability account if left blank.">{glSelect("unclaimed_deposit_liability_account_id")}</FormField>
+              <FormField label="Capital account" span={6}>
+                {glSelect("capital_account_id")}
+              </FormField>
+              <FormField label="Interest payable account" span={6}>
+                {glSelect("interest_payable_account_id")}
+              </FormField>
+              <FormField label="Interest expense account" span={6}>
+                {glSelect("interest_expense_account_id")}
+              </FormField>
+              <FormField label="WHT payable account" span={6}>
+                {glSelect("wht_payable_account_id")}
+              </FormField>
+              <FormField label="Introducer commission account" span={6}>
+                {glSelect("introducer_commission_account_id")}
+              </FormField>
+              <FormField label="Marketing incentive account" span={6}>
+                {glSelect("marketing_incentive_account_id")}
+              </FormField>
+              <FormField
+                label="Unclaimed / dormant deposits liability"
+                span={12}
+                hint="Segregated liability for matured / unclaimed FD balances aged into dormancy. Optional — falls back to the deposit-liability account if left blank."
+              >
+                {glSelect("unclaimed_deposit_liability_account_id")}
+              </FormField>
             </FormGrid>
           </div>
 
           {productId && (
             <div className="text-[11.5px] text-muted-foreground bg-secondary/40 border border-border rounded-md px-3 py-2">
-              Interest rates are managed centrally in the ALCO rates sheet — the applicable rate is looked up automatically at booking based on the deposit tenure and value date.
+              Interest rates are managed centrally in the ALCO rates sheet — the applicable rate is
+              looked up automatically at booking based on the deposit tenure and value date.
             </div>
           )}
-
 
           <FormActions>
             {onDelete && (
               <button
                 type="button"
-                className={cn(btnSecondaryCls, "text-destructive border-destructive/40 hover:bg-destructive/10")}
+                className={cn(
+                  btnSecondaryCls,
+                  "text-destructive border-destructive/40 hover:bg-destructive/10",
+                )}
                 onClick={() => {
                   if (confirm("Delete this product and all its rate tiers?")) onDelete();
                 }}

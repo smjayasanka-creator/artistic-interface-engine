@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { createClient } from "@/lib/mzizi.functions";
 import { getRiskScheme, saveClientRiskAssessment } from "@/lib/risk.functions";
-import { RiskAssessmentForm, applicableFactors, type RiskAnswer } from "@/components/mzizi/RiskAssessmentForm";
+import {
+  RiskAssessmentForm,
+  applicableFactors,
+  type RiskAnswer,
+} from "@/components/mzizi/RiskAssessmentForm";
 import {
   screenCustomer,
   getScreeningConfig,
@@ -51,11 +55,18 @@ const EMPTY_ADDR: AddressBlock = { building_no: "", street1: "", street2: "", to
 const isAddrComplete = (a: AddressBlock) =>
   a.building_no.trim() !== "" && a.street1.trim() !== "" && a.town.trim() !== "";
 const fmtAddr = (a: AddressBlock) =>
-  [a.building_no, a.street1, a.street2, a.town].map((s) => s.trim()).filter(Boolean).join(", ");
+  [a.building_no, a.street1, a.street2, a.town]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(", ");
 
 const REQUIRED_DOCS: { key: "nic" | "billing"; label: string; hint: string }[] = [
   { key: "nic", label: "NIC copy", hint: "Front and back of national ID (JPG, PNG or PDF)" },
-  { key: "billing", label: "Billing Proof", hint: "Recent utility bill or bank statement (JPG, PNG or PDF)" },
+  {
+    key: "billing",
+    label: "Billing Proof",
+    hint: "Recent utility bill or bank statement (JPG, PNG or PDF)",
+  },
 ];
 
 const MAX_DOC_BYTES = 10 * 1024 * 1024;
@@ -144,7 +155,14 @@ function NewClientPage() {
   const [commissionPct, setCommissionPct] = useState<number | "">("");
   const [commissionAmount, setCommissionAmount] = useState<number | "">("");
 
-  type BankAcct = { bank_name: string; branch_name: string; account_no: string; account_name: string; swift_code: string; is_primary: boolean };
+  type BankAcct = {
+    bank_name: string;
+    branch_name: string;
+    account_no: string;
+    account_name: string;
+    swift_code: string;
+    is_primary: boolean;
+  };
   const [banks, setBanks] = useState<BankAcct[]>([]);
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -160,13 +178,19 @@ function NewClientPage() {
 
   // Risk profile
   const fetchScheme = useServerFn(getRiskScheme);
-  const { data: riskScheme } = useQuery({ queryKey: ["risk-scheme"], queryFn: () => fetchScheme() });
+  const { data: riskScheme } = useQuery({
+    queryKey: ["risk-scheme"],
+    queryFn: () => fetchScheme(),
+  });
   const [riskAnswers, setRiskAnswers] = useState<RiskAnswer[]>([]);
   const saveRiskFn = useServerFn(saveClientRiskAssessment);
 
   // Customer screening (inline on Application tab)
   const [screening, setScreening] = useState<ScreeningResult | null>(null);
-  const [approvalInstance, setApprovalInstance] = useState<{ id: string; tier: ScreeningTier } | null>(null);
+  const [approvalInstance, setApprovalInstance] = useState<{
+    id: string;
+    tier: ScreeningTier;
+  } | null>(null);
   const screenFn = useServerFn(screenCustomer);
   const fetchScreeningCfg = useServerFn(getScreeningConfig);
   const requestApprovalFn = useServerFn(requestScreeningApproval);
@@ -217,9 +241,6 @@ function NewClientPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-
-
-
   const errors = useMemo(() => {
     const r = clientSchema.safeParse(form);
     if (r.success) return {} as Partial<Record<FieldKey, string>>;
@@ -260,8 +281,7 @@ function NewClientPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const set = <K extends FieldKey>(k: K, v: FormState[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
+  const set = <K extends FieldKey>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
   const blur = (k: FieldKey) => setTouched((t) => ({ ...t, [k]: true }));
 
   function onPickPhoto(f: File | null) {
@@ -356,8 +376,23 @@ function NewClientPage() {
     e.preventDefault();
     setSubmitted(true);
     // Core zod fields (Personal details) live on the Screening tab
-    const screeningFields: FieldKey[] = ["first_name", "last_name", "national_id", "phone_country_code", "phone"];
-    const appFields: FieldKey[] = ["date_of_birth", "gender", "email", "address", "gn_division", "divisional_secretariat", "district", "province"];
+    const screeningFields: FieldKey[] = [
+      "first_name",
+      "last_name",
+      "national_id",
+      "phone_country_code",
+      "phone",
+    ];
+    const appFields: FieldKey[] = [
+      "date_of_birth",
+      "gender",
+      "email",
+      "address",
+      "gn_division",
+      "divisional_secretariat",
+      "district",
+      "province",
+    ];
     const hasScreeningErr = screeningFields.some((k) => errors[k]);
     const hasAppErr = appFields.some((k) => errors[k]);
     if (!isValid) {
@@ -420,8 +455,10 @@ function NewClientPage() {
           geo_lat: geo?.lat ?? null,
           geo_lng: geo?.lng ?? null,
           is_introducer: isIntroducer,
-          default_commission_pct: isIntroducer && commissionPct !== "" ? Number(commissionPct) : null,
-          default_commission_amount: isIntroducer && commissionAmount !== "" ? Number(commissionAmount) : null,
+          default_commission_pct:
+            isIntroducer && commissionPct !== "" ? Number(commissionPct) : null,
+          default_commission_amount:
+            isIntroducer && commissionAmount !== "" ? Number(commissionAmount) : null,
           bank_accounts: banks
             .filter((b) => b.bank_name.trim() && b.account_no.trim() && b.account_name.trim())
             .map((b) => ({
@@ -512,19 +549,59 @@ function NewClientPage() {
         {tab === "screening" && (
           <>
             <Card className="p-6">
-              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Personal details</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">
+                Personal details
+              </h2>
               <FormGrid>
-                <FormField label="First name" required span={4} error={showError("first_name") ? errors.first_name : undefined}>
-                  <input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} onBlur={() => blur("first_name")} className={cls("first_name")} maxLength={60} />
+                <FormField
+                  label="First name"
+                  required
+                  span={4}
+                  error={showError("first_name") ? errors.first_name : undefined}
+                >
+                  <input
+                    value={form.first_name}
+                    onChange={(e) => set("first_name", e.target.value)}
+                    onBlur={() => blur("first_name")}
+                    className={cls("first_name")}
+                    maxLength={60}
+                  />
                 </FormField>
-                <FormField label="Last name" required span={4} error={showError("last_name") ? errors.last_name : undefined}>
-                  <input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} onBlur={() => blur("last_name")} className={cls("last_name")} maxLength={60} />
+                <FormField
+                  label="Last name"
+                  required
+                  span={4}
+                  error={showError("last_name") ? errors.last_name : undefined}
+                >
+                  <input
+                    value={form.last_name}
+                    onChange={(e) => set("last_name", e.target.value)}
+                    onBlur={() => blur("last_name")}
+                    className={cls("last_name")}
+                    maxLength={60}
+                  />
                 </FormField>
-                <FormField label="National ID" required span={4} error={showError("national_id") ? errors.national_id : undefined}>
-                  <input value={form.national_id} onChange={(e) => set("national_id", e.target.value)} onBlur={() => blur("national_id")} className={`${cls("national_id")} font-mono`} maxLength={30} />
+                <FormField
+                  label="National ID"
+                  required
+                  span={4}
+                  error={showError("national_id") ? errors.national_id : undefined}
+                >
+                  <input
+                    value={form.national_id}
+                    onChange={(e) => set("national_id", e.target.value)}
+                    onBlur={() => blur("national_id")}
+                    className={`${cls("national_id")} font-mono`}
+                    maxLength={30}
+                  />
                 </FormField>
 
-                <FormField label="Country code" required span={3} error={showError("phone_country_code") ? errors.phone_country_code : undefined}>
+                <FormField
+                  label="Country code"
+                  required
+                  span={3}
+                  error={showError("phone_country_code") ? errors.phone_country_code : undefined}
+                >
                   <select
                     value={form.phone_country_code}
                     onChange={(e) => set("phone_country_code", e.target.value)}
@@ -532,11 +609,18 @@ function NewClientPage() {
                     className={cls("phone_country_code")}
                   >
                     {COUNTRY_CODES.map((c) => (
-                      <option key={c.code} value={c.code}>{c.label}</option>
+                      <option key={c.code} value={c.code}>
+                        {c.label}
+                      </option>
                     ))}
                   </select>
                 </FormField>
-                <FormField label="Phone" required span={9} error={showError("phone") ? errors.phone : undefined}>
+                <FormField
+                  label="Phone"
+                  required
+                  span={9}
+                  error={showError("phone") ? errors.phone : undefined}
+                >
                   <input
                     value={form.phone}
                     onChange={(e) => set("phone", e.target.value.replace(/[^\d]/g, ""))}
@@ -560,7 +644,11 @@ function NewClientPage() {
                   className={btnSecondaryCls}
                 >
                   <Search size={13} className="mr-1" />
-                  {screenMut.isPending ? "Screening…" : screening ? "Re-run screening" : "Screen customer"}
+                  {screenMut.isPending
+                    ? "Screening…"
+                    : screening
+                      ? "Re-run screening"
+                      : "Screen customer"}
                 </button>
               </div>
 
@@ -581,27 +669,70 @@ function NewClientPage() {
         {tab === "application" && (
           <>
             <Card className="p-6">
-              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Personal profile</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">
+                Personal profile
+              </h2>
               <FormGrid>
-                <FormField label="Date of birth" required span={4} error={showError("date_of_birth") ? errors.date_of_birth : undefined}>
-                  <input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} onBlur={() => blur("date_of_birth")} className={cls("date_of_birth")} />
+                <FormField
+                  label="Date of birth"
+                  required
+                  span={4}
+                  error={showError("date_of_birth") ? errors.date_of_birth : undefined}
+                >
+                  <input
+                    type="date"
+                    value={form.date_of_birth}
+                    onChange={(e) => set("date_of_birth", e.target.value)}
+                    onBlur={() => blur("date_of_birth")}
+                    className={cls("date_of_birth")}
+                  />
                 </FormField>
-                <FormField label="Gender" required span={4} error={showError("gender") ? errors.gender : undefined}>
-                  <select value={form.gender} onChange={(e) => set("gender", e.target.value as "" | Gender)} onBlur={() => blur("gender")} className={cls("gender")}>
+                <FormField
+                  label="Gender"
+                  required
+                  span={4}
+                  error={showError("gender") ? errors.gender : undefined}
+                >
+                  <select
+                    value={form.gender}
+                    onChange={(e) => set("gender", e.target.value as "" | Gender)}
+                    onBlur={() => blur("gender")}
+                    className={cls("gender")}
+                  >
                     <option value="">Select…</option>
                     <option value="female">Female</option>
                     <option value="male">Male</option>
                     <option value="other">Other</option>
                   </select>
                 </FormField>
-                <FormField label="Email" span={4} error={showError("email") ? errors.email : undefined}>
-                  <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} onBlur={() => blur("email")} className={cls("email")} maxLength={255} />
+                <FormField
+                  label="Email"
+                  span={4}
+                  error={showError("email") ? errors.email : undefined}
+                >
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => set("email", e.target.value)}
+                    onBlur={() => blur("email")}
+                    className={cls("email")}
+                    maxLength={255}
+                  />
                 </FormField>
                 <FormField label="Nationality" required span={4}>
-                  <input value={nationality} onChange={(e) => setNationality(e.target.value)} className={inputCls} maxLength={60} />
+                  <input
+                    value={nationality}
+                    onChange={(e) => setNationality(e.target.value)}
+                    className={inputCls}
+                    maxLength={60}
+                  />
                 </FormField>
                 <FormField label="Marital status" required span={4}>
-                  <select value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value as MaritalStatus)} className={inputCls}>
+                  <select
+                    value={maritalStatus}
+                    onChange={(e) => setMaritalStatus(e.target.value as MaritalStatus)}
+                    className={inputCls}
+                  >
                     <option value="">Select…</option>
                     <option value="single">Single</option>
                     <option value="married">Married</option>
@@ -614,16 +745,30 @@ function NewClientPage() {
                     min={0}
                     className={inputCls + " font-mono"}
                     value={dependents}
-                    onChange={(e) => setDependents(e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))}
+                    onChange={(e) =>
+                      setDependents(
+                        e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
+                      )
+                    }
                   />
                 </FormField>
                 {maritalStatus === "married" && (
                   <>
                     <FormField label="Name of spouse" required span={6}>
-                      <input value={spouseName} onChange={(e) => setSpouseName(e.target.value)} className={inputCls} maxLength={120} />
+                      <input
+                        value={spouseName}
+                        onChange={(e) => setSpouseName(e.target.value)}
+                        className={inputCls}
+                        maxLength={120}
+                      />
                     </FormField>
                     <FormField label="Spouse employer" span={6}>
-                      <input value={spouseEmployer} onChange={(e) => setSpouseEmployer(e.target.value)} className={inputCls} maxLength={120} />
+                      <input
+                        value={spouseEmployer}
+                        onChange={(e) => setSpouseEmployer(e.target.value)}
+                        className={inputCls}
+                        maxLength={120}
+                      />
                     </FormField>
                   </>
                 )}
@@ -631,26 +776,56 @@ function NewClientPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Permanent address</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">
+                Permanent address
+              </h2>
               <FormGrid>
                 <FormField label="Building number" required span={3}>
-                  <input value={permanentAddr.building_no} onChange={(e) => setPermanentAddr({ ...permanentAddr, building_no: e.target.value })} className={inputCls} maxLength={40} />
+                  <input
+                    value={permanentAddr.building_no}
+                    onChange={(e) =>
+                      setPermanentAddr({ ...permanentAddr, building_no: e.target.value })
+                    }
+                    className={inputCls}
+                    maxLength={40}
+                  />
                 </FormField>
                 <FormField label="Street 1" required span={4}>
-                  <input value={permanentAddr.street1} onChange={(e) => setPermanentAddr({ ...permanentAddr, street1: e.target.value })} className={inputCls} maxLength={80} />
+                  <input
+                    value={permanentAddr.street1}
+                    onChange={(e) =>
+                      setPermanentAddr({ ...permanentAddr, street1: e.target.value })
+                    }
+                    className={inputCls}
+                    maxLength={80}
+                  />
                 </FormField>
                 <FormField label="Street 2" span={4}>
-                  <input value={permanentAddr.street2} onChange={(e) => setPermanentAddr({ ...permanentAddr, street2: e.target.value })} className={inputCls} maxLength={80} />
+                  <input
+                    value={permanentAddr.street2}
+                    onChange={(e) =>
+                      setPermanentAddr({ ...permanentAddr, street2: e.target.value })
+                    }
+                    className={inputCls}
+                    maxLength={80}
+                  />
                 </FormField>
                 <FormField label="Town" required span={3}>
-                  <input value={permanentAddr.town} onChange={(e) => setPermanentAddr({ ...permanentAddr, town: e.target.value })} className={inputCls} maxLength={80} />
+                  <input
+                    value={permanentAddr.town}
+                    onChange={(e) => setPermanentAddr({ ...permanentAddr, town: e.target.value })}
+                    className={inputCls}
+                    maxLength={80}
+                  />
                 </FormField>
               </FormGrid>
             </Card>
 
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[11px] font-semibold text-faint uppercase tracking-wider">Mailing address</h2>
+                <h2 className="text-[11px] font-semibold text-faint uppercase tracking-wider">
+                  Mailing address
+                </h2>
                 <label className="flex items-center gap-2 text-xs text-muted-foreground">
                   <input
                     type="checkbox"
@@ -663,48 +838,136 @@ function NewClientPage() {
               {!mailingSameAsPermanent && (
                 <FormGrid>
                   <FormField label="Building number" required span={3}>
-                    <input value={mailingAddr.building_no} onChange={(e) => setMailingAddr({ ...mailingAddr, building_no: e.target.value })} className={inputCls} maxLength={40} />
+                    <input
+                      value={mailingAddr.building_no}
+                      onChange={(e) =>
+                        setMailingAddr({ ...mailingAddr, building_no: e.target.value })
+                      }
+                      className={inputCls}
+                      maxLength={40}
+                    />
                   </FormField>
                   <FormField label="Street 1" required span={4}>
-                    <input value={mailingAddr.street1} onChange={(e) => setMailingAddr({ ...mailingAddr, street1: e.target.value })} className={inputCls} maxLength={80} />
+                    <input
+                      value={mailingAddr.street1}
+                      onChange={(e) => setMailingAddr({ ...mailingAddr, street1: e.target.value })}
+                      className={inputCls}
+                      maxLength={80}
+                    />
                   </FormField>
                   <FormField label="Street 2" span={4}>
-                    <input value={mailingAddr.street2} onChange={(e) => setMailingAddr({ ...mailingAddr, street2: e.target.value })} className={inputCls} maxLength={80} />
+                    <input
+                      value={mailingAddr.street2}
+                      onChange={(e) => setMailingAddr({ ...mailingAddr, street2: e.target.value })}
+                      className={inputCls}
+                      maxLength={80}
+                    />
                   </FormField>
                   <FormField label="Town" required span={3}>
-                    <input value={mailingAddr.town} onChange={(e) => setMailingAddr({ ...mailingAddr, town: e.target.value })} className={inputCls} maxLength={80} />
+                    <input
+                      value={mailingAddr.town}
+                      onChange={(e) => setMailingAddr({ ...mailingAddr, town: e.target.value })}
+                      className={inputCls}
+                      maxLength={80}
+                    />
                   </FormField>
                 </FormGrid>
               )}
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Address (administrative)</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">
+                Address (administrative)
+              </h2>
               <FormGrid>
-                <FormField label="Residential address" required span={12} error={showError("address") ? errors.address : undefined}>
-                  <textarea value={form.address} onChange={(e) => set("address", e.target.value)} onBlur={() => blur("address")} rows={2} maxLength={200} className={cls("address")} />
+                <FormField
+                  label="Residential address"
+                  required
+                  span={12}
+                  error={showError("address") ? errors.address : undefined}
+                >
+                  <textarea
+                    value={form.address}
+                    onChange={(e) => set("address", e.target.value)}
+                    onBlur={() => blur("address")}
+                    rows={2}
+                    maxLength={200}
+                    className={cls("address")}
+                  />
                 </FormField>
-                <FormField label="GN Division" required span={6} error={showError("gn_division") ? errors.gn_division : undefined}>
-                  <input value={form.gn_division} onChange={(e) => set("gn_division", e.target.value)} onBlur={() => blur("gn_division")} className={cls("gn_division")} maxLength={80} />
+                <FormField
+                  label="GN Division"
+                  required
+                  span={6}
+                  error={showError("gn_division") ? errors.gn_division : undefined}
+                >
+                  <input
+                    value={form.gn_division}
+                    onChange={(e) => set("gn_division", e.target.value)}
+                    onBlur={() => blur("gn_division")}
+                    className={cls("gn_division")}
+                    maxLength={80}
+                  />
                 </FormField>
-                <FormField label="Divisional Secretariat" required span={6} error={showError("divisional_secretariat") ? errors.divisional_secretariat : undefined}>
-                  <input value={form.divisional_secretariat} onChange={(e) => set("divisional_secretariat", e.target.value)} onBlur={() => blur("divisional_secretariat")} className={cls("divisional_secretariat")} maxLength={80} />
+                <FormField
+                  label="Divisional Secretariat"
+                  required
+                  span={6}
+                  error={
+                    showError("divisional_secretariat") ? errors.divisional_secretariat : undefined
+                  }
+                >
+                  <input
+                    value={form.divisional_secretariat}
+                    onChange={(e) => set("divisional_secretariat", e.target.value)}
+                    onBlur={() => blur("divisional_secretariat")}
+                    className={cls("divisional_secretariat")}
+                    maxLength={80}
+                  />
                 </FormField>
-                <FormField label="District" required span={6} error={showError("district") ? errors.district : undefined}>
-                  <input value={form.district} onChange={(e) => set("district", e.target.value)} onBlur={() => blur("district")} className={cls("district")} maxLength={80} />
+                <FormField
+                  label="District"
+                  required
+                  span={6}
+                  error={showError("district") ? errors.district : undefined}
+                >
+                  <input
+                    value={form.district}
+                    onChange={(e) => set("district", e.target.value)}
+                    onBlur={() => blur("district")}
+                    className={cls("district")}
+                    maxLength={80}
+                  />
                 </FormField>
-                <FormField label="Province" required span={6} error={showError("province") ? errors.province : undefined}>
-                  <input value={form.province} onChange={(e) => set("province", e.target.value)} onBlur={() => blur("province")} className={cls("province")} maxLength={80} />
+                <FormField
+                  label="Province"
+                  required
+                  span={6}
+                  error={showError("province") ? errors.province : undefined}
+                >
+                  <input
+                    value={form.province}
+                    onChange={(e) => set("province", e.target.value)}
+                    onBlur={() => blur("province")}
+                    className={cls("province")}
+                    maxLength={80}
+                  />
                 </FormField>
               </FormGrid>
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Customer photo</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">
+                Customer photo
+              </h2>
               <div className="flex items-center gap-4">
                 <div className="w-24 h-24 rounded-md border border-border overflow-hidden bg-muted flex items-center justify-center text-xs text-muted-foreground">
                   {photoPreview ? (
-                    <img src={photoPreview} alt="Customer preview" className="w-full h-full object-cover" />
+                    <img
+                      src={photoPreview}
+                      alt="Customer preview"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     "No photo"
                   )}
@@ -719,11 +982,19 @@ function NewClientPage() {
                     onChange={(e) => onPickPhoto(e.target.files?.[0] ?? null)}
                   />
                   <div className="flex gap-2">
-                    <button type="button" className={btnSecondaryCls} onClick={() => fileRef.current?.click()}>
+                    <button
+                      type="button"
+                      className={btnSecondaryCls}
+                      onClick={() => fileRef.current?.click()}
+                    >
                       {photoFile ? "Change photo" : "Choose photo"}
                     </button>
                     {photoFile && (
-                      <button type="button" className={btnGhostCls} onClick={() => onPickPhoto(null)}>
+                      <button
+                        type="button"
+                        className={btnGhostCls}
+                        onClick={() => onPickPhoto(null)}
+                      >
                         Remove
                       </button>
                     )}
@@ -734,9 +1005,16 @@ function NewClientPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Customer geo location</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">
+                Customer geo location
+              </h2>
               <div className="flex items-center gap-4 flex-wrap">
-                <button type="button" className={btnSecondaryCls} onClick={captureGeo} disabled={geoBusy}>
+                <button
+                  type="button"
+                  className={btnSecondaryCls}
+                  onClick={captureGeo}
+                  disabled={geoBusy}
+                >
                   {geoBusy ? "Locating…" : geo ? "Recapture location" : "Capture current location"}
                 </button>
                 {geo && (
@@ -746,26 +1024,83 @@ function NewClientPage() {
                 )}
                 {geoError && <span className="text-xs text-destructive">{geoError}</span>}
                 {!geo && !geoError && (
-                  <span className="text-xs text-muted-foreground">Optional. Uses your device location.</span>
+                  <span className="text-xs text-muted-foreground">
+                    Optional. Uses your device location.
+                  </span>
                 )}
               </div>
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Bank accounts</h2>
-              <p className="text-xs text-muted-foreground mb-3">Add bank accounts used for FD pay-out or interest transfer. Mark one as primary.</p>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">
+                Bank accounts
+              </h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                Add bank accounts used for FD pay-out or interest transfer. Mark one as primary.
+              </p>
               <div className="flex flex-col gap-2">
                 {banks.map((b, i) => (
                   <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                    <input placeholder="Bank name" className={inputCls + " col-span-3"} value={b.bank_name} onChange={(e) => setBanks(banks.map((x, j) => j === i ? { ...x, bank_name: e.target.value } : x))} />
-                    <input placeholder="Branch" className={inputCls + " col-span-2"} value={b.branch_name} onChange={(e) => setBanks(banks.map((x, j) => j === i ? { ...x, branch_name: e.target.value } : x))} />
-                    <input placeholder="Account no" className={inputCls + " col-span-2 font-mono"} value={b.account_no} onChange={(e) => setBanks(banks.map((x, j) => j === i ? { ...x, account_no: e.target.value } : x))} />
-                    <input placeholder="Account name" className={inputCls + " col-span-3"} value={b.account_name} onChange={(e) => setBanks(banks.map((x, j) => j === i ? { ...x, account_name: e.target.value } : x))} />
+                    <input
+                      placeholder="Bank name"
+                      className={inputCls + " col-span-3"}
+                      value={b.bank_name}
+                      onChange={(e) =>
+                        setBanks(
+                          banks.map((x, j) => (j === i ? { ...x, bank_name: e.target.value } : x)),
+                        )
+                      }
+                    />
+                    <input
+                      placeholder="Branch"
+                      className={inputCls + " col-span-2"}
+                      value={b.branch_name}
+                      onChange={(e) =>
+                        setBanks(
+                          banks.map((x, j) =>
+                            j === i ? { ...x, branch_name: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    />
+                    <input
+                      placeholder="Account no"
+                      className={inputCls + " col-span-2 font-mono"}
+                      value={b.account_no}
+                      onChange={(e) =>
+                        setBanks(
+                          banks.map((x, j) => (j === i ? { ...x, account_no: e.target.value } : x)),
+                        )
+                      }
+                    />
+                    <input
+                      placeholder="Account name"
+                      className={inputCls + " col-span-3"}
+                      value={b.account_name}
+                      onChange={(e) =>
+                        setBanks(
+                          banks.map((x, j) =>
+                            j === i ? { ...x, account_name: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    />
                     <label className="col-span-1 flex items-center gap-1 text-[11px]">
-                      <input type="radio" name="primary_bank" checked={b.is_primary} onChange={() => setBanks(banks.map((x, j) => ({ ...x, is_primary: j === i })))} />
+                      <input
+                        type="radio"
+                        name="primary_bank"
+                        checked={b.is_primary}
+                        onChange={() =>
+                          setBanks(banks.map((x, j) => ({ ...x, is_primary: j === i })))
+                        }
+                      />
                       Primary
                     </label>
-                    <button type="button" className="col-span-1 text-destructive hover:text-destructive/80 flex justify-center" onClick={() => setBanks(banks.filter((_, j) => j !== i))}>
+                    <button
+                      type="button"
+                      className="col-span-1 text-destructive hover:text-destructive/80 flex justify-center"
+                      onClick={() => setBanks(banks.filter((_, j) => j !== i))}
+                    >
                       Remove
                     </button>
                   </div>
@@ -773,7 +1108,19 @@ function NewClientPage() {
                 <button
                   type="button"
                   className={btnSecondaryCls + " self-start"}
-                  onClick={() => setBanks([...banks, { bank_name: "", branch_name: "", account_no: "", account_name: "", swift_code: "", is_primary: banks.length === 0 }])}
+                  onClick={() =>
+                    setBanks([
+                      ...banks,
+                      {
+                        bank_name: "",
+                        branch_name: "",
+                        account_no: "",
+                        account_name: "",
+                        swift_code: "",
+                        is_primary: banks.length === 0,
+                      },
+                    ])
+                  }
                 >
                   + Add bank account
                 </button>
@@ -781,9 +1128,15 @@ function NewClientPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">Introducer settings</h2>
+              <h2 className="text-[11px] font-semibold mb-4 text-faint uppercase tracking-wider">
+                Introducer settings
+              </h2>
               <label className="flex items-center gap-2 text-sm mb-3">
-                <input type="checkbox" checked={isIntroducer} onChange={(e) => setIsIntroducer(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={isIntroducer}
+                  onChange={(e) => setIsIntroducer(e.target.checked)}
+                />
                 This customer can be selected as an introducer on FD / loan bookings
               </label>
               {isIntroducer && (
@@ -794,7 +1147,9 @@ function NewClientPage() {
                       step="0.001"
                       className={inputCls + " font-mono"}
                       value={commissionPct}
-                      onChange={(e) => setCommissionPct(e.target.value === "" ? "" : Number(e.target.value))}
+                      onChange={(e) =>
+                        setCommissionPct(e.target.value === "" ? "" : Number(e.target.value))
+                      }
                     />
                   </FormField>
                   <FormField label="Default commission amount" span={3}>
@@ -803,11 +1158,16 @@ function NewClientPage() {
                       step="0.01"
                       className={inputCls + " font-mono"}
                       value={commissionAmount}
-                      onChange={(e) => setCommissionAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                      onChange={(e) =>
+                        setCommissionAmount(e.target.value === "" ? "" : Number(e.target.value))
+                      }
                     />
                   </FormField>
                   <FormField label="" span={6}>
-                    <span className="text-[11px] text-muted-foreground">Amount takes precedence over percentage when both are set. Either can be overridden per booking.</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      Amount takes precedence over percentage when both are set. Either can be
+                      overridden per booking.
+                    </span>
                   </FormField>
                 </FormGrid>
               )}
@@ -815,33 +1175,45 @@ function NewClientPage() {
           </>
         )}
 
-
         {tab === "risk" && (
           <Card className="p-6">
-            <h2 className="text-[11px] font-semibold mb-1 text-faint uppercase tracking-wider">Initial risk profile</h2>
+            <h2 className="text-[11px] font-semibold mb-1 text-faint uppercase tracking-wider">
+              Initial risk profile
+            </h2>
             <p className="text-xs text-muted-foreground mb-4">
-              Complete the risk assessment. All applicable factors must be answered before the client can be registered. Scoring scheme is maintained in Administration → Risk profiling.
+              Complete the risk assessment. All applicable factors must be answered before the
+              client can be registered. Scoring scheme is maintained in Administration → Risk
+              profiling.
             </p>
             {!riskScheme ? (
               <div className="text-sm text-muted-foreground">Loading risk scheme…</div>
             ) : (
-              <RiskAssessmentForm scheme={riskScheme} answers={riskAnswers} onChange={setRiskAnswers} />
+              <RiskAssessmentForm
+                scheme={riskScheme}
+                answers={riskAnswers}
+                onChange={setRiskAnswers}
+              />
             )}
           </Card>
         )}
 
-
         {tab === "documents" && (
           <Card className="p-6">
-            <h2 className="text-[11px] font-semibold mb-1 text-faint uppercase tracking-wider">Onboarding documents</h2>
+            <h2 className="text-[11px] font-semibold mb-1 text-faint uppercase tracking-wider">
+              Onboarding documents
+            </h2>
             <p className="text-xs text-muted-foreground mb-4">
-              Attach the required KYC documents below. Each file must be an image or PDF, up to 10 MB.
+              Attach the required KYC documents below. Each file must be an image or PDF, up to 10
+              MB.
             </p>
             <div className="flex flex-col gap-3">
               {REQUIRED_DOCS.map((d) => {
                 const file = docFiles[d.key];
                 return (
-                  <div key={d.key} className="border border-border rounded-md p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div
+                    key={d.key}
+                    className="border border-border rounded-md p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                  >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">{d.label}</span>
@@ -872,7 +1244,11 @@ function NewClientPage() {
                         />
                       </label>
                       {file && (
-                        <button type="button" className={btnGhostCls} onClick={() => onPickDoc(d.key, null)}>
+                        <button
+                          type="button"
+                          className={btnGhostCls}
+                          onClick={() => onPickDoc(d.key, null)}
+                        >
                           Remove
                         </button>
                       )}
@@ -891,18 +1267,28 @@ function NewClientPage() {
 
         <FormActions>
           {submitted && !isValid && (
-            <span className="text-xs text-destructive mr-auto">Fix {Object.keys(errors).length} field(s) above</span>
+            <span className="text-xs text-destructive mr-auto">
+              Fix {Object.keys(errors).length} field(s) above
+            </span>
           )}
           {submitted && isValid && !docsSatisfied && (
             <span className="text-xs text-destructive mr-auto">Attach the required documents</span>
           )}
           {submitted && isValid && docsSatisfied && !riskSatisfied && (
-            <span className="text-xs text-destructive mr-auto">Complete the risk profile ({riskMissing.length} pending)</span>
+            <span className="text-xs text-destructive mr-auto">
+              Complete the risk profile ({riskMissing.length} pending)
+            </span>
           )}
-          <Link to="/clients" className={btnSecondaryCls}>Cancel</Link>
+          <Link to="/clients" className={btnSecondaryCls}>
+            Cancel
+          </Link>
           <button
             type="submit"
-            disabled={post.isPending || uploading || (submitted && (!isValid || !docsSatisfied || !riskSatisfied))}
+            disabled={
+              post.isPending ||
+              uploading ||
+              (submitted && (!isValid || !docsSatisfied || !riskSatisfied))
+            }
             className={btnPrimaryCls}
           >
             {uploading ? "Uploading photo…" : post.isPending ? "Saving…" : "Register client"}
@@ -927,7 +1313,11 @@ function ScreeningResultCard({
 }: {
   result: ScreeningResult;
   classification: Classification;
-  config: { tier1_min_score: number; tier2_min_score: number; auto_escalate_direct: boolean } | null;
+  config: {
+    tier1_min_score: number;
+    tier2_min_score: number;
+    auto_escalate_direct: boolean;
+  } | null;
   onRequestApproval: (tier: "tier1" | "tier2") => void;
   requesting: boolean;
   approvalInstance: { id: string; tier: ScreeningTier } | null;
@@ -966,14 +1356,20 @@ function ScreeningResultCard({
               : "Loading routing config…"}
             {config && (
               <>
-                {" "}Thresholds: Tier 1 ≥ {config.tier1_min_score}, Tier 2 ≥ {config.tier2_min_score}.
+                {" "}
+                Thresholds: Tier 1 ≥ {config.tier1_min_score}, Tier 2 ≥ {config.tier2_min_score}.
               </>
             )}
           </p>
         </div>
       </div>
 
-      <div className={cn("flex items-center gap-2 rounded-md border px-3 py-2 text-[12.5px] mb-4", tierMeta.cls)}>
+      <div
+        className={cn(
+          "flex items-center gap-2 rounded-md border px-3 py-2 text-[12.5px] mb-4",
+          tierMeta.cls,
+        )}
+      >
         <Icon size={14} />
         {tierMeta.text}
       </div>
@@ -1042,9 +1438,7 @@ function MatchesSection({
             <tr className="border-b border-border">
               <th className="text-left font-medium px-3 py-2">List type</th>
               <th className="text-left font-medium px-3 py-2">Reference</th>
-              {variant === "fuzzy" && (
-                <th className="text-right font-medium px-3 py-2">Score</th>
-              )}
+              {variant === "fuzzy" && <th className="text-right font-medium px-3 py-2">Score</th>}
             </tr>
           </thead>
           <tbody>
@@ -1069,4 +1463,3 @@ function MatchesSection({
     </div>
   );
 }
-

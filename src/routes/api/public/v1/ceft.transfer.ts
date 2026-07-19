@@ -1,12 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateApiKey, logApiCall, generateReference } from "@/lib/api-auth.server";
 import {
-  CeftRequest, CeftResponse,
-  parseJsonBody, validateAndSend, logAndReturnAuthError,
-  checkIdempotency, withIdempotencyEnvelope, errJson, ERRORS,
+  CeftRequest,
+  CeftResponse,
+  parseJsonBody,
+  validateAndSend,
+  logAndReturnAuthError,
+  checkIdempotency,
+  withIdempotencyEnvelope,
+  errJson,
+  ERRORS,
 } from "@/lib/api-schemas.server";
 import { postApiChannelEntry } from "@/lib/api-ledger.server";
-
 
 const ENDPOINT = "/api/public/v1/ceft/transfer";
 const CHANNEL = "ceft";
@@ -16,20 +21,42 @@ export const Route = createFileRoute("/api/public/v1/ceft/transfer")({
     handlers: {
       POST: async ({ request }) => {
         const auth = await authenticateApiKey(request, "ceft");
-        if (!auth.ok) return logAndReturnAuthError({ status: auth.status, error: auth.error, channel: CHANNEL, endpoint: ENDPOINT, direction: "outbound" });
+        if (!auth.ok)
+          return logAndReturnAuthError({
+            status: auth.status,
+            error: auth.error,
+            channel: CHANNEL,
+            endpoint: ENDPOINT,
+            direction: "outbound",
+          });
 
         const parsed = await parseJsonBody(request, CeftRequest);
         if (!parsed.ok) {
-          await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "outbound",
-            endpoint: ENDPOINT, method: "POST", status_code: 400, request: parsed.raw, error: "validation_failed" });
+          await logApiCall({
+            company_id: auth.key.company_id,
+            api_key_id: auth.key.id,
+            channel: CHANNEL,
+            direction: "outbound",
+            endpoint: ENDPOINT,
+            method: "POST",
+            status_code: 400,
+            request: parsed.raw,
+            error: "validation_failed",
+          });
           return parsed.response;
         }
 
         const idem = request.headers.get("Idempotency-Key");
         if (idem) {
-          const hit = await checkIdempotency({ company_id: auth.key.company_id, endpoint: ENDPOINT, key: idem, body: parsed.data });
+          const hit = await checkIdempotency({
+            company_id: auth.key.company_id,
+            endpoint: ENDPOINT,
+            key: idem,
+            body: parsed.data,
+          });
           if (hit.kind === "conflict") return errJson(ERRORS.idempotency_conflict);
-          if (hit.kind === "replay") return validateAndSend(CeftResponse, hit.response as any, hit.status);
+          if (hit.kind === "replay")
+            return validateAndSend(CeftResponse, hit.response as any, hit.status);
         }
 
         const reference = generateReference("CEFT");
@@ -41,15 +68,26 @@ export const Route = createFileRoute("/api/public/v1/ceft/transfer")({
         };
         const dir = parsed.data.transaction_type === "credit" ? "outbound" : "inbound";
         await postApiChannelEntry({
-          company_id: auth.key.company_id, direction: dir,
-          amount: parsed.data.amount, reference,
-          description: `CEFT ${parsed.data.transaction_type} · session ${parsed.data.session_id}`,
-          source_module: "ceft", idempotency_key: idem ?? reference,
-        });
-        await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL,
+          company_id: auth.key.company_id,
           direction: dir,
-          endpoint: ENDPOINT, method: "POST", reference, status_code: 202,
-          request: withIdempotencyEnvelope(parsed.data, idem), response });
+          amount: parsed.data.amount,
+          reference,
+          description: `CEFT ${parsed.data.transaction_type} · session ${parsed.data.session_id}`,
+          source_module: "ceft",
+          idempotency_key: idem ?? reference,
+        });
+        await logApiCall({
+          company_id: auth.key.company_id,
+          api_key_id: auth.key.id,
+          channel: CHANNEL,
+          direction: dir,
+          endpoint: ENDPOINT,
+          method: "POST",
+          reference,
+          status_code: 202,
+          request: withIdempotencyEnvelope(parsed.data, idem),
+          response,
+        });
         return validateAndSend(CeftResponse, response, 202);
       },
     },

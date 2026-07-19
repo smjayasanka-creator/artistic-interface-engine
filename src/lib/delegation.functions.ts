@@ -16,7 +16,9 @@ export const listAuthorities = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("delegation_authority_master")
-      .select("*, members:delegation_authority_member(*), delegates:delegation_authority_delegate(*)")
+      .select(
+        "*, members:delegation_authority_member(*), delegates:delegation_authority_delegate(*)",
+      )
       .order("level", { ascending: true });
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -41,7 +43,12 @@ export const upsertAuthority = createServerFn({ method: "POST" })
     const payload: any = { ...data, company_id };
     if (!data.id) payload.created_by = context.userId;
     const q = data.id
-      ? context.supabase.from("delegation_authority_master").update(payload).eq("id", data.id).select().single()
+      ? context.supabase
+          .from("delegation_authority_master")
+          .update(payload)
+          .eq("id", data.id)
+          .select()
+          .single()
       : context.supabase.from("delegation_authority_master").insert(payload).select().single();
     const { data: row, error } = await q;
     if (error) throw new Error(error.message);
@@ -52,7 +59,10 @@ export const deleteAuthority = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("delegation_authority_master").delete().eq("id", data.id);
+    const { error } = await context.supabase
+      .from("delegation_authority_master")
+      .delete()
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -83,7 +93,10 @@ export const removeAuthorityMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("delegation_authority_member").delete().eq("id", data.id);
+    const { error } = await context.supabase
+      .from("delegation_authority_member")
+      .delete()
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -105,7 +118,12 @@ export const upsertDelegate = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => delegateSchema.parse(d))
   .handler(async ({ data, context }) => {
     const q = data.id
-      ? context.supabase.from("delegation_authority_delegate").update(data).eq("id", data.id).select().single()
+      ? context.supabase
+          .from("delegation_authority_delegate")
+          .update(data)
+          .eq("id", data.id)
+          .select()
+          .single()
       : context.supabase.from("delegation_authority_delegate").insert(data).select().single();
     const { data: row, error } = await q;
     if (error) throw new Error(error.message);
@@ -116,7 +134,10 @@ export const deleteDelegate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("delegation_authority_delegate").delete().eq("id", data.id);
+    const { error } = await context.supabase
+      .from("delegation_authority_delegate")
+      .delete()
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -204,7 +225,9 @@ export const previewLoanApprovalChain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ loan_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: r, error } = await context.supabase.rpc("resolve_loan_approval_chain", { _loan_id: data.loan_id });
+    const { data: r, error } = await context.supabase.rpc("resolve_loan_approval_chain", {
+      _loan_id: data.loan_id,
+    });
     if (error) throw new Error(error.message);
     return r as { rule_id: string | null; rule_name: string | null; steps: any[] };
   });
@@ -212,12 +235,14 @@ export const previewLoanApprovalChain = createServerFn({ method: "POST" })
 export const previewLoanApprovalChainRaw = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      client_id: z.string().uuid(),
-      product_id: z.string().uuid(),
-      principal: z.number().nonnegative(),
-      annual_rate_pct: z.number().nonnegative(),
-    }).parse(d),
+    z
+      .object({
+        client_id: z.string().uuid(),
+        product_id: z.string().uuid(),
+        principal: z.number().nonnegative(),
+        annual_rate_pct: z.number().nonnegative(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { data: r, error } = await context.supabase.rpc(
@@ -255,7 +280,10 @@ export const listDelegationLookups = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const [staff, branches, products, roles, secTypes] = await Promise.all([
-      context.supabase.from("staff").select("id, user_id, full_name, email, role, branch_id").order("full_name"),
+      context.supabase
+        .from("staff")
+        .select("id, user_id, full_name, email, role, branch_id")
+        .order("full_name"),
       context.supabase.from("branch").select("id, code, name, region").order("code"),
       context.supabase.from("loan_product").select("id, code, name").order("name"),
       context.supabase.from("custom_role").select("id, name").order("name"),

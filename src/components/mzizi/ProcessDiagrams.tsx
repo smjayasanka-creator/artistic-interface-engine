@@ -51,8 +51,7 @@ const PROCESSES: Proc[] = [
   {
     id: "savings-lifecycle",
     title: "Savings Account Lifecycle",
-    summary:
-      "Open account with opening deposit, transact via passbook, close with balance payout.",
+    summary: "Open account with opening deposit, transact via passbook, close with balance payout.",
     validations: [
       "Opening deposit ≥ product minimum balance.",
       "Passbook serial must be issued from active branch stock.",
@@ -248,9 +247,7 @@ function MermaidView({ code, id }: { code: string; id: string }) {
   }, [code, id]);
 
   if (err) {
-    return (
-      <div className="text-[12px] text-rose-600 font-mono whitespace-pre-wrap">{err}</div>
-    );
+    return <div className="text-[12px] text-rose-600 font-mono whitespace-pre-wrap">{err}</div>;
   }
   return <div ref={ref} className="overflow-auto [&_svg]:max-w-full [&_svg]:h-auto" />;
 }

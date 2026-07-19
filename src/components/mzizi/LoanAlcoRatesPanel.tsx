@@ -5,12 +5,23 @@ import { toast } from "sonner";
 import { Upload, Send, Plus, Trash2, History, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import {
-  FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls, btnGhostCls,
+  FormActions,
+  inputCls,
+  selectCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
+  btnGhostCls,
 } from "@/components/mzizi/FormGrid";
 import { Modal } from "@/components/mzizi/Modal";
 import {
-  listLoanAlcoRates, upsertLoanAlcoRate, deleteLoanAlcoRate, listLoanAlcoRateHistory,
-  listLoanAlcoProposals, applyLoanAlcoProposal, cancelLoanAlcoProposal, listAllLoanAlcoVersions,
+  listLoanAlcoRates,
+  upsertLoanAlcoRate,
+  deleteLoanAlcoRate,
+  listLoanAlcoRateHistory,
+  listLoanAlcoProposals,
+  applyLoanAlcoProposal,
+  cancelLoanAlcoProposal,
+  listAllLoanAlcoVersions,
 } from "@/lib/loan-alco.functions";
 
 import { getAllLoanProducts } from "@/lib/mzizi.functions";
@@ -32,8 +43,8 @@ type RateRow = {
 };
 
 type Draft = {
-  key: string;              // stable client-side key
-  rate_id?: string;         // DB id of the current active version
+  key: string; // stable client-side key
+  rate_id?: string; // DB id of the current active version
   product_id: string;
   security_type_id: string;
   equipment_vehicle: string;
@@ -42,7 +53,7 @@ type Draft = {
   min_period_months: string;
   max_period_months: string;
   active: boolean;
-  effective_from: string;   // ISO string bound to <input type="datetime-local">
+  effective_from: string; // ISO string bound to <input type="datetime-local">
   note: string;
   _new?: boolean;
 };
@@ -98,15 +109,17 @@ function blankDraft(product_id: string): Draft {
 
 function draftEqualToRow(d: Draft, r?: RateRow) {
   if (!r) return false;
-  return d.security_type_id === (r.security_type_id ?? "")
-    && d.equipment_vehicle === (r.equipment_vehicle ?? "")
-    && d.min_rate === String(r.min_rate)
-    && d.max_rate === String(r.max_rate)
-    && d.min_period_months === String(r.min_period_months)
-    && d.max_period_months === String(r.max_period_months)
-    && d.active === r.active
-    && d.note === (r.note ?? "")
-    && d.effective_from === toLocalInput(r.effective_from);
+  return (
+    d.security_type_id === (r.security_type_id ?? "") &&
+    d.equipment_vehicle === (r.equipment_vehicle ?? "") &&
+    d.min_rate === String(r.min_rate) &&
+    d.max_rate === String(r.max_rate) &&
+    d.min_period_months === String(r.min_period_months) &&
+    d.max_period_months === String(r.max_period_months) &&
+    d.active === r.active &&
+    d.note === (r.note ?? "") &&
+    d.effective_from === toLocalInput(r.effective_from)
+  );
 }
 
 export function LoanAlcoRatesPanel() {
@@ -117,9 +130,18 @@ export function LoanAlcoRatesPanel() {
   const productsFn = useServerFn(getAllLoanProducts);
   const secTypesFn = useServerFn(listSecurityTypes);
 
-  const { data: rates, isLoading } = useQuery({ queryKey: ["loan-alco", "rates"], queryFn: () => listFn() });
-  const { data: products } = useQuery({ queryKey: ["loan-alco", "products"], queryFn: () => productsFn() });
-  const { data: secTypes } = useQuery({ queryKey: ["loan-alco", "security-types"], queryFn: () => secTypesFn() });
+  const { data: rates, isLoading } = useQuery({
+    queryKey: ["loan-alco", "rates"],
+    queryFn: () => listFn(),
+  });
+  const { data: products } = useQuery({
+    queryKey: ["loan-alco", "products"],
+    queryFn: () => productsFn(),
+  });
+  const { data: secTypes } = useQuery({
+    queryKey: ["loan-alco", "security-types"],
+    queryFn: () => secTypesFn(),
+  });
 
   const activeProducts = useMemo(
     () => (products ?? []).filter((p: any) => p.is_active !== false),
@@ -173,8 +195,14 @@ export function LoanAlcoRatesPanel() {
     return rows.filter((r) => {
       if (r._new) {
         // include new rows only if any field filled
-        return r.min_rate || r.max_rate || r.min_period_months || r.max_period_months
-          || r.security_type_id || r.equipment_vehicle;
+        return (
+          r.min_rate ||
+          r.max_rate ||
+          r.min_period_months ||
+          r.max_period_months ||
+          r.security_type_id ||
+          r.equipment_vehicle
+        );
       }
       return !draftEqualToRow(r, r.rate_id ? ratesById.get(r.rate_id) : undefined);
     });
@@ -183,7 +211,10 @@ export function LoanAlcoRatesPanel() {
   const proposalsFn = useServerFn(listLoanAlcoProposals);
   const applyProposalFn = useServerFn(applyLoanAlcoProposal);
   const cancelProposalFn = useServerFn(cancelLoanAlcoProposal);
-  const { data: proposals } = useQuery({ queryKey: ["loan-alco", "proposals"], queryFn: () => proposalsFn() });
+  const { data: proposals } = useQuery({
+    queryKey: ["loan-alco", "proposals"],
+    queryFn: () => proposalsFn(),
+  });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -214,7 +245,8 @@ export function LoanAlcoRatesPanel() {
             active: d.active,
           },
         });
-        if (res?.pending) pending++; else applied++;
+        if (res?.pending) pending++;
+        else applied++;
       }
       return { pending, applied };
     },
@@ -247,12 +279,18 @@ export function LoanAlcoRatesPanel() {
 
   const applyProposal = useMutation({
     mutationFn: (id: string) => applyProposalFn({ data: { proposal_id: id } }),
-    onSuccess: () => { toast.success("Version applied"); qc.invalidateQueries({ queryKey: ["loan-alco"] }); },
+    onSuccess: () => {
+      toast.success("Version applied");
+      qc.invalidateQueries({ queryKey: ["loan-alco"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const cancelProposal = useMutation({
     mutationFn: (id: string) => cancelProposalFn({ data: { proposal_id: id } }),
-    onSuccess: () => { toast.success("Proposal cancelled"); qc.invalidateQueries({ queryKey: ["loan-alco"] }); },
+    onSuccess: () => {
+      toast.success("Proposal cancelled");
+      qc.invalidateQueries({ queryKey: ["loan-alco"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -265,18 +303,28 @@ export function LoanAlcoRatesPanel() {
   }
 
   function applyBulk() {
-    const lines = csv.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const lines = csv
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
     if (lines.length === 0) return toast.error("Empty CSV");
     const byProdName = new Map(activeProducts.map((p: any) => [String(p.name).toLowerCase(), p]));
     const bySecName = new Map(activeSecTypes.map((s: any) => [String(s.name).toLowerCase(), s]));
-    let ok = 0, skipped = 0;
+    let ok = 0,
+      skipped = 0;
     const added: Draft[] = [];
     for (const line of lines) {
       const parts = line.split(/\t|,|;/).map((x) => x.trim());
       const [prodName, secName, equipment, minR, maxR, minP, maxP, effFrom] = parts;
-      if (!prodName || prodName.toLowerCase() === "product") { skipped++; continue; }
+      if (!prodName || prodName.toLowerCase() === "product") {
+        skipped++;
+        continue;
+      }
       const p: any = byProdName.get(prodName.toLowerCase());
-      if (!p) { skipped++; continue; }
+      if (!p) {
+        skipped++;
+        continue;
+      }
       const sec: any = secName ? bySecName.get(secName.toLowerCase()) : null;
       let effLocal = nowLocal();
       if (effFrom) {
@@ -306,9 +354,12 @@ export function LoanAlcoRatesPanel() {
   }
 
   function downloadTemplate() {
-    const header = "product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months,effective_from";
-    const csvRows = (rates as RateRow[] ?? []).map((r) => {
-      const sec = r.security_type_id ? activeSecTypes.find((s: any) => s.id === r.security_type_id) : null;
+    const header =
+      "product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months,effective_from";
+    const csvRows = ((rates as RateRow[]) ?? []).map((r) => {
+      const sec = r.security_type_id
+        ? activeSecTypes.find((s: any) => s.id === r.security_type_id)
+        : null;
       return [
         productName(r.product_id),
         (sec as any)?.name ?? "",
@@ -334,24 +385,34 @@ export function LoanAlcoRatesPanel() {
   const historyFn = useServerFn(listLoanAlcoRateHistory);
   const [historyFor, setHistoryFor] = useState<Draft | null>(null);
   const { data: historyRows, isFetching: historyLoading } = useQuery({
-    queryKey: ["loan-alco", "history", historyFor?.product_id, historyFor?.security_type_id, historyFor?.equipment_vehicle],
-    queryFn: () => historyFn({
-      data: {
-        product_id: historyFor!.product_id,
-        security_type_id: historyFor!.security_type_id || null,
-        equipment_vehicle: historyFor!.equipment_vehicle.trim() || null,
-      },
-    }),
+    queryKey: [
+      "loan-alco",
+      "history",
+      historyFor?.product_id,
+      historyFor?.security_type_id,
+      historyFor?.equipment_vehicle,
+    ],
+    queryFn: () =>
+      historyFn({
+        data: {
+          product_id: historyFor!.product_id,
+          security_type_id: historyFor!.security_type_id || null,
+          equipment_vehicle: historyFor!.equipment_vehicle.trim() || null,
+        },
+      }),
     enabled: !!historyFor,
   });
 
   // All-versions panel
   const allVersionsFn = useServerFn(listAllLoanAlcoVersions);
-  const { data: allVersions } = useQuery({ queryKey: ["loan-alco", "all-versions"], queryFn: () => allVersionsFn() });
+  const { data: allVersions } = useQuery({
+    queryKey: ["loan-alco", "all-versions"],
+    queryFn: () => allVersionsFn(),
+  });
   const [viewVersion, setViewVersion] = useState<any | null>(null);
 
-
-  if (isLoading) return <div className="text-sm text-muted-foreground">Loading loan ALCO rates…</div>;
+  if (isLoading)
+    return <div className="text-sm text-muted-foreground">Loading loan ALCO rates…</div>;
 
   return (
     <Card>
@@ -359,11 +420,14 @@ export function LoanAlcoRatesPanel() {
         <div>
           <CardTitle>ALCO rates — Loan products</CardTitle>
           <p className="text-[12px] text-muted-foreground">
-            Interest rate bands per loan product. Add multiple rows per product for different security types or equipment/vehicles.
+            Interest rate bands per loan product. Add multiple rows per product for different
+            security types or equipment/vehicles.
           </p>
         </div>
         <div className="flex gap-2">
-          <button className={btnSecondaryCls} onClick={downloadTemplate}>Download CSV</button>
+          <button className={btnSecondaryCls} onClick={downloadTemplate}>
+            Download CSV
+          </button>
           <button className={btnSecondaryCls} onClick={() => setBulkOpen((v) => !v)}>
             <Upload size={14} className="mr-1.5" /> Bulk upload
           </button>
@@ -374,19 +438,35 @@ export function LoanAlcoRatesPanel() {
         <div className="mb-4 rounded-md border border-border p-3 bg-muted/30">
           <div className="text-[12px] font-semibold mb-1">Paste CSV / Excel rows</div>
           <div className="text-[11px] text-muted-foreground mb-2">
-            Columns: <code>product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months,effective_from</code> (header optional; <code>effective_from</code> optional, defaults to now).
-            Each row becomes a new version — the previous active rate is automatically closed.
+            Columns:{" "}
+            <code>
+              product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months,effective_from
+            </code>{" "}
+            (header optional; <code>effective_from</code> optional, defaults to now). Each row
+            becomes a new version — the previous active rate is automatically closed.
           </div>
           <textarea
             value={csv}
             onChange={(e) => setCsv(e.target.value)}
             rows={6}
-            placeholder={"product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months,effective_from\nLeasing,Vehicle,Toyota Hilux,12,18,3,60,2026-07-15T09:00"}
+            placeholder={
+              "product,security_type,equipment_vehicle,min_rate,max_rate,min_period_months,max_period_months,effective_from\nLeasing,Vehicle,Toyota Hilux,12,18,3,60,2026-07-15T09:00"
+            }
             className={inputCls + " font-mono text-[12px]"}
           />
           <div className="flex justify-end gap-2 mt-2">
-            <button className={btnSecondaryCls} onClick={() => { setBulkOpen(false); setCsv(""); }}>Cancel</button>
-            <button className={btnPrimaryCls} onClick={applyBulk}>Load into table</button>
+            <button
+              className={btnSecondaryCls}
+              onClick={() => {
+                setBulkOpen(false);
+                setCsv("");
+              }}
+            >
+              Cancel
+            </button>
+            <button className={btnPrimaryCls} onClick={applyBulk}>
+              Load into table
+            </button>
           </div>
         </div>
       )}
@@ -423,40 +503,80 @@ export function LoanAlcoRatesPanel() {
                           {idx === 0 ? (
                             <>
                               <div className="font-semibold">{p.name}</div>
-                              <div className="text-[11px] text-muted-foreground">{p.segment ?? ""}</div>
+                              <div className="text-[11px] text-muted-foreground">
+                                {p.segment ?? ""}
+                              </div>
                             </>
                           ) : (
                             <div className="text-[11px] text-muted-foreground pl-2">↳ {p.name}</div>
                           )}
                         </td>
                         <td className="px-2 py-1.5">
-                          <select className={selectCls + " py-1"} value={d.security_type_id}
-                            onChange={(e) => updateRow(d.key, { security_type_id: e.target.value })}>
+                          <select
+                            className={selectCls + " py-1"}
+                            value={d.security_type_id}
+                            onChange={(e) => updateRow(d.key, { security_type_id: e.target.value })}
+                          >
                             <option value="">— Any —</option>
                             {activeSecTypes.map((s: any) => (
-                              <option key={s.id} value={s.id}>{s.name}</option>
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
                             ))}
                           </select>
                         </td>
                         <td className="px-2 py-1.5">
-                          <input className={inputCls + " py-1"} value={d.equipment_vehicle}
-                            onChange={(e) => updateRow(d.key, { equipment_vehicle: e.target.value })} />
+                          <input
+                            className={inputCls + " py-1"}
+                            value={d.equipment_vehicle}
+                            onChange={(e) =>
+                              updateRow(d.key, { equipment_vehicle: e.target.value })
+                            }
+                          />
                         </td>
                         <td className="px-2 py-1.5">
-                          <input type="number" step="0.001" min="0" className={inputCls + " text-right font-mono py-1"}
-                            value={d.min_rate} onChange={(e) => updateRow(d.key, { min_rate: e.target.value })} />
+                          <input
+                            type="number"
+                            step="0.001"
+                            min="0"
+                            className={inputCls + " text-right font-mono py-1"}
+                            value={d.min_rate}
+                            onChange={(e) => updateRow(d.key, { min_rate: e.target.value })}
+                          />
                         </td>
                         <td className="px-2 py-1.5">
-                          <input type="number" step="0.001" min="0" className={inputCls + " text-right font-mono py-1"}
-                            value={d.max_rate} onChange={(e) => updateRow(d.key, { max_rate: e.target.value })} />
+                          <input
+                            type="number"
+                            step="0.001"
+                            min="0"
+                            className={inputCls + " text-right font-mono py-1"}
+                            value={d.max_rate}
+                            onChange={(e) => updateRow(d.key, { max_rate: e.target.value })}
+                          />
                         </td>
                         <td className="px-2 py-1.5">
-                          <input type="number" step="1" min="0" className={inputCls + " text-right font-mono py-1"}
-                            value={d.min_period_months} onChange={(e) => updateRow(d.key, { min_period_months: e.target.value })} />
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            className={inputCls + " text-right font-mono py-1"}
+                            value={d.min_period_months}
+                            onChange={(e) =>
+                              updateRow(d.key, { min_period_months: e.target.value })
+                            }
+                          />
                         </td>
                         <td className="px-2 py-1.5">
-                          <input type="number" step="1" min="0" className={inputCls + " text-right font-mono py-1"}
-                            value={d.max_period_months} onChange={(e) => updateRow(d.key, { max_period_months: e.target.value })} />
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            className={inputCls + " text-right font-mono py-1"}
+                            value={d.max_period_months}
+                            onChange={(e) =>
+                              updateRow(d.key, { max_period_months: e.target.value })
+                            }
+                          />
                         </td>
                         <td className="px-2 py-1.5">
                           <input
@@ -468,8 +588,11 @@ export function LoanAlcoRatesPanel() {
                           />
                         </td>
                         <td className="px-2 py-1.5 text-center">
-                          <input type="checkbox" checked={d.active}
-                            onChange={(e) => updateRow(d.key, { active: e.target.checked })} />
+                          <input
+                            type="checkbox"
+                            checked={d.active}
+                            onChange={(e) => updateRow(d.key, { active: e.target.checked })}
+                          />
                         </td>
                         <td className="px-2 py-1.5">
                           <div className="flex items-center justify-center gap-1">
@@ -488,7 +611,11 @@ export function LoanAlcoRatesPanel() {
                               onClick={() => {
                                 if (d._new) {
                                   setRows((prev) => prev.filter((r) => r.key !== d.key));
-                                } else if (confirm("Close (retire) this active rate version? History is preserved.")) {
+                                } else if (
+                                  confirm(
+                                    "Close (retire) this active rate version? History is preserved.",
+                                  )
+                                ) {
                                   remove.mutate(d);
                                 }
                               }}
@@ -514,7 +641,11 @@ export function LoanAlcoRatesPanel() {
               );
             })}
             {activeProducts.length === 0 && (
-              <tr><td colSpan={10} className="px-3 py-6 text-center text-muted-foreground">No active loan products.</td></tr>
+              <tr>
+                <td colSpan={10} className="px-3 py-6 text-center text-muted-foreground">
+                  No active loan products.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -536,38 +667,56 @@ export function LoanAlcoRatesPanel() {
         </button>
       </FormActions>
 
-      <Modal open={!!historyFor} onClose={() => setHistoryFor(null)} title="Rate version history" width={880}>
+      <Modal
+        open={!!historyFor}
+        onClose={() => setHistoryFor(null)}
+        title="Rate version history"
+        width={880}
+      >
         {historyFor && (
           <div>
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="text-[12px] text-muted-foreground">
-                <span className="font-semibold text-foreground">{productName(historyFor.product_id)}</span>
+                <span className="font-semibold text-foreground">
+                  {productName(historyFor.product_id)}
+                </span>
                 {historyFor.security_type_id && (
-                  <> · {activeSecTypes.find((s: any) => s.id === historyFor.security_type_id)?.name}</>
+                  <>
+                    {" "}
+                    · {activeSecTypes.find((s: any) => s.id === historyFor.security_type_id)?.name}
+                  </>
                 )}
                 {historyFor.equipment_vehicle && <> · {historyFor.equipment_vehicle}</>}
-                <div className="mt-1 text-[11px]">Historical versions are read-only. Create a new version to change rates — the previous version is preserved.</div>
+                <div className="mt-1 text-[11px]">
+                  Historical versions are read-only. Create a new version to change rates — the
+                  previous version is preserved.
+                </div>
               </div>
               <button
                 className={btnPrimaryCls + " h-8"}
                 title="Clone the active version into an editable draft row"
                 onClick={() => {
-                  const active = (historyRows ?? []).find((h: any) => h.effective_to === null) ?? (historyRows ?? [])[0];
+                  const active =
+                    (historyRows ?? []).find((h: any) => h.effective_to === null) ??
+                    (historyRows ?? [])[0];
                   if (!active) return;
-                  setRows((prev) => [...prev, {
-                    key: `new-${crypto.randomUUID()}`,
-                    product_id: historyFor.product_id,
-                    security_type_id: active.security_type_id ?? "",
-                    equipment_vehicle: active.equipment_vehicle ?? "",
-                    min_rate: String(active.min_rate),
-                    max_rate: String(active.max_rate),
-                    min_period_months: String(active.min_period_months),
-                    max_period_months: String(active.max_period_months),
-                    active: true,
-                    effective_from: nowLocal(),
-                    note: "",
-                    _new: true,
-                  }]);
+                  setRows((prev) => [
+                    ...prev,
+                    {
+                      key: `new-${crypto.randomUUID()}`,
+                      product_id: historyFor.product_id,
+                      security_type_id: active.security_type_id ?? "",
+                      equipment_vehicle: active.equipment_vehicle ?? "",
+                      min_rate: String(active.min_rate),
+                      max_rate: String(active.max_rate),
+                      min_period_months: String(active.min_period_months),
+                      max_period_months: String(active.max_period_months),
+                      active: true,
+                      effective_from: nowLocal(),
+                      note: "",
+                      _new: true,
+                    },
+                  ]);
                   setHistoryFor(null);
                   toast.success("New version draft added — edit and save to create version");
                 }}
@@ -597,40 +746,63 @@ export function LoanAlcoRatesPanel() {
                   <tbody className="divide-y divide-border">
                     {(historyRows ?? []).map((h: any) => {
                       const statusCls =
-                        h.status === "active" ? "bg-emerald-500/10 text-emerald-700"
-                        : h.status === "retired" ? "bg-muted text-muted-foreground"
-                        : "bg-slate-500/10 text-slate-600";
+                        h.status === "active"
+                          ? "bg-emerald-500/10 text-emerald-700"
+                          : h.status === "retired"
+                            ? "bg-muted text-muted-foreground"
+                            : "bg-slate-500/10 text-slate-600";
                       return (
-                        <tr key={h.id} className={h.effective_to === null ? "bg-emerald-500/5" : ""}>
+                        <tr
+                          key={h.id}
+                          className={h.effective_to === null ? "bg-emerald-500/5" : ""}
+                        >
                           <td className="px-2 py-1.5 font-mono text-[11px]">v{h.version_no}</td>
-                          <td className="px-2 py-1.5 whitespace-nowrap">{new Date(h.effective_from).toLocaleString()}</td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">
+                            {new Date(h.effective_from).toLocaleString()}
+                          </td>
                           <td className="px-2 py-1.5 whitespace-nowrap">
                             {h.effective_to ? new Date(h.effective_to).toLocaleString() : "—"}
                           </td>
                           <td className="px-2 py-1.5">
-                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[10.5px] font-medium uppercase tracking-wide ${statusCls}`}>
+                            <span
+                              className={`inline-flex px-1.5 py-0.5 rounded text-[10.5px] font-medium uppercase tracking-wide ${statusCls}`}
+                            >
                               {h.status}
                             </span>
                           </td>
                           <td className="px-2 py-1.5 text-right font-mono">{h.min_rate}</td>
                           <td className="px-2 py-1.5 text-right font-mono">{h.max_rate}</td>
-                          <td className="px-2 py-1.5 text-right font-mono">{h.min_period_months}</td>
-                          <td className="px-2 py-1.5 text-right font-mono">{h.max_period_months}</td>
-                          <td className="px-2 py-1.5 whitespace-nowrap">{h.created_by_name ?? "—"}</td>
-                          <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">{h.created_at ? new Date(h.created_at).toLocaleString() : "—"}</td>
+                          <td className="px-2 py-1.5 text-right font-mono">
+                            {h.min_period_months}
+                          </td>
+                          <td className="px-2 py-1.5 text-right font-mono">
+                            {h.max_period_months}
+                          </td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">
+                            {h.created_by_name ?? "—"}
+                          </td>
+                          <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">
+                            {h.created_at ? new Date(h.created_at).toLocaleString() : "—"}
+                          </td>
                           <td className="px-2 py-1.5 text-muted-foreground">{h.note ?? ""}</td>
                         </tr>
                       );
                     })}
                     {(historyRows ?? []).length === 0 && (
-                      <tr><td colSpan={11} className="px-2 py-4 text-center text-muted-foreground">No history.</td></tr>
+                      <tr>
+                        <td colSpan={11} className="px-2 py-4 text-center text-muted-foreground">
+                          No history.
+                        </td>
+                      </tr>
                     )}
                   </tbody>
                 </table>
               </div>
             )}
             <div className="flex justify-end mt-3">
-              <button className={btnSecondaryCls} onClick={() => setHistoryFor(null)}>Close</button>
+              <button className={btnSecondaryCls} onClick={() => setHistoryFor(null)}>
+                Close
+              </button>
             </div>
           </div>
         )}
@@ -641,25 +813,36 @@ export function LoanAlcoRatesPanel() {
           <div className="text-[13px] font-semibold mb-2">Rate change proposals</div>
           <div className="divide-y divide-border">
             {(proposals ?? []).map((p: any) => {
-              const wfStatus = p.workflow?.status ?? (p.workflow_instance_id ? "unknown" : "no workflow");
-              const canApply = p.status === "pending" && (wfStatus === "approved" || !p.workflow_instance_id);
+              const wfStatus =
+                p.workflow?.status ?? (p.workflow_instance_id ? "unknown" : "no workflow");
+              const canApply =
+                p.status === "pending" && (wfStatus === "approved" || !p.workflow_instance_id);
               return (
                 <div key={p.id} className="py-2.5 flex items-start gap-3">
                   <div className="mt-0.5">
-                    {p.status === "applied" ? <CheckCircle2 size={16} className="text-emerald-600" />
-                      : p.status === "declined" || p.status === "cancelled" ? <XCircle size={16} className="text-rose-600" />
-                      : <Clock size={16} className="text-amber-600" />}
+                    {p.status === "applied" ? (
+                      <CheckCircle2 size={16} className="text-emerald-600" />
+                    ) : p.status === "declined" || p.status === "cancelled" ? (
+                      <XCircle size={16} className="text-rose-600" />
+                    ) : (
+                      <Clock size={16} className="text-amber-600" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 text-[12px]">
                     <div className="font-semibold">
                       {p.product?.name ?? "—"}
                       {p.security?.name ? ` · ${p.security.name}` : ""}
                       {p.equipment_vehicle ? ` · ${p.equipment_vehicle}` : ""}
-                      <span className="ml-2 text-[10.5px] uppercase tracking-wide text-muted-foreground">{p.status}</span>
-                      <span className="ml-2 text-[10.5px] text-muted-foreground">workflow: {wfStatus}</span>
+                      <span className="ml-2 text-[10.5px] uppercase tracking-wide text-muted-foreground">
+                        {p.status}
+                      </span>
+                      <span className="ml-2 text-[10.5px] text-muted-foreground">
+                        workflow: {wfStatus}
+                      </span>
                     </div>
                     <div className="text-[11.5px] text-muted-foreground font-mono">
-                      {p.min_rate}% – {p.max_rate}% · {p.min_period_months}–{p.max_period_months} mo · eff {new Date(p.effective_from).toLocaleString()}
+                      {p.min_rate}% – {p.max_rate}% · {p.min_period_months}–{p.max_period_months} mo
+                      · eff {new Date(p.effective_from).toLocaleString()}
                     </div>
                   </div>
                   {p.status === "pending" && (
@@ -667,7 +850,9 @@ export function LoanAlcoRatesPanel() {
                       <button
                         className={btnPrimaryCls + " h-8 px-3 text-[12px]"}
                         disabled={!canApply || applyProposal.isPending}
-                        title={canApply ? "Apply the approved version" : "Waiting for workflow approval"}
+                        title={
+                          canApply ? "Apply the approved version" : "Waiting for workflow approval"
+                        }
                         onClick={() => applyProposal.mutate(p.id)}
                       >
                         Apply
@@ -691,7 +876,9 @@ export function LoanAlcoRatesPanel() {
         <div className="flex items-center gap-2 mb-2">
           <History size={14} className="text-muted-foreground" />
           <div className="text-[13px] font-semibold">Previous versions</div>
-          <div className="text-[11px] text-muted-foreground">All historical Loan ALCO rate versions across products (read-only)</div>
+          <div className="text-[11px] text-muted-foreground">
+            All historical Loan ALCO rate versions across products (read-only)
+          </div>
         </div>
         <div className="overflow-auto rounded-md border border-border max-h-[420px]">
           <table className="w-full text-[12px]">
@@ -712,9 +899,11 @@ export function LoanAlcoRatesPanel() {
             <tbody className="divide-y divide-border">
               {(allVersions ?? []).map((v: any) => {
                 const statusCls =
-                  v.status === "active" ? "bg-emerald-500/10 text-emerald-700"
-                  : v.status === "retired" ? "bg-muted text-muted-foreground"
-                  : "bg-slate-500/10 text-slate-600";
+                  v.status === "active"
+                    ? "bg-emerald-500/10 text-emerald-700"
+                    : v.status === "retired"
+                      ? "bg-muted text-muted-foreground"
+                      : "bg-slate-500/10 text-slate-600";
                 return (
                   <tr key={v.id} className={v.status === "active" ? "bg-emerald-500/5" : ""}>
                     <td className="px-2 py-1.5 font-mono text-[11px]">v{v.version_no}</td>
@@ -722,16 +911,24 @@ export function LoanAlcoRatesPanel() {
                     <td className="px-2 py-1.5 text-muted-foreground">
                       {[v.security?.name, v.equipment_vehicle].filter(Boolean).join(" · ") || "—"}
                     </td>
-                    <td className="px-2 py-1.5 whitespace-nowrap">{new Date(v.effective_from).toLocaleDateString()}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap">
+                      {new Date(v.effective_from).toLocaleDateString()}
+                    </td>
                     <td className="px-2 py-1.5">
-                      <span className={`inline-flex px-1.5 py-0.5 rounded text-[10.5px] font-medium uppercase tracking-wide ${statusCls}`}>
+                      <span
+                        className={`inline-flex px-1.5 py-0.5 rounded text-[10.5px] font-medium uppercase tracking-wide ${statusCls}`}
+                      >
                         {v.status}
                       </span>
                     </td>
                     <td className="px-2 py-1.5 whitespace-nowrap">{v.created_by_name ?? "—"}</td>
-                    <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">{v.created_at ? new Date(v.created_at).toLocaleString() : "—"}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">
+                      {v.created_at ? new Date(v.created_at).toLocaleString() : "—"}
+                    </td>
                     <td className="px-2 py-1.5 whitespace-nowrap">{v.approved_by_name ?? "—"}</td>
-                    <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">{v.approved_at ? new Date(v.approved_at).toLocaleString() : "—"}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">
+                      {v.approved_at ? new Date(v.approved_at).toLocaleString() : "—"}
+                    </td>
                     <td className="px-2 py-1.5 text-center">
                       <button
                         className="text-muted-foreground hover:bg-muted rounded p-1"
@@ -745,67 +942,134 @@ export function LoanAlcoRatesPanel() {
                 );
               })}
               {(allVersions ?? []).length === 0 && (
-                <tr><td colSpan={10} className="px-2 py-4 text-center text-muted-foreground">No versions yet.</td></tr>
+                <tr>
+                  <td colSpan={10} className="px-2 py-4 text-center text-muted-foreground">
+                    No versions yet.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      <Modal open={!!viewVersion} onClose={() => setViewVersion(null)} title={`Rate version v${viewVersion?.version_no ?? ""} — read-only`} width={640}>
+      <Modal
+        open={!!viewVersion}
+        onClose={() => setViewVersion(null)}
+        title={`Rate version v${viewVersion?.version_no ?? ""} — read-only`}
+        width={640}
+      >
         {viewVersion && (
           <div className="text-[12.5px] space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <div><div className="text-[11px] text-muted-foreground">Product</div><div className="font-semibold">{viewVersion.product?.name ?? "—"}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Security type</div><div>{viewVersion.security?.name ?? "—"}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Equipment / Vehicle</div><div>{viewVersion.equipment_vehicle ?? "—"}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Status</div><div className="uppercase text-[11px]">{viewVersion.status}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Min rate</div><div className="font-mono">{viewVersion.min_rate}%</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Max rate</div><div className="font-mono">{viewVersion.max_rate}%</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Min period (months)</div><div className="font-mono">{viewVersion.min_period_months}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Max period (months)</div><div className="font-mono">{viewVersion.max_period_months}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Effective from</div><div>{new Date(viewVersion.effective_from).toLocaleString()}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Effective to</div><div>{viewVersion.effective_to ? new Date(viewVersion.effective_to).toLocaleString() : "—"}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Created by</div><div>{viewVersion.created_by_name ?? "—"}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Created date</div><div>{viewVersion.created_at ? new Date(viewVersion.created_at).toLocaleString() : "—"}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Approved by</div><div>{viewVersion.approved_by_name ?? "—"}</div></div>
-              <div><div className="text-[11px] text-muted-foreground">Approved date</div><div>{viewVersion.approved_at ? new Date(viewVersion.approved_at).toLocaleString() : "—"}</div></div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Product</div>
+                <div className="font-semibold">{viewVersion.product?.name ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Security type</div>
+                <div>{viewVersion.security?.name ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Equipment / Vehicle</div>
+                <div>{viewVersion.equipment_vehicle ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Status</div>
+                <div className="uppercase text-[11px]">{viewVersion.status}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Min rate</div>
+                <div className="font-mono">{viewVersion.min_rate}%</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Max rate</div>
+                <div className="font-mono">{viewVersion.max_rate}%</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Min period (months)</div>
+                <div className="font-mono">{viewVersion.min_period_months}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Max period (months)</div>
+                <div className="font-mono">{viewVersion.max_period_months}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Effective from</div>
+                <div>{new Date(viewVersion.effective_from).toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Effective to</div>
+                <div>
+                  {viewVersion.effective_to
+                    ? new Date(viewVersion.effective_to).toLocaleString()
+                    : "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Created by</div>
+                <div>{viewVersion.created_by_name ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Created date</div>
+                <div>
+                  {viewVersion.created_at ? new Date(viewVersion.created_at).toLocaleString() : "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Approved by</div>
+                <div>{viewVersion.approved_by_name ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Approved date</div>
+                <div>
+                  {viewVersion.approved_at
+                    ? new Date(viewVersion.approved_at).toLocaleString()
+                    : "—"}
+                </div>
+              </div>
             </div>
             {viewVersion.note && (
-              <div><div className="text-[11px] text-muted-foreground">Note</div><div>{viewVersion.note}</div></div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Note</div>
+                <div>{viewVersion.note}</div>
+              </div>
             )}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 className={btnSecondaryCls}
                 title="Clone this version into an editable draft row at the bottom of the table"
                 onClick={() => {
-                  setRows((prev) => [...prev, {
-                    key: `new-${crypto.randomUUID()}`,
-                    product_id: viewVersion.product_id,
-                    security_type_id: viewVersion.security_type_id ?? "",
-                    equipment_vehicle: viewVersion.equipment_vehicle ?? "",
-                    min_rate: String(viewVersion.min_rate),
-                    max_rate: String(viewVersion.max_rate),
-                    min_period_months: String(viewVersion.min_period_months),
-                    max_period_months: String(viewVersion.max_period_months),
-                    active: true,
-                    effective_from: nowLocal(),
-                    note: "",
-                    _new: true,
-                  }]);
+                  setRows((prev) => [
+                    ...prev,
+                    {
+                      key: `new-${crypto.randomUUID()}`,
+                      product_id: viewVersion.product_id,
+                      security_type_id: viewVersion.security_type_id ?? "",
+                      equipment_vehicle: viewVersion.equipment_vehicle ?? "",
+                      min_rate: String(viewVersion.min_rate),
+                      max_rate: String(viewVersion.max_rate),
+                      min_period_months: String(viewVersion.min_period_months),
+                      max_period_months: String(viewVersion.max_period_months),
+                      active: true,
+                      effective_from: nowLocal(),
+                      note: "",
+                      _new: true,
+                    },
+                  ]);
                   setViewVersion(null);
                   toast.success("Cloned into a new draft row — edit and save");
                 }}
               >
                 <Plus size={14} className="mr-1.5" /> Create new version from this
               </button>
-              <button className={btnPrimaryCls} onClick={() => setViewVersion(null)}>Close</button>
+              <button className={btnPrimaryCls} onClick={() => setViewVersion(null)}>
+                Close
+              </button>
             </div>
           </div>
         )}
       </Modal>
-
     </Card>
-
   );
 }

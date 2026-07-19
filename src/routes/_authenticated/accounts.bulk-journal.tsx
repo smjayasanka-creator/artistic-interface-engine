@@ -3,13 +3,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Download, Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import * as XLSX from "xlsx";
 import {
-  createJournalEntry,
-  listCompanyBranches,
-  listGlAccounts,
-} from "@/lib/mzizi.functions";
+  Download,
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
+import * as XLSX from "xlsx";
+import { createJournalEntry, listCompanyBranches, listGlAccounts } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
 import { money } from "@/lib/format";
@@ -54,7 +57,15 @@ const SAMPLE_ROWS = [
 
 function downloadSample() {
   const ws = XLSX.utils.aoa_to_sheet(SAMPLE_ROWS);
-  ws["!cols"] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 30 }, { wch: 14 }, { wch: 12 }, { wch: 12 }];
+  ws["!cols"] = [
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 30 },
+    { wch: 14 },
+    { wch: 12 },
+    { wch: 12 },
+  ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Journal");
   XLSX.writeFile(wb, "journal-bulk-upload-sample.xlsx");
@@ -64,7 +75,10 @@ function BulkJournalPage() {
   const qc = useQueryClient();
   const branchesFn = useServerFn(listCompanyBranches);
   const accountsFn = useServerFn(listGlAccounts);
-  const { data: branches } = useQuery({ queryKey: ["company-branches"], queryFn: () => branchesFn() });
+  const { data: branches } = useQuery({
+    queryKey: ["company-branches"],
+    queryFn: () => branchesFn(),
+  });
   const { data: accounts } = useQuery({ queryKey: ["gl-accounts"], queryFn: () => accountsFn() });
 
   const [fileName, setFileName] = useState<string>("");
@@ -111,7 +125,8 @@ function BulkJournalPage() {
       if (!g.reference) g.errors.push("Missing reference");
       if (!g.entry_date) g.errors.push("Missing entry_date");
       if (!g.branch_code) g.errors.push("Missing branch_code");
-      else if (!branchByCode.get(g.branch_code.toLowerCase())) g.errors.push(`Unknown branch code '${g.branch_code}'`);
+      else if (!branchByCode.get(g.branch_code.toLowerCase()))
+        g.errors.push(`Unknown branch code '${g.branch_code}'`);
       if (g.rows.length < 2) g.errors.push("Needs at least 2 lines");
       if (!g.balanced) g.errors.push(`Not balanced (DR ${g.totalDebit} / CR ${g.totalCredit})`);
       for (const r of g.rows) {
@@ -144,7 +159,9 @@ function BulkJournalPage() {
       }));
       setRawRows(parsed);
       setGroups(toGroups(parsed));
-      toast.success(`Parsed ${parsed.length} rows into ${new Set(parsed.map((r) => r.reference)).size} entries`);
+      toast.success(
+        `Parsed ${parsed.length} rows into ${new Set(parsed.map((r) => r.reference)).size} entries`,
+      );
     } catch (e: any) {
       toast.error(`Failed to read file: ${e.message}`);
     }
@@ -157,7 +174,9 @@ function BulkJournalPage() {
       let ok = 0;
       let fail = 0;
       for (const g of valid) {
-        setGroups((prev) => prev.map((x) => (x.reference === g.reference ? { ...x, status: "posting" } : x)));
+        setGroups((prev) =>
+          prev.map((x) => (x.reference === g.reference ? { ...x, status: "posting" } : x)),
+        );
         try {
           const branch = branchByCode.get(g.branch_code.toLowerCase());
           const lines = g.rows.map((r) => ({
@@ -249,7 +268,11 @@ function BulkJournalPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Stat label="Entries" value={totalGroups} />
             <Stat label="Valid" value={validGroups} tone="ok" />
-            <Stat label="Invalid" value={invalidGroups} tone={invalidGroups > 0 ? "err" : undefined} />
+            <Stat
+              label="Invalid"
+              value={invalidGroups}
+              tone={invalidGroups > 0 ? "err" : undefined}
+            />
             <Stat label="Posted" value={postedGroups} tone={postedGroups > 0 ? "ok" : undefined} />
           </div>
 
@@ -278,7 +301,10 @@ function BulkJournalPage() {
                 <div className="font-mono text-faint">{g.branch_code}</div>
                 <div className="text-muted-foreground truncate" title={g.errors.join(" · ")}>
                   {g.errors.length > 0 ? (
-                    <span className="text-destructive">{g.errors[0]}{g.errors.length > 1 ? ` (+${g.errors.length - 1})` : ""}</span>
+                    <span className="text-destructive">
+                      {g.errors[0]}
+                      {g.errors.length > 1 ? ` (+${g.errors.length - 1})` : ""}
+                    </span>
                   ) : (
                     g.description || <span className="text-faint">—</span>
                   )}
@@ -288,11 +314,20 @@ function BulkJournalPage() {
                 <div className="text-right font-mono text-primary">{money(g.totalCredit)}</div>
                 <div className="text-[11.5px]">
                   {g.status === "posted" ? (
-                    <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 size={12} /> Posted</span>
+                    <span className="inline-flex items-center gap-1 text-primary">
+                      <CheckCircle2 size={12} /> Posted
+                    </span>
                   ) : g.status === "posting" ? (
-                    <span className="inline-flex items-center gap-1 text-muted-foreground"><Loader2 size={12} className="animate-spin" /> Posting…</span>
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <Loader2 size={12} className="animate-spin" /> Posting…
+                    </span>
                   ) : g.status === "failed" ? (
-                    <span className="inline-flex items-center gap-1 text-destructive" title={g.message}><AlertCircle size={12} /> Failed</span>
+                    <span
+                      className="inline-flex items-center gap-1 text-destructive"
+                      title={g.message}
+                    >
+                      <AlertCircle size={12} /> Failed
+                    </span>
                   ) : g.errors.length > 0 ? (
                     <span className="text-destructive">Invalid</span>
                   ) : (
@@ -306,7 +341,9 @@ function BulkJournalPage() {
           </Card>
 
           <div className="flex items-center justify-end gap-2">
-            <button onClick={reset} className={btnSecondaryCls}>Clear</button>
+            <button onClick={reset} className={btnSecondaryCls}>
+              Clear
+            </button>
             <button
               onClick={() => post.mutate()}
               disabled={validGroups === 0 || post.isPending}
@@ -325,7 +362,13 @@ function Stat({ label, value, tone }: { label: string; value: number; tone?: "ok
   return (
     <Card>
       <div className="text-[10.5px] uppercase tracking-wider text-faint font-semibold">{label}</div>
-      <div className={cn("text-2xl font-semibold mt-1", tone === "ok" && "text-primary", tone === "err" && "text-destructive")}>
+      <div
+        className={cn(
+          "text-2xl font-semibold mt-1",
+          tone === "ok" && "text-primary",
+          tone === "err" && "text-destructive",
+        )}
+      >
         {value}
       </div>
     </Card>

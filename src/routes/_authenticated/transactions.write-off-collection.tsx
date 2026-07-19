@@ -45,7 +45,10 @@ function WriteOffCollectionPage() {
   return (
     <div className="animate-fadein space-y-6">
       <div>
-        <Link to="/transactions" className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground hover:text-foreground">
+        <Link
+          to="/transactions"
+          className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft size={14} /> Back to Transactions
         </Link>
         <h1 className="text-xl font-semibold mt-2">Write-off collection</h1>
@@ -82,21 +85,35 @@ function WriteOffCollectionPage() {
             </thead>
             <tbody>
               {writeOffsQ.isLoading && (
-                <tr><td colSpan={7} className="px-3 py-6 text-center text-faint">Loading…</td></tr>
+                <tr>
+                  <td colSpan={7} className="px-3 py-6 text-center text-faint">
+                    Loading…
+                  </td>
+                </tr>
               )}
               {!writeOffsQ.isLoading && rows.length === 0 && (
-                <tr><td colSpan={7} className="px-3 py-6 text-center text-faint">No outstanding write-offs.</td></tr>
+                <tr>
+                  <td colSpan={7} className="px-3 py-6 text-center text-faint">
+                    No outstanding write-offs.
+                  </td>
+                </tr>
               )}
               {rows.map((w: any) => {
                 const outstanding = Number(w.total_written_off) - Number(w.total_recovered);
                 return (
                   <tr key={w.id} className="border-t border-row-divider">
-                    <td className="px-3 py-2 font-mono">{w.facility_no ?? w.loan_id.slice(0, 8)}</td>
+                    <td className="px-3 py-2 font-mono">
+                      {w.facility_no ?? w.loan_id.slice(0, 8)}
+                    </td>
                     <td className="px-3 py-2">{w.client_name}</td>
-                    <td className="px-3 py-2 text-faint">{String(w.write_off_date).slice(0, 10)}</td>
+                    <td className="px-3 py-2 text-faint">
+                      {String(w.write_off_date).slice(0, 10)}
+                    </td>
                     <td className="px-3 py-2 text-right font-mono">{fmt(w.total_written_off)}</td>
                     <td className="px-3 py-2 text-right font-mono">{fmt(w.total_recovered)}</td>
-                    <td className="px-3 py-2 text-right font-mono font-semibold">{fmt(outstanding)}</td>
+                    <td className="px-3 py-2 text-right font-mono font-semibold">
+                      {fmt(outstanding)}
+                    </td>
                     <td className="px-3 py-2 text-right">
                       <button
                         onClick={() => setRecoveryModal(w)}
@@ -127,7 +144,15 @@ function WriteOffCollectionPage() {
   );
 }
 
-function RecoveryModal({ writeOff, onClose, onDone }: { writeOff: any; onClose: () => void; onDone: () => void }) {
+function RecoveryModal({
+  writeOff,
+  onClose,
+  onDone,
+}: {
+  writeOff: any;
+  onClose: () => void;
+  onDone: () => void;
+}) {
   const recFn = useServerFn(recordWriteOffRecovery);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [principal, setPrincipal] = useState(0);
@@ -141,70 +166,139 @@ function RecoveryModal({ writeOff, onClose, onDone }: { writeOff: any; onClose: 
   const dueI = Number(writeOff.interest_written_off) - Number(writeOff.interest_recovered);
   const dueC = Number(writeOff.charges_written_off) - Number(writeOff.charges_recovered);
   const dueTotal = Number(writeOff.total_written_off) - Number(writeOff.total_recovered);
-  const amount = useMemo(() => Number(principal || 0) + Number(interest || 0) + Number(charges || 0), [principal, interest, charges]);
+  const amount = useMemo(
+    () => Number(principal || 0) + Number(interest || 0) + Number(charges || 0),
+    [principal, interest, charges],
+  );
 
   const m = useMutation({
-    mutationFn: () => recFn({ data: {
-      write_off_id: writeOff.id,
-      recovery_date: date,
-      amount,
-      principal: Number(principal || 0),
-      interest: Number(interest || 0),
-      charges: Number(charges || 0),
-      payment_method: method,
-      reference: reference || undefined,
-      notes: notes || undefined,
-    } }),
-    onSuccess: () => { toast.success("Recovery recorded"); onDone(); },
+    mutationFn: () =>
+      recFn({
+        data: {
+          write_off_id: writeOff.id,
+          recovery_date: date,
+          amount,
+          principal: Number(principal || 0),
+          interest: Number(interest || 0),
+          charges: Number(charges || 0),
+          payment_method: method,
+          reference: reference || undefined,
+          notes: notes || undefined,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Recovery recorded");
+      onDone();
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const invalid = amount <= 0
-    || Number(principal) > dueP + 0.01
-    || Number(interest) > dueI + 0.01
-    || Number(charges) > dueC + 0.01
-    || amount > dueTotal + 0.01
-    || !method;
+  const invalid =
+    amount <= 0 ||
+    Number(principal) > dueP + 0.01 ||
+    Number(interest) > dueI + 0.01 ||
+    Number(charges) > dueC + 0.01 ||
+    amount > dueTotal + 0.01 ||
+    !method;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card rounded-xl border border-border w-full max-w-2xl max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-card rounded-xl border border-border w-full max-w-2xl max-h-[90vh] overflow-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
-          <div className="font-semibold text-[15px]">Record recovery — {writeOff.facility_no ?? writeOff.loan_id.slice(0, 8)}</div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
+          <div className="font-semibold text-[15px]">
+            Record recovery — {writeOff.facility_no ?? writeOff.loan_id.slice(0, 8)}
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X size={16} />
+          </button>
         </div>
         <div className="p-5 flex flex-col gap-4">
           <div className="text-[12.5px] bg-secondary/40 border border-border rounded-md px-3 py-2 grid grid-cols-4 gap-3">
-            <div><div className="text-[10.5px] uppercase text-faint">Capital due</div><div className="font-mono">{fmt(dueP)}</div></div>
-            <div><div className="text-[10.5px] uppercase text-faint">Interest due</div><div className="font-mono">{fmt(dueI)}</div></div>
-            <div><div className="text-[10.5px] uppercase text-faint">Charges due</div><div className="font-mono">{fmt(dueC)}</div></div>
-            <div><div className="text-[10.5px] uppercase text-faint">Total due</div><div className="font-mono font-semibold">{fmt(dueTotal)}</div></div>
+            <div>
+              <div className="text-[10.5px] uppercase text-faint">Capital due</div>
+              <div className="font-mono">{fmt(dueP)}</div>
+            </div>
+            <div>
+              <div className="text-[10.5px] uppercase text-faint">Interest due</div>
+              <div className="font-mono">{fmt(dueI)}</div>
+            </div>
+            <div>
+              <div className="text-[10.5px] uppercase text-faint">Charges due</div>
+              <div className="font-mono">{fmt(dueC)}</div>
+            </div>
+            <div>
+              <div className="text-[10.5px] uppercase text-faint">Total due</div>
+              <div className="font-mono font-semibold">{fmt(dueTotal)}</div>
+            </div>
           </div>
           <FormGrid>
             <FormField label="Recovery date" required span={6}>
-              <input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} />
+              <input
+                type="date"
+                className={inputCls}
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
             </FormField>
             <FormField label="Payment method" required span={6}>
-              <select className={inputCls} value={method} onChange={(e) => setMethod(e.target.value)}>
+              <select
+                className={inputCls}
+                value={method}
+                onChange={(e) => setMethod(e.target.value)}
+              >
                 {PAYMENT_METHODS.map((p) => (
-                  <option key={p} value={p}>{p.replace(/_/g, " ")}</option>
+                  <option key={p} value={p}>
+                    {p.replace(/_/g, " ")}
+                  </option>
                 ))}
               </select>
             </FormField>
             <FormField label="Principal recovered" span={4}>
-              <input type="number" step="0.01" className={cn(inputCls, "text-right font-mono")} value={principal} onChange={(e) => setPrincipal(Number(e.target.value))} />
+              <input
+                type="number"
+                step="0.01"
+                className={cn(inputCls, "text-right font-mono")}
+                value={principal}
+                onChange={(e) => setPrincipal(Number(e.target.value))}
+              />
             </FormField>
             <FormField label="Interest recovered" span={4}>
-              <input type="number" step="0.01" className={cn(inputCls, "text-right font-mono")} value={interest} onChange={(e) => setInterest(Number(e.target.value))} />
+              <input
+                type="number"
+                step="0.01"
+                className={cn(inputCls, "text-right font-mono")}
+                value={interest}
+                onChange={(e) => setInterest(Number(e.target.value))}
+              />
             </FormField>
             <FormField label="Charges recovered" span={4}>
-              <input type="number" step="0.01" className={cn(inputCls, "text-right font-mono")} value={charges} onChange={(e) => setCharges(Number(e.target.value))} />
+              <input
+                type="number"
+                step="0.01"
+                className={cn(inputCls, "text-right font-mono")}
+                value={charges}
+                onChange={(e) => setCharges(Number(e.target.value))}
+              />
             </FormField>
             <FormField label="Reference (cheque/transfer no)" span={6}>
-              <input className={inputCls} value={reference} onChange={(e) => setReference(e.target.value)} />
+              <input
+                className={inputCls}
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+              />
             </FormField>
             <FormField label="Notes" span={6}>
-              <input className={inputCls} value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <input
+                className={inputCls}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
             </FormField>
           </FormGrid>
           <div className="flex items-center justify-end text-[13px] gap-2">
@@ -212,7 +306,9 @@ function RecoveryModal({ writeOff, onClose, onDone }: { writeOff: any; onClose: 
             <span className="font-mono font-semibold">{fmt(amount)}</span>
           </div>
           <FormActions>
-            <button className={btnSecondaryCls} onClick={onClose} disabled={m.isPending}>Cancel</button>
+            <button className={btnSecondaryCls} onClick={onClose} disabled={m.isPending}>
+              Cancel
+            </button>
             <button
               className={btnPrimaryCls}
               disabled={invalid || m.isPending}

@@ -15,17 +15,23 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   errorComponent: DashboardError,
 });
 
-
 function DashboardError({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   return (
     <div className="animate-fadein flex items-center justify-center min-h-[60vh] p-6">
       <div className="max-w-md w-full bg-card border border-border rounded-2xl p-6 text-center">
-        <div className="w-9 h-9 rounded-full mx-auto mb-3 flex items-center justify-center bg-destructive/10 text-destructive font-semibold">!</div>
+        <div className="w-9 h-9 rounded-full mx-auto mb-3 flex items-center justify-center bg-destructive/10 text-destructive font-semibold">
+          !
+        </div>
         <h2 className="text-sm font-semibold text-foreground">Couldn't load dashboard</h2>
-        <p className="text-xs text-muted-foreground mt-1">{error.message || "Something went wrong."}</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {error.message || "Something went wrong."}
+        </p>
         <button
-          onClick={() => { reset(); router.invalidate(); }}
+          onClick={() => {
+            reset();
+            router.invalidate();
+          }}
           className="mt-4 bg-primary text-primary-foreground text-xs font-semibold px-3 py-2 rounded-md hover:bg-primary-hover"
         >
           Retry
@@ -52,15 +58,51 @@ type KpiTone = {
 };
 
 const TONES: Record<string, KpiTone> = {
-  teal:   { from: "#0d9488", to: "#14b8a6", ring: "rgba(20,184,166,.35)", fg: "#ffffff", chip: "rgba(255,255,255,.18)" },
-  indigo: { from: "#4f46e5", to: "#6366f1", ring: "rgba(99,102,241,.35)", fg: "#ffffff", chip: "rgba(255,255,255,.18)" },
-  rose:   { from: "#e11d48", to: "#f43f5e", ring: "rgba(244,63,94,.35)",  fg: "#ffffff", chip: "rgba(255,255,255,.18)" },
-  amber:  { from: "#d97706", to: "#f59e0b", ring: "rgba(245,158,11,.35)", fg: "#ffffff", chip: "rgba(255,255,255,.2)"  },
-  violet: { from: "#7c3aed", to: "#a855f7", ring: "rgba(168,85,247,.35)", fg: "#ffffff", chip: "rgba(255,255,255,.18)" },
+  teal: {
+    from: "#0d9488",
+    to: "#14b8a6",
+    ring: "rgba(20,184,166,.35)",
+    fg: "#ffffff",
+    chip: "rgba(255,255,255,.18)",
+  },
+  indigo: {
+    from: "#4f46e5",
+    to: "#6366f1",
+    ring: "rgba(99,102,241,.35)",
+    fg: "#ffffff",
+    chip: "rgba(255,255,255,.18)",
+  },
+  rose: {
+    from: "#e11d48",
+    to: "#f43f5e",
+    ring: "rgba(244,63,94,.35)",
+    fg: "#ffffff",
+    chip: "rgba(255,255,255,.18)",
+  },
+  amber: {
+    from: "#d97706",
+    to: "#f59e0b",
+    ring: "rgba(245,158,11,.35)",
+    fg: "#ffffff",
+    chip: "rgba(255,255,255,.2)",
+  },
+  violet: {
+    from: "#7c3aed",
+    to: "#a855f7",
+    ring: "rgba(168,85,247,.35)",
+    fg: "#ffffff",
+    chip: "rgba(255,255,255,.18)",
+  },
 };
 
 function VibrantKpi({
-  tone, label, value, delta, icon: Icon, to, format = "money",
+  tone,
+  label,
+  value,
+  delta,
+  icon: Icon,
+  to,
+  format = "money",
 }: {
   tone: keyof typeof TONES;
   label: string;
@@ -79,10 +121,21 @@ function VibrantKpi({
   })();
   const inner = (
     <>
-      <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20" style={{ background: "radial-gradient(circle, #fff 0%, transparent 70%)" }} />
+      <div
+        className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20"
+        style={{ background: "radial-gradient(circle, #fff 0%, transparent 70%)" }}
+      />
       <div className="relative flex items-center justify-between mb-2">
-        <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,.85)" }}>{label}</div>
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: t.chip }}>
+        <div
+          className="text-[11px] font-semibold uppercase tracking-wide"
+          style={{ color: "rgba(255,255,255,.85)" }}
+        >
+          {label}
+        </div>
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center"
+          style={{ background: t.chip }}
+        >
           <Icon size={14} className="text-white" />
         </div>
       </div>
@@ -90,7 +143,12 @@ function VibrantKpi({
         {displayValue}
       </div>
       {delta && (
-        <div className="relative text-[11px] font-medium mt-2" style={{ color: "rgba(255,255,255,.9)" }}>{delta}</div>
+        <div
+          className="relative text-[11px] font-medium mt-2"
+          style={{ color: "rgba(255,255,255,.9)" }}
+        >
+          {delta}
+        </div>
       )}
     </>
   );
@@ -98,7 +156,8 @@ function VibrantKpi({
     background: `linear-gradient(135deg, ${t.from} 0%, ${t.to} 100%)`,
     boxShadow: `0 10px 24px -12px ${t.ring}, 0 1px 0 rgba(255,255,255,.15) inset`,
   } as const;
-  const cls = "relative overflow-hidden rounded-2xl px-4 py-4 text-white block transition-transform hover:-translate-y-0.5 hover:shadow-lg";
+  const cls =
+    "relative overflow-hidden rounded-2xl px-4 py-4 text-white block transition-transform hover:-translate-y-0.5 hover:shadow-lg";
   if (to) {
     return (
       <Link to={to} className={cls} style={style}>
@@ -106,7 +165,11 @@ function VibrantKpi({
       </Link>
     );
   }
-  return <div className={cls} style={style}>{inner}</div>;
+  return (
+    <div className={cls} style={style}>
+      {inner}
+    </div>
+  );
 }
 
 function Dashboard() {
@@ -137,11 +200,48 @@ function Dashboard() {
     <div className="flex flex-col gap-5 animate-fadein">
       {/* Vibrant KPIs */}
       <div className="grid grid-cols-5 gap-3.5">
-        <VibrantKpi tone="indigo" to="/transactions" label="Disbursement" value={data.kpis.disbursement} delta="This month" icon={Banknote} />
-        <VibrantKpi tone="teal"   to="/loans" label="Portfolio Growth" value={data.kpis.portfolioGrowth} delta="Disbursed − collected this month" icon={TrendingUp} />
-        <VibrantKpi tone="rose"   to="/savings" label="Deposit Net Intake" value={data.kpis.depositNetIntake} delta="Deposits − withdrawals this month" icon={Wallet} />
-        <VibrantKpi tone="amber"  to="/collections" label="Due Collection Ratio" value={data.kpis.dueCollectionRatio} format="percent" delta="Collected / due this month" icon={Percent} />
-        <VibrantKpi tone="violet" to="/clients" label="Number of New Customers" value={data.kpis.newCustomers} format="number" delta="Joined this month" icon={Users} />
+        <VibrantKpi
+          tone="indigo"
+          to="/transactions"
+          label="Disbursement"
+          value={data.kpis.disbursement}
+          delta="This month"
+          icon={Banknote}
+        />
+        <VibrantKpi
+          tone="teal"
+          to="/loans"
+          label="Portfolio Growth"
+          value={data.kpis.portfolioGrowth}
+          delta="Disbursed − collected this month"
+          icon={TrendingUp}
+        />
+        <VibrantKpi
+          tone="rose"
+          to="/savings"
+          label="Deposit Net Intake"
+          value={data.kpis.depositNetIntake}
+          delta="Deposits − withdrawals this month"
+          icon={Wallet}
+        />
+        <VibrantKpi
+          tone="amber"
+          to="/collections"
+          label="Due Collection Ratio"
+          value={data.kpis.dueCollectionRatio}
+          format="percent"
+          delta="Collected / due this month"
+          icon={Percent}
+        />
+        <VibrantKpi
+          tone="violet"
+          to="/clients"
+          label="Number of New Customers"
+          value={data.kpis.newCustomers}
+          format="number"
+          delta="Joined this month"
+          icon={Users}
+        />
       </div>
 
       {/* Pending approvals + PAR + Product wise disbursement */}
@@ -150,7 +250,10 @@ function Dashboard() {
           <CardTitle
             subtitle="Click Open to review the request and Approve, Reject or Send back."
             right={
-              <Link to="/approvals" className="text-[11.5px] font-semibold text-primary hover:underline">
+              <Link
+                to="/approvals"
+                className="text-[11.5px] font-semibold text-primary hover:underline"
+              >
                 Open inbox →
               </Link>
             }
@@ -166,7 +269,9 @@ function Dashboard() {
             </span>
           </CardTitle>
           {wfInbox.length === 0 ? (
-            <div className="text-center text-faint text-sm py-6">✓ Nothing awaiting your decision</div>
+            <div className="text-center text-faint text-sm py-6">
+              ✓ Nothing awaiting your decision
+            </div>
           ) : (
             <div className="flex flex-col divide-y divide-row-divider">
               {wfInbox.slice(0, 12).map((inst: any) => {
@@ -218,8 +323,12 @@ function Dashboard() {
             return (
               <div key={b.bucket} className="mb-3.5">
                 <div className="flex justify-between text-xs mb-1.5">
-                  <span className="font-medium text-secondary-foreground">{b.bucket === "current" ? "Current" : `${b.bucket} days`}</span>
-                  <span className="font-mono text-muted-foreground">{money(b.amount)} · {pct.toFixed(1)}%</span>
+                  <span className="font-medium text-secondary-foreground">
+                    {b.bucket === "current" ? "Current" : `${b.bucket} days`}
+                  </span>
+                  <span className="font-mono text-muted-foreground">
+                    {money(b.amount)} · {pct.toFixed(1)}%
+                  </span>
                 </div>
                 <div className="h-2 rounded-md bg-muted overflow-hidden">
                   <div
@@ -239,7 +348,10 @@ function Dashboard() {
           <CardTitle
             subtitle="Disbursed amount grouped by loan product this month"
             right={
-              <Link to="/loans" className="text-[11.5px] font-semibold text-primary hover:underline">
+              <Link
+                to="/loans"
+                className="text-[11.5px] font-semibold text-primary hover:underline"
+              >
                 View loans →
               </Link>
             }
@@ -260,11 +372,14 @@ function Dashboard() {
                     className="block rounded-md -mx-1 px-1 py-1 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="font-medium text-secondary-foreground truncate pr-2">{row.product}</span>
-                      <span className="font-mono text-muted-foreground shrink-0">{money(row.amount)} · {pct.toFixed(1)}%</span>
+                      <span className="font-medium text-secondary-foreground truncate pr-2">
+                        {row.product}
+                      </span>
+                      <span className="font-mono text-muted-foreground shrink-0">
+                        {money(row.amount)} · {pct.toFixed(1)}%
+                      </span>
                     </div>
                   </Link>
-
                 );
               })}
             </div>
@@ -272,10 +387,7 @@ function Dashboard() {
         </Card>
       </div>
 
-      {openInst && (
-        <InstanceDetailModal instance={openInst} onClose={() => setOpenInst(null)} />
-      )}
-
+      {openInst && <InstanceDetailModal instance={openInst} onClose={() => setOpenInst(null)} />}
     </div>
   );
 }

@@ -41,8 +41,14 @@ export const listCustomRoles = createServerFn({ method: "GET" })
     let assigns: any[] = [];
     if (ids.length) {
       const [{ data: p }, { data: a }] = await Promise.all([
-        (context.supabase as any).from("custom_role_permission").select("role_id, permission_code").in("role_id", ids),
-        (context.supabase as any).from("user_custom_role").select("role_id, staff_id, staff:staff_id(id, full_name, email)").in("role_id", ids),
+        (context.supabase as any)
+          .from("custom_role_permission")
+          .select("role_id, permission_code")
+          .in("role_id", ids),
+        (context.supabase as any)
+          .from("user_custom_role")
+          .select("role_id, staff_id, staff:staff_id(id, full_name, email)")
+          .in("role_id", ids),
       ]);
       perms = p ?? [];
       assigns = a ?? [];
@@ -50,11 +56,13 @@ export const listCustomRoles = createServerFn({ method: "GET" })
     return (roles ?? []).map((r: any) => ({
       ...r,
       permissions: perms.filter((x) => x.role_id === r.id).map((x) => x.permission_code),
-      assignees: assigns.filter((x) => x.role_id === r.id).map((x) => ({
-        staff_id: x.staff_id,
-        full_name: x.staff?.full_name ?? "—",
-        email: x.staff?.email ?? null,
-      })),
+      assignees: assigns
+        .filter((x) => x.role_id === r.id)
+        .map((x) => ({
+          staff_id: x.staff_id,
+          full_name: x.staff?.full_name ?? "—",
+          email: x.staff?.email ?? null,
+        })),
     }));
   });
 
@@ -151,9 +159,7 @@ export const setRoleAssignees = createServerFn({ method: "POST" })
         staff_id: sid,
         assigned_by: context.userId,
       }));
-      const { error } = await (context.supabase as any)
-        .from("user_custom_role")
-        .insert(rows);
+      const { error } = await (context.supabase as any).from("user_custom_role").insert(rows);
       if (error) throw new Error(error.message);
     }
     return { ok: true };

@@ -53,9 +53,7 @@ function ResetPasswordPage() {
       <div className="w-full max-w-md bg-card border border-border rounded-2xl p-7">
         <h1 className="text-lg font-semibold text-foreground">Set a new password</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {ready
-            ? "Choose a new password for your account."
-            : "Validating your reset link…"}
+          {ready ? "Choose a new password for your account." : "Validating your reset link…"}
         </p>
         {ready && (
           <form onSubmit={submit} className="mt-5 flex flex-col gap-3">

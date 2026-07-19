@@ -6,7 +6,10 @@ export function makeStub(title: string, description: string) {
   return function Stub() {
     return (
       <div className="animate-fadein space-y-5 max-w-2xl">
-        <Link to="/loans" className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground hover:text-foreground">
+        <Link
+          to="/loans"
+          className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft size={14} /> Back to Loans
         </Link>
         <div>

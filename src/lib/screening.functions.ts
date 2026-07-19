@@ -74,11 +74,13 @@ export const getScreeningConfig = createServerFn({ method: "GET" })
 export const saveScreeningConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      tier1_min_score: z.number().min(0).max(100),
-      tier2_min_score: z.number().min(0).max(100),
-      auto_escalate_direct: z.boolean(),
-    }).parse(d),
+    z
+      .object({
+        tier1_min_score: z.number().min(0).max(100),
+        tier2_min_score: z.number().min(0).max(100),
+        auto_escalate_direct: z.boolean(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -87,17 +89,15 @@ export const saveScreeningConfig = createServerFn({ method: "POST" })
     if (data.tier2_min_score < data.tier1_min_score) {
       throw new Error("Tier 2 threshold must be greater than or equal to Tier 1");
     }
-    const { error } = await supabase
-      .from("screening_config")
-      .upsert(
-        {
-          company_id: cid as string,
-          tier1_min_score: data.tier1_min_score,
-          tier2_min_score: data.tier2_min_score,
-          auto_escalate_direct: data.auto_escalate_direct,
-        },
-        { onConflict: "company_id" },
-      );
+    const { error } = await supabase.from("screening_config").upsert(
+      {
+        company_id: cid as string,
+        tier1_min_score: data.tier1_min_score,
+        tier2_min_score: data.tier2_min_score,
+        auto_escalate_direct: data.auto_escalate_direct,
+      },
+      { onConflict: "company_id" },
+    );
     if (error) throw error;
     return { ok: true };
   });
@@ -124,13 +124,15 @@ export function classifyScreening(
 export const requestScreeningApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      tier: z.enum(["tier1", "tier2"]),
-      customer_name: z.string().min(1),
-      national_id: z.string().min(1),
-      max_score: z.number().min(0).max(100),
-      has_direct: z.boolean(),
-    }).parse(d),
+    z
+      .object({
+        tier: z.enum(["tier1", "tier2"]),
+        customer_name: z.string().min(1),
+        national_id: z.string().min(1),
+        max_score: z.number().min(0).max(100),
+        has_direct: z.boolean(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -148,7 +150,10 @@ export const requestScreeningApproval = createServerFn({ method: "POST" })
       .eq("is_enabled", true)
       .maybeSingle();
     if (wErr) throw wErr;
-    if (!wf) throw new Error(`No active workflow configured for "${txType}". Add one in Administration → Workflows.`);
+    if (!wf)
+      throw new Error(
+        `No active workflow configured for "${txType}". Add one in Administration → Workflows.`,
+      );
 
     const label = `Screening: ${data.customer_name} (${data.national_id}) — ${data.has_direct ? "direct hit" : `score ${data.max_score.toFixed(1)}`}`;
     const { data: inst, error } = await supabase

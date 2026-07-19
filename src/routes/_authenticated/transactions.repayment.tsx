@@ -32,7 +32,10 @@ export const Route = createFileRoute("/_authenticated/transactions/repayment")({
 // Stable idempotency key. One key per prepared submission; regenerated only
 // after a confirmed successful post (or when the user starts a new one).
 function newIdempotencyKey(): string {
-  return globalThis.crypto?.randomUUID?.() ?? `rep-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `rep-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  );
 }
 
 // Anchor a "business date" as noon UTC so it lands on the same calendar
@@ -90,9 +93,7 @@ function RecordRepaymentPage() {
 
   const canBackdate = !!ctx?.can_backdate;
   const businessDate = ctx?.business_date ?? "";
-  const disbursedOn = ctx?.loan?.disbursed_at
-    ? String(ctx.loan.disbursed_at).slice(0, 10)
-    : "";
+  const disbursedOn = ctx?.loan?.disbursed_at ? String(ctx.loan.disbursed_at).slice(0, 10) : "";
 
   const referenceRequired = channel === "bank" || channel === "mpesa";
   const referenceLabel =
@@ -107,7 +108,8 @@ function RecordRepaymentPage() {
     if (!loanId) errs.loanId = "Select a loan";
     const amt = Number(amount);
     if (!amount || !(amt > 0)) errs.amount = "Enter an amount greater than 0";
-    if (referenceRequired && !reference.trim()) errs.reference = `${channel === "mpesa" ? "M-Pesa" : "Bank"} reference is required`;
+    if (referenceRequired && !reference.trim())
+      errs.reference = `${channel === "mpesa" ? "M-Pesa" : "Bank"} reference is required`;
     if (reference.trim().length > 80) errs.reference = "Reference must be 80 characters or fewer";
     if (notes.trim().length > 300) errs.notes = "Notes must be 300 characters or fewer";
     if (!receivedOn) {
@@ -282,9 +284,7 @@ function RecordRepaymentPage() {
                   max={businessDate || undefined}
                   readOnly={!canBackdate}
                   disabled={!loanId}
-                  onChange={
-                    canBackdate ? (e) => setReceivedOn(e.target.value) : undefined
-                  }
+                  onChange={canBackdate ? (e) => setReceivedOn(e.target.value) : undefined}
                   className={cn(
                     inputCls,
                     "font-mono",
@@ -298,7 +298,12 @@ function RecordRepaymentPage() {
                 />
               </FormField>
 
-              <FormField label={`Amount (${getActiveCurrency()})`} required span={2} error={fieldErrors.amount}>
+              <FormField
+                label={`Amount (${getActiveCurrency()})`}
+                required
+                span={2}
+                error={fieldErrors.amount}
+              >
                 <input
                   inputMode="numeric"
                   value={amount}

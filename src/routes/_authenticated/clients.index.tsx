@@ -36,7 +36,9 @@ function ClientsBlank() {
                   key={t.key}
                   className={cn(
                     "relative flex items-center gap-2 px-4 py-2.5 text-[12.5px] font-medium border-b-2 -mb-px whitespace-nowrap",
-                    active ? "border-primary text-primary" : "border-transparent text-muted-foreground",
+                    active
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground",
                   )}
                 >
                   <Icon size={14} />
@@ -52,26 +54,34 @@ function ClientsBlank() {
         <div className="flex flex-col gap-4 min-w-0">
           <Card padded={false}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border">
-              {["Outstanding loans", "Savings balance", "Fixed deposits", "On-time rate"].map((label) => (
-                <div key={label} className="bg-card px-5 py-4">
-                  <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">{label}</div>
-                  <div className="font-mono text-lg font-semibold mt-1 text-faint">—</div>
-                </div>
-              ))}
+              {["Outstanding loans", "Savings balance", "Fixed deposits", "On-time rate"].map(
+                (label) => (
+                  <div key={label} className="bg-card px-5 py-4">
+                    <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
+                      {label}
+                    </div>
+                    <div className="font-mono text-lg font-semibold mt-1 text-faint">—</div>
+                  </div>
+                ),
+              )}
             </div>
           </Card>
           <Card>
             <EmptyHint />
           </Card>
           <Card>
-            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">Recent activity</div>
+            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">
+              Recent activity
+            </div>
             <div className="text-sm text-muted-foreground">Select a customer to view activity.</div>
           </Card>
         </div>
         <div className="flex flex-col gap-4 min-w-0">
           {["Personal", "Contact", "Bank accounts"].map((title) => (
             <Card key={title}>
-              <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">{title}</div>
+              <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">
+                {title}
+              </div>
               <div className="text-sm text-muted-foreground">—</div>
             </Card>
           ))}

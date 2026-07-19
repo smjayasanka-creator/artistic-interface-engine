@@ -264,7 +264,12 @@ export const upsertRiskBand = createServerFn({ method: "POST" })
     } else {
       const { error } = await supabase
         .from("risk_band")
-        .insert({ company_id: companyId, band: data.band, min_pct: data.min_pct, max_pct: data.max_pct });
+        .insert({
+          company_id: companyId,
+          band: data.band,
+          min_pct: data.min_pct,
+          max_pct: data.max_pct,
+        });
       if (error) throw error;
     }
     return { ok: true };
@@ -331,9 +336,13 @@ export const saveClientRiskAssessment = createServerFn({ method: "POST" })
     let maxScore = 0;
     for (const f of factors ?? []) {
       if (!answeredFactors.has(f.id)) continue;
-      const os = (allOpts ?? []).filter((o: any) => o.factor_id === f.id).map((o: any) => Number(o.score));
+      const os = (allOpts ?? [])
+        .filter((o: any) => o.factor_id === f.id)
+        .map((o: any) => Number(o.score));
       if (!os.length) continue;
-      maxScore += (f as any).multi_select ? os.reduce((a: number, b: number) => a + b, 0) : Math.max(...os);
+      maxScore += (f as any).multi_select
+        ? os.reduce((a: number, b: number) => a + b, 0)
+        : Math.max(...os);
     }
     const pct = maxScore > 0 ? Number(((totalScore / maxScore) * 100).toFixed(2)) : 0;
 

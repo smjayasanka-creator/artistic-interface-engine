@@ -7,7 +7,14 @@ import { Download, FileSpreadsheet, Link2, Unlink } from "lucide-react";
 import * as XLSX from "xlsx";
 import { getLedger } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
-import { FormField, FormGrid, btnPrimaryCls, btnSecondaryCls, inputCls, selectCls } from "@/components/mzizi/FormGrid";
+import {
+  FormField,
+  FormGrid,
+  btnPrimaryCls,
+  btnSecondaryCls,
+  inputCls,
+  selectCls,
+} from "@/components/mzizi/FormGrid";
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -52,9 +59,16 @@ function downloadSampleStatement() {
 
 function BankReconciliationPage() {
   const ledgerFn = useServerFn(getLedger);
-  const { data: all } = useQuery({ queryKey: ["ledger", "all-for-recon"], queryFn: () => ledgerFn({ data: {} }) });
+  const { data: all } = useQuery({
+    queryKey: ["ledger", "all-for-recon"],
+    queryFn: () => ledgerFn({ data: {} }),
+  });
   const bankAccounts = useMemo(
-    () => (all?.accounts ?? []).filter((a: any) => a.type === "asset" || String(a.code).startsWith("101") || /bank|cash/i.test(a.name)),
+    () =>
+      (all?.accounts ?? []).filter(
+        (a: any) =>
+          a.type === "asset" || String(a.code).startsWith("101") || /bank|cash/i.test(a.name),
+      ),
     [all],
   );
 
@@ -68,7 +82,11 @@ function BankReconciliationPage() {
   const [fileName, setFileName] = useState("");
 
   const acctFn = useServerFn(getLedger);
-  const { data: acctData, refetch, isFetching } = useQuery({
+  const {
+    data: acctData,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ["ledger", accountId, from, to],
     queryFn: () => acctFn({ data: { account: accountId } }),
     enabled: !!accountId,
@@ -151,7 +169,15 @@ function BankReconciliationPage() {
       toast.error("Select a statement line first");
       return;
     }
-    setStmtLines((S) => S.map((s) => (s.id === selectedStmt ? { ...s, matchedTo: ledgerId } : s.matchedTo === ledgerId ? { ...s, matchedTo: undefined } : s)));
+    setStmtLines((S) =>
+      S.map((s) =>
+        s.id === selectedStmt
+          ? { ...s, matchedTo: ledgerId }
+          : s.matchedTo === ledgerId
+            ? { ...s, matchedTo: undefined }
+            : s,
+      ),
+    );
     setLedgerLines((L) =>
       L.map((l) =>
         l.id === ledgerId
@@ -233,7 +259,11 @@ function BankReconciliationPage() {
         </CardTitle>
         <FormGrid>
           <FormField label="Bank / cash account" required span={5}>
-            <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={selectCls}>
+            <select
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              className={selectCls}
+            >
               <option value="">Select account…</option>
               {bankAccounts.map((a: any) => (
                 <option key={a.id} value={a.id}>
@@ -243,10 +273,20 @@ function BankReconciliationPage() {
             </select>
           </FormField>
           <FormField label="From" span={2}>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inputCls + " font-mono"} />
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className={inputCls + " font-mono"}
+            />
           </FormField>
           <FormField label="To" span={2}>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inputCls + " font-mono"} />
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className={inputCls + " font-mono"}
+            />
           </FormField>
           <FormField label="Opening balance" span={3}>
             <input
@@ -258,7 +298,11 @@ function BankReconciliationPage() {
           </FormField>
         </FormGrid>
         <div className="flex flex-wrap items-center gap-2 mt-4">
-          <button onClick={loadLedger} disabled={!accountId || isFetching} className={btnSecondaryCls}>
+          <button
+            onClick={loadLedger}
+            disabled={!accountId || isFetching}
+            className={btnSecondaryCls}
+          >
             {isFetching ? "Loading…" : "Load ledger postings"}
           </button>
           <button onClick={downloadSampleStatement} className={btnSecondaryCls + " gap-1.5"}>
@@ -275,10 +319,18 @@ function BankReconciliationPage() {
               <FileSpreadsheet size={14} /> {fileName || "Upload statement"}
             </span>
           </label>
-          <button onClick={autoMatch} disabled={!stmtLines.length || !ledgerLines.length} className={btnPrimaryCls + " gap-1.5"}>
+          <button
+            onClick={autoMatch}
+            disabled={!stmtLines.length || !ledgerLines.length}
+            className={btnPrimaryCls + " gap-1.5"}
+          >
             <Link2 size={14} /> Auto-match
           </button>
-          <button onClick={exportReconciliation} disabled={!stmtLines.length && !ledgerLines.length} className={btnSecondaryCls + " gap-1.5 ml-auto"}>
+          <button
+            onClick={exportReconciliation}
+            disabled={!stmtLines.length && !ledgerLines.length}
+            className={btnSecondaryCls + " gap-1.5 ml-auto"}
+          >
             <Download size={14} /> Export
           </button>
         </div>
@@ -303,9 +355,14 @@ function BankReconciliationPage() {
           <Card padded={false}>
             <div className="px-5 py-3 border-b border-border flex items-center justify-between">
               <div className="text-sm font-semibold">Bank statement</div>
-              <div className="text-[11px] text-faint">{stmtLines.length} lines · Click to select</div>
+              <div className="text-[11px] text-faint">
+                {stmtLines.length} lines · Click to select
+              </div>
             </div>
-            <Header cols={[".9fr", "1.8fr", ".8fr", ".8fr", "auto"]} labels={["Date", "Description", "Debit", "Credit", ""]} />
+            <Header
+              cols={[".9fr", "1.8fr", ".8fr", ".8fr", "auto"]}
+              labels={["Date", "Description", "Debit", "Credit", ""]}
+            />
             {stmtLines.map((s) => (
               <button
                 key={s.id}
@@ -321,10 +378,16 @@ function BankReconciliationPage() {
                 <span className="text-muted-foreground">{s.date}</span>
                 <span className="truncate">
                   {s.description}
-                  {s.reference && <span className="font-mono text-faint ml-1.5">[{s.reference}]</span>}
+                  {s.reference && (
+                    <span className="font-mono text-faint ml-1.5">[{s.reference}]</span>
+                  )}
                 </span>
-                <span className="text-right font-mono text-debit">{s.debit ? money(s.debit) : ""}</span>
-                <span className="text-right font-mono text-primary">{s.credit ? money(s.credit) : ""}</span>
+                <span className="text-right font-mono text-debit">
+                  {s.debit ? money(s.debit) : ""}
+                </span>
+                <span className="text-right font-mono text-primary">
+                  {s.credit ? money(s.credit) : ""}
+                </span>
                 <span className="pl-2">
                   {s.matchedTo && (
                     <span
@@ -340,17 +403,25 @@ function BankReconciliationPage() {
                 </span>
               </button>
             ))}
-            {stmtLines.length === 0 && <div className="text-center text-faint text-sm py-8">Upload a statement file to begin.</div>}
+            {stmtLines.length === 0 && (
+              <div className="text-center text-faint text-sm py-8">
+                Upload a statement file to begin.
+              </div>
+            )}
           </Card>
 
           <Card padded={false}>
             <div className="px-5 py-3 border-b border-border flex items-center justify-between">
               <div className="text-sm font-semibold">Ledger postings</div>
               <div className="text-[11px] text-faint">
-                {ledgerLines.length} lines · {selectedStmt ? "Click to match selected" : "Select a statement line"}
+                {ledgerLines.length} lines ·{" "}
+                {selectedStmt ? "Click to match selected" : "Select a statement line"}
               </div>
             </div>
-            <Header cols={[".9fr", ".8fr", "1.6fr", ".8fr", ".8fr"]} labels={["Date", "Ref", "Description", "Debit", "Credit"]} />
+            <Header
+              cols={[".9fr", ".8fr", "1.6fr", ".8fr", ".8fr"]}
+              labels={["Date", "Ref", "Description", "Debit", "Credit"]}
+            />
             {ledgerLines.map((l) => (
               <button
                 key={l.id}
@@ -367,11 +438,19 @@ function BankReconciliationPage() {
                 <span className="text-muted-foreground">{shortDate(l.date)}</span>
                 <span className="font-mono text-ledger-ref">{l.reference}</span>
                 <span className="text-muted-foreground truncate">{l.description}</span>
-                <span className="text-right font-mono text-debit">{l.debit ? money(l.debit) : ""}</span>
-                <span className="text-right font-mono text-primary">{l.credit ? money(l.credit) : ""}</span>
+                <span className="text-right font-mono text-debit">
+                  {l.debit ? money(l.debit) : ""}
+                </span>
+                <span className="text-right font-mono text-primary">
+                  {l.credit ? money(l.credit) : ""}
+                </span>
               </button>
             ))}
-            {ledgerLines.length === 0 && <div className="text-center text-faint text-sm py-8">Load ledger postings for the selected account.</div>}
+            {ledgerLines.length === 0 && (
+              <div className="text-center text-faint text-sm py-8">
+                Load ledger postings for the selected account.
+              </div>
+            )}
           </Card>
         </div>
       )}
@@ -394,7 +473,17 @@ function Header({ cols, labels }: { cols: string[]; labels: string[] }) {
   );
 }
 
-function Stat({ label, value, mono, tone }: { label: string; value: string | number; mono?: boolean; tone?: "ok" | "err" }) {
+function Stat({
+  label,
+  value,
+  mono,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  mono?: boolean;
+  tone?: "ok" | "err";
+}) {
   return (
     <Card>
       <div className="text-[10.5px] uppercase tracking-wider text-faint font-semibold">{label}</div>

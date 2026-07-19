@@ -7,14 +7,23 @@ import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Modal } from "@/components/mzizi/Modal";
 import { Badge } from "@/components/mzizi/Badge";
 import {
-  FormGrid, FormField, FormActions,
-  inputCls, btnPrimaryCls, btnSecondaryCls,
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
 } from "@/components/mzizi/FormGrid";
 import { getSession } from "@/lib/mzizi.functions";
 import {
-  listBanks, upsertBank, deleteBank,
-  listBankBranches, upsertBankBranch, deleteBankBranch,
-  type Bank, type BankBranch,
+  listBanks,
+  upsertBank,
+  deleteBank,
+  listBankBranches,
+  upsertBankBranch,
+  deleteBankBranch,
+  type Bank,
+  type BankBranch,
 } from "@/lib/bank-directory.functions";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +45,9 @@ export function BankDirectoryTab() {
   const rows = useMemo(() => {
     if (!q.trim()) return banks;
     const s = q.trim().toLowerCase();
-    return banks.filter(b => b.name.toLowerCase().includes(s) || b.code.toLowerCase().includes(s));
+    return banks.filter(
+      (b) => b.name.toLowerCase().includes(s) || b.code.toLowerCase().includes(s),
+    );
   }, [banks, q]);
 
   if (openBranchesFor) {
@@ -55,7 +66,12 @@ export function BankDirectoryTab() {
         <div className="p-4 flex items-center gap-3 border-b border-border">
           <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted text-[12.5px] flex-1 max-w-md">
             <Search size={14} className="text-muted-foreground" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search banks by name or code…" className="bg-transparent outline-none flex-1" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search banks by name or code…"
+              className="bg-transparent outline-none flex-1"
+            />
           </div>
           <div className="ml-auto text-[11.5px] text-muted-foreground">{rows.length} banks</div>
           {isPlatformAdmin && (
@@ -76,7 +92,9 @@ export function BankDirectoryTab() {
           <div className="text-right">Actions</div>
         </div>
         {isLoading && <div className="text-center text-faint text-sm py-8">Loading…</div>}
-        {!isLoading && rows.length === 0 && <div className="text-center text-faint text-sm py-8">No banks match.</div>}
+        {!isLoading && rows.length === 0 && (
+          <div className="text-center text-faint text-sm py-8">No banks match.</div>
+        )}
         {rows.map((b) => (
           <div
             key={b.id}
@@ -86,17 +104,35 @@ export function BankDirectoryTab() {
             <div className="font-mono text-[12px]">{b.code}</div>
             <div className="font-medium truncate">{b.name}</div>
             <div className="text-center">
-              <Badge className={b.cefts_enabled ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" : "bg-muted text-muted-foreground border-border"}>
+              <Badge
+                className={
+                  b.cefts_enabled
+                    ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30"
+                    : "bg-muted text-muted-foreground border-border"
+                }
+              >
                 {b.cefts_enabled ? "Enabled" : "—"}
               </Badge>
             </div>
             <div className="text-center">
-              <Badge className={b.slips_enabled ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" : "bg-muted text-muted-foreground border-border"}>
+              <Badge
+                className={
+                  b.slips_enabled
+                    ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30"
+                    : "bg-muted text-muted-foreground border-border"
+                }
+              >
                 {b.slips_enabled ? "Enabled" : "—"}
               </Badge>
             </div>
             <div className="text-center">
-              <Badge className={b.active ? "bg-sky-500/10 text-sky-700 border-sky-500/30" : "bg-muted text-muted-foreground border-border"}>
+              <Badge
+                className={
+                  b.active
+                    ? "bg-sky-500/10 text-sky-700 border-sky-500/30"
+                    : "bg-muted text-muted-foreground border-border"
+                }
+              >
                 {b.active ? "Active" : "Inactive"}
               </Badge>
             </div>
@@ -109,7 +145,11 @@ export function BankDirectoryTab() {
                 <Building2 size={13} /> Branches
               </button>
               {isPlatformAdmin && (
-                <button onClick={() => setEditing(b)} className="p-1.5 rounded hover:bg-muted" title="Edit">
+                <button
+                  onClick={() => setEditing(b)}
+                  className="p-1.5 rounded hover:bg-muted"
+                  title="Edit"
+                >
                   <Pencil size={14} className="text-muted-foreground" />
                 </button>
               )}
@@ -119,10 +159,7 @@ export function BankDirectoryTab() {
       </Card>
 
       {editing && (
-        <BankEditModal
-          bank={editing === "new" ? null : editing}
-          onClose={() => setEditing(null)}
-        />
+        <BankEditModal bank={editing === "new" ? null : editing} onClose={() => setEditing(null)} />
       )}
     </div>
   );
@@ -139,13 +176,31 @@ function BankEditModal({ bank, onClose }: { bank: Bank | null; onClose: () => vo
   const [active, setActive] = useState(bank?.active ?? true);
 
   const save = useMutation({
-    mutationFn: () => upsertFn({ data: { id: bank?.id ?? null, code, name, cefts_enabled: cefts, slips_enabled: slips, active } }),
-    onSuccess: () => { toast.success("Bank saved"); qc.invalidateQueries({ queryKey: ["bank-directory"] }); onClose(); },
+    mutationFn: () =>
+      upsertFn({
+        data: {
+          id: bank?.id ?? null,
+          code,
+          name,
+          cefts_enabled: cefts,
+          slips_enabled: slips,
+          active,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Bank saved");
+      qc.invalidateQueries({ queryKey: ["bank-directory"] });
+      onClose();
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const remove = useMutation({
     mutationFn: () => delFn({ data: { id: bank!.id } }),
-    onSuccess: () => { toast.success("Bank removed"); qc.invalidateQueries({ queryKey: ["bank-directory"] }); onClose(); },
+    onSuccess: () => {
+      toast.success("Bank removed");
+      qc.invalidateQueries({ queryKey: ["bank-directory"] });
+      onClose();
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -153,7 +208,12 @@ function BankEditModal({ bank, onClose }: { bank: Bank | null; onClose: () => vo
     <Modal open onClose={onClose} title={bank ? `Edit — ${bank.name}` : "New bank"}>
       <FormGrid>
         <FormField label="Bank code" required span={3}>
-          <input className={inputCls + " font-mono"} value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. 7010" />
+          <input
+            className={inputCls + " font-mono"}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="e.g. 7010"
+          />
         </FormField>
         <FormField label="Bank name" required span={9}>
           <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} />
@@ -182,13 +242,21 @@ function BankEditModal({ bank, onClose }: { bank: Bank | null; onClose: () => vo
           <button
             className={cn(btnSecondaryCls, "text-rose-600 mr-auto")}
             disabled={remove.isPending}
-            onClick={() => { if (confirm("Remove bank and all its branches?")) remove.mutate(); }}
+            onClick={() => {
+              if (confirm("Remove bank and all its branches?")) remove.mutate();
+            }}
           >
             <Trash2 size={14} /> Delete
           </button>
         )}
-        <button className={btnSecondaryCls} onClick={onClose}>Cancel</button>
-        <button className={btnPrimaryCls} disabled={save.isPending || !code || !name} onClick={() => save.mutate()}>
+        <button className={btnSecondaryCls} onClick={onClose}>
+          Cancel
+        </button>
+        <button
+          className={btnPrimaryCls}
+          disabled={save.isPending || !code || !name}
+          onClick={() => save.mutate()}
+        >
           {save.isPending ? "Saving…" : "Save"}
         </button>
       </FormActions>
@@ -196,7 +264,15 @@ function BankEditModal({ bank, onClose }: { bank: Bank | null; onClose: () => vo
   );
 }
 
-function BranchesPanel({ bank, onBack, canEdit }: { bank: Bank; onBack: () => void; canEdit: boolean }) {
+function BranchesPanel({
+  bank,
+  onBack,
+  canEdit,
+}: {
+  bank: Bank;
+  onBack: () => void;
+  canEdit: boolean;
+}) {
   const listFn = useServerFn(listBankBranches);
   const { data: branches = [], isLoading } = useQuery({
     queryKey: ["bank-branches", bank.id],
@@ -208,18 +284,31 @@ function BranchesPanel({ bank, onBack, canEdit }: { bank: Bank; onBack: () => vo
   const rows = useMemo(() => {
     if (!q.trim()) return branches;
     const s = q.trim().toLowerCase();
-    return branches.filter(b => b.name.toLowerCase().includes(s) || b.code.toLowerCase().includes(s) || (b.city ?? "").toLowerCase().includes(s));
+    return branches.filter(
+      (b) =>
+        b.name.toLowerCase().includes(s) ||
+        b.code.toLowerCase().includes(s) ||
+        (b.city ?? "").toLowerCase().includes(s),
+    );
   }, [branches, q]);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-2.5 py-1.5">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-2.5 py-1.5"
+        >
           <ArrowLeft size={14} /> All banks
         </button>
         <div>
-          <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Branches of</div>
-          <div className="text-[15px] font-semibold">{bank.name} <span className="text-muted-foreground font-mono text-[12px]">({bank.code})</span></div>
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+            Branches of
+          </div>
+          <div className="text-[15px] font-semibold">
+            {bank.name}{" "}
+            <span className="text-muted-foreground font-mono text-[12px]">({bank.code})</span>
+          </div>
         </div>
       </div>
 
@@ -227,7 +316,12 @@ function BranchesPanel({ bank, onBack, canEdit }: { bank: Bank; onBack: () => vo
         <div className="p-4 flex items-center gap-3 border-b border-border">
           <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted text-[12.5px] flex-1 max-w-md">
             <Search size={14} className="text-muted-foreground" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search branches…" className="bg-transparent outline-none flex-1" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search branches…"
+              className="bg-transparent outline-none flex-1"
+            />
           </div>
           <div className="ml-auto text-[11.5px] text-muted-foreground">{rows.length} branches</div>
           {canEdit && (
@@ -264,13 +358,23 @@ function BranchesPanel({ bank, onBack, canEdit }: { bank: Bank; onBack: () => vo
             <div className="text-muted-foreground truncate">{br.address ?? "—"}</div>
             <div>{br.city ?? "—"}</div>
             <div className="text-center">
-              <Badge className={br.active ? "bg-sky-500/10 text-sky-700 border-sky-500/30" : "bg-muted text-muted-foreground border-border"}>
+              <Badge
+                className={
+                  br.active
+                    ? "bg-sky-500/10 text-sky-700 border-sky-500/30"
+                    : "bg-muted text-muted-foreground border-border"
+                }
+              >
                 {br.active ? "Active" : "Inactive"}
               </Badge>
             </div>
             <div className="text-right">
               {canEdit && (
-                <button onClick={() => setEditing(br)} className="p-1.5 rounded hover:bg-muted" title="Edit">
+                <button
+                  onClick={() => setEditing(br)}
+                  className="p-1.5 rounded hover:bg-muted"
+                  title="Edit"
+                >
                   <Pencil size={14} className="text-muted-foreground" />
                 </button>
               )}
@@ -290,7 +394,15 @@ function BranchesPanel({ bank, onBack, canEdit }: { bank: Bank; onBack: () => vo
   );
 }
 
-function BranchEditModal({ bankId, branch, onClose }: { bankId: string; branch: BankBranch | null; onClose: () => void }) {
+function BranchEditModal({
+  bankId,
+  branch,
+  onClose,
+}: {
+  bankId: string;
+  branch: BankBranch | null;
+  onClose: () => void;
+}) {
   const qc = useQueryClient();
   const upsertFn = useServerFn(upsertBankBranch);
   const delFn = useServerFn(deleteBankBranch);
@@ -301,13 +413,32 @@ function BranchEditModal({ bankId, branch, onClose }: { bankId: string; branch: 
   const [active, setActive] = useState(branch?.active ?? true);
 
   const save = useMutation({
-    mutationFn: () => upsertFn({ data: { id: branch?.id ?? null, bank_id: bankId, code, name, address: address || null, city: city || null, active } }),
-    onSuccess: () => { toast.success("Branch saved"); qc.invalidateQueries({ queryKey: ["bank-branches", bankId] }); onClose(); },
+    mutationFn: () =>
+      upsertFn({
+        data: {
+          id: branch?.id ?? null,
+          bank_id: bankId,
+          code,
+          name,
+          address: address || null,
+          city: city || null,
+          active,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Branch saved");
+      qc.invalidateQueries({ queryKey: ["bank-branches", bankId] });
+      onClose();
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const remove = useMutation({
     mutationFn: () => delFn({ data: { id: branch!.id } }),
-    onSuccess: () => { toast.success("Branch removed"); qc.invalidateQueries({ queryKey: ["bank-branches", bankId] }); onClose(); },
+    onSuccess: () => {
+      toast.success("Branch removed");
+      qc.invalidateQueries({ queryKey: ["bank-branches", bankId] });
+      onClose();
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -315,13 +446,22 @@ function BranchEditModal({ bankId, branch, onClose }: { bankId: string; branch: 
     <Modal open onClose={onClose} title={branch ? `Edit — ${branch.name}` : "New branch"}>
       <FormGrid>
         <FormField label="Branch code" required span={3}>
-          <input className={inputCls + " font-mono"} value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. 001" />
+          <input
+            className={inputCls + " font-mono"}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="e.g. 001"
+          />
         </FormField>
         <FormField label="Branch name" required span={9}>
           <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} />
         </FormField>
         <FormField label="Address" span={8}>
-          <input className={inputCls} value={address} onChange={(e) => setAddress(e.target.value)} />
+          <input
+            className={inputCls}
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
         </FormField>
         <FormField label="City" span={4}>
           <input className={inputCls} value={city} onChange={(e) => setCity(e.target.value)} />
@@ -338,13 +478,21 @@ function BranchEditModal({ bankId, branch, onClose }: { bankId: string; branch: 
           <button
             className={cn(btnSecondaryCls, "text-rose-600 mr-auto")}
             disabled={remove.isPending}
-            onClick={() => { if (confirm("Remove this branch?")) remove.mutate(); }}
+            onClick={() => {
+              if (confirm("Remove this branch?")) remove.mutate();
+            }}
           >
             <Trash2 size={14} /> Delete
           </button>
         )}
-        <button className={btnSecondaryCls} onClick={onClose}>Cancel</button>
-        <button className={btnPrimaryCls} disabled={save.isPending || !code || !name} onClick={() => save.mutate()}>
+        <button className={btnSecondaryCls} onClick={onClose}>
+          Cancel
+        </button>
+        <button
+          className={btnPrimaryCls}
+          disabled={save.isPending || !code || !name}
+          onClick={() => save.mutate()}
+        >
           {save.isPending ? "Saving…" : "Save"}
         </button>
       </FormActions>

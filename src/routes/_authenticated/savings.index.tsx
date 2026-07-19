@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PiggyBank, XCircle, BookMarked, ArrowRight, Wallet, MoonStar, Archive } from "lucide-react";
+import {
+  PiggyBank,
+  XCircle,
+  BookMarked,
+  ArrowRight,
+  Wallet,
+  MoonStar,
+  Archive,
+} from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -14,7 +22,10 @@ export const Route = createFileRoute("/_authenticated/savings/")({
       queryKey: ["savings-accounts", "all"],
       queryFn: () => listSavingsAccounts({ data: { status: "all" } }),
     });
-    context.queryClient.ensureQueryData({ queryKey: ["passbook-stock"], queryFn: () => listPassbookStock() });
+    context.queryClient.ensureQueryData({
+      queryKey: ["passbook-stock"],
+      queryFn: () => listPassbookStock(),
+    });
   },
   component: SavingsIndex,
 });
@@ -83,7 +94,6 @@ function SavingsIndex() {
 
   return (
     <div className="animate-fadein flex flex-col gap-5">
-
       <div className="grid gap-3 md:grid-cols-3">
         <Card className="p-3.5">
           <div className="flex items-center gap-3">

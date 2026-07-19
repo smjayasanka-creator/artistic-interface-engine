@@ -49,11 +49,7 @@
 export type Frequency = "daily" | "weekly" | "biweekly" | "monthly";
 export type InterestMethod = "flat" | "declining_balance";
 export type ScheduleType = "normal" | "structured";
-export type BusinessDayConvention =
-  | "none"
-  | "following"
-  | "modified_following"
-  | "preceding";
+export type BusinessDayConvention = "none" | "following" | "modified_following" | "preceding";
 
 export interface BusinessDayConfig {
   convention: BusinessDayConvention;
@@ -85,10 +81,7 @@ export interface ScheduleSummary {
 
 // perYear is used for interest math only; stepDays is retained for daily
 // accrual math but is intentionally NOT used to walk monthly dates anymore.
-export const FREQ_META: Record<
-  Frequency,
-  { label: string; perYear: number; stepDays: number }
-> = {
+export const FREQ_META: Record<Frequency, { label: string; perYear: number; stepDays: number }> = {
   daily: { label: "Daily", perYear: 365, stepDays: 1 },
   weekly: { label: "Weekly", perYear: 52, stepDays: 7 },
   biweekly: { label: "Bi-weekly", perYear: 26, stepDays: 14 },
@@ -162,7 +155,7 @@ export function addMonthsPreservingAnchor(
   anchor: { day: number; isEom: boolean },
 ): string {
   const { y, m } = parseDateOnly(dateStr);
-  const totalMonth0 = (y * 12 + (m - 1)) + months;
+  const totalMonth0 = y * 12 + (m - 1) + months;
   const ty = Math.floor(totalMonth0 / 12);
   const tm = (totalMonth0 % 12) + 1;
   const dim = daysInMonth(ty, tm);
@@ -194,11 +187,7 @@ export function contractualDueDate(
     case "biweekly":
       return addDaysISO(firstDueDate, (seq - 1) * 14);
     case "monthly":
-      return addMonthsPreservingAnchor(
-        firstDueDate,
-        seq - 1,
-        anchorFromDate(firstDueDate),
-      );
+      return addMonthsPreservingAnchor(firstDueDate, seq - 1, anchorFromDate(firstDueDate));
   }
 }
 
@@ -218,10 +207,7 @@ function isBusinessDay(dateStr: string, cfg: BusinessDayConfig): boolean {
   return true;
 }
 
-export function adjustBusinessDay(
-  dateStr: string,
-  cfg?: BusinessDayConfig,
-): string {
+export function adjustBusinessDay(dateStr: string, cfg?: BusinessDayConfig): string {
   if (!cfg || cfg.convention === "none") return dateStr;
   const step = (from: string, dir: 1 | -1): string => {
     let cur = from;
@@ -265,10 +251,14 @@ function resolveFirstDueDate(opts: DateOpts, frequency: Frequency): string {
   // Installment #1 = start + one period, using the same rules as
   // contractualDueDate so anchor-day preservation kicks in for monthly.
   switch (frequency) {
-    case "daily":    return addDaysISO(start, 1);
-    case "weekly":   return addDaysISO(start, 7);
-    case "biweekly": return addDaysISO(start, 14);
-    case "monthly":  return addMonthsPreservingAnchor(start, 1, anchorFromDate(start));
+    case "daily":
+      return addDaysISO(start, 1);
+    case "weekly":
+      return addDaysISO(start, 7);
+    case "biweekly":
+      return addDaysISO(start, 14);
+    case "monthly":
+      return addMonthsPreservingAnchor(start, 1, anchorFromDate(start));
   }
 }
 
@@ -303,13 +293,15 @@ function round2(n: number): number {
 // Normal schedule
 // ---------------------------------------------------------------------------
 
-export function generateSchedule(opts: {
-  principal: number;
-  annualRatePct: number;
-  termMonths: number;
-  frequency: Frequency;
-  method?: InterestMethod;
-} & DateOpts): ScheduleSummary {
+export function generateSchedule(
+  opts: {
+    principal: number;
+    annualRatePct: number;
+    termMonths: number;
+    frequency: Frequency;
+    method?: InterestMethod;
+  } & DateOpts,
+): ScheduleSummary {
   const { principal, annualRatePct, termMonths, frequency, method = "flat" } = opts;
   const meta = FREQ_META[frequency];
   const n = installmentCount(termMonths, frequency);
@@ -453,20 +445,22 @@ function distributeCents(totalCents: number, n: number): number[] {
   return out;
 }
 
-export function generateStructuredSchedule(opts: {
-  principal: number;
-  annualRatePct: number;
-  termMonths: number;
-  frequency: Frequency;
-  method?: InterestMethod;
-  overrides: Record<number, number>;
-  /**
-   * If true AND method === "declining_balance", a manual payment below the
-   * period's accrued interest is allowed and the shortfall capitalizes
-   * (balance grows). Never enabled implicitly.
-   */
-  allowCapitalization?: boolean;
-} & DateOpts): StructuredScheduleResult {
+export function generateStructuredSchedule(
+  opts: {
+    principal: number;
+    annualRatePct: number;
+    termMonths: number;
+    frequency: Frequency;
+    method?: InterestMethod;
+    overrides: Record<number, number>;
+    /**
+     * If true AND method === "declining_balance", a manual payment below the
+     * period's accrued interest is allowed and the shortfall capitalizes
+     * (balance grows). Never enabled implicitly.
+     */
+    allowCapitalization?: boolean;
+  } & DateOpts,
+): StructuredScheduleResult {
   const {
     principal,
     annualRatePct,
@@ -498,16 +492,28 @@ export function generateStructuredSchedule(opts: {
     }
     const seq = Number(key);
     if (!Number.isInteger(seq) || seq < 1 || seq > n) {
-      errors.push({ code: "invalid_sequence", seq, message: `Override sequence ${seq} is out of range 1..${n}` });
+      errors.push({
+        code: "invalid_sequence",
+        seq,
+        message: `Override sequence ${seq} is out of range 1..${n}`,
+      });
       continue;
     }
     if (seenSeqs.has(seq)) {
-      errors.push({ code: "duplicate_sequence", seq, message: `Duplicate override for row ${seq}` });
+      errors.push({
+        code: "duplicate_sequence",
+        seq,
+        message: `Duplicate override for row ${seq}`,
+      });
       continue;
     }
     seenSeqs.add(seq);
     if (typeof raw !== "number" || !Number.isFinite(raw)) {
-      errors.push({ code: "not_finite", seq, message: `Row ${seq}: payment must be a finite number` });
+      errors.push({
+        code: "not_finite",
+        seq,
+        message: `Row ${seq}: payment must be a finite number`,
+      });
       continue;
     }
     if (raw < 0) {
@@ -576,7 +582,9 @@ export function generateStructuredSchedule(opts: {
     for (let i = 1; i <= n; i++) {
       const isManual = manualSeqs.has(i);
       const interestCents = interestPerRow[i - 1];
-      const principalPartCents = isManual ? manualPrincipalCents[i] : autoPrincipals[autoIdx++] ?? 0;
+      const principalPartCents = isManual
+        ? manualPrincipalCents[i]
+        : (autoPrincipals[autoIdx++] ?? 0);
       const paymentCents = principalPartCents + interestCents;
       balCents -= principalPartCents;
       rows[i - 1] = {
@@ -612,9 +620,10 @@ export function generateStructuredSchedule(opts: {
 
     let autoPaymentCents = 0;
     if (autoSeqs.length > 0) {
-      const solved = periodRate === 0
-        ? (targetFV - manualFV) / autoSeqs.length
-        : (targetFV - manualFV) / autoCoeff;
+      const solved =
+        periodRate === 0
+          ? (targetFV - manualFV) / autoSeqs.length
+          : (targetFV - manualFV) / autoCoeff;
       autoPaymentCents = toCents(solved);
       if (autoPaymentCents < 0) {
         errors.push({

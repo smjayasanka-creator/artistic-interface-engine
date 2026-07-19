@@ -8,7 +8,15 @@ import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Kpi } from "@/components/mzizi/Kpi";
 import { Badge } from "@/components/mzizi/Badge";
 import { Modal } from "@/components/mzizi/Modal";
-import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
+import {
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  selectCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
+} from "@/components/mzizi/FormGrid";
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { getSession } from "@/lib/mzizi.functions";
@@ -30,7 +38,6 @@ export const Route = createFileRoute("/_authenticated/platform-admin")({
 
 type Tab = "overview" | "companies" | "plans" | "jobs" | "processes" | "hardening" | "architecture";
 
-
 const STATUS_TONE: Record<string, string> = {
   trialing: "bg-sky-500/10 text-sky-700 border-sky-500/30",
   active: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30",
@@ -42,7 +49,10 @@ const STATUS_TONE: Record<string, string> = {
 
 function PlatformAdmin() {
   const sessionFn = useServerFn(getSession);
-  const { data: session, isLoading: sessionLoading } = useQuery({ queryKey: ["session"], queryFn: () => sessionFn() });
+  const { data: session, isLoading: sessionLoading } = useQuery({
+    queryKey: ["session"],
+    queryFn: () => sessionFn(),
+  });
   const isPlatformAdmin = (session?.roles ?? []).includes("platform_admin");
 
   const [tab, setTab] = useState<Tab>("overview");
@@ -57,7 +67,8 @@ function PlatformAdmin() {
           </div>
           <CardTitle>Platform Admin Control</CardTitle>
           <p className="text-[13px] text-muted-foreground mt-1">
-            This console is restricted to platform administrators. Contact the platform owner if you need access.
+            This console is restricted to platform administrators. Contact the platform owner if you
+            need access.
           </p>
         </Card>
       </div>
@@ -68,11 +79,12 @@ function PlatformAdmin() {
     <div className="animate-fadein flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-[11.5px] uppercase tracking-wider text-muted-foreground font-semibold">Platform Admin</div>
+          <div className="text-[11.5px] uppercase tracking-wider text-muted-foreground font-semibold">
+            Platform Admin
+          </div>
           <div className="text-[18px] font-semibold mt-0.5">Tenant oversight console</div>
         </div>
       </div>
-
 
       <div className="flex gap-1 border-b border-border">
         {(
@@ -84,7 +96,6 @@ function PlatformAdmin() {
             ["processes", "Processes"],
             ["hardening", "Hardening"],
             ["architecture", "Architecture"],
-
           ] as const
         ).map(([id, label]) => (
           <button
@@ -92,7 +103,9 @@ function PlatformAdmin() {
             onClick={() => setTab(id)}
             className={cn(
               "px-4 py-2.5 text-[13px] font-medium border-b-2 -mb-px",
-              tab === id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
+              tab === id
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             {label}
@@ -107,7 +120,6 @@ function PlatformAdmin() {
       {tab === "processes" && <ProcessDiagrams />}
       {tab === "hardening" && <HardeningChecklist />}
       {tab === "architecture" && <ArchitectureView />}
-
     </div>
   );
 }
@@ -119,16 +131,20 @@ function ArchitectureView() {
   return (
     <div className="flex flex-col gap-3">
       <div className="inline-flex self-start rounded-lg border border-border bg-card p-0.5">
-        {([
-          ["runtime", "Runtime map"],
-          ["services", "Service boundaries"],
-        ] as const).map(([id, label]) => (
+        {(
+          [
+            ["runtime", "Runtime map"],
+            ["services", "Service boundaries"],
+          ] as const
+        ).map(([id, label]) => (
           <button
             key={id}
             onClick={() => setMode(id)}
             className={cn(
               "px-3 py-1.5 text-[12.5px] font-medium rounded-md",
-              mode === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+              mode === id
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             {label}
@@ -140,7 +156,6 @@ function ArchitectureView() {
   );
 }
 
-
 function OverviewTab() {
   const fn = useServerFn(getPlatformOverview);
   const { data, isLoading } = useQuery({ queryKey: ["platform-overview"], queryFn: () => fn() });
@@ -149,10 +164,27 @@ function OverviewTab() {
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-4 gap-4">
-        <Kpi label="Monthly recurring revenue" value={money(t.mrr) + " LKR"} delta={`ARR ${money(t.arr)} LKR`} />
-        <Kpi label="Companies" value={String(t.companies)} delta={`${t.active} active · ${t.trialing} trialing`} />
-        <Kpi label="Portfolio under management" value={money(t.loan_value) + " LKR"} delta={`Deposits ${money(t.fd_value)}`} />
-        <Kpi label="Users on platform" value={String(t.staff)} delta={`${t.clients} end-customers`} deltaTone="neutral" />
+        <Kpi
+          label="Monthly recurring revenue"
+          value={money(t.mrr) + " LKR"}
+          delta={`ARR ${money(t.arr)} LKR`}
+        />
+        <Kpi
+          label="Companies"
+          value={String(t.companies)}
+          delta={`${t.active} active · ${t.trialing} trialing`}
+        />
+        <Kpi
+          label="Portfolio under management"
+          value={money(t.loan_value) + " LKR"}
+          delta={`Deposits ${money(t.fd_value)}`}
+        />
+        <Kpi
+          label="Users on platform"
+          value={String(t.staff)}
+          delta={`${t.clients} end-customers`}
+          deltaTone="neutral"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-5">
@@ -169,7 +201,9 @@ function OverviewTab() {
                 <div key={String(label)}>
                   <div className="flex justify-between text-[12px] mb-1">
                     <span className="text-muted-foreground">{label}</span>
-                    <span className="font-mono font-semibold">{String(v)} · {pct}%</span>
+                    <span className="font-mono font-semibold">
+                      {String(v)} · {pct}%
+                    </span>
                   </div>
                   <div className="h-2 rounded bg-muted overflow-hidden">
                     <div className={`${color} h-full`} style={{ width: `${pct}%` }} />
@@ -183,19 +217,26 @@ function OverviewTab() {
         <Card>
           <CardTitle>Top companies by MRR</CardTitle>
           <div className="mt-2 divide-y divide-border">
-            {[...data.rows].sort((a, b) => b.mrr - a.mrr).slice(0, 6).map((r) => (
-              <div key={r.id} className="py-2 flex items-center gap-3 text-[13px]">
-                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center font-semibold">
-                  {r.name.slice(0, 1).toUpperCase()}
+            {[...data.rows]
+              .sort((a, b) => b.mrr - a.mrr)
+              .slice(0, 6)
+              .map((r) => (
+                <div key={r.id} className="py-2 flex items-center gap-3 text-[13px]">
+                  <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center font-semibold">
+                    {r.name.slice(0, 1).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{r.name}</div>
+                    <div className="text-[11.5px] text-muted-foreground">
+                      {r.plan_name} · {r.country}
+                    </div>
+                  </div>
+                  <div className="font-mono font-semibold">{money(r.mrr)}</div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{r.name}</div>
-                  <div className="text-[11.5px] text-muted-foreground">{r.plan_name} · {r.country}</div>
-                </div>
-                <div className="font-mono font-semibold">{money(r.mrr)}</div>
-              </div>
-            ))}
-            {data.rows.length === 0 && <div className="text-[12px] text-muted-foreground py-3">No companies yet.</div>}
+              ))}
+            {data.rows.length === 0 && (
+              <div className="text-[12px] text-muted-foreground py-3">No companies yet.</div>
+            )}
           </div>
         </Card>
       </div>
@@ -217,7 +258,9 @@ function CompaniesTab() {
     if (statusFilter !== "all") r = r.filter((x) => x.status === statusFilter);
     if (q.trim()) {
       const s = q.trim().toLowerCase();
-      r = r.filter((x) => x.name.toLowerCase().includes(s) || (x.country ?? "").toLowerCase().includes(s));
+      r = r.filter(
+        (x) => x.name.toLowerCase().includes(s) || (x.country ?? "").toLowerCase().includes(s),
+      );
     }
     return r;
   }, [data, q, statusFilter]);
@@ -230,9 +273,18 @@ function CompaniesTab() {
         <div className="p-4 flex items-center gap-3 border-b border-border">
           <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted text-[12.5px] flex-1 max-w-md">
             <Search size={14} className="text-muted-foreground" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search companies…" className="bg-transparent outline-none flex-1" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search companies…"
+              className="bg-transparent outline-none flex-1"
+            />
           </div>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={selectCls + " w-40"}>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className={selectCls + " w-40"}
+          >
             <option value="all">All statuses</option>
             <option value="active">Active</option>
             <option value="trialing">Trialing</option>
@@ -270,7 +322,12 @@ function CompaniesTab() {
             </div>
             <div>{r.plan_name}</div>
             <div>
-              <span className={cn("text-[10.5px] font-semibold px-2 py-0.5 rounded-full border capitalize", STATUS_TONE[r.status] ?? STATUS_TONE.unassigned)}>
+              <span
+                className={cn(
+                  "text-[10.5px] font-semibold px-2 py-0.5 rounded-full border capitalize",
+                  STATUS_TONE[r.status] ?? STATUS_TONE.unassigned,
+                )}
+              >
                 {r.status.replace("_", " ")}
               </span>
             </div>
@@ -279,14 +336,19 @@ function CompaniesTab() {
             <div className="text-right font-mono">{r.client_count}</div>
             <div className="text-right font-mono">{money(r.loan_value)}</div>
             <div className="text-right">
-              <button onClick={() => setSelected(r.id)} className="text-primary text-[12px] font-semibold hover:underline">
+              <button
+                onClick={() => setSelected(r.id)}
+                className="text-primary text-[12px] font-semibold hover:underline"
+              >
                 Manage
               </button>
             </div>
           </div>
         ))}
         {rows.length === 0 && (
-          <div className="px-5 py-8 text-[12.5px] text-muted-foreground text-center">No companies match your filters.</div>
+          <div className="px-5 py-8 text-[12.5px] text-muted-foreground text-center">
+            No companies match your filters.
+          </div>
         )}
       </Card>
 
@@ -301,7 +363,6 @@ function CompaniesTab() {
 }
 
 /* ---------------- Manage subscription modal ---------------- */
-
 
 function ManageSubscriptionModal({ company, onClose }: { company: any; onClose: () => void }) {
   const qc = useQueryClient();
@@ -318,7 +379,10 @@ function ManageSubscriptionModal({ company, onClose }: { company: any; onClose: 
   const [mrr, setMrr] = useState<number>(company.mrr || 0);
   const [periodEnd, setPeriodEnd] = useState<string>("");
 
-  const chosenPlan = useMemo(() => (plans ?? []).find((p: any) => p.id === planId), [plans, planId]);
+  const chosenPlan = useMemo(
+    () => (plans ?? []).find((p: any) => p.id === planId),
+    [plans, planId],
+  );
 
   // preselect current plan by code once plans load
   if (plans && !planId) {
@@ -355,18 +419,29 @@ function ManageSubscriptionModal({ company, onClose }: { company: any; onClose: 
     <Modal open onClose={onClose} title={`Manage subscription — ${company.name}`}>
       <FormGrid>
         <FormField label="Plan" required span={6}>
-          <select className={selectCls} value={planId} onChange={(e) => {
-            setPlanId(e.target.value);
-            const p = (plans as any[])?.find((x) => x.id === e.target.value);
-            if (p) setMrr(cycle === "monthly" ? Number(p.price_monthly) : Number(p.price_annual) / 12);
-          }}>
+          <select
+            className={selectCls}
+            value={planId}
+            onChange={(e) => {
+              setPlanId(e.target.value);
+              const p = (plans as any[])?.find((x) => x.id === e.target.value);
+              if (p)
+                setMrr(cycle === "monthly" ? Number(p.price_monthly) : Number(p.price_annual) / 12);
+            }}
+          >
             {(plans ?? []).map((p: any) => (
-              <option key={p.id} value={p.id}>{p.name} · {money(p.price_monthly)}/mo</option>
+              <option key={p.id} value={p.id}>
+                {p.name} · {money(p.price_monthly)}/mo
+              </option>
             ))}
           </select>
         </FormField>
         <FormField label="Status" required span={3}>
-          <select className={selectCls} value={status} onChange={(e) => setStatus(e.target.value as any)}>
+          <select
+            className={selectCls}
+            value={status}
+            onChange={(e) => setStatus(e.target.value as any)}
+          >
             <option value="trialing">Trialing</option>
             <option value="active">Active</option>
             <option value="past_due">Past due</option>
@@ -375,28 +450,61 @@ function ManageSubscriptionModal({ company, onClose }: { company: any; onClose: 
           </select>
         </FormField>
         <FormField label="Billing cycle" required span={3}>
-          <select className={selectCls} value={cycle} onChange={(e) => {
-            const c = e.target.value as "monthly" | "annual";
-            setCycle(c);
-            if (chosenPlan) setMrr(c === "monthly" ? Number(chosenPlan.price_monthly) : Number(chosenPlan.price_annual) / 12);
-          }}>
+          <select
+            className={selectCls}
+            value={cycle}
+            onChange={(e) => {
+              const c = e.target.value as "monthly" | "annual";
+              setCycle(c);
+              if (chosenPlan)
+                setMrr(
+                  c === "monthly"
+                    ? Number(chosenPlan.price_monthly)
+                    : Number(chosenPlan.price_annual) / 12,
+                );
+            }}
+          >
             <option value="monthly">Monthly</option>
             <option value="annual">Annual</option>
           </select>
         </FormField>
         <FormField label="Seats" required span={3}>
-          <input type="number" min={0} className={inputCls + " font-mono"} value={seats} onChange={(e) => setSeats(Number(e.target.value))} />
+          <input
+            type="number"
+            min={0}
+            className={inputCls + " font-mono"}
+            value={seats}
+            onChange={(e) => setSeats(Number(e.target.value))}
+          />
         </FormField>
         <FormField label="MRR (LKR)" required span={5}>
-          <input type="number" min={0} step="0.01" className={inputCls + " font-mono"} value={mrr} onChange={(e) => setMrr(Number(e.target.value))} />
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            className={inputCls + " font-mono"}
+            value={mrr}
+            onChange={(e) => setMrr(Number(e.target.value))}
+          />
         </FormField>
         <FormField label="Current period end" span={4}>
-          <input type="date" className={inputCls + " font-mono"} value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
+          <input
+            type="date"
+            className={inputCls + " font-mono"}
+            value={periodEnd}
+            onChange={(e) => setPeriodEnd(e.target.value)}
+          />
         </FormField>
       </FormGrid>
       <FormActions>
-        <button className={btnSecondaryCls} onClick={onClose}>Cancel</button>
-        <button className={btnPrimaryCls} disabled={save.isPending || !planId} onClick={() => save.mutate()}>
+        <button className={btnSecondaryCls} onClick={onClose}>
+          Cancel
+        </button>
+        <button
+          className={btnPrimaryCls}
+          disabled={save.isPending || !planId}
+          onClick={() => save.mutate()}
+        >
           {save.isPending ? "Saving…" : "Save subscription"}
         </button>
       </FormActions>
@@ -415,7 +523,9 @@ function PlansTab() {
         <Card key={p.id} className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold">{p.code}</div>
+              <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold">
+                {p.code}
+              </div>
               <div className="text-[16px] font-semibold">{p.name}</div>
             </div>
             {p.active ? (
@@ -426,7 +536,8 @@ function PlansTab() {
           </div>
           <div>
             <div className="font-mono text-[22px] font-semibold">
-              {money(p.price_monthly)} <span className="text-[12px] text-muted-foreground font-normal">{p.currency}/mo</span>
+              {money(p.price_monthly)}{" "}
+              <span className="text-[12px] text-muted-foreground font-normal">{p.currency}/mo</span>
             </div>
             <div className="text-[11.5px] text-muted-foreground">
               or {money(p.price_annual)} {p.currency}/year
@@ -434,7 +545,10 @@ function PlansTab() {
           </div>
           <ul className="text-[12.5px] text-foreground/85 space-y-1 border-t border-border pt-3">
             {(Array.isArray(p.features) ? p.features : []).map((f: string, i: number) => (
-              <li key={i} className="flex gap-2"><span className="text-primary">•</span>{f}</li>
+              <li key={i} className="flex gap-2">
+                <span className="text-primary">•</span>
+                {f}
+              </li>
             ))}
           </ul>
           <div className="text-[11.5px] text-muted-foreground border-t border-border pt-2">
@@ -469,7 +583,9 @@ function JobsTab() {
       <div className="flex items-center justify-between">
         <div>
           <div className="text-[13px] font-semibold">Scheduled background jobs</div>
-          <div className="text-[12px] text-muted-foreground">Live status of every pg_cron job — most recent run per job.</div>
+          <div className="text-[12px] text-muted-foreground">
+            Live status of every pg_cron job — most recent run per job.
+          </div>
         </div>
         <button onClick={() => refetch()} className={btnSecondaryCls} disabled={isFetching}>
           {isFetching ? "Refreshing…" : "Refresh"}
@@ -501,10 +617,18 @@ function JobsTab() {
               className="grid items-start text-[12.5px] py-2.5 px-5 border-b border-row-divider"
               style={{ gridTemplateColumns: "1.4fr 0.8fr 0.6fr 1.2fr 0.8fr 1.4fr 0.8fr" }}
             >
-              <div className="font-medium truncate" title={j.jobname}>{j.jobname}</div>
+              <div className="font-medium truncate" title={j.jobname}>
+                {j.jobname}
+              </div>
               <div className="font-mono text-faint">{j.schedule}</div>
               <div>
-                <Badge className={j.active ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" : "bg-muted text-muted-foreground border-border"}>
+                <Badge
+                  className={
+                    j.active
+                      ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30"
+                      : "bg-muted text-muted-foreground border-border"
+                  }
+                >
                   {j.active ? "yes" : "paused"}
                 </Badge>
               </div>
@@ -513,18 +637,23 @@ function JobsTab() {
               </div>
               <div>
                 {j.last_status ? (
-                  <Badge className={cn(
-                    ok && "bg-emerald-500/10 text-emerald-700 border-emerald-500/30",
-                    failed && "bg-rose-500/10 text-rose-700 border-rose-500/30",
-                    !ok && !failed && "bg-amber-500/10 text-amber-700 border-amber-500/30",
-                  )}>
+                  <Badge
+                    className={cn(
+                      ok && "bg-emerald-500/10 text-emerald-700 border-emerald-500/30",
+                      failed && "bg-rose-500/10 text-rose-700 border-rose-500/30",
+                      !ok && !failed && "bg-amber-500/10 text-amber-700 border-amber-500/30",
+                    )}
+                  >
                     {j.last_status}
                   </Badge>
                 ) : (
                   <span className="text-faint">—</span>
                 )}
               </div>
-              <div className="font-mono text-[11.5px] text-faint truncate" title={j.last_return_message ?? ""}>
+              <div
+                className="font-mono text-[11.5px] text-faint truncate"
+                title={j.last_return_message ?? ""}
+              >
                 {j.last_return_message ?? "—"}
               </div>
               <div className="text-right">

@@ -158,29 +158,69 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html, body { font-family: var(--font-sans); }
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    font-family: var(--font-sans);
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     -webkit-font-smoothing: antialiased;
   }
-  .font-mono { font-family: var(--font-mono); }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
 
   /* Editable form fields get a light green background across the whole app.
      Read-only / disabled inputs keep their default styling. */
-  input:not([readonly]):not([disabled]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+  input:not([readonly]):not([disabled]):not([type="checkbox"]):not([type="radio"]):not(
+      [type="range"]
+    ):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
   select:not([disabled]):not([data-readonly]),
   textarea:not([readonly]):not([disabled]),
   [contenteditable="true"] {
-    background-color: #D4F6D4;
+    background-color: #d4f6d4;
   }
 }
 
-@keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
-@keyframes popin { from { opacity: 0; transform: scale(.97) translateY(6px) } to { opacity: 1; transform: none } }
-@keyframes toastin { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes popin {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes toastin {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 
-.animate-fadein { animation: fadein .25s ease }
-.animate-popin { animation: popin .22s ease }
-.animate-toastin { animation: toastin .3s ease }
+.animate-fadein {
+  animation: fadein 0.25s ease;
+}
+.animate-popin {
+  animation: popin 0.22s ease;
+}
+.animate-toastin {
+  animation: toastin 0.3s ease;
+}

@@ -3,7 +3,27 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Users, Wallet, PiggyBank, Coins, BookOpen, Settings2, Clock, ArrowRight, ArrowLeft, Shield, ShieldCheck, LineChart, ShieldAlert, ScanSearch, KeyRound, Mail, Landmark, CalendarClock } from "lucide-react";
+import {
+  Building2,
+  Users,
+  Wallet,
+  PiggyBank,
+  Coins,
+  BookOpen,
+  Settings2,
+  Clock,
+  ArrowRight,
+  ArrowLeft,
+  Shield,
+  ShieldCheck,
+  LineChart,
+  ShieldAlert,
+  ScanSearch,
+  KeyRound,
+  Mail,
+  Landmark,
+  CalendarClock,
+} from "lucide-react";
 import { EodTab } from "@/components/mzizi/EodTab";
 import { BankDirectoryTab } from "@/components/mzizi/BankDirectoryTab";
 import { UserRolesTab } from "@/components/mzizi/UserRolesTab";
@@ -31,7 +51,15 @@ import {
 } from "@/lib/mzizi.functions";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Avatar } from "@/components/mzizi/Avatar";
-import { FormGrid, FormField, FormActions, inputCls, selectCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
+import {
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  selectCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
+} from "@/components/mzizi/FormGrid";
 import { money, shortDate, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FREQ_META, type Frequency, type InterestMethod } from "@/lib/loan-schedule";
@@ -52,7 +80,27 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Tab = "settings" | "branches" | "staff" | "user_roles" | "products" | "loan_charges" | "loan_evaluation" | "fd_products" | "savings_products" | "savings_charges" | "alco_rates" | "loan_alco_rates" | "accounts" | "security_types" | "delegation" | "risk_profiling" | "screening" | "bank_directory" | "eod" | "time_travel";
+type Tab =
+  | "settings"
+  | "branches"
+  | "staff"
+  | "user_roles"
+  | "products"
+  | "loan_charges"
+  | "loan_evaluation"
+  | "fd_products"
+  | "savings_products"
+  | "savings_charges"
+  | "alco_rates"
+  | "loan_alco_rates"
+  | "accounts"
+  | "security_types"
+  | "delegation"
+  | "risk_profiling"
+  | "screening"
+  | "bank_directory"
+  | "eod"
+  | "time_travel";
 type Mode = "list" | "create" | "edit";
 type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
 const LOAN_SEGMENTS: { value: LoanSegment; label: string }[] = [
@@ -87,38 +135,184 @@ const TYPE_TONE: Record<AccountType, string> = {
 };
 
 type Group = "general" | "savings_fd" | "loan";
-type Section = { id: Tab; label: string; desc: string; icon: React.ComponentType<{ size?: number }>; accent: string; group: Group };
+type Section = {
+  id: Tab;
+  label: string;
+  desc: string;
+  icon: React.ComponentType<{ size?: number }>;
+  accent: string;
+  group: Group;
+};
 const SECTIONS: Section[] = [
-  { id: "settings",    label: "Company settings",  desc: "Workspace defaults, currency & fiscal year",       icon: Settings2, accent: "from-slate-500/15 to-slate-500/0 text-slate-600", group: "general" },
-  { id: "branches",    label: "Branches",          desc: "Locations, regions & operating currency",          icon: Building2, accent: "from-sky-500/15 to-sky-500/0 text-sky-600", group: "general" },
-  { id: "staff",       label: "Staff",             desc: "Employees, roles & invitations",                   icon: Users,     accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600", group: "general" },
-  { id: "user_roles",  label: "User roles",        desc: "Create custom roles & assign actions",             icon: KeyRound,  accent: "from-purple-500/15 to-purple-500/0 text-purple-600", group: "general" },
-  { id: "accounts",    label: "Chart of accounts", desc: "General ledger accounts & posting rules",          icon: BookOpen,  accent: "from-violet-500/15 to-violet-500/0 text-violet-600", group: "general" },
-  { id: "delegation",  label: "Delegation authority", desc: "Approval bands: LTV, amount & rate ranges",     icon: ShieldCheck, accent: "from-rose-500/15 to-rose-500/0 text-rose-600", group: "general" },
-  { id: "risk_profiling", label: "Risk profiling",   desc: "Customer risk factors, scoring & bands",           icon: ShieldAlert, accent: "from-orange-500/15 to-orange-500/0 text-orange-600", group: "general" },
-  { id: "screening",   label: "Customer screening", desc: "FIU screening score thresholds & approval routing", icon: ScanSearch,  accent: "from-red-500/15 to-red-500/0 text-red-600", group: "general" },
-  { id: "bank_directory", label: "Bank directory",  desc: "Banks & branches — CEFTS / SLIPS enablement",       icon: Landmark,    accent: "from-blue-500/15 to-blue-500/0 text-blue-600", group: "general" },
-  { id: "eod",         label: "Day End Process",  desc: "Company-wide daily close, accruals & auto-schedule", icon: CalendarClock, accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600", group: "general" },
-  { id: "time_travel", label: "Time travel",       desc: "Simulate a different date for testing (dev only)", icon: Clock,     accent: "from-amber-500/15 to-amber-500/0 text-amber-600", group: "general" },
+  {
+    id: "settings",
+    label: "Company settings",
+    desc: "Workspace defaults, currency & fiscal year",
+    icon: Settings2,
+    accent: "from-slate-500/15 to-slate-500/0 text-slate-600",
+    group: "general",
+  },
+  {
+    id: "branches",
+    label: "Branches",
+    desc: "Locations, regions & operating currency",
+    icon: Building2,
+    accent: "from-sky-500/15 to-sky-500/0 text-sky-600",
+    group: "general",
+  },
+  {
+    id: "staff",
+    label: "Staff",
+    desc: "Employees, roles & invitations",
+    icon: Users,
+    accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
+    group: "general",
+  },
+  {
+    id: "user_roles",
+    label: "User roles",
+    desc: "Create custom roles & assign actions",
+    icon: KeyRound,
+    accent: "from-purple-500/15 to-purple-500/0 text-purple-600",
+    group: "general",
+  },
+  {
+    id: "accounts",
+    label: "Chart of accounts",
+    desc: "General ledger accounts & posting rules",
+    icon: BookOpen,
+    accent: "from-violet-500/15 to-violet-500/0 text-violet-600",
+    group: "general",
+  },
+  {
+    id: "delegation",
+    label: "Delegation authority",
+    desc: "Approval bands: LTV, amount & rate ranges",
+    icon: ShieldCheck,
+    accent: "from-rose-500/15 to-rose-500/0 text-rose-600",
+    group: "general",
+  },
+  {
+    id: "risk_profiling",
+    label: "Risk profiling",
+    desc: "Customer risk factors, scoring & bands",
+    icon: ShieldAlert,
+    accent: "from-orange-500/15 to-orange-500/0 text-orange-600",
+    group: "general",
+  },
+  {
+    id: "screening",
+    label: "Customer screening",
+    desc: "FIU screening score thresholds & approval routing",
+    icon: ScanSearch,
+    accent: "from-red-500/15 to-red-500/0 text-red-600",
+    group: "general",
+  },
+  {
+    id: "bank_directory",
+    label: "Bank directory",
+    desc: "Banks & branches — CEFTS / SLIPS enablement",
+    icon: Landmark,
+    accent: "from-blue-500/15 to-blue-500/0 text-blue-600",
+    group: "general",
+  },
+  {
+    id: "eod",
+    label: "Day End Process",
+    desc: "Company-wide daily close, accruals & auto-schedule",
+    icon: CalendarClock,
+    accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600",
+    group: "general",
+  },
+  {
+    id: "time_travel",
+    label: "Time travel",
+    desc: "Simulate a different date for testing (dev only)",
+    icon: Clock,
+    accent: "from-amber-500/15 to-amber-500/0 text-amber-600",
+    group: "general",
+  },
 
-  { id: "products",    label: "Loan products",     desc: "Interest methods, terms & pricing",                icon: Wallet,    accent: "from-amber-500/15 to-amber-500/0 text-amber-600", group: "loan" },
-  { id: "loan_charges", label: "Loan charges",     desc: "Fees applied to loan products (in-house/outside)", icon: Coins,     accent: "from-yellow-500/15 to-yellow-500/0 text-yellow-600", group: "loan" },
-  { id: "loan_alco_rates", label: "Loan ALCO rates", desc: "Rate bands by product, security & equipment",     icon: LineChart, accent: "from-amber-500/15 to-amber-500/0 text-amber-600", group: "loan" },
-  { id: "security_types", label: "Security types",  desc: "Collateral kinds (vehicle, property, gold …)",     icon: Shield,      accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600", group: "loan" },
-  { id: "loan_evaluation", label: "Loan product evaluation", desc: "Configure evaluation sections per loan product", icon: ShieldCheck, accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600", group: "loan" },
+  {
+    id: "products",
+    label: "Loan products",
+    desc: "Interest methods, terms & pricing",
+    icon: Wallet,
+    accent: "from-amber-500/15 to-amber-500/0 text-amber-600",
+    group: "loan",
+  },
+  {
+    id: "loan_charges",
+    label: "Loan charges",
+    desc: "Fees applied to loan products (in-house/outside)",
+    icon: Coins,
+    accent: "from-yellow-500/15 to-yellow-500/0 text-yellow-600",
+    group: "loan",
+  },
+  {
+    id: "loan_alco_rates",
+    label: "Loan ALCO rates",
+    desc: "Rate bands by product, security & equipment",
+    icon: LineChart,
+    accent: "from-amber-500/15 to-amber-500/0 text-amber-600",
+    group: "loan",
+  },
+  {
+    id: "security_types",
+    label: "Security types",
+    desc: "Collateral kinds (vehicle, property, gold …)",
+    icon: Shield,
+    accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600",
+    group: "loan",
+  },
+  {
+    id: "loan_evaluation",
+    label: "Loan product evaluation",
+    desc: "Configure evaluation sections per loan product",
+    icon: ShieldCheck,
+    accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
+    group: "loan",
+  },
 
-  { id: "fd_products", label: "FD products",       desc: "Fixed deposit tenors & rates",                     icon: PiggyBank, accent: "from-teal-500/15 to-teal-500/0 text-teal-600", group: "savings_fd" },
-  { id: "savings_products", label: "Savings products", desc: "Passbook accounts, interest & fees",           icon: Coins,     accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600", group: "savings_fd" },
-  { id: "savings_charges",  label: "Savings charges",  desc: "Fees applied to savings products",             icon: Coins,     accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600", group: "savings_fd" },
-  { id: "alco_rates",  label: "ALCO rates",        desc: "Deposit product rate proposals & approvals",       icon: LineChart, accent: "from-orange-500/15 to-orange-500/0 text-orange-600", group: "savings_fd" },
+  {
+    id: "fd_products",
+    label: "FD products",
+    desc: "Fixed deposit tenors & rates",
+    icon: PiggyBank,
+    accent: "from-teal-500/15 to-teal-500/0 text-teal-600",
+    group: "savings_fd",
+  },
+  {
+    id: "savings_products",
+    label: "Savings products",
+    desc: "Passbook accounts, interest & fees",
+    icon: Coins,
+    accent: "from-cyan-500/15 to-cyan-500/0 text-cyan-600",
+    group: "savings_fd",
+  },
+  {
+    id: "savings_charges",
+    label: "Savings charges",
+    desc: "Fees applied to savings products",
+    icon: Coins,
+    accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600",
+    group: "savings_fd",
+  },
+  {
+    id: "alco_rates",
+    label: "ALCO rates",
+    desc: "Deposit product rate proposals & approvals",
+    icon: LineChart,
+    accent: "from-orange-500/15 to-orange-500/0 text-orange-600",
+    group: "savings_fd",
+  },
 ];
 
 const GROUPS: { id: Group; label: string }[] = [
-  { id: "general",    label: "General" },
+  { id: "general", label: "General" },
   { id: "savings_fd", label: "Savings / Fixed Deposit" },
-  { id: "loan",       label: "Loan" },
+  { id: "loan", label: "Loan" },
 ];
-
 
 function Admin() {
   const [tab, setTab] = useState<Tab | null>(null);
@@ -132,7 +326,9 @@ function Admin() {
           return (
             <div key={g.id} className="flex flex-col gap-2.5">
               <div className="flex items-center gap-2">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {g.label}
+                </div>
                 <div className="flex-1 h-px bg-border" />
               </div>
               <div className="grid gap-3 md:grid-cols-3">
@@ -142,14 +338,21 @@ function Admin() {
                     <button key={s.id} onClick={() => setTab(s.id)} className="text-left group">
                       <Card className="p-3.5 hover:border-primary/40 transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${s.accent}`}>
+                          <div
+                            className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0 ${s.accent}`}
+                          >
                             <Icon size={18} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-semibold text-[14px] truncate">{s.label}</div>
-                            <div className="text-[11.5px] text-muted-foreground truncate">{s.desc}</div>
+                            <div className="text-[11.5px] text-muted-foreground truncate">
+                              {s.desc}
+                            </div>
                           </div>
-                          <ArrowRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                          <ArrowRight
+                            size={16}
+                            className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform"
+                          />
                         </div>
                       </Card>
                     </button>
@@ -163,16 +366,20 @@ function Admin() {
     );
   }
 
-
   const current = SECTIONS.find((s) => s.id === tab)!;
   const Icon = current.icon;
   return (
     <div className="animate-fadein flex flex-col gap-5">
       <div className="flex items-center gap-3">
-        <button onClick={() => setTab(null)} className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-2.5 py-1.5">
+        <button
+          onClick={() => setTab(null)}
+          className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-2.5 py-1.5"
+        >
           <ArrowLeft size={14} /> Administration
         </button>
-        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center ${current.accent}`}>
+        <div
+          className={`w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center ${current.accent}`}
+        >
           <Icon size={16} />
         </div>
         <div className="min-w-0">
@@ -207,12 +414,42 @@ function Admin() {
 /* ---------------- Company settings (workspace) ---------------- */
 
 const CURRENCIES = ["KES", "UGX", "TZS", "RWF", "LKR", "USD", "EUR", "GBP"] as const;
-const COUNTRIES = ["Kenya", "Uganda", "Tanzania", "Rwanda", "Burundi", "South Sudan", "Ethiopia", "Sri Lanka", "United States", "United Kingdom"] as const;
-const TIMEZONES = ["Africa/Nairobi", "Africa/Kampala", "Africa/Dar_es_Salaam", "Africa/Kigali", "Africa/Addis_Ababa", "Asia/Colombo", "UTC", "Europe/London", "America/New_York"] as const;
+const COUNTRIES = [
+  "Kenya",
+  "Uganda",
+  "Tanzania",
+  "Rwanda",
+  "Burundi",
+  "South Sudan",
+  "Ethiopia",
+  "Sri Lanka",
+  "United States",
+  "United Kingdom",
+] as const;
+const TIMEZONES = [
+  "Africa/Nairobi",
+  "Africa/Kampala",
+  "Africa/Dar_es_Salaam",
+  "Africa/Kigali",
+  "Africa/Addis_Ababa",
+  "Asia/Colombo",
+  "UTC",
+  "Europe/London",
+  "America/New_York",
+] as const;
 const FY_MONTHS = [
-  [1, "January"], [2, "February"], [3, "March"], [4, "April"],
-  [5, "May"], [6, "June"], [7, "July"], [8, "August"],
-  [9, "September"], [10, "October"], [11, "November"], [12, "December"],
+  [1, "January"],
+  [2, "February"],
+  [3, "March"],
+  [4, "April"],
+  [5, "May"],
+  [6, "June"],
+  [7, "July"],
+  [8, "August"],
+  [9, "September"],
+  [10, "October"],
+  [11, "November"],
+  [12, "December"],
 ] as const;
 
 function SettingsTab() {
@@ -221,7 +458,14 @@ function SettingsTab() {
   const updFn = useServerFn(updateCompany);
   const { data: company, isLoading } = useQuery({ queryKey: ["company"], queryFn: () => getFn() });
 
-  const [form, setForm] = useState<{ name: string; currency: string; country: string; fy_end_month: number; fy_end_day: number; timezone: string } | null>(null);
+  const [form, setForm] = useState<{
+    name: string;
+    currency: string;
+    country: string;
+    fy_end_month: number;
+    fy_end_day: number;
+    timezone: string;
+  } | null>(null);
 
   if (!form && company) {
     setForm({
@@ -262,34 +506,86 @@ function SettingsTab() {
       >
         <FormGrid>
           <FormField label="Company name" required span={6}>
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} required minLength={2} />
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className={inputCls}
+              required
+              minLength={2}
+            />
           </FormField>
           <FormField label="Timezone" required span={6}>
-            <select value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })} className={selectCls}>
-              {TIMEZONES.map((t) => <option key={t} value={t}>{t}</option>)}
+            <select
+              value={form.timezone}
+              onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+              className={selectCls}
+            >
+              {TIMEZONES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
             </select>
           </FormField>
           <FormField label="Currency" required span={4} hint="Default reporting currency">
-            <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className={selectCls + " font-mono"}>
-              {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            <select
+              value={form.currency}
+              onChange={(e) => setForm({ ...form, currency: e.target.value })}
+              className={selectCls + " font-mono"}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </FormField>
           <FormField label="Country" required span={4}>
-            <select value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className={selectCls}>
-              {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            <select
+              value={form.country}
+              onChange={(e) => setForm({ ...form, country: e.target.value })}
+              className={selectCls}
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </FormField>
-          <FormField label="Financial year end" required span={4} hint="Month and day the fiscal year closes">
+          <FormField
+            label="Financial year end"
+            required
+            span={4}
+            hint="Month and day the fiscal year closes"
+          >
             <div className="flex gap-2">
-              <select value={form.fy_end_month} onChange={(e) => setForm({ ...form, fy_end_month: Number(e.target.value) })} className={selectCls + " flex-1"}>
-                {FY_MONTHS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              <select
+                value={form.fy_end_month}
+                onChange={(e) => setForm({ ...form, fy_end_month: Number(e.target.value) })}
+                className={selectCls + " flex-1"}
+              >
+                {FY_MONTHS.map(([v, l]) => (
+                  <option key={v} value={v}>
+                    {l}
+                  </option>
+                ))}
               </select>
-              <input type="number" min={1} max={31} value={form.fy_end_day} onChange={(e) => setForm({ ...form, fy_end_day: Number(e.target.value) })} className={inputCls + " w-20 font-mono"} />
+              <input
+                type="number"
+                min={1}
+                max={31}
+                value={form.fy_end_day}
+                onChange={(e) => setForm({ ...form, fy_end_day: Number(e.target.value) })}
+                className={inputCls + " w-20 font-mono"}
+              />
             </div>
           </FormField>
         </FormGrid>
         <FormActions>
-          <button type="submit" disabled={save.isPending} className={btnPrimaryCls}>{save.isPending ? "Saving…" : "Save settings"}</button>
+          <button type="submit" disabled={save.isPending} className={btnPrimaryCls}>
+            {save.isPending ? "Saving…" : "Save settings"}
+          </button>
         </FormActions>
       </form>
     </Card>
@@ -312,7 +608,11 @@ function InviteSection() {
   const [role, setRole] = useState<(typeof INVITE_ROLES)[number]>("loan_officer");
 
   const invite = useMutation({
-    mutationFn: (v: { email: string; role: (typeof INVITE_ROLES)[number]; invite_origin: string }) => inviteFn({ data: v }),
+    mutationFn: (v: {
+      email: string;
+      role: (typeof INVITE_ROLES)[number];
+      invite_origin: string;
+    }) => inviteFn({ data: v }),
     onSuccess: () => {
       toast.success("Invite sent");
       setEmail("");
@@ -358,15 +658,34 @@ function InviteSection() {
         >
           <FormGrid>
             <FormField label="Email" required span={7}>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputCls} placeholder="teammate@company.com" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className={inputCls}
+                placeholder="teammate@company.com"
+              />
             </FormField>
             <FormField label="Role" required span={3}>
-              <select value={role} onChange={(e) => setRole(e.target.value as (typeof INVITE_ROLES)[number])} className={selectCls}>
-                {INVITE_ROLES.map((r) => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as (typeof INVITE_ROLES)[number])}
+                className={selectCls}
+              >
+                {INVITE_ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {r.replace("_", " ")}
+                  </option>
+                ))}
               </select>
             </FormField>
             <FormField label="" span={2}>
-              <button type="submit" disabled={invite.isPending} className={btnPrimaryCls + " w-full"}>
+              <button
+                type="submit"
+                disabled={invite.isPending}
+                className={btnPrimaryCls + " w-full"}
+              >
                 {invite.isPending ? "…" : "Send invite"}
               </button>
             </FormField>
@@ -376,7 +695,10 @@ function InviteSection() {
 
       <Card>
         <div className="px-5 pt-4 pb-2 text-sm font-semibold">
-          Pending invites <span className="text-[11px] text-muted-foreground font-normal ml-1">{data.invites.filter((i: any) => !i.accepted_at).length} pending</span>
+          Pending invites{" "}
+          <span className="text-[11px] text-muted-foreground font-normal ml-1">
+            {data.invites.filter((i: any) => !i.accepted_at).length} pending
+          </span>
         </div>
         <div className="divide-y divide-border">
           {data.invites.map((i: any) => (
@@ -384,22 +706,34 @@ function InviteSection() {
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-semibold text-foreground truncate">{i.email}</div>
                 <div className="text-[11.5px] text-muted-foreground truncate">
-                  role: {String(i.role).replace("_", " ")} · invited {shortDate(i.created_at)} · {i.accepted_at ? `accepted ${shortDate(i.accepted_at)}` : `expires ${shortDate(i.expires_at)}`}
+                  role: {String(i.role).replace("_", " ")} · invited {shortDate(i.created_at)} ·{" "}
+                  {i.accepted_at
+                    ? `accepted ${shortDate(i.accepted_at)}`
+                    : `expires ${shortDate(i.expires_at)}`}
                 </div>
               </div>
               {!i.accepted_at && (
                 <div className="flex items-center gap-3">
-                  <button onClick={() => resend.mutate(i.id)} disabled={resend.isPending} className="text-[11.5px] text-primary hover:underline disabled:opacity-50">
+                  <button
+                    onClick={() => resend.mutate(i.id)}
+                    disabled={resend.isPending}
+                    className="text-[11.5px] text-primary hover:underline disabled:opacity-50"
+                  >
                     Resend
                   </button>
-                  <button onClick={() => revoke.mutate(i.id)} className="text-[11.5px] text-rose-600 hover:underline">
+                  <button
+                    onClick={() => revoke.mutate(i.id)}
+                    className="text-[11.5px] text-rose-600 hover:underline"
+                  >
                     Revoke
                   </button>
                 </div>
               )}
             </div>
           ))}
-          {data.invites.length === 0 && <div className="px-5 py-4 text-[12px] text-muted-foreground">No invites yet.</div>}
+          {data.invites.length === 0 && (
+            <div className="px-5 py-4 text-[12px] text-muted-foreground">No invites yet.</div>
+          )}
         </div>
       </Card>
     </div>
@@ -422,7 +756,8 @@ function ListHeader({
   return (
     <div className="px-5 pt-4 pb-3 text-sm font-semibold flex items-center justify-between">
       <span>
-        {title} <span className="text-[11px] text-muted-foreground font-normal ml-1">{count} total</span>
+        {title}{" "}
+        <span className="text-[11px] text-muted-foreground font-normal ml-1">{count} total</span>
       </span>
       <button
         onClick={onNew}
@@ -518,11 +853,7 @@ function RequiredDocsEditor({
           placeholder="Type a document name and press Enter"
           className={inputCls}
         />
-        <button
-          type="button"
-          onClick={() => add(draft)}
-          className={btnSecondaryCls}
-        >
+        <button type="button" onClick={() => add(draft)} className={btnSecondaryCls}>
           Add
         </button>
       </div>
@@ -544,8 +875,6 @@ function RequiredDocsEditor({
   );
 }
 
-
-
 /* ---------------- Branches ---------------- */
 
 function BranchesTab() {
@@ -557,7 +886,17 @@ function BranchesTab() {
   const createFn = useServerFn(createBranch);
   const updateFn = useServerFn(updateBranch);
 
-  const emptyForm = { code: "", name: "", region: "", currency: "KES", opened_on: "", branch_prefix: "", savings_prefix: "", fd_prefix: "", loan_prefix: "" };
+  const emptyForm = {
+    code: "",
+    name: "",
+    region: "",
+    currency: "KES",
+    opened_on: "",
+    branch_prefix: "",
+    savings_prefix: "",
+    fd_prefix: "",
+    loan_prefix: "",
+  };
   const [form, setForm] = useState(emptyForm);
 
   const reset = () => {
@@ -625,37 +964,99 @@ function BranchesTab() {
         <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
           <FormGrid>
             <FormField label="Code" required span={2}>
-              <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="NRB" className={inputCls + " font-mono"} required />
+              <input
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                placeholder="NRB"
+                className={inputCls + " font-mono"}
+                required
+              />
             </FormField>
             <FormField label="Name" required span={6}>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nairobi Branch" className={inputCls} required />
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Nairobi Branch"
+                className={inputCls}
+                required
+              />
             </FormField>
             <FormField label="Currency" span={2}>
-              <input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })} maxLength={3} className={inputCls + " font-mono"} />
+              <input
+                value={form.currency}
+                onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
+                maxLength={3}
+                className={inputCls + " font-mono"}
+              />
             </FormField>
             <FormField label="Opened on" span={2}>
-              <input type="date" value={form.opened_on} onChange={(e) => setForm({ ...form, opened_on: e.target.value })} className={inputCls + " font-mono"} />
+              <input
+                type="date"
+                value={form.opened_on}
+                onChange={(e) => setForm({ ...form, opened_on: e.target.value })}
+                className={inputCls + " font-mono"}
+              />
             </FormField>
             <FormField label="Region" span={12} hint="Optional">
-              <input value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} className={inputCls} />
+              <input
+                value={form.region}
+                onChange={(e) => setForm({ ...form, region: e.target.value })}
+                className={inputCls}
+              />
             </FormField>
             <FormField label="Branch prefix" span={3} hint="Used in transaction numbers">
-              <input value={form.branch_prefix} onChange={(e) => setForm({ ...form, branch_prefix: e.target.value.toUpperCase() })} maxLength={6} placeholder="NRB" className={inputCls + " font-mono"} />
+              <input
+                value={form.branch_prefix}
+                onChange={(e) => setForm({ ...form, branch_prefix: e.target.value.toUpperCase() })}
+                maxLength={6}
+                placeholder="NRB"
+                className={inputCls + " font-mono"}
+              />
             </FormField>
             <FormField label="Savings prefix" span={3}>
-              <input value={form.savings_prefix} onChange={(e) => setForm({ ...form, savings_prefix: e.target.value.toUpperCase() })} maxLength={6} placeholder="SAV" className={inputCls + " font-mono"} />
+              <input
+                value={form.savings_prefix}
+                onChange={(e) => setForm({ ...form, savings_prefix: e.target.value.toUpperCase() })}
+                maxLength={6}
+                placeholder="SAV"
+                className={inputCls + " font-mono"}
+              />
             </FormField>
             <FormField label="Fixed Deposit prefix" span={3}>
-              <input value={form.fd_prefix} onChange={(e) => setForm({ ...form, fd_prefix: e.target.value.toUpperCase() })} maxLength={6} placeholder="FD" className={inputCls + " font-mono"} />
+              <input
+                value={form.fd_prefix}
+                onChange={(e) => setForm({ ...form, fd_prefix: e.target.value.toUpperCase() })}
+                maxLength={6}
+                placeholder="FD"
+                className={inputCls + " font-mono"}
+              />
             </FormField>
             <FormField label="Loan prefix" span={3}>
-              <input value={form.loan_prefix} onChange={(e) => setForm({ ...form, loan_prefix: e.target.value.toUpperCase() })} maxLength={6} placeholder="LN" className={inputCls + " font-mono"} />
+              <input
+                value={form.loan_prefix}
+                onChange={(e) => setForm({ ...form, loan_prefix: e.target.value.toUpperCase() })}
+                maxLength={6}
+                placeholder="LN"
+                className={inputCls + " font-mono"}
+              />
             </FormField>
           </FormGrid>
           <FormActions>
-            <button type="button" onClick={reset} className={btnSecondaryCls}>Cancel</button>
-            <button type="submit" disabled={create.isPending || update.isPending} className={btnPrimaryCls}>
-              {isEdit ? (update.isPending ? "Saving…" : "Save changes") : (create.isPending ? "Creating…" : "Create branch")}
+            <button type="button" onClick={reset} className={btnSecondaryCls}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending || update.isPending}
+              className={btnPrimaryCls}
+            >
+              {isEdit
+                ? update.isPending
+                  ? "Saving…"
+                  : "Save changes"
+                : create.isPending
+                  ? "Creating…"
+                  : "Create branch"}
             </button>
           </FormActions>
         </form>
@@ -684,7 +1085,12 @@ function BranchesTab() {
       </Card>
 
       <Card padded={false}>
-        <ListHeader title="Branches" count={data.branches.length} onNew={() => setMode("create")} newLabel="New branch" />
+        <ListHeader
+          title="Branches"
+          count={data.branches.length}
+          onNew={() => setMode("create")}
+          newLabel="New branch"
+        />
         <div
           className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
           style={{ gridTemplateColumns: GRID }}
@@ -703,7 +1109,9 @@ function BranchesTab() {
             style={{ gridTemplateColumns: GRID }}
           >
             <div className="font-mono font-medium text-[11.5px]">{b.code}</div>
-            <div className="truncate font-medium" title={b.name}>{b.name}</div>
+            <div className="truncate font-medium" title={b.name}>
+              {b.name}
+            </div>
             <div className="text-muted-foreground truncate">{b.region ?? "—"}</div>
             <div className="font-mono text-[11px]">{b.currency}</div>
             <div className="text-muted-foreground text-[11px]">{shortDate(b.opened_on)}</div>
@@ -737,7 +1145,13 @@ function StaffTab() {
   const updateFn = useServerFn(updateStaff);
   const toggleFn = useServerFn(toggleStaff);
 
-  const emptyForm = { full_name: "", role: "loan_officer" as StaffRole, branch_id: "", email: "", phone: "" };
+  const emptyForm = {
+    full_name: "",
+    role: "loan_officer" as StaffRole,
+    branch_id: "",
+    email: "",
+    phone: "",
+  };
   const [form, setForm] = useState(emptyForm);
 
   const reset = () => {
@@ -817,28 +1231,58 @@ function StaffTab() {
         <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
           <FormGrid>
             <FormField label="Full name" required span={6}>
-              <input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className={inputCls} required />
+              <input
+                value={form.full_name}
+                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                className={inputCls}
+                required
+              />
             </FormField>
             <FormField label="Branch" required span={6}>
-              <select value={form.branch_id} onChange={(e) => setForm({ ...form, branch_id: e.target.value })} className={selectCls} required>
+              <select
+                value={form.branch_id}
+                onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
+                className={selectCls}
+                required
+              >
                 <option value="">Select branch…</option>
                 {data.branches.map((b: any) => (
-                  <option key={b.id} value={b.id}>{b.code} — {b.name}</option>
+                  <option key={b.id} value={b.id}>
+                    {b.code} — {b.name}
+                  </option>
                 ))}
               </select>
             </FormField>
             <FormField label="Role" required span={5}>
-              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })} className={selectCls + " capitalize"}>
+              <select
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })}
+                className={selectCls + " capitalize"}
+              >
                 {STAFF_ROLES.map((r) => (
-                  <option key={r} value={r}>{r.replace("_", " ")}</option>
+                  <option key={r} value={r}>
+                    {r.replace("_", " ")}
+                  </option>
                 ))}
               </select>
             </FormField>
             <FormField label="Email" required={!isEdit} span={4}>
-              <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} required={!isEdit} placeholder={isEdit ? "optional" : "teammate@company.com"} />
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className={inputCls}
+                required={!isEdit}
+                placeholder={isEdit ? "optional" : "teammate@company.com"}
+              />
             </FormField>
             <FormField label="Phone" span={3}>
-              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputCls + " font-mono"} placeholder="optional" />
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className={inputCls + " font-mono"}
+                placeholder="optional"
+              />
             </FormField>
           </FormGrid>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
@@ -847,9 +1291,21 @@ function StaffTab() {
               : "An invitation email is sent to this address. They can accept using Google or by setting a password — either way, this staff profile links to their login automatically."}
           </p>
           <FormActions>
-            <button type="button" onClick={reset} className={btnSecondaryCls}>Cancel</button>
-            <button type="submit" disabled={create.isPending || update.isPending} className={btnPrimaryCls}>
-              {isEdit ? (update.isPending ? "Saving…" : "Save changes") : (create.isPending ? "Adding…" : "Add staff")}
+            <button type="button" onClick={reset} className={btnSecondaryCls}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending || update.isPending}
+              className={btnPrimaryCls}
+            >
+              {isEdit
+                ? update.isPending
+                  ? "Saving…"
+                  : "Save changes"
+                : create.isPending
+                  ? "Adding…"
+                  : "Add staff"}
             </button>
           </FormActions>
         </form>
@@ -863,7 +1319,10 @@ function StaffTab() {
       <Card padded={false}>
         <div className="px-5 pt-4 pb-3 flex items-center justify-between gap-2 flex-wrap">
           <div className="text-sm font-semibold">
-            Staff <span className="text-[11px] text-muted-foreground font-normal ml-1">{data.staff.length} total</span>
+            Staff{" "}
+            <span className="text-[11px] text-muted-foreground font-normal ml-1">
+              {data.staff.length} total
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -873,7 +1332,11 @@ function StaffTab() {
               + New staff
             </button>
             <button
-              onClick={() => document.getElementById("staff-invite-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              onClick={() =>
+                document
+                  .getElementById("staff-invite-section")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
               className="px-3 py-1.5 rounded-md text-[12px] font-semibold border border-border hover:border-primary hover:text-primary flex items-center gap-1.5"
             >
               <Mail size={13} /> Invite by email
@@ -901,7 +1364,9 @@ function StaffTab() {
               <Avatar name={s.full_name} />
               <span className="truncate">{s.full_name}</span>
             </div>
-            <div className="capitalize text-muted-foreground truncate">{(s.role ?? "").replace("_", " ")}</div>
+            <div className="capitalize text-muted-foreground truncate">
+              {(s.role ?? "").replace("_", " ")}
+            </div>
             <div className="text-muted-foreground truncate">{s.branch?.name ?? "—"}</div>
             <div className="text-muted-foreground text-[11px] truncate">
               <div className="truncate">{s.email ?? "—"}</div>
@@ -912,7 +1377,9 @@ function StaffTab() {
                 onClick={() => toggle.mutate({ data: { id: s.id, is_active: !s.is_active } })}
                 className={cn(
                   "text-[10px] px-2 py-0.5 rounded-full border",
-                  s.is_active ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700" : "border-muted bg-muted text-muted-foreground",
+                  s.is_active
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                    : "border-muted bg-muted text-muted-foreground",
                 )}
               >
                 {s.is_active ? "Active" : "Off"}
@@ -928,7 +1395,9 @@ function StaffTab() {
             </div>
           </div>
         ))}
-        {data.staff.length === 0 && <div className="text-center text-faint text-sm py-8">No staff yet.</div>}
+        {data.staff.length === 0 && (
+          <div className="text-center text-faint text-sm py-8">No staff yet.</div>
+        )}
       </Card>
       <InviteSection />
     </div>
@@ -941,7 +1410,10 @@ function ProductsTab() {
   const [mode, setMode] = useState<Mode>("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const listFn = useServerFn(getAllLoanProducts);
-  const { data: products } = useQuery({ queryKey: ["loan_products", "all"], queryFn: () => listFn() });
+  const { data: products } = useQuery({
+    queryKey: ["loan_products", "all"],
+    queryFn: () => listFn(),
+  });
   const acctFn = useServerFn(getGlAccounts);
   const { data: accounts } = useQuery({ queryKey: ["gl_accounts"], queryFn: () => acctFn() });
   const qc = useQueryClient();
@@ -1045,7 +1517,7 @@ function ProductsTab() {
       loanLossAcct: (p as any).loan_loss_provision_account_id ?? "",
       suspIntAcct: (p as any).suspended_interest_account_id ?? "",
       requiredDocs: Array.isArray(p.required_documents) ? [...p.required_documents] : [],
-      segment: ((p.segment as LoanSegment) ?? "micro"),
+      segment: (p.segment as LoanSegment) ?? "micro",
     });
 
     setEditingId(p.id);
@@ -1108,7 +1580,9 @@ function ProductsTab() {
             <FormField label="Code" required span={2} hint="3 digits (000–999)">
               <input
                 value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value.replace(/\D/g, "").slice(0, 3) })}
+                onChange={(e) =>
+                  setForm({ ...form, code: e.target.value.replace(/\D/g, "").slice(0, 3) })
+                }
                 placeholder="001"
                 inputMode="numeric"
                 maxLength={3}
@@ -1117,57 +1591,154 @@ function ProductsTab() {
               />
             </FormField>
             <FormField label="Product name" required span={4}>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Kilimo Boost" className={inputCls} required />
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. Kilimo Boost"
+                className={inputCls}
+                required
+              />
             </FormField>
             <FormField label="Segment" required span={2}>
-              <select value={form.segment} onChange={(e) => setForm({ ...form, segment: e.target.value as LoanSegment })} className={selectCls}>
+              <select
+                value={form.segment}
+                onChange={(e) => setForm({ ...form, segment: e.target.value as LoanSegment })}
+                className={selectCls}
+              >
                 {LOAN_SEGMENTS.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
                 ))}
               </select>
             </FormField>
             <FormField label="Processing fee (%)" span={2}>
-              <input type="number" step="0.01" value={form.processingFee} onChange={(e) => setForm({ ...form, processingFee: e.target.value })} className={inputCls + " font-mono"} />
+              <input
+                type="number"
+                step="0.01"
+                value={form.processingFee}
+                onChange={(e) => setForm({ ...form, processingFee: e.target.value })}
+                className={inputCls + " font-mono"}
+              />
             </FormField>
             <FormField label="Min rate (%/yr)" required span={2}>
-              <input type="number" step="0.01" value={form.minRate} onChange={(e) => setForm({ ...form, minRate: e.target.value })} className={inputCls + " font-mono"} required />
+              <input
+                type="number"
+                step="0.01"
+                value={form.minRate}
+                onChange={(e) => setForm({ ...form, minRate: e.target.value })}
+                className={inputCls + " font-mono"}
+                required
+              />
             </FormField>
             <FormField label="Max rate (%/yr)" span={2}>
-              <input type="number" step="0.01" value={form.maxRate} onChange={(e) => setForm({ ...form, maxRate: e.target.value })} placeholder="optional" className={inputCls + " font-mono"} />
+              <input
+                type="number"
+                step="0.01"
+                value={form.maxRate}
+                onChange={(e) => setForm({ ...form, maxRate: e.target.value })}
+                placeholder="optional"
+                className={inputCls + " font-mono"}
+              />
             </FormField>
             <FormField label="Min term (months)" required span={3}>
-              <input type="number" min={1} value={form.minTerm} onChange={(e) => setForm({ ...form, minTerm: e.target.value })} className={inputCls + " font-mono"} required />
+              <input
+                type="number"
+                min={1}
+                value={form.minTerm}
+                onChange={(e) => setForm({ ...form, minTerm: e.target.value })}
+                className={inputCls + " font-mono"}
+                required
+              />
             </FormField>
             <FormField label="Max term (months)" required span={3}>
-              <input type="number" min={1} value={form.maxTerm} onChange={(e) => setForm({ ...form, maxTerm: e.target.value })} className={inputCls + " font-mono"} required />
+              <input
+                type="number"
+                min={1}
+                value={form.maxTerm}
+                onChange={(e) => setForm({ ...form, maxTerm: e.target.value })}
+                className={inputCls + " font-mono"}
+                required
+              />
             </FormField>
             <FormField label={`Min principal (${getActiveCurrency()})`} required span={3}>
-              <input type="number" value={form.minPrincipal} onChange={(e) => setForm({ ...form, minPrincipal: e.target.value })} className={inputCls + " font-mono"} required />
+              <input
+                type="number"
+                value={form.minPrincipal}
+                onChange={(e) => setForm({ ...form, minPrincipal: e.target.value })}
+                className={inputCls + " font-mono"}
+                required
+              />
             </FormField>
             <FormField label={`Max principal (${getActiveCurrency()})`} span={3}>
-              <input type="number" value={form.maxPrincipal} onChange={(e) => setForm({ ...form, maxPrincipal: e.target.value })} placeholder="optional" className={inputCls + " font-mono"} />
+              <input
+                type="number"
+                value={form.maxPrincipal}
+                onChange={(e) => setForm({ ...form, maxPrincipal: e.target.value })}
+                placeholder="optional"
+                className={inputCls + " font-mono"}
+              />
             </FormField>
             <FormField label="Repayment frequency" span={7}>
-              <select value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value as Frequency })} className={selectCls}>
+              <select
+                value={form.frequency}
+                onChange={(e) => setForm({ ...form, frequency: e.target.value as Frequency })}
+                className={selectCls}
+              >
                 {(Object.keys(FREQ_META) as Frequency[]).map((f) => (
-                  <option key={f} value={f}>{FREQ_META[f].label}</option>
+                  <option key={f} value={f}>
+                    {FREQ_META[f].label}
+                  </option>
                 ))}
               </select>
             </FormField>
             <FormField label="Interest method" span={5}>
-              <select value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value as InterestMethod })} className={selectCls + " capitalize"}>
+              <select
+                value={form.method}
+                onChange={(e) => setForm({ ...form, method: e.target.value as InterestMethod })}
+                className={selectCls + " capitalize"}
+              >
                 {(["flat", "declining_balance"] as InterestMethod[]).map((m) => (
-                  <option key={m} value={m}>{m.replace("_", " ")}</option>
+                  <option key={m} value={m}>
+                    {m.replace("_", " ")}
+                  </option>
                 ))}
               </select>
             </FormField>
-            <FormField label={`Termination fee (${getActiveCurrency()})`} span={6} hint="Flat charge on early termination">
-              <input type="number" step="0.01" min={0} value={form.terminationFee} onChange={(e) => setForm({ ...form, terminationFee: e.target.value })} className={inputCls + " font-mono"} />
+            <FormField
+              label={`Termination fee (${getActiveCurrency()})`}
+              span={6}
+              hint="Flat charge on early termination"
+            >
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={form.terminationFee}
+                onChange={(e) => setForm({ ...form, terminationFee: e.target.value })}
+                className={inputCls + " font-mono"}
+              />
             </FormField>
-            <FormField label="Termination fee (%)" span={6} hint="% of outstanding principal charged on termination">
-              <input type="number" step="0.01" min={0} max={100} value={form.terminationFeePct} onChange={(e) => setForm({ ...form, terminationFeePct: e.target.value })} className={inputCls + " font-mono"} />
+            <FormField
+              label="Termination fee (%)"
+              span={6}
+              hint="% of outstanding principal charged on termination"
+            >
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                max={100}
+                value={form.terminationFeePct}
+                onChange={(e) => setForm({ ...form, terminationFeePct: e.target.value })}
+                className={inputCls + " font-mono"}
+              />
             </FormField>
-            <FormField label="Required documents" span={12} hint="Applicants must upload each of these before submitting a loan application">
+            <FormField
+              label="Required documents"
+              span={12}
+              hint="Applicants must upload each of these before submitting a loan application"
+            >
               <RequiredDocsEditor
                 items={form.requiredDocs}
                 onChange={(next) => setForm({ ...form, requiredDocs: next })}
@@ -1175,71 +1746,168 @@ function ProductsTab() {
             </FormField>
           </FormGrid>
 
-
           <div className="pt-3 border-t border-border">
-            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">Ledger accounts (auto-posting)</div>
+            <div className="text-[11px] uppercase tracking-wider text-faint font-semibold mb-3">
+              Ledger accounts (auto-posting)
+            </div>
             <FormGrid>
               <FormField label="Loans receivable (DR on disburse)" span={6}>
-                <select value={form.principalAcct} onChange={(e) => setForm({ ...form, principalAcct: e.target.value })} className={selectCls}>
+                <select
+                  value={form.principalAcct}
+                  onChange={(e) => setForm({ ...form, principalAcct: e.target.value })}
+                  className={selectCls}
+                >
                   <option value="">— default 1100 —</option>
-                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                  {assetAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {a.code} · {a.name}
+                    </option>
+                  ))}
                 </select>
               </FormField>
               <FormField label="Cash / bank (CR on disburse)" span={6}>
-                <select value={form.cashAcct} onChange={(e) => setForm({ ...form, cashAcct: e.target.value })} className={selectCls}>
+                <select
+                  value={form.cashAcct}
+                  onChange={(e) => setForm({ ...form, cashAcct: e.target.value })}
+                  className={selectCls}
+                >
                   <option value="">— default 1000 —</option>
-                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                  {assetAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {a.code} · {a.name}
+                    </option>
+                  ))}
                 </select>
               </FormField>
               <FormField label="Interest income (CR on repayment)" span={6}>
-                <select value={form.interestAcct} onChange={(e) => setForm({ ...form, interestAcct: e.target.value })} className={selectCls}>
+                <select
+                  value={form.interestAcct}
+                  onChange={(e) => setForm({ ...form, interestAcct: e.target.value })}
+                  className={selectCls}
+                >
                   <option value="">— default 4000 —</option>
-                  {incomeAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                  {incomeAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {a.code} · {a.name}
+                    </option>
+                  ))}
                 </select>
               </FormField>
               <FormField label="Fee income (optional)" span={6}>
-                <select value={form.feeAcct} onChange={(e) => setForm({ ...form, feeAcct: e.target.value })} className={selectCls}>
+                <select
+                  value={form.feeAcct}
+                  onChange={(e) => setForm({ ...form, feeAcct: e.target.value })}
+                  className={selectCls}
+                >
                   <option value="">— none —</option>
-                  {incomeAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                  {incomeAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {a.code} · {a.name}
+                    </option>
+                  ))}
                 </select>
               </FormField>
               <FormField label="Accrued interest receivable (DR daily accrual)" span={6}>
-                <select value={form.accruedAcct} onChange={(e) => setForm({ ...form, accruedAcct: e.target.value })} className={selectCls}>
+                <select
+                  value={form.accruedAcct}
+                  onChange={(e) => setForm({ ...form, accruedAcct: e.target.value })}
+                  className={selectCls}
+                >
                   <option value="">— none (accrual disabled) —</option>
-                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                  {assetAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {a.code} · {a.name}
+                    </option>
+                  ))}
                 </select>
               </FormField>
               <FormField label="Interest receivable (DR on installment due)" span={6}>
-                <select value={form.interestRecvAcct} onChange={(e) => setForm({ ...form, interestRecvAcct: e.target.value })} className={selectCls}>
+                <select
+                  value={form.interestRecvAcct}
+                  onChange={(e) => setForm({ ...form, interestRecvAcct: e.target.value })}
+                  className={selectCls}
+                >
                   <option value="">— none —</option>
-                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                  {assetAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {a.code} · {a.name}
+                    </option>
+                  ))}
                 </select>
               </FormField>
-              <FormField label="Bad debt expense (DR on write-off)" span={6} hint="Used when writing off principal straight to P&L (no provision yet built)">
-                <select value={form.badDebtAcct} onChange={(e) => setForm({ ...form, badDebtAcct: e.target.value })} className={selectCls}>
+              <FormField
+                label="Bad debt expense (DR on write-off)"
+                span={6}
+                hint="Used when writing off principal straight to P&L (no provision yet built)"
+              >
+                <select
+                  value={form.badDebtAcct}
+                  onChange={(e) => setForm({ ...form, badDebtAcct: e.target.value })}
+                  className={selectCls}
+                >
                   <option value="">— none —</option>
-                  {expenseAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                  {expenseAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {a.code} · {a.name}
+                    </option>
+                  ))}
                 </select>
               </FormField>
-              <FormField label="Loan-loss provision / allowance (contra-asset)" span={6} hint="Used when write-off is charged against a previously built allowance">
-                <select value={form.loanLossAcct} onChange={(e) => setForm({ ...form, loanLossAcct: e.target.value })} className={selectCls}>
+              <FormField
+                label="Loan-loss provision / allowance (contra-asset)"
+                span={6}
+                hint="Used when write-off is charged against a previously built allowance"
+              >
+                <select
+                  value={form.loanLossAcct}
+                  onChange={(e) => setForm({ ...form, loanLossAcct: e.target.value })}
+                  className={selectCls}
+                >
                   <option value="">— none —</option>
-                  {assetAccts.map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                  {assetAccts.map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {a.code} · {a.name}
+                    </option>
+                  ))}
                 </select>
               </FormField>
-              <FormField label="Suspended interest (interest-in-suspense)" span={6} hint="Reverses accrued interest income when loan becomes NPL / written off">
-                <select value={form.suspIntAcct} onChange={(e) => setForm({ ...form, suspIntAcct: e.target.value })} className={selectCls}>
+              <FormField
+                label="Suspended interest (interest-in-suspense)"
+                span={6}
+                hint="Reverses accrued interest income when loan becomes NPL / written off"
+              >
+                <select
+                  value={form.suspIntAcct}
+                  onChange={(e) => setForm({ ...form, suspIntAcct: e.target.value })}
+                  className={selectCls}
+                >
                   <option value="">— none —</option>
-                  {[...assetAccts, ...incomeAccts].map((a: any) => (<option key={a.id} value={a.id}>{a.code} · {a.name}</option>))}
+                  {[...assetAccts, ...incomeAccts].map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {a.code} · {a.name}
+                    </option>
+                  ))}
                 </select>
               </FormField>
             </FormGrid>
           </div>
 
           <FormActions>
-            <button type="button" onClick={reset} className={btnSecondaryCls}>Cancel</button>
-            <button type="submit" disabled={create.isPending || update.isPending} className={btnPrimaryCls}>
-              {isEdit ? (update.isPending ? "Saving…" : "Save changes") : (create.isPending ? "Creating…" : "Create product")}
+            <button type="button" onClick={reset} className={btnSecondaryCls}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending || update.isPending}
+              className={btnPrimaryCls}
+            >
+              {isEdit
+                ? update.isPending
+                  ? "Saving…"
+                  : "Save changes"
+                : create.isPending
+                  ? "Creating…"
+                  : "Create product"}
             </button>
           </FormActions>
         </form>
@@ -1250,7 +1918,12 @@ function ProductsTab() {
   const GRID = "1.2fr .7fr .55fr .75fr .9fr .7fr .55fr .45fr .4fr";
   return (
     <Card padded={false}>
-      <ListHeader title="Loan products" count={products?.length ?? 0} onNew={() => setMode("create")} newLabel="New product" />
+      <ListHeader
+        title="Loan products"
+        count={products?.length ?? 0}
+        onNew={() => setMode("create")}
+        newLabel="New product"
+      />
       <div
         className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
         style={{ gridTemplateColumns: GRID }}
@@ -1272,12 +1945,19 @@ function ProductsTab() {
           style={{ gridTemplateColumns: GRID }}
         >
           <div className="font-medium flex items-center gap-2 truncate" title={p.name}>
-            <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: p.color ?? "#0f766e" }} />
+            <span
+              className="inline-block w-2 h-2 rounded-full shrink-0"
+              style={{ background: p.color ?? "#0f766e" }}
+            />
             <span className="truncate">{p.name}</span>
           </div>
-          <div className="text-[11px] text-muted-foreground truncate">{loanSegmentLabel(p.segment ?? "micro")}</div>
+          <div className="text-[11px] text-muted-foreground truncate">
+            {loanSegmentLabel(p.segment ?? "micro")}
+          </div>
           <div className="font-mono text-[11.5px]">{p.annual_rate_pct}%</div>
-          <div className="font-mono text-[11px] text-muted-foreground">{p.min_term_months}–{p.max_term_months} mo</div>
+          <div className="font-mono text-[11px] text-muted-foreground">
+            {p.min_term_months}–{p.max_term_months} mo
+          </div>
           <div className="font-mono text-[11px] text-muted-foreground truncate">
             {money(p.min_principal)}–{p.max_principal ? money(p.max_principal) : "∞"}
           </div>
@@ -1292,7 +1972,9 @@ function ProductsTab() {
               onClick={() => toggle.mutate({ data: { id: p.id, is_active: !p.is_active } })}
               className={cn(
                 "text-[10px] px-2 py-0.5 rounded-full border",
-                p.is_active ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700" : "border-muted bg-muted text-muted-foreground",
+                p.is_active
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                  : "border-muted bg-muted text-muted-foreground",
               )}
             >
               {p.is_active ? "Active" : "Off"}
@@ -1318,8 +2000,20 @@ function ProductsTab() {
 /* ---------------- Accounts ---------------- */
 
 const SUBCATEGORIES: Record<AccountType, string[]> = {
-  asset: ["Cash & Cash Equivalents", "Investments", "Loan and Receivables", "Fixed Assets", "Other Assets"],
-  liability: ["Bank Borrowings", "Customer Deposits", "Financial Liabilities", "Other Liabilities", "Tax Liability"],
+  asset: [
+    "Cash & Cash Equivalents",
+    "Investments",
+    "Loan and Receivables",
+    "Fixed Assets",
+    "Other Assets",
+  ],
+  liability: [
+    "Bank Borrowings",
+    "Customer Deposits",
+    "Financial Liabilities",
+    "Other Liabilities",
+    "Tax Liability",
+  ],
   equity: ["Share Capital", "Reserves", "Retaining Earning"],
   income: ["Interest Income", "Fees and Other Income"],
   expense: [
@@ -1433,13 +2127,21 @@ function AccountsTab() {
     rows: (accounts ?? []).filter((a: any) => a.type === t),
   }));
 
-  const allBranchesSelected = form.branch_ids.length === 0 || form.branch_ids.length === branches.length;
+  const allBranchesSelected =
+    form.branch_ids.length === 0 || form.branch_ids.length === branches.length;
 
   if (mode === "create" || mode === "edit") {
     const isEdit = mode === "edit";
     return (
       <Card>
-        <FormHeader title={isEdit ? "Edit account" : "New account"} onBack={() => { setMode("list"); setEditingId(null); resetForm(); }} />
+        <FormHeader
+          title={isEdit ? "Edit account" : "New account"}
+          onBack={() => {
+            setMode("list");
+            setEditingId(null);
+            resetForm();
+          }}
+        />
         <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
           <FormGrid>
             <FormField label="Code" required span={2}>
@@ -1463,7 +2165,9 @@ function AccountsTab() {
             <FormField label="Normal balance" span={3}>
               <select
                 value={form.normal_balance}
-                onChange={(e) => setForm({ ...form, normal_balance: Number(e.target.value) as 1 | -1 })}
+                onChange={(e) =>
+                  setForm({ ...form, normal_balance: Number(e.target.value) as 1 | -1 })
+                }
                 className={selectCls}
               >
                 <option value={1}>Debit</option>
@@ -1504,13 +2208,22 @@ function AccountsTab() {
                 ))}
               </select>
             </FormField>
-            <FormField label="Branches" span={12} hint="Leave 'All branches' checked to apply this account to every branch.">
+            <FormField
+              label="Branches"
+              span={12}
+              hint="Leave 'All branches' checked to apply this account to every branch."
+            >
               <div className="border border-input rounded-md bg-background p-2.5 flex flex-col gap-1.5">
                 <label className="flex items-center gap-2 text-[12.5px] font-medium pb-1.5 border-b border-border">
                   <input
                     type="checkbox"
                     checked={allBranchesSelected}
-                    onChange={(e) => setForm({ ...form, branch_ids: e.target.checked ? [] : branches.map((b) => b.id) })}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        branch_ids: e.target.checked ? [] : branches.map((b) => b.id),
+                      })
+                    }
                   />
                   <span>Select all branches</span>
                 </label>
@@ -1523,11 +2236,16 @@ function AccountsTab() {
                           type="checkbox"
                           checked={checked}
                           onChange={(e) => {
-                            const base = allBranchesSelected ? branches.map((x) => x.id) : form.branch_ids;
+                            const base = allBranchesSelected
+                              ? branches.map((x) => x.id)
+                              : form.branch_ids;
                             const next = e.target.checked
                               ? Array.from(new Set([...base, b.id]))
                               : base.filter((id) => id !== b.id);
-                            setForm({ ...form, branch_ids: next.length === branches.length ? [] : next });
+                            setForm({
+                              ...form,
+                              branch_ids: next.length === branches.length ? [] : next,
+                            });
                           }}
                         />
                         <span className="font-mono text-faint">{b.code}</span>
@@ -1536,24 +2254,42 @@ function AccountsTab() {
                     );
                   })}
                   {branches.length === 0 && (
-                    <div className="text-[12px] text-muted-foreground col-span-full">No branches yet.</div>
+                    <div className="text-[12px] text-muted-foreground col-span-full">
+                      No branches yet.
+                    </div>
                   )}
                 </div>
               </div>
             </FormField>
           </FormGrid>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            Assets & expenses are normally debit; liabilities, equity & income are normally credit. The default is set
-            when you pick a type.
+            Assets & expenses are normally debit; liabilities, equity & income are normally credit.
+            The default is set when you pick a type.
           </p>
           <FormActions>
-            <button type="button" onClick={() => { setMode("list"); setEditingId(null); resetForm(); }} className={btnSecondaryCls}>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("list");
+                setEditingId(null);
+                resetForm();
+              }}
+              className={btnSecondaryCls}
+            >
               Cancel
             </button>
-            <button type="submit" disabled={create.isPending || update.isPending} className={btnPrimaryCls}>
+            <button
+              type="submit"
+              disabled={create.isPending || update.isPending}
+              className={btnPrimaryCls}
+            >
               {isEdit
-                ? (update.isPending ? "Saving…" : "Save changes")
-                : (create.isPending ? "Creating…" : "Create account")}
+                ? update.isPending
+                  ? "Saving…"
+                  : "Save changes"
+                : create.isPending
+                  ? "Creating…"
+                  : "Create account"}
             </button>
           </FormActions>
         </form>
@@ -1601,7 +2337,9 @@ function AccountsTab() {
             style={{ gridTemplateColumns: "0.5fr 1.4fr 1fr 1fr 0.95fr 0.55fr 0.5fr 0.4fr" }}
           >
             <div className="font-mono font-medium text-[11.5px]">{a.code}</div>
-            <div className="truncate" title={a.name}>{a.name}</div>
+            <div className="truncate" title={a.name}>
+              {a.name}
+            </div>
             <div>
               <span
                 className={cn(
@@ -1651,5 +2389,3 @@ function AccountsTab() {
     </Card>
   );
 }
-
-

@@ -2,7 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { serverNow, serverToday } from "@/lib/clock-server";
-import { buildSchedule, dailyAccrual, addMonths, daysBetween, interestForPeriod } from "@/lib/fd-schedule";
+import {
+  buildSchedule,
+  dailyAccrual,
+  addMonths,
+  daysBetween,
+  interestForPeriod,
+} from "@/lib/fd-schedule";
 import { PAYMENT_METHODS, assertPaymentMethod } from "@/lib/payment-methods";
 
 // ─────────── Ledger kernel helper ───────────
@@ -19,13 +25,21 @@ export const FD_PRODUCT_ACCOUNT_COLUMNS =
 
 async function resolveFdAccounts(supabase: any, product: any, companyId?: string | null) {
   const need: Record<string, { fromProduct: string | null; code: string }> = {
-    cash:    { fromProduct: product?.cash_account_id ?? null, code: "1000" },
-    liab:    { fromProduct: product?.capital_account_id ?? product?.deposit_liability_account_id ?? null, code: "2200" },
+    cash: { fromProduct: product?.cash_account_id ?? null, code: "1000" },
+    liab: {
+      fromProduct: product?.capital_account_id ?? product?.deposit_liability_account_id ?? null,
+      code: "2200",
+    },
     accrued: { fromProduct: product?.interest_payable_account_id ?? null, code: "2210" },
-    intr:    { fromProduct: product?.interest_expense_account_id ?? null, code: "5200" },
-    wht:     { fromProduct: product?.wht_payable_account_id ?? product?.wht_liability_account_id ?? null, code: "2300" },
+    intr: { fromProduct: product?.interest_expense_account_id ?? null, code: "5200" },
+    wht: {
+      fromProduct: product?.wht_payable_account_id ?? product?.wht_liability_account_id ?? null,
+      code: "2300",
+    },
   };
-  const missing = Object.values(need).filter((n) => !n.fromProduct).map((n) => n.code);
+  const missing = Object.values(need)
+    .filter((n) => !n.fromProduct)
+    .map((n) => n.code);
   let byCode: Record<string, string> = {};
   if (missing.length) {
     let q = supabase.from("gl_account").select("id, code, company_id").in("code", missing);
@@ -44,7 +58,6 @@ async function resolveFdAccounts(supabase: any, product: any, companyId?: string
   };
 }
 
-
 // ──────────────────────────────────────────────────────────────────────────
 // PRODUCTS
 // ──────────────────────────────────────────────────────────────────────────
@@ -57,7 +70,9 @@ export const listFdProducts = createServerFn({ method: "GET" })
     if (!cid) return [];
     const { data, error } = await supabase
       .from("fd_product")
-      .select("*, rate_tiers:fd_rate_tier(id,tenure_months,annual_rate,effective_from,effective_to)")
+      .select(
+        "*, rate_tiers:fd_rate_tier(id,tenure_months,annual_rate,effective_from,effective_to)",
+      )
       .eq("company_id", cid)
       .order("code");
     if (error) throw error;
@@ -86,10 +101,10 @@ const productInputBase = z.object({
   marketing_incentive_account_id: z.string().uuid().nullable().optional(),
   unclaimed_deposit_liability_account_id: z.string().uuid().nullable().optional(),
 });
-const productInput = productInputBase.refine(
-  (v) => v.max_tenure_months >= v.min_tenure_months,
-  { message: "Max tenure must be ≥ min tenure", path: ["max_tenure_months"] },
-);
+const productInput = productInputBase.refine((v) => v.max_tenure_months >= v.min_tenure_months, {
+  message: "Max tenure must be ≥ min tenure",
+  path: ["max_tenure_months"],
+});
 
 export const createFdProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -154,7 +169,12 @@ export const upsertFdRateTier = createServerFn({ method: "POST" })
     const { supabase } = context;
     if (data.id) {
       const { id, ...patch } = data;
-      const { data: row, error } = await supabase.from("fd_rate_tier").update(patch).eq("id", id).select().single();
+      const { data: row, error } = await supabase
+        .from("fd_rate_tier")
+        .update(patch)
+        .eq("id", id)
+        .select()
+        .single();
       if (error) throw error;
       return row;
     }
@@ -177,7 +197,9 @@ export const deleteFdRateTier = createServerFn({ method: "POST" })
 // ──────────────────────────────────────────────────────────────────────────
 
 async function findApplicableRate(
-  supabase: ReturnType<typeof requireSupabaseAuth extends never ? never : (arg: unknown) => unknown> extends never
+  supabase: ReturnType<
+    typeof requireSupabaseAuth extends never ? never : (arg: unknown) => unknown
+  > extends never
     ? never
     : any, // eslint-disable-line @typescript-eslint/no-explicit-any
   productId: string,
@@ -191,7 +213,9 @@ async function findApplicableRate(
     .eq("tenure_months", tenureMonths)
     .lte("effective_from", onDate)
     .order("effective_from", { ascending: false });
-  const row = (data ?? []).find((r: { effective_to: string | null }) => !r.effective_to || r.effective_to >= onDate);
+  const row = (data ?? []).find(
+    (r: { effective_to: string | null }) => !r.effective_to || r.effective_to >= onDate,
+  );
   return row ? Number(row.annual_rate) : null;
 }
 
@@ -207,7 +231,12 @@ export const lookupFdRate = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ context, data }) => {
-    const rate = await findApplicableRate(context.supabase, data.product_id, data.tenure_months, data.on_date);
+    const rate = await findApplicableRate(
+      context.supabase,
+      data.product_id,
+      data.tenure_months,
+      data.on_date,
+    );
     return { annual_rate: rate };
   });
 
@@ -217,17 +246,25 @@ export const lookupFdRate = createServerFn({ method: "POST" })
 
 export const listFixedDeposits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { status?: string; product_id?: string; from?: string; to?: string; page?: number; pageSize?: number }) =>
-    z
-      .object({
-        status: z.string().optional(),
-        product_id: z.string().uuid().optional(),
-        from: z.string().optional(),
-        to: z.string().optional(),
-        page: z.number().int().min(1).default(1),
-        pageSize: z.number().int().min(1).max(200).default(25),
-      })
-      .parse({ ...i, page: i.page ?? 1, pageSize: i.pageSize ?? 25 }),
+  .inputValidator(
+    (i: {
+      status?: string;
+      product_id?: string;
+      from?: string;
+      to?: string;
+      page?: number;
+      pageSize?: number;
+    }) =>
+      z
+        .object({
+          status: z.string().optional(),
+          product_id: z.string().uuid().optional(),
+          from: z.string().optional(),
+          to: z.string().optional(),
+          page: z.number().int().min(1).default(1),
+          pageSize: z.number().int().min(1).max(200).default(25),
+        })
+        .parse({ ...i, page: i.page ?? 1, pageSize: i.pageSize ?? 25 }),
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
@@ -241,7 +278,11 @@ export const listFixedDeposits = createServerFn({ method: "GET" })
       )
       .order("created_at", { ascending: false })
       .range(from, to);
-    if (data.status) q = q.eq("status", data.status as "pending" | "active" | "matured" | "prematurely_closed" | "renewed");
+    if (data.status)
+      q = q.eq(
+        "status",
+        data.status as "pending" | "active" | "matured" | "prematurely_closed" | "renewed",
+      );
     if (data.product_id) q = q.eq("product_id", data.product_id);
     if (data.from) q = q.gte("maturity_date", data.from);
     if (data.to) q = q.lte("maturity_date", data.to);
@@ -260,7 +301,9 @@ export const listActiveDeposits = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await supabase
       .from("fixed_deposit")
-      .select("id,certificate_no,principal,client!fixed_deposit_client_id_fkey(id,full_name),product:product_id(id,code,name)")
+      .select(
+        "id,certificate_no,principal,client!fixed_deposit_client_id_fkey(id,full_name),product:product_id(id,code,name)",
+      )
       .eq("status", "active")
       .order("certificate_no");
     if (error) throw error;
@@ -276,7 +319,6 @@ const depositMovementInput = z.object({
   bank_account_id: z.string().uuid().optional().nullable(),
   savings_account_id: z.string().uuid().optional().nullable(),
 });
-
 
 export const recordDepositReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -342,7 +384,6 @@ export const recordDepositWithdrawal = createServerFn({ method: "POST" })
     return row;
   });
 
-
 export const getFdSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -367,7 +408,10 @@ export const getFdSummary = createServerFn({ method: "GET" })
     ]);
     const rows = active ?? [];
     const total = rows.reduce((s, r) => s + Number(r.principal), 0);
-    const weighted = total > 0 ? rows.reduce((s, r) => s + Number(r.principal) * Number(r.rate_at_booking), 0) / total : 0;
+    const weighted =
+      total > 0
+        ? rows.reduce((s, r) => s + Number(r.principal) * Number(r.rate_at_booking), 0) / total
+        : 0;
     return {
       portfolio_value: total,
       active_count: rows.length,
@@ -383,27 +427,42 @@ export const getFixedDeposit = createServerFn({ method: "GET" })
   .inputValidator((i: { id: string }) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const [{ data: fd, error }, { data: schedule }, { data: accruals }, { data: nominees }, { data: txns }] =
-      await Promise.all([
-        supabase
-          .from("fixed_deposit")
-          .select(
-            "*, client!fixed_deposit_client_id_fkey(id,full_name,phone,national_id), product:product_id(id,code,name,penalty_type,penalty_value,wht_rate), branch:branch_id(id,code,name), settlement:settlement_account(id,code,name)",
-          )
-          .eq("id", data.id)
-          .maybeSingle(),
-        supabase.from("fd_interest_schedule").select("*").eq("deposit_id", data.id).order("seq"),
-        supabase
-          .from("fd_accrual")
-          .select("accrual_date,daily_amount,cumulative_amount")
-          .eq("deposit_id", data.id)
-          .order("accrual_date", { ascending: false })
-          .limit(60),
-        supabase.from("fd_nominee").select("*").eq("deposit_id", data.id),
-        supabase.from("fd_transaction").select("*").eq("deposit_id", data.id).order("txn_date", { ascending: false }),
-      ]);
+    const [
+      { data: fd, error },
+      { data: schedule },
+      { data: accruals },
+      { data: nominees },
+      { data: txns },
+    ] = await Promise.all([
+      supabase
+        .from("fixed_deposit")
+        .select(
+          "*, client!fixed_deposit_client_id_fkey(id,full_name,phone,national_id), product:product_id(id,code,name,penalty_type,penalty_value,wht_rate), branch:branch_id(id,code,name), settlement:settlement_account(id,code,name)",
+        )
+        .eq("id", data.id)
+        .maybeSingle(),
+      supabase.from("fd_interest_schedule").select("*").eq("deposit_id", data.id).order("seq"),
+      supabase
+        .from("fd_accrual")
+        .select("accrual_date,daily_amount,cumulative_amount")
+        .eq("deposit_id", data.id)
+        .order("accrual_date", { ascending: false })
+        .limit(60),
+      supabase.from("fd_nominee").select("*").eq("deposit_id", data.id),
+      supabase
+        .from("fd_transaction")
+        .select("*")
+        .eq("deposit_id", data.id)
+        .order("txn_date", { ascending: false }),
+    ]);
     if (error) throw error;
-    return { fd, schedule: schedule ?? [], accruals: accruals ?? [], nominees: nominees ?? [], transactions: txns ?? [] };
+    return {
+      fd,
+      schedule: schedule ?? [],
+      accruals: accruals ?? [],
+      nominees: nominees ?? [],
+      transactions: txns ?? [],
+    };
   });
 
 const nomineeSchema = z.object({
@@ -431,7 +490,10 @@ const createDepositInput = z.object({
   marketing_officer_id: z.string().uuid().nullable().optional(),
   introducer_id: z.string().uuid().nullable().optional(),
   introducer_commission_amount: z.number().nonnegative().nullable().optional(),
-  introducer_commission_payment_mode: z.enum(["cash", "bank_transfer", "credit_savings"]).nullable().optional(),
+  introducer_commission_payment_mode: z
+    .enum(["cash", "bank_transfer", "credit_savings"])
+    .nullable()
+    .optional(),
 });
 
 export const createFixedDeposit = createServerFn({ method: "POST" })
@@ -455,10 +517,12 @@ export const createFixedDeposit = createServerFn({ method: "POST" })
       .eq("id", data.product_id)
       .maybeSingle();
     if (!product || !product.active) throw new Error("Product unavailable");
-    if (Number(data.principal) < Number(product.min_amount)) throw new Error("Amount below product minimum");
+    if (Number(data.principal) < Number(product.min_amount))
+      throw new Error("Amount below product minimum");
     if (product.max_amount != null && Number(data.principal) > Number(product.max_amount))
       throw new Error("Amount above product maximum");
-    if (data.payout_option === "monthly" && !product.allow_monthly) throw new Error("Monthly payout not allowed");
+    if (data.payout_option === "monthly" && !product.allow_monthly)
+      throw new Error("Monthly payout not allowed");
     if (data.payout_option === "at_maturity" && !product.allow_at_maturity)
       throw new Error("At-maturity payout not allowed");
 
@@ -475,8 +539,14 @@ export const createFixedDeposit = createServerFn({ method: "POST" })
       throw new Error("Select a bank account for interest bank transfer");
     }
 
-    const rate = await findApplicableRate(supabase, data.product_id, data.tenure_months, data.value_date);
-    if (rate == null) throw new Error("No published rate for this product and tenure at value date");
+    const rate = await findApplicableRate(
+      supabase,
+      data.product_id,
+      data.tenure_months,
+      data.value_date,
+    );
+    if (rate == null)
+      throw new Error("No published rate for this product and tenure at value date");
 
     const { data: certNo, error: certErr } = await supabase.rpc("next_contract_no", {
       _company_id: cid,
@@ -568,7 +638,9 @@ export const listIntroducers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("client")
-      .select("id, full_name, national_id, phone, default_commission_pct, default_commission_amount")
+      .select(
+        "id, full_name, national_id, phone, default_commission_pct, default_commission_amount",
+      )
       .eq("is_introducer", true)
       .order("full_name");
     if (error) throw error;
@@ -684,7 +756,12 @@ async function computePrematureBreakdown(
 
   // Find published rate for the shorter tenure (round down to complete months, min 1)
   const shorterTenure = Math.max(1, completeMonths);
-  const publishedRate = await findApplicableRate(supabase, fd.product_id, shorterTenure, fd.value_date);
+  const publishedRate = await findApplicableRate(
+    supabase,
+    fd.product_id,
+    shorterTenure,
+    fd.value_date,
+  );
   const baseRate = publishedRate ?? Number(fd.rate_at_booking);
   const applicableRate = Math.max(0, baseRate - Number(fd.product.penalty_value));
 
@@ -698,11 +775,15 @@ async function computePrematureBreakdown(
     .select("net_interest,paid")
     .eq("deposit_id", fdId)
     .eq("paid", true);
-  const alreadyPaidNet = (paidRows ?? []).reduce((s: number, r: { net_interest: number }) => s + Number(r.net_interest), 0);
+  const alreadyPaidNet = (paidRows ?? []).reduce(
+    (s: number, r: { net_interest: number }) => s + Number(r.net_interest),
+    0,
+  );
 
   const excessPaid = Math.max(0, Math.round((alreadyPaidNet - netEntitled) * 100) / 100);
   const finalInterestPayable = Math.max(0, Math.round((netEntitled - alreadyPaidNet) * 100) / 100);
-  const settlement = Math.round((Number(fd.principal) - excessPaid + finalInterestPayable) * 100) / 100;
+  const settlement =
+    Math.round((Number(fd.principal) - excessPaid + finalInterestPayable) * 100) / 100;
 
   return {
     fd,
@@ -754,7 +835,11 @@ export const closePrematurely = createServerFn({ method: "POST" })
     const r = await computePrematureBreakdown(supabase, data.id, data.on_date);
 
     // Cancel unpaid scheduled rows
-    await supabase.from("fd_interest_schedule").delete().eq("deposit_id", data.id).eq("paid", false);
+    await supabase
+      .from("fd_interest_schedule")
+      .delete()
+      .eq("deposit_id", data.id)
+      .eq("paid", false);
 
     await supabase
       .from("fixed_deposit")
@@ -791,16 +876,18 @@ export const closePrematurely = createServerFn({ method: "POST" })
         .eq("deposit_id", r.fd.id)
         .is("released_at", null)
         .lte("accrual_date", data.on_date);
-      const accruedAmount = Math.round(
-        ((accRows ?? []).reduce((s: number, x: any) => s + Number(x.daily_amount ?? 0), 0)) * 100,
-      ) / 100;
+      const accruedAmount =
+        Math.round(
+          (accRows ?? []).reduce((s: number, x: any) => s + Number(x.daily_amount ?? 0), 0) * 100,
+        ) / 100;
       // Interest side total debit must equal interestPart. Split as
       //   Dr Accrued (accruedAmount) + adjust Interest Expense.
       const intrAdj = Math.round((interestPart - accruedAmount) * 100) / 100;
       const lines: Array<{ account_id: string; debit: number; credit: number }> = [
         { account_id: glp.liab, debit: principal, credit: 0 },
       ];
-      if (accruedAmount > 0) lines.push({ account_id: glp.accrued, debit: accruedAmount, credit: 0 });
+      if (accruedAmount > 0)
+        lines.push({ account_id: glp.accrued, debit: accruedAmount, credit: 0 });
       if (intrAdj > 0) lines.push({ account_id: glp.intr, debit: intrAdj, credit: 0 });
       if (intrAdj < 0) lines.push({ account_id: glp.intr, debit: 0, credit: -intrAdj });
       lines.push({ account_id: glp.cash, debit: 0, credit: r.settlement });
@@ -832,7 +919,9 @@ export const closePrematurely = createServerFn({ method: "POST" })
 
 export const listMaturingDeposits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { window: 7 | 30 | 60 }) => z.object({ window: z.union([z.literal(7), z.literal(30), z.literal(60)]) }).parse(i))
+  .inputValidator((i: { window: 7 | 30 | 60 }) =>
+    z.object({ window: z.union([z.literal(7), z.literal(30), z.literal(60)]) }).parse(i),
+  )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const today = serverToday();
@@ -863,7 +952,10 @@ export const processMaturity = createServerFn({ method: "POST" })
       z
         .object({
           id: z.string().uuid(),
-          on_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+          on_date: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
           payment_method: z.enum(PAYMENT_METHODS).optional(),
           bank_account_id: z.string().uuid().optional().nullable(),
           savings_account_id: z.string().uuid().optional().nullable(),
@@ -941,14 +1033,16 @@ export const processMaturity = createServerFn({ method: "POST" })
           .eq("deposit_id", fd.id)
           .is("released_at", null)
           .lte("accrual_date", onDate);
-        const accruedAmount = Math.round(
-          ((accRows ?? []).reduce((s: number, x: any) => s + Number(x.daily_amount ?? 0), 0)) * 100,
-        ) / 100;
+        const accruedAmount =
+          Math.round(
+            (accRows ?? []).reduce((s: number, x: any) => s + Number(x.daily_amount ?? 0), 0) * 100,
+          ) / 100;
         const intrAdj = Math.round((owedNet - accruedAmount) * 100) / 100;
         const lines: Array<{ account_id: string; debit: number; credit: number }> = [
           { account_id: glm.liab, debit: Number(fd.principal), credit: 0 },
         ];
-        if (accruedAmount > 0) lines.push({ account_id: glm.accrued, debit: accruedAmount, credit: 0 });
+        if (accruedAmount > 0)
+          lines.push({ account_id: glm.accrued, debit: accruedAmount, credit: 0 });
         if (intrAdj > 0) lines.push({ account_id: glm.intr, debit: intrAdj, credit: 0 });
         if (intrAdj < 0) lines.push({ account_id: glm.intr, debit: 0, credit: -intrAdj });
         lines.push({ account_id: glm.cash, debit: 0, credit: settlement });
@@ -972,7 +1066,6 @@ export const processMaturity = createServerFn({ method: "POST" })
 
       return { ok: true, action: "payout", settlement };
     }
-
 
     // Renewals
     const newPrincipal =
@@ -1032,7 +1125,9 @@ export const processMaturity = createServerFn({ method: "POST" })
       payoutOption: fd.payout_option,
       whtRatePct: Number(product?.wht_rate ?? fd.wht_rate_at_booking),
     });
-    await supabase.from("fd_interest_schedule").insert(rows.map((r) => ({ ...r, deposit_id: newFd.id })));
+    await supabase
+      .from("fd_interest_schedule")
+      .insert(rows.map((r) => ({ ...r, deposit_id: newFd.id })));
 
     // Close old
     await supabase
@@ -1041,8 +1136,7 @@ export const processMaturity = createServerFn({ method: "POST" })
       .eq("id", fd.id);
 
     // Residual interest payout if principal-only renewal
-    const residual =
-      fd.maturity_instruction === "renew_principal" ? owedNet : 0;
+    const residual = fd.maturity_instruction === "renew_principal" ? owedNet : 0;
     if (residual > 0) {
       await supabase.from("fd_transaction").insert({
         deposit_id: fd.id,
@@ -1152,7 +1246,10 @@ export const runFdInterestPayouts = createServerFn({ method: "POST" })
         .eq("id", row.deposit_id)
         .maybeSingle();
       if (!fd || fd.status !== "active" || fd.payout_option !== "monthly") continue;
-      await supabase.from("fd_interest_schedule").update({ paid: true, paid_date: today }).eq("id", row.id);
+      await supabase
+        .from("fd_interest_schedule")
+        .update({ paid: true, paid_date: today })
+        .eq("id", row.id);
       await supabase.from("fd_transaction").insert({
         deposit_id: row.deposit_id,
         type: "interest_payout",
@@ -1180,12 +1277,14 @@ export const runFdInterestPayouts = createServerFn({ method: "POST" })
           .eq("deposit_id", fd.id)
           .is("released_at", null)
           .lte("accrual_date", today);
-        const accruedAmount = Math.round(
-          ((accRows ?? []).reduce((s: number, x: any) => s + Number(x.daily_amount ?? 0), 0)) * 100,
-        ) / 100;
+        const accruedAmount =
+          Math.round(
+            (accRows ?? []).reduce((s: number, x: any) => s + Number(x.daily_amount ?? 0), 0) * 100,
+          ) / 100;
         const intrAdj = Math.round((gross - accruedAmount) * 100) / 100;
         const lines: Array<{ account_id: string; debit: number; credit: number }> = [];
-        if (accruedAmount > 0) lines.push({ account_id: gli.accrued, debit: accruedAmount, credit: 0 });
+        if (accruedAmount > 0)
+          lines.push({ account_id: gli.accrued, debit: accruedAmount, credit: 0 });
         if (intrAdj > 0) lines.push({ account_id: gli.intr, debit: intrAdj, credit: 0 });
         if (intrAdj < 0) lines.push({ account_id: gli.intr, debit: 0, credit: -intrAdj });
         lines.push({ account_id: gli.cash, debit: 0, credit: net });

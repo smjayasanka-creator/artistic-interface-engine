@@ -108,8 +108,15 @@ function FdDetail() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <div className="font-mono text-[12px] px-2 py-0.5 rounded bg-muted">{fd.certificate_no}</div>
-              <span className={cn("inline-flex px-2 py-0.5 rounded border text-[10.5px] uppercase tracking-wide", STATUS_TONE[fd.status])}>
+              <div className="font-mono text-[12px] px-2 py-0.5 rounded bg-muted">
+                {fd.certificate_no}
+              </div>
+              <span
+                className={cn(
+                  "inline-flex px-2 py-0.5 rounded border text-[10.5px] uppercase tracking-wide",
+                  STATUS_TONE[fd.status],
+                )}
+              >
                 {fd.status.replace("_", " ")}
               </span>
             </div>
@@ -123,7 +130,11 @@ function FdDetail() {
               <Printer size={14} className="mr-1.5" /> Certificate
             </button>
             {fd.status === "pending" && (
-              <button className={btnPrimaryCls} onClick={() => approveM.mutate()} disabled={approveM.isPending}>
+              <button
+                className={btnPrimaryCls}
+                onClick={() => approveM.mutate()}
+                disabled={approveM.isPending}
+              >
                 {approveM.isPending ? "Approving…" : "Approve & activate"}
               </button>
             )}
@@ -137,7 +148,11 @@ function FdDetail() {
                 >
                   Premature close
                 </button>
-                <button className={btnPrimaryCls} onClick={() => matureM.mutate()} disabled={matureM.isPending}>
+                <button
+                  className={btnPrimaryCls}
+                  onClick={() => matureM.mutate()}
+                  disabled={matureM.isPending}
+                >
                   Process maturity
                 </button>
               </>
@@ -153,7 +168,10 @@ function FdDetail() {
           <Info label="Value date" value={fd.value_date} />
           <Info label="Maturity date" value={fd.maturity_date} />
           <Info label="WHT" value={`${Number(fd.wht_rate_at_booking).toFixed(3)}%`} />
-          <Info label="Settlement account" value={fd.settlement ? `${fd.settlement.code} · ${fd.settlement.name}` : "—"} />
+          <Info
+            label="Settlement account"
+            value={fd.settlement ? `${fd.settlement.code} · ${fd.settlement.name}` : "—"}
+          />
         </div>
       </Card>
 
@@ -188,7 +206,9 @@ function FdDetail() {
               onClick={() => setTab(t)}
               className={cn(
                 "px-4 py-2.5 text-[13px] font-medium border-b-2 -mb-px capitalize",
-                tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
+                tab === t
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
               {t}
@@ -198,10 +218,11 @@ function FdDetail() {
 
         {tab === "overview" && (
           <div className="text-[13px] text-muted-foreground">
-            Maturity instruction: <span className="text-foreground font-medium">{fd.maturity_instruction.replace(/_/g, " ")}</span>
-            {fd.close_reason && (
-              <div className="mt-2">Close reason: {fd.close_reason}</div>
-            )}
+            Maturity instruction:{" "}
+            <span className="text-foreground font-medium">
+              {fd.maturity_instruction.replace(/_/g, " ")}
+            </span>
+            {fd.close_reason && <div className="mt-2">Close reason: {fd.close_reason}</div>}
           </div>
         )}
 
@@ -222,9 +243,15 @@ function FdDetail() {
                 <tr key={r.id} className="border-b border-border/50">
                   <td className="py-1.5 pr-3">{r.seq}</td>
                   <td className="py-1.5 pr-3">{r.due_date}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(r.gross_interest), true)}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(r.wht_amount), true)}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(r.net_interest), true)}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">
+                    {money(Number(r.gross_interest), true)}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right font-mono">
+                    {money(Number(r.wht_amount), true)}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right font-mono">
+                    {money(Number(r.net_interest), true)}
+                  </td>
                   <td className="py-1.5 pr-3">
                     {r.paid ? (
                       <span className="text-emerald-600">Paid {r.paid_date}</span>
@@ -236,7 +263,9 @@ function FdDetail() {
               ))}
               {data.schedule.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-muted-foreground">Schedule appears after approval.</td>
+                  <td colSpan={6} className="py-6 text-center text-muted-foreground">
+                    Schedule appears after approval.
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -256,13 +285,19 @@ function FdDetail() {
               {data.accruals.map((r) => (
                 <tr key={r.accrual_date} className="border-b border-border/50">
                   <td className="py-1.5 pr-3">{r.accrual_date}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(r.daily_amount).toFixed(4)}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(r.cumulative_amount).toFixed(4)}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">
+                    {Number(r.daily_amount).toFixed(4)}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right font-mono">
+                    {Number(r.cumulative_amount).toFixed(4)}
+                  </td>
                 </tr>
               ))}
               {data.accruals.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="py-6 text-center text-muted-foreground">No accruals yet. Run daily accrual.</td>
+                  <td colSpan={3} className="py-6 text-center text-muted-foreground">
+                    No accruals yet. Run daily accrual.
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -285,7 +320,9 @@ function FdDetail() {
                   <td className="py-1.5 pr-3">{n.name}</td>
                   <td className="py-1.5 pr-3">{n.nic ?? "—"}</td>
                   <td className="py-1.5 pr-3">{n.relationship ?? "—"}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{Number(n.percentage).toFixed(2)}%</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">
+                    {Number(n.percentage).toFixed(2)}%
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -307,7 +344,9 @@ function FdDetail() {
                 <tr key={t.id} className="border-b border-border/50">
                   <td className="py-1.5 pr-3">{t.txn_date}</td>
                   <td className="py-1.5 pr-3 capitalize">{t.type.replace(/_/g, " ")}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">{money(Number(t.amount), true)}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">
+                    {money(Number(t.amount), true)}
+                  </td>
                   <td className="py-1.5 pr-3 text-muted-foreground">{t.reference ?? "—"}</td>
                 </tr>
               ))}
@@ -317,12 +356,20 @@ function FdDetail() {
       </Card>
 
       {closeModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setCloseModal(null)}>
-          <div className="bg-card rounded-xl border border-border max-w-lg w-full p-5" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setCloseModal(null)}
+        >
+          <div
+            className="bg-card rounded-xl border border-border max-w-lg w-full p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="font-semibold text-[15px] mb-3">Premature closure</div>
             <div className="flex flex-col gap-3">
               <label className="flex flex-col gap-1">
-                <span className="text-[11px] uppercase tracking-wider text-faint font-semibold">Closure date</span>
+                <span className="text-[11px] uppercase tracking-wider text-faint font-semibold">
+                  Closure date
+                </span>
                 <input
                   type="date"
                   className={inputCls}
@@ -331,7 +378,9 @@ function FdDetail() {
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-[11px] uppercase tracking-wider text-faint font-semibold">Reason</span>
+                <span className="text-[11px] uppercase tracking-wider text-faint font-semibold">
+                  Reason
+                </span>
                 <input
                   className={inputCls}
                   value={closeModal.reason}
@@ -351,7 +400,10 @@ function FdDetail() {
                 <div className="text-[12.5px] bg-muted/50 rounded p-3 flex flex-col gap-1">
                   <Row k="Period held" v={`${preview.completeMonths}m ${preview.trailingDays}d`} />
                   <Row k="Published rate for period" v={`${preview.publishedRate.toFixed(3)}%`} />
-                  <Row k="Applicable rate (after penalty)" v={`${preview.applicableRate.toFixed(3)}%`} />
+                  <Row
+                    k="Applicable rate (after penalty)"
+                    v={`${preview.applicableRate.toFixed(3)}%`}
+                  />
                   <Row k="Interest entitled (gross)" v={money(preview.grossEntitled, true)} />
                   <Row k="WHT" v={money(preview.whtEntitled, true)} />
                   <Row k="Interest entitled (net)" v={money(preview.netEntitled, true)} />
@@ -361,11 +413,18 @@ function FdDetail() {
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
-                <button className={btnSecondaryCls} onClick={() => setCloseModal(null)}>Cancel</button>
+                <button className={btnSecondaryCls} onClick={() => setCloseModal(null)}>
+                  Cancel
+                </button>
                 <button
                   className={btnPrimaryCls}
                   disabled={!preview || closeM.isPending}
-                  onClick={() => closeM.mutate({ on_date: closeModal.onDate, reason: closeModal.reason || undefined })}
+                  onClick={() =>
+                    closeM.mutate({
+                      on_date: closeModal.onDate,
+                      reason: closeModal.reason || undefined,
+                    })
+                  }
                 >
                   Confirm & close
                 </button>

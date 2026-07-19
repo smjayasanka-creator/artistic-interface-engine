@@ -70,7 +70,10 @@ export function PaymentMethodPicker({
   return (
     <>
       <FormField label="Payment method" required span={span}>
-        <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+        <div
+          className={`grid gap-2`}
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+        >
           {allowed.map((m) => (
             <button
               key={m}
@@ -106,8 +109,8 @@ export function PaymentMethodPicker({
               !clientId
                 ? "Select client first"
                 : banks && banks.length === 0
-                ? "No bank accounts on file for this client"
-                : undefined
+                  ? "No bank accounts on file for this client"
+                  : undefined
             }
           >
             <select
@@ -159,8 +162,8 @@ export function PaymentMethodPicker({
             !clientId
               ? "Select client first"
               : savings && savings.length === 0
-              ? "No active SDF savings account for this client"
-              : undefined
+                ? "No active SDF savings account for this client"
+                : undefined
           }
         >
           <select

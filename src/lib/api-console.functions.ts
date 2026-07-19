@@ -15,13 +15,17 @@ const SCOPES = [
 async function sha256Hex(input: string): Promise<string> {
   const enc = new TextEncoder().encode(input);
   const buf = await crypto.subtle.digest("SHA-256", enc);
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function randomToken(bytes = 32): string {
   const arr = new Uint8Array(bytes);
   crypto.getRandomValues(arr);
-  return Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export const listApiKeys = createServerFn({ method: "GET" })
@@ -30,7 +34,9 @@ export const listApiKeys = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await supabase
       .from("api_key")
-      .select("id, label, key_prefix, scopes, environment, status, last_used_at, created_at, revoked_at")
+      .select(
+        "id, label, key_prefix, scopes, environment, status, last_used_at, created_at, revoked_at",
+      )
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { keys: data ?? [] };
@@ -39,11 +45,13 @@ export const listApiKeys = createServerFn({ method: "GET" })
 export const createApiKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      label: z.string().min(2).max(80),
-      scopes: z.array(z.enum(SCOPES)).min(1),
-      environment: z.enum(["sandbox", "production"]).default("sandbox"),
-    }).parse(d),
+    z
+      .object({
+        label: z.string().min(2).max(80),
+        scopes: z.array(z.enum(SCOPES)).min(1),
+        environment: z.enum(["sandbox", "production"]).default("sandbox"),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -96,7 +104,9 @@ export const revokeApiKey = createServerFn({ method: "POST" })
 export const listApiLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ channel: z.string().optional(), limit: z.number().min(1).max(200).default(50) }).parse(d ?? {}),
+    z
+      .object({ channel: z.string().optional(), limit: z.number().min(1).max(200).default(50) })
+      .parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;

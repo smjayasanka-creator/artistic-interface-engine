@@ -3,7 +3,14 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Lock } from "lucide-react";
 import { Card } from "@/components/mzizi/Card";
-import { FormGrid, FormField, FormActions, inputCls, btnPrimaryCls, btnSecondaryCls } from "@/components/mzizi/FormGrid";
+import {
+  FormGrid,
+  FormField,
+  FormActions,
+  inputCls,
+  btnPrimaryCls,
+  btnSecondaryCls,
+} from "@/components/mzizi/FormGrid";
 import { money, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -64,7 +71,9 @@ function CloseCashierPage() {
 
   return (
     <div className="animate-fadein flex flex-col gap-4">
-      <Link to="/transactions" className="text-xs text-primary hover:underline">← Back to transactions</Link>
+      <Link to="/transactions" className="text-xs text-primary hover:underline">
+        ← Back to transactions
+      </Link>
 
       <form onSubmit={submit} className="flex flex-col gap-4">
         <Card className="p-6">
@@ -100,7 +109,12 @@ function CloseCashierPage() {
                     className={`${inputCls} font-mono text-right w-28 ml-auto`}
                   />
                 </div>
-                <div className={cn("text-right font-mono", r.subtotal > 0 ? "text-foreground" : "text-faint")}>
+                <div
+                  className={cn(
+                    "text-right font-mono",
+                    r.subtotal > 0 ? "text-foreground" : "text-faint",
+                  )}
+                >
                   {money(r.subtotal)}
                 </div>
               </div>
@@ -127,7 +141,11 @@ function CloseCashierPage() {
               />
             </FormField>
             <FormField label={`Counted (${getActiveCurrency()})`} span={4}>
-              <input readOnly value={money(counted)} className={`${inputCls} font-mono font-semibold bg-muted/50`} />
+              <input
+                readOnly
+                value={money(counted)}
+                className={`${inputCls} font-mono font-semibold bg-muted/50`}
+              />
             </FormField>
             <FormField label="Variance" span={4}>
               <input
@@ -135,7 +153,11 @@ function CloseCashierPage() {
                 value={money(variance)}
                 className={cn(
                   `${inputCls} font-mono font-semibold`,
-                  variance === 0 ? "text-primary" : variance > 0 ? "text-emerald-600" : "text-rose-600",
+                  variance === 0
+                    ? "text-primary"
+                    : variance > 0
+                      ? "text-emerald-600"
+                      : "text-rose-600",
                 )}
               />
             </FormField>
@@ -153,7 +175,9 @@ function CloseCashierPage() {
         </Card>
 
         <FormActions>
-          <Link to="/transactions" className={btnSecondaryCls}>Cancel</Link>
+          <Link to="/transactions" className={btnSecondaryCls}>
+            Cancel
+          </Link>
           <button type="submit" disabled={submitting} className={btnPrimaryCls}>
             {submitting ? "Closing…" : "Close cashier"}
           </button>

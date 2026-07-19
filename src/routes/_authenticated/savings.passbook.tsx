@@ -38,7 +38,10 @@ function PassbookPage() {
   const receiveFn = useServerFn(receivePassbookStock);
   const issueFn = useServerFn(issuePassbook);
 
-  const { data: branches } = useQuery({ queryKey: ["company-branches"], queryFn: () => branchFn() });
+  const { data: branches } = useQuery({
+    queryKey: ["company-branches"],
+    queryFn: () => branchFn(),
+  });
   const { data: products } = useQuery({ queryKey: ["savings-products"], queryFn: () => prodFn() });
   const { data: accounts } = useQuery({
     queryKey: ["savings-accounts", "active"],
@@ -90,8 +93,7 @@ function PassbookPage() {
     [stock, iStockId],
   );
   const nextSerial =
-    selectedStock &&
-    Number(selectedStock.serial_from) + Number(selectedStock.quantity_issued);
+    selectedStock && Number(selectedStock.serial_from) + Number(selectedStock.quantity_issued);
 
   const issueM = useMutation({
     mutationFn: () =>
@@ -121,7 +123,11 @@ function PassbookPage() {
         </div>
         <FormGrid>
           <FormField label="Branch" required span={4}>
-            <select className={selectCls} value={rBranch} onChange={(e) => setRBranch(e.target.value)}>
+            <select
+              className={selectCls}
+              value={rBranch}
+              onChange={(e) => setRBranch(e.target.value)}
+            >
               <option value="">Select…</option>
               {(branches ?? []).map((b: any) => (
                 <option key={b.id} value={b.id}>
@@ -130,8 +136,16 @@ function PassbookPage() {
               ))}
             </select>
           </FormField>
-          <FormField label="Product (optional)" span={4} hint="Restrict batch to a specific product">
-            <select className={selectCls} value={rProduct} onChange={(e) => setRProduct(e.target.value)}>
+          <FormField
+            label="Product (optional)"
+            span={4}
+            hint="Restrict batch to a specific product"
+          >
+            <select
+              className={selectCls}
+              value={rProduct}
+              onChange={(e) => setRProduct(e.target.value)}
+            >
               <option value="">Any product</option>
               {(products ?? []).map((p: any) => (
                 <option key={p.id} value={p.id}>
@@ -270,7 +284,11 @@ function PassbookPage() {
             </select>
           </FormField>
           <FormField label="Account" required span={5}>
-            <select className={selectCls} value={iAcctId} onChange={(e) => setIAcctId(e.target.value)}>
+            <select
+              className={selectCls}
+              value={iAcctId}
+              onChange={(e) => setIAcctId(e.target.value)}
+            >
               <option value="">Select account…</option>
               {(accounts ?? []).map((a: any) => (
                 <option key={a.id} value={a.id}>
@@ -279,7 +297,11 @@ function PassbookPage() {
               ))}
             </select>
           </FormField>
-          <FormField label="Serial No." span={2} hint={nextSerial ? `Next: ${nextSerial}` : undefined}>
+          <FormField
+            label="Serial No."
+            span={2}
+            hint={nextSerial ? `Next: ${nextSerial}` : undefined}
+          >
             <input
               type="number"
               className={inputCls}

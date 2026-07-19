@@ -101,7 +101,9 @@ export function SavingsChargesTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const rows = ((charges as ChargeRow[]) ?? []).slice().sort((a, b) => a.name.localeCompare(b.name));
+  const rows = ((charges as ChargeRow[]) ?? [])
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
   const productList = ((products as any[]) ?? []).map((p) => ({
     id: p.id,
     code: p.code,
@@ -111,9 +113,12 @@ export function SavingsChargesTab() {
     const p = productList.find((x) => x.id === id);
     return p ? `${p.code}` : "—";
   };
-  const glList = ((glAccounts as any[]) ?? []).filter((a) => a.is_active !== false && a.type === "income");
+  const glList = ((glAccounts as any[]) ?? []).filter(
+    (a) => a.is_active !== false && a.type === "income",
+  );
   const glName = (id: string) => {
-    const a = glList.find((x) => x.id === id) ?? ((glAccounts as any[]) ?? []).find((x) => x.id === id);
+    const a =
+      glList.find((x) => x.id === id) ?? ((glAccounts as any[]) ?? []).find((x) => x.id === id);
     return a ? `${a.code} · ${a.name}` : "—";
   };
 
@@ -122,7 +127,9 @@ export function SavingsChargesTab() {
       <div className="px-5 pt-4 pb-3 text-sm font-semibold flex items-center justify-between">
         <span>
           Savings charges{" "}
-          <span className="text-[11px] text-muted-foreground font-normal ml-1">{rows.length} total</span>
+          <span className="text-[11px] text-muted-foreground font-normal ml-1">
+            {rows.length} total
+          </span>
         </span>
         <button
           onClick={() => setEditing({ values: { ...EMPTY } })}
@@ -151,18 +158,26 @@ export function SavingsChargesTab() {
           className="grid items-center text-[12px] py-1.5 px-5 border-b border-row-divider last:border-b-0"
           style={{ gridTemplateColumns: GRID_COLS }}
         >
-          <div className="truncate font-medium" title={c.name}>{c.name}</div>
+          <div className="truncate font-medium" title={c.name}>
+            {c.name}
+          </div>
           <div className="font-mono text-[11.5px]">{money(c.amount)}</div>
           <div className="text-[11.5px] text-muted-foreground">{FREQ_LABEL[c.frequency]}</div>
-          <div className="text-[11px] text-muted-foreground truncate" title={glName(c.income_account_id)}>
+          <div
+            className="text-[11px] text-muted-foreground truncate"
+            title={glName(c.income_account_id)}
+          >
             {glName(c.income_account_id)}
           </div>
-          <div className="text-[11px] text-muted-foreground truncate" title={c.product_ids.map(productName).join(", ")}>
+          <div
+            className="text-[11px] text-muted-foreground truncate"
+            title={c.product_ids.map(productName).join(", ")}
+          >
             {c.product_ids.length === 0
               ? "—"
               : c.product_ids.length <= 2
-              ? c.product_ids.map(productName).join(", ")
-              : `${c.product_ids.length} products`}
+                ? c.product_ids.map(productName).join(", ")
+                : `${c.product_ids.length} products`}
           </div>
           <div className="text-right">
             <button
@@ -265,7 +280,10 @@ function ChargeModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onCancel}>
+    <div
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+      onClick={onCancel}
+    >
       <div
         className="bg-card rounded-xl border border-border max-w-2xl w-full max-h-[90vh] overflow-auto"
         onClick={(e) => e.stopPropagation()}
@@ -320,12 +338,7 @@ function ChargeModal({
                 <option value="annual">Annual</option>
               </select>
             </FormField>
-            <FormField
-              label="Income account"
-              required
-              span={4}
-              hint="Chart of Account (income)"
-            >
+            <FormField label="Income account" required span={4} hint="Chart of Account (income)">
               <select
                 className={selectCls}
                 value={v.income_account_id}
@@ -376,8 +389,9 @@ function ChargeModal({
           </FormGrid>
 
           <div className="text-[11.5px] text-muted-foreground bg-secondary/40 border border-border rounded-md px-3 py-2">
-            <strong>Debit account:</strong> automatically posted to each applicable product's deposit-liability
-            (capital) account when the charge is applied. No configuration needed here.
+            <strong>Debit account:</strong> automatically posted to each applicable product's
+            deposit-liability (capital) account when the charge is applied. No configuration needed
+            here.
           </div>
 
           <FormActions>

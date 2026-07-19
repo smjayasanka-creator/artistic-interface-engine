@@ -3,20 +3,22 @@ import { z } from "zod";
 
 // Mirror of the schema in loan-application.functions.ts (kept in sync so we
 // can unit-test the field allow-list without booting the server runtime).
-const UpdatableAppFields = z.object({
-  client_id: z.string().uuid().nullable().optional(),
-  product_id: z.string().uuid().nullable().optional(),
-  officer_id: z.string().uuid().nullable().optional(),
-  branch_id: z.string().uuid().optional(),
-  requested_principal: z.number().nonnegative().optional(),
-  requested_tenor_months: z.number().int().nonnegative().optional(),
-  requested_rate_pct: z.number().nullable().optional(),
-  frequency: z.string().nullable().optional(),
-  currency: z.string().optional(),
-  purpose: z.string().nullable().optional(),
-  channel: z.string().nullable().optional(),
-  metadata: z.record(z.string(), z.any()).optional(),
-}).strict();
+const UpdatableAppFields = z
+  .object({
+    client_id: z.string().uuid().nullable().optional(),
+    product_id: z.string().uuid().nullable().optional(),
+    officer_id: z.string().uuid().nullable().optional(),
+    branch_id: z.string().uuid().optional(),
+    requested_principal: z.number().nonnegative().optional(),
+    requested_tenor_months: z.number().int().nonnegative().optional(),
+    requested_rate_pct: z.number().nullable().optional(),
+    frequency: z.string().nullable().optional(),
+    currency: z.string().optional(),
+    purpose: z.string().nullable().optional(),
+    channel: z.string().nullable().optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
+  })
+  .strict();
 
 const SENSITIVE = [
   "company_id",

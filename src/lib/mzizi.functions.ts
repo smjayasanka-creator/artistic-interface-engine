@@ -28,39 +28,35 @@ export const getTellerSummary = createServerFn({ method: "GET" })
 
     const staffId = staff?.id ?? null;
 
-    const [
-      { data: repays },
-      { data: fdReceipts },
-      { data: fdWithdrawals },
-      { data: disbursals },
-    ] = await Promise.all([
-      staffId
-        ? supabase
-            .from("repayment")
-            .select("amount")
-            .eq("received_by", staffId)
-            .gte("received_at", sinceIso)
-        : Promise.resolve({ data: [] as { amount: number }[] } as any),
-      supabase
-        .from("fd_transaction")
-        .select("amount")
-        .eq("created_by", userId)
-        .eq("type", "deposit_receipt")
-        .gte("txn_date", todayDate),
-      supabase
-        .from("fd_transaction")
-        .select("amount")
-        .eq("created_by", userId)
-        .eq("type", "withdrawal")
-        .gte("txn_date", todayDate),
-      staffId
-        ? supabase
-            .from("loan")
-            .select("principal")
-            .eq("approved_by", staffId)
-            .gte("disbursed_at", sinceIso)
-        : Promise.resolve({ data: [] as { principal: number }[] } as any),
-    ]);
+    const [{ data: repays }, { data: fdReceipts }, { data: fdWithdrawals }, { data: disbursals }] =
+      await Promise.all([
+        staffId
+          ? supabase
+              .from("repayment")
+              .select("amount")
+              .eq("received_by", staffId)
+              .gte("received_at", sinceIso)
+          : Promise.resolve({ data: [] as { amount: number }[] } as any),
+        supabase
+          .from("fd_transaction")
+          .select("amount")
+          .eq("created_by", userId)
+          .eq("type", "deposit_receipt")
+          .gte("txn_date", todayDate),
+        supabase
+          .from("fd_transaction")
+          .select("amount")
+          .eq("created_by", userId)
+          .eq("type", "withdrawal")
+          .gte("txn_date", todayDate),
+        staffId
+          ? supabase
+              .from("loan")
+              .select("principal")
+              .eq("approved_by", staffId)
+              .gte("disbursed_at", sinceIso)
+          : Promise.resolve({ data: [] as { principal: number }[] } as any),
+      ]);
 
     const sum = (rows: any[] | null | undefined, key: string) =>
       (rows ?? []).reduce((s, r) => s + Number(r[key] ?? 0), 0);
@@ -143,7 +139,9 @@ export const getDashboard = createServerFn({ method: "GET" })
       supabase.from("loan").select("principal").gte("disbursed_at", weekAgoIso),
       supabase
         .from("loan")
-        .select("id, principal, submitted_at, client:client_id(id, full_name, risk_grade, avatar_color), product:product_id(name)")
+        .select(
+          "id, principal, submitted_at, client:client_id(id, full_name, risk_grade, avatar_color), product:product_id(name)",
+        )
         .eq("status", "submitted")
         .order("submitted_at", { ascending: false })
         .limit(6),
@@ -157,15 +155,32 @@ export const getDashboard = createServerFn({ method: "GET" })
         .select("actor_user_id, decision, acted_at")
         .gte("acted_at", weekAgoIso),
       supabase.from("staff").select("id, user_id, full_name, role"),
-      supabase.from("loan").select("principal").not("disbursed_at", "is", null).gte("disbursed_at", monthStartIso).lte("disbursed_at", monthEndIso),
-      supabase.from("repayment").select("amount").gte("received_at", monthStartIso).lte("received_at", monthEndIso),
-      supabase.from("savings_transaction").select("amount, txn_type").gte("txn_date", monthStartDate).lte("txn_date", monthEndDate),
+      supabase
+        .from("loan")
+        .select("principal")
+        .not("disbursed_at", "is", null)
+        .gte("disbursed_at", monthStartIso)
+        .lte("disbursed_at", monthEndIso),
+      supabase
+        .from("repayment")
+        .select("amount")
+        .gte("received_at", monthStartIso)
+        .lte("received_at", monthEndIso),
+      supabase
+        .from("savings_transaction")
+        .select("amount, txn_type")
+        .gte("txn_date", monthStartDate)
+        .lte("txn_date", monthEndDate),
       supabase
         .from("loan_installment")
         .select("principal_due, interest_due, fee_due, principal_paid, interest_paid, fee_paid")
         .gte("due_date", monthStartDate)
         .lte("due_date", monthEndDate),
-      supabase.from("client").select("id", { count: "exact", head: true }).gte("joined_on", monthStartDate).lte("joined_on", monthEndDate),
+      supabase
+        .from("client")
+        .select("id", { count: "exact", head: true })
+        .gte("joined_on", monthStartDate)
+        .lte("joined_on", monthEndDate),
       supabase
         .from("loan")
         .select("principal, product:product_id(name)")
@@ -174,23 +189,46 @@ export const getDashboard = createServerFn({ method: "GET" })
         .lte("disbursed_at", monthEndIso),
     ]);
 
-    const outstandingTotal = (outstanding ?? []).reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0);
+    const outstandingTotal = (outstanding ?? []).reduce(
+      (s, r) => s + Number(r.outstanding_principal ?? 0),
+      0,
+    );
     const parBuckets = ["current", "1-30", "31-60", "61-90", "90+"].map((b) => {
       const row = (par ?? []).find((r) => r.bucket === b);
       return { bucket: b, amount: Number(row?.principal_at_risk ?? 0) };
     });
     const collectedToday = (repayToday ?? []).reduce((s, r) => s + Number(r.amount), 0);
     const disbursedWeek = (disbWeek ?? []).reduce((s, r) => s + Number(r.principal), 0);
-    const par30plus = parBuckets.filter((b) => b.bucket !== "current" && b.bucket !== "1-30").reduce((s, b) => s + b.amount, 0);
+    const par30plus = parBuckets
+      .filter((b) => b.bucket !== "current" && b.bucket !== "1-30")
+      .reduce((s, b) => s + b.amount, 0);
 
     // Team activity — workflow actions per staff (today + last 7 days)
     const staffByUser = new Map((staffRows ?? []).map((s: any) => [s.user_id, s]));
-    type TeamRow = { staff_id: string; name: string; role: string; today: number; week: number; approvals: number; declines: number; last_at: string | null };
+    type TeamRow = {
+      staff_id: string;
+      name: string;
+      role: string;
+      today: number;
+      week: number;
+      approvals: number;
+      declines: number;
+      last_at: string | null;
+    };
     const perStaff = new Map<string, TeamRow>();
     for (const a of (wfActions ?? []) as any[]) {
       const s = staffByUser.get(a.actor_user_id) as any;
       if (!s) continue;
-      const row = perStaff.get(s.id) ?? { staff_id: s.id, name: s.full_name, role: s.role, today: 0, week: 0, approvals: 0, declines: 0, last_at: null };
+      const row = perStaff.get(s.id) ?? {
+        staff_id: s.id,
+        name: s.full_name,
+        role: s.role,
+        today: 0,
+        week: 0,
+        approvals: 0,
+        declines: 0,
+        last_at: null,
+      };
       row.week += 1;
       if (a.acted_at >= startOfDayIso) row.today += 1;
       if (a.decision === "approve") row.approvals += 1;
@@ -198,7 +236,9 @@ export const getDashboard = createServerFn({ method: "GET" })
       if (!row.last_at || a.acted_at > row.last_at) row.last_at = a.acted_at;
       perStaff.set(s.id, row);
     }
-    const team = Array.from(perStaff.values()).sort((a, b) => b.week - a.week).slice(0, 6);
+    const team = Array.from(perStaff.values())
+      .sort((a, b) => b.week - a.week)
+      .slice(0, 6);
     const teamTotals = {
       totalToday: (wfActions ?? []).filter((a: any) => a.acted_at >= startOfDayIso).length,
       totalWeek: (wfActions ?? []).length,
@@ -210,16 +250,22 @@ export const getDashboard = createServerFn({ method: "GET" })
     const monthRepaid = (monthRepays ?? []).reduce((s, r) => s + Number(r.amount), 0);
     const portfolioGrowth = monthDisbursed - monthRepaid;
 
-    const deposits = (savingsTxns ?? []).filter((t: any) => t.txn_type === "deposit").reduce((s, r) => s + Number(r.amount), 0);
-    const withdrawals = (savingsTxns ?? []).filter((t: any) => t.txn_type === "withdrawal").reduce((s, r) => s + Number(r.amount), 0);
+    const deposits = (savingsTxns ?? [])
+      .filter((t: any) => t.txn_type === "deposit")
+      .reduce((s, r) => s + Number(r.amount), 0);
+    const withdrawals = (savingsTxns ?? [])
+      .filter((t: any) => t.txn_type === "withdrawal")
+      .reduce((s, r) => s + Number(r.amount), 0);
     const depositNetIntake = deposits - withdrawals;
 
     const totalDue = (installments ?? []).reduce(
-      (s, r) => s + Number(r.principal_due ?? 0) + Number(r.interest_due ?? 0) + Number(r.fee_due ?? 0),
+      (s, r) =>
+        s + Number(r.principal_due ?? 0) + Number(r.interest_due ?? 0) + Number(r.fee_due ?? 0),
       0,
     );
     const totalPaid = (installments ?? []).reduce(
-      (s, r) => s + Number(r.principal_paid ?? 0) + Number(r.interest_paid ?? 0) + Number(r.fee_paid ?? 0),
+      (s, r) =>
+        s + Number(r.principal_paid ?? 0) + Number(r.interest_paid ?? 0) + Number(r.fee_paid ?? 0),
       0,
     );
     const dueCollectionRatio = totalDue > 0 ? totalPaid / totalDue : 0;
@@ -273,9 +319,16 @@ export const getClients = createServerFn({ method: "GET" })
     const ids = (clients ?? []).map((c) => c.id);
     const outstandingByClient = new Map<string, { count: number; out: number }>();
     if (ids.length) {
-      const { data: loans } = await supabase.from("loan").select("client_id, id, principal").in("client_id", ids);
-      const { data: outs } = await supabase.from("v_loan_outstanding").select("loan_id, outstanding_principal");
-      const outMap = new Map((outs ?? []).map((o) => [o.loan_id, Number(o.outstanding_principal ?? 0)]));
+      const { data: loans } = await supabase
+        .from("loan")
+        .select("client_id, id, principal")
+        .in("client_id", ids);
+      const { data: outs } = await supabase
+        .from("v_loan_outstanding")
+        .select("loan_id, outstanding_principal");
+      const outMap = new Map(
+        (outs ?? []).map((o) => [o.loan_id, Number(o.outstanding_principal ?? 0)]),
+      );
       for (const l of loans ?? []) {
         const cur = outstandingByClient.get(l.client_id) ?? { count: 0, out: 0 };
         cur.count += 1;
@@ -306,7 +359,9 @@ export const getClient = createServerFn({ method: "GET" })
 
     const { data: loans } = await supabase
       .from("loan")
-      .select("id, status, principal, term_months, annual_rate_pct, frequency, disbursed_at, created_at, product:product_id(name)")
+      .select(
+        "id, status, principal, term_months, annual_rate_pct, frequency, disbursed_at, created_at, product:product_id(name)",
+      )
       .eq("client_id", data.id)
       .order("created_at", { ascending: false });
 
@@ -341,14 +396,22 @@ export const getClient = createServerFn({ method: "GET" })
       : { data: [] as any[] };
 
     const totalOut = loanIds.length
-      ? (await supabase.from("v_loan_outstanding").select("outstanding_principal").in("loan_id", loanIds)).data
-          ?.reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0) ?? 0
+      ? ((
+          await supabase
+            .from("v_loan_outstanding")
+            .select("outstanding_principal")
+            .in("loan_id", loanIds)
+        ).data?.reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0) ?? 0)
       : 0;
-    const activeLoans = (loans ?? []).filter((l) => l.status === "disbursed" || l.status === "active").length;
+    const activeLoans = (loans ?? []).filter(
+      (l) => l.status === "disbursed" || l.status === "active",
+    ).length;
 
     const { data: savings } = await supabase
       .from("savings_account")
-      .select("id, account_no, status, balance, available_balance, interest_accrued, opened_on, last_txn_at, product:product_id(name)")
+      .select(
+        "id, account_no, status, balance, available_balance, interest_accrued, opened_on, last_txn_at, product:product_id(name)",
+      )
       .eq("client_id", data.id)
       .order("opened_on", { ascending: false });
 
@@ -356,7 +419,9 @@ export const getClient = createServerFn({ method: "GET" })
     const { data: savingsTxns } = savingsIds.length
       ? await supabase
           .from("savings_transaction")
-          .select("id, account_id, txn_date, txn_type, channel, amount, running_balance, reference, narration, created_at")
+          .select(
+            "id, account_id, txn_date, txn_type, channel, amount, running_balance, reference, narration, created_at",
+          )
           .in("account_id", savingsIds)
           .order("txn_date", { ascending: false })
           .limit(100)
@@ -364,7 +429,9 @@ export const getClient = createServerFn({ method: "GET" })
 
     const { data: fds } = await supabase
       .from("fixed_deposit")
-      .select("id, certificate_no, status, principal, rate_at_booking, tenure_months, payout_option, value_date, maturity_date, product:product_id(name)")
+      .select(
+        "id, certificate_no, status, principal, rate_at_booking, tenure_months, payout_option, value_date, maturity_date, product:product_id(name)",
+      )
       .eq("client_id", data.id)
       .order("value_date", { ascending: false });
 
@@ -389,9 +456,12 @@ export const getClient = createServerFn({ method: "GET" })
       .reduce((s, f) => s + Number(f.principal ?? 0), 0);
 
     // Documents from storage bucket
-    let documents: Array<{ name: string; path: string; size: number; updated_at: string | null }> = [];
+    let documents: Array<{ name: string; path: string; size: number; updated_at: string | null }> =
+      [];
     try {
-      const { data: docList } = await supabase.storage.from("client-documents").list(data.id, { limit: 50 });
+      const { data: docList } = await supabase.storage
+        .from("client-documents")
+        .list(data.id, { limit: 50 });
       documents = (docList ?? []).map((d) => ({
         name: d.name,
         path: `${data.id}/${d.name}`,
@@ -427,7 +497,6 @@ export const getClient = createServerFn({ method: "GET" })
     };
   });
 
-
 export const getLoans = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { page?: number; pageSize?: number } = {}) => ({
@@ -449,7 +518,10 @@ export const getLoans = createServerFn({ method: "GET" })
       .range(from, to);
     const ids = (loans ?? []).map((l) => l.id);
     const { data: outs } = ids.length
-      ? await supabase.from("v_loan_outstanding").select("loan_id, outstanding_principal, principal_repaid").in("loan_id", ids)
+      ? await supabase
+          .from("v_loan_outstanding")
+          .select("loan_id, outstanding_principal, principal_repaid")
+          .in("loan_id", ids)
       : { data: [] as any[] };
     const outMap = new Map((outs ?? []).map((o) => [o.loan_id, o]));
     const { data: nextDue } = ids.length
@@ -466,7 +538,9 @@ export const getLoans = createServerFn({ method: "GET" })
     const { data: wfInstances } = ids.length
       ? await supabase
           .from("workflow_instance")
-          .select("reference_id, status, current_step, workflow:workflow_id(name, steps:workflow_step(step_order, name))")
+          .select(
+            "reference_id, status, current_step, workflow:workflow_id(name, steps:workflow_step(step_order, name))",
+          )
           .eq("transaction_type", "loan_approval")
           .in("reference_id", ids)
       : { data: [] as any[] };
@@ -483,14 +557,17 @@ export const getLoans = createServerFn({ method: "GET" })
       let stage = "Draft";
       if (l.status === "submitted") {
         if (wf) {
-          const step = (wf.workflow?.steps ?? []).find((s: any) => s.step_order === wf.current_step);
-          stage = wf.status === "approved"
-            ? "Approved — ready to disburse"
-            : wf.status === "rejected"
-              ? "Rejected"
-              : step?.name
-                ? `Approval · ${step.name}`
-                : "Pending approval";
+          const step = (wf.workflow?.steps ?? []).find(
+            (s: any) => s.step_order === wf.current_step,
+          );
+          stage =
+            wf.status === "approved"
+              ? "Approved — ready to disburse"
+              : wf.status === "rejected"
+                ? "Rejected"
+                : step?.name
+                  ? `Approval · ${step.name}`
+                  : "Pending approval";
         } else {
           stage = "Ready to disburse";
         }
@@ -499,7 +576,8 @@ export const getLoans = createServerFn({ method: "GET" })
         ...l,
         outstanding: out,
         repaid: rep,
-        progress: l.principal > 0 ? Math.min(100, Math.round((rep / Number(l.principal)) * 100)) : 0,
+        progress:
+          l.principal > 0 ? Math.min(100, Math.round((rep / Number(l.principal)) * 100)) : 0,
         nextDue: nxt?.due_date ?? null,
         overdue,
         stage,
@@ -514,23 +592,38 @@ export const getGroups = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: groups } = await supabase
       .from("lending_group")
-      .select("id, name, cycle, meeting_day, meeting_place, color, leader:leader_client_id(full_name)")
+      .select(
+        "id, name, cycle, meeting_day, meeting_place, color, leader:leader_client_id(full_name)",
+      )
       .order("name");
     const ids = (groups ?? []).map((g) => g.id);
     const counts = new Map<string, number>();
     const outMap = new Map<string, number>();
     if (ids.length) {
-      const { data: members } = await supabase.from("client").select("id, group_id").in("group_id", ids);
+      const { data: members } = await supabase
+        .from("client")
+        .select("id, group_id")
+        .in("group_id", ids);
       for (const m of members ?? []) counts.set(m.group_id!, (counts.get(m.group_id!) ?? 0) + 1);
       const memberIds = (members ?? []).map((m) => m.id);
       if (memberIds.length) {
-        const { data: loans } = await supabase.from("loan").select("id, client_id").in("client_id", memberIds);
+        const { data: loans } = await supabase
+          .from("loan")
+          .select("id, client_id")
+          .in("client_id", memberIds);
         const clientToGroup = new Map((members ?? []).map((m) => [m.id, m.group_id!]));
         const { data: outs } = await supabase
           .from("v_loan_outstanding")
           .select("loan_id, outstanding_principal")
-          .in("loan_id", (loans ?? []).map((l) => l.id).length ? (loans ?? []).map((l) => l.id) : ["00000000-0000-0000-0000-000000000000"]);
-        const outByLoan = new Map((outs ?? []).map((o) => [o.loan_id, Number(o.outstanding_principal ?? 0)]));
+          .in(
+            "loan_id",
+            (loans ?? []).map((l) => l.id).length
+              ? (loans ?? []).map((l) => l.id)
+              : ["00000000-0000-0000-0000-000000000000"],
+          );
+        const outByLoan = new Map(
+          (outs ?? []).map((o) => [o.loan_id, Number(o.outstanding_principal ?? 0)]),
+        );
         for (const l of loans ?? []) {
           const gid = clientToGroup.get(l.client_id);
           if (gid) outMap.set(gid, (outMap.get(gid) ?? 0) + (outByLoan.get(l.id) ?? 0));
@@ -549,10 +642,15 @@ export const getLedger = createServerFn({ method: "GET" })
   .inputValidator((i: { account?: string }) => i)
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: accounts } = await supabase.from("gl_account").select("id, code, name, type").order("code");
+    const { data: accounts } = await supabase
+      .from("gl_account")
+      .select("id, code, name, type")
+      .order("code");
     let q = supabase
       .from("posting")
-      .select("id, debit, credit, account:account_id(code, name), entry:entry_id(reference, entry_date, description)")
+      .select(
+        "id, debit, credit, account:account_id(code, name), entry:entry_id(reference, entry_date, description)",
+      )
       .order("id", { ascending: false })
       .limit(60);
     if (data.account) q = q.eq("account_id", data.account);
@@ -587,10 +685,18 @@ export const getReports = createServerFn({ method: "GET" })
       if (idx >= 0) months[idx].total += Number(l.principal);
     }
 
-    const byProduct = new Map<string, { name: string; color: string; count: number; out: number }>();
+    const byProduct = new Map<
+      string,
+      { name: string; color: string; count: number; out: number }
+    >();
     for (const l of loans ?? []) {
       const p = (l.product as any) ?? { id: "unknown", name: "Other", color: "#64748b" };
-      const cur = byProduct.get(p.id) ?? { name: p.name, color: p.color ?? "#64748b", count: 0, out: 0 };
+      const cur = byProduct.get(p.id) ?? {
+        name: p.name,
+        color: p.color ?? "#64748b",
+        count: 0,
+        out: 0,
+      };
       cur.count += 1;
       cur.out += Number(l.principal);
       byProduct.set(p.id, cur);
@@ -620,9 +726,7 @@ export const getFinancials = createServerFn({ method: "GET" })
       .select("id, code, name, type, normal_balance")
       .order("code");
 
-    const { data: postings } = await supabase
-      .from("posting")
-      .select("account_id, debit, credit");
+    const { data: postings } = await supabase.from("posting").select("account_id, debit, credit");
 
     const totals = new Map<string, { debit: number; credit: number }>();
     for (const p of postings ?? []) {
@@ -686,7 +790,9 @@ export const getFinancials = createServerFn({ method: "GET" })
     // Portfolio by product (outstanding + count)
     const { data: loans } = await supabase
       .from("loan")
-      .select("id, principal, status, disbursed_at, product:product_id(id, name, color), client:client_id(id, full_name)")
+      .select(
+        "id, principal, status, disbursed_at, product:product_id(id, name, color), client:client_id(id, full_name)",
+      )
       .not("disbursed_at", "is", null);
 
     const { data: outs } = await supabase
@@ -700,11 +806,23 @@ export const getFinancials = createServerFn({ method: "GET" })
       });
     }
 
-    const byProduct = new Map<string, { name: string; color: string; count: number; principal: number; outstanding: number }>();
-    const byClient = new Map<string, { name: string; loans: number; principal: number; outstanding: number }>();
+    const byProduct = new Map<
+      string,
+      { name: string; color: string; count: number; principal: number; outstanding: number }
+    >();
+    const byClient = new Map<
+      string,
+      { name: string; loans: number; principal: number; outstanding: number }
+    >();
     for (const l of loans ?? []) {
       const p = (l.product as any) ?? { id: "unknown", name: "Other", color: "#64748b" };
-      const cp = byProduct.get(p.id) ?? { name: p.name, color: p.color ?? "#64748b", count: 0, principal: 0, outstanding: 0 };
+      const cp = byProduct.get(p.id) ?? {
+        name: p.name,
+        color: p.color ?? "#64748b",
+        count: 0,
+        principal: 0,
+        outstanding: 0,
+      };
       const o = outMap.get(l.id as string) ?? { out: Number(l.principal), repaid: 0 };
       cp.count += 1;
       cp.principal += Number(l.principal);
@@ -712,7 +830,12 @@ export const getFinancials = createServerFn({ method: "GET" })
       byProduct.set(p.id, cp);
 
       const c = (l.client as any) ?? { id: "unknown", full_name: "Unknown" };
-      const cc = byClient.get(c.id) ?? { name: c.full_name, loans: 0, principal: 0, outstanding: 0 };
+      const cc = byClient.get(c.id) ?? {
+        name: c.full_name,
+        loans: 0,
+        principal: 0,
+        outstanding: 0,
+      };
       cc.loans += 1;
       cc.principal += Number(l.principal);
       cc.outstanding += o.out;
@@ -755,13 +878,17 @@ export const getAdmin = createServerFn({ method: "GET" })
     const branch = branches?.[0] ?? null;
     const { data: staff } = await supabase
       .from("staff")
-      .select("id, full_name, role, email, phone, is_active, branch_id, branch:branch_id(id,name,code)")
+      .select(
+        "id, full_name, role, email, phone, is_active, branch_id, branch:branch_id(id,name,code)",
+      )
       .order("full_name");
     const { count: activeClients } = await supabase
       .from("client")
       .select("id", { count: "exact", head: true })
       .eq("status", "active");
-    const { data: outs } = await supabase.from("v_loan_outstanding").select("outstanding_principal");
+    const { data: outs } = await supabase
+      .from("v_loan_outstanding")
+      .select("outstanding_principal");
     const portfolio = (outs ?? []).reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0);
     return {
       branch,
@@ -774,20 +901,31 @@ export const getAdmin = createServerFn({ method: "GET" })
 
 export const createBranch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { code: string; name: string; region?: string; currency?: string; opened_on?: string; branch_prefix?: string; savings_prefix?: string; fd_prefix?: string; loan_prefix?: string }) =>
-    z
-      .object({
-        code: z.string().trim().min(1).max(20),
-        name: z.string().trim().min(2).max(80),
-        region: z.string().trim().max(80).optional().or(z.literal("")),
-        currency: z.string().trim().length(3).optional(),
-        opened_on: z.string().optional().or(z.literal("")),
-        branch_prefix: z.string().trim().max(6).optional().or(z.literal("")),
-        savings_prefix: z.string().trim().max(6).optional().or(z.literal("")),
-        fd_prefix: z.string().trim().max(6).optional().or(z.literal("")),
-        loan_prefix: z.string().trim().max(6).optional().or(z.literal("")),
-      })
-      .parse(i),
+  .inputValidator(
+    (i: {
+      code: string;
+      name: string;
+      region?: string;
+      currency?: string;
+      opened_on?: string;
+      branch_prefix?: string;
+      savings_prefix?: string;
+      fd_prefix?: string;
+      loan_prefix?: string;
+    }) =>
+      z
+        .object({
+          code: z.string().trim().min(1).max(20),
+          name: z.string().trim().min(2).max(80),
+          region: z.string().trim().max(80).optional().or(z.literal("")),
+          currency: z.string().trim().length(3).optional(),
+          opened_on: z.string().optional().or(z.literal("")),
+          branch_prefix: z.string().trim().max(6).optional().or(z.literal("")),
+          savings_prefix: z.string().trim().max(6).optional().or(z.literal("")),
+          fd_prefix: z.string().trim().max(6).optional().or(z.literal("")),
+          loan_prefix: z.string().trim().max(6).optional().or(z.literal("")),
+        })
+        .parse(i),
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
@@ -818,7 +956,18 @@ export const createBranch = createServerFn({ method: "POST" })
 export const updateBranch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (i: { id: string; code: string; name: string; region?: string | null; currency?: string; opened_on?: string | null; branch_prefix?: string | null; savings_prefix?: string | null; fd_prefix?: string | null; loan_prefix?: string | null }) =>
+    (i: {
+      id: string;
+      code: string;
+      name: string;
+      region?: string | null;
+      currency?: string;
+      opened_on?: string | null;
+      branch_prefix?: string | null;
+      savings_prefix?: string | null;
+      fd_prefix?: string | null;
+      loan_prefix?: string | null;
+    }) =>
       z
         .object({
           id: z.string().uuid(),
@@ -833,7 +982,7 @@ export const updateBranch = createServerFn({ method: "POST" })
           loan_prefix: z.string().trim().max(6).nullable().optional().or(z.literal("")),
         })
         .parse(i),
-    )
+  )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
@@ -855,7 +1004,6 @@ export const updateBranch = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
-
 
 export const createStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -971,7 +1119,10 @@ export const toggleStaff = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) throw new Error("Only admins can modify staff");
-    const { error } = await supabase.from("staff").update({ is_active: data.is_active }).eq("id", data.id);
+    const { error } = await supabase
+      .from("staff")
+      .update({ is_active: data.is_active })
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
@@ -1021,7 +1172,9 @@ export const getProducts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await context.supabase
       .from("loan_product")
-      .select("id, name, annual_rate_pct, frequency, color, min_principal, max_principal, min_term_months, max_term_months, required_documents")
+      .select(
+        "id, name, annual_rate_pct, frequency, color, min_principal, max_principal, min_term_months, max_term_months, required_documents",
+      )
       .eq("is_active", true)
       .order("name");
     return data ?? [];
@@ -1075,7 +1228,11 @@ export const createClient = createServerFn({ method: "POST" })
           gender: z.enum(["male", "female", "other"]),
           address: z.string().trim().min(3, "Address is required").max(200),
           gn_division: z.string().trim().min(1, "GN Division is required").max(80),
-          divisional_secretariat: z.string().trim().min(1, "Divisional Secretariat is required").max(80),
+          divisional_secretariat: z
+            .string()
+            .trim()
+            .min(1, "Divisional Secretariat is required")
+            .max(80),
           district: z.string().trim().min(1, "District is required").max(80),
           province: z.string().trim().min(1, "Province is required").max(80),
           photo_url: z.string().trim().max(500).nullable().optional(),
@@ -1136,8 +1293,7 @@ export const createClient = createServerFn({ method: "POST" })
         province: data.province,
       });
       externalPersonId = (call.result?.ID as string) ?? null;
-      externalClientId =
-        call.result?.clientID != null ? String(call.result.clientID) : null;
+      externalClientId = call.result?.clientID != null ? String(call.result.clientID) : null;
       await supabaseAdmin.from("api_transaction_log").insert({
         company_id: companyId,
         channel: "instafin",
@@ -1168,7 +1324,16 @@ export const createClient = createServerFn({ method: "POST" })
     }
 
     // 2) Instafin succeeded — persist locally.
-    const colors = ["#0f766e", "#0369a1", "#7c3aed", "#c2410c", "#b45309", "#065f46", "#9333ea", "#be185d"];
+    const colors = [
+      "#0f766e",
+      "#0369a1",
+      "#7c3aed",
+      "#c2410c",
+      "#b45309",
+      "#065f46",
+      "#9333ea",
+      "#be185d",
+    ];
     const color = colors[Math.floor(Math.random() * colors.length)];
     const fullName = `${data.first_name} ${data.last_name}`.trim();
     const fullPhone = `${data.phone_country_code}${data.phone}`;
@@ -1228,7 +1393,6 @@ export const createClient = createServerFn({ method: "POST" })
     return created;
   });
 
-
 export const submitApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -1242,8 +1406,18 @@ export const submitApplication = createServerFn({ method: "POST" })
       frequency?: "daily" | "weekly" | "biweekly" | "monthly";
       schedule_type?: "normal" | "structured";
       schedule_overrides?: Record<string, number>;
-      initial_charges?: { charge_id: string; amount: number; capitalize?: boolean; supplier_client_id?: string | null }[];
-      securities?: { security_type_id: string; values: Record<string, unknown>; notes?: string | null; documents?: { path: string; name: string; size: number; kind?: string | null }[] }[];
+      initial_charges?: {
+        charge_id: string;
+        amount: number;
+        capitalize?: boolean;
+        supplier_client_id?: string | null;
+      }[];
+      securities?: {
+        security_type_id: string;
+        values: Record<string, unknown>;
+        notes?: string | null;
+        documents?: { path: string; name: string; size: number; kind?: string | null }[];
+      }[];
       draft?: boolean;
     }) =>
       z
@@ -1258,7 +1432,14 @@ export const submitApplication = createServerFn({ method: "POST" })
           schedule_type: z.enum(["normal", "structured"]).optional(),
           schedule_overrides: z.record(z.string(), z.number()).optional(),
           initial_charges: z
-            .array(z.object({ charge_id: z.string().uuid(), amount: z.number().nonnegative(), capitalize: z.boolean().optional(), supplier_client_id: z.string().uuid().nullable().optional() }))
+            .array(
+              z.object({
+                charge_id: z.string().uuid(),
+                amount: z.number().nonnegative(),
+                capitalize: z.boolean().optional(),
+                supplier_client_id: z.string().uuid().nullable().optional(),
+              }),
+            )
             .optional(),
           securities: z
             .array(
@@ -1291,7 +1472,11 @@ export const submitApplication = createServerFn({ method: "POST" })
       if (data.annual_rate_pct != null && !(data.annual_rate_pct > 0))
         throw new Error("Annual rate must be greater than 0");
     }
-    const { data: staff } = await supabase.from("staff").select("id, branch_id").eq("user_id", context.userId).maybeSingle();
+    const { data: staff } = await supabase
+      .from("staff")
+      .select("id, branch_id")
+      .eq("user_id", context.userId)
+      .maybeSingle();
     if (!staff) throw new Error("No staff profile");
     const { data: product } = await supabase
       .from("loan_product")
@@ -1361,7 +1546,6 @@ export const submitApplication = createServerFn({ method: "POST" })
       .single();
     if (error) throw error;
 
-
     if (data.initial_charges && data.initial_charges.length) {
       const rows = data.initial_charges.map((c) => ({
         loan_id: (loan as any).id,
@@ -1412,7 +1596,6 @@ export const submitApplication = createServerFn({ method: "POST" })
     return { ...(loan as any), application_id: appId, application_no: appNo };
   });
 
-
 export const declineLoan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { loan_id: string }) => z.object({ loan_id: z.string().uuid() }).parse(i))
@@ -1426,7 +1609,10 @@ export const declineLoan = createServerFn({ method: "POST" })
     if (!staffRow || !["admin", "branch_manager"].includes(staffRow.role as string)) {
       throw new Error("Only branch managers or admins can decline loans");
     }
-    const { error } = await context.supabase.from("loan").update({ status: "rejected" }).eq("id", data.loan_id);
+    const { error } = await context.supabase
+      .from("loan")
+      .update({ status: "rejected" })
+      .eq("id", data.loan_id);
     if (error) throw error;
     return { ok: true };
   });
@@ -1487,8 +1673,18 @@ export const recordRepayment = createServerFn({ method: "POST" })
           loan_id: z.string().uuid(),
           amount: z.number().positive().max(1e12),
           channel: z.enum(["cash", "mpesa", "bank", "internal"]),
-          reference: z.string().trim().max(80).nullish().transform((v) => (v && v.length ? v : null)),
-          notes: z.string().trim().max(300).nullish().transform((v) => (v && v.length ? v : null)),
+          reference: z
+            .string()
+            .trim()
+            .max(80)
+            .nullish()
+            .transform((v) => (v && v.length ? v : null)),
+          notes: z
+            .string()
+            .trim()
+            .max(300)
+            .nullish()
+            .transform((v) => (v && v.length ? v : null)),
           idempotency_key: z.string().trim().min(8).max(80),
           received_at: z.string().datetime({ offset: true }),
         })
@@ -1503,24 +1699,35 @@ export const recordRepayment = createServerFn({ method: "POST" })
           // Future-date guard — server clock is authoritative.
           const t = new Date(v.received_at).getTime();
           if (!Number.isFinite(t)) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["received_at"], message: "Invalid received_at" });
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["received_at"],
+              message: "Invalid received_at",
+            });
           } else if (t - Date.now() > 60_000) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["received_at"], message: "received_at cannot be in the future" });
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["received_at"],
+              message: "received_at cannot be in the future",
+            });
           }
         })
         .parse(i),
-    )
+  )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: result, error } = await supabase.rpc("record_repayment" as any, {
-      _loan_id: data.loan_id,
-      _amount: data.amount,
-      _channel: data.channel,
-      _reference: trimOrNull(data.reference, 80),
-      _idempotency_key: data.idempotency_key,
-      _received_at: data.received_at,
-      _notes: trimOrNull(data.notes, 300),
-    } as any);
+    const { data: result, error } = await supabase.rpc(
+      "record_repayment" as any,
+      {
+        _loan_id: data.loan_id,
+        _amount: data.amount,
+        _channel: data.channel,
+        _reference: trimOrNull(data.reference, 80),
+        _idempotency_key: data.idempotency_key,
+        _received_at: data.received_at,
+        _notes: trimOrNull(data.notes, 300),
+      } as any,
+    );
     if (error) throw new Error(error.message);
     const r = (result ?? {}) as any;
     return {
@@ -1541,9 +1748,6 @@ export const recordRepayment = createServerFn({ method: "POST" })
     };
   });
 
-
-
-
 export const getCollections = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -1551,7 +1755,9 @@ export const getCollections = createServerFn({ method: "GET" })
     const today = serverToday();
     const { data: today_rep } = await supabase
       .from("repayment")
-      .select("id, amount, channel, received_at, loan:loan_id(client:client_id(full_name, avatar_color))")
+      .select(
+        "id, amount, channel, received_at, loan:loan_id(client:client_id(full_name, avatar_color))",
+      )
       .gte("received_at", today)
       .order("received_at", { ascending: false });
     const totalToday = (today_rep ?? []).reduce((s, r) => s + Number(r.amount), 0);
@@ -1609,11 +1815,13 @@ export const createLoanProduct = createServerFn({ method: "POST" })
       required_documents?: string[];
       segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
-
       z
         .object({
           name: z.string().trim().min(2).max(80),
-          code: z.string().trim().regex(/^\d{3}$/, "Code must be exactly 3 digits"),
+          code: z
+            .string()
+            .trim()
+            .regex(/^\d{3}$/, "Code must be exactly 3 digits"),
           annual_rate_pct: z.number().positive().max(200),
           max_annual_rate_pct: z.number().positive().max(200).optional(),
           min_term_months: z.number().int().positive().max(120),
@@ -1636,7 +1844,9 @@ export const createLoanProduct = createServerFn({ method: "POST" })
           loan_loss_provision_account_id: z.string().uuid().nullable().optional(),
           suspended_interest_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
-          segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
+          segment: z
+            .enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"])
+            .optional(),
         })
         .refine((v) => v.max_term_months >= v.min_term_months, {
           message: "Max term must be >= min term",
@@ -1688,8 +1898,6 @@ export const createLoanProduct = createServerFn({ method: "POST" })
     return created;
   });
 
-
-
 export const toggleLoanProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { id: string; is_active: boolean }) =>
@@ -1699,7 +1907,10 @@ export const toggleLoanProduct = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) throw new Error("Only admins can modify loan products");
-    const { error } = await supabase.from("loan_product").update({ is_active: data.is_active }).eq("id", data.id);
+    const { error } = await supabase
+      .from("loan_product")
+      .update({ is_active: data.is_active })
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
@@ -1734,12 +1945,14 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
       required_documents?: string[];
       segment?: "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
     }) =>
-
       z
         .object({
           id: z.string().uuid(),
           name: z.string().trim().min(2).max(80),
-          code: z.string().trim().regex(/^\d{3}$/, "Code must be exactly 3 digits"),
+          code: z
+            .string()
+            .trim()
+            .regex(/^\d{3}$/, "Code must be exactly 3 digits"),
           annual_rate_pct: z.number().positive().max(200),
           max_annual_rate_pct: z.number().positive().max(200).nullable().optional(),
           min_term_months: z.number().int().positive().max(120),
@@ -1761,7 +1974,9 @@ export const updateLoanProduct = createServerFn({ method: "POST" })
           loan_loss_provision_account_id: z.string().uuid().nullable().optional(),
           suspended_interest_account_id: z.string().uuid().nullable().optional(),
           required_documents: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
-          segment: z.enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"]).optional(),
+          segment: z
+            .enum(["micro", "sme", "leasing", "housing", "society", "cashback", "gold"])
+            .optional(),
         })
 
         .parse(i),
@@ -1879,7 +2094,10 @@ export const toggleGlAccount = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) throw new Error("Only admins can modify GL accounts");
-    const { error } = await supabase.from("gl_account").update({ is_active: data.is_active }).eq("id", data.id);
+    const { error } = await supabase
+      .from("gl_account")
+      .update({ is_active: data.is_active })
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
@@ -1950,7 +2168,10 @@ export const getJournalEntries = createServerFn({ method: "GET" })
 
     let q = supabase
       .from("journal_entry")
-      .select("id, reference, entry_date, description, created_at, loan_id, branch:branch_id(code,name)", { count: "exact" })
+      .select(
+        "id, reference, entry_date, description, created_at, loan_id, branch:branch_id(code,name)",
+        { count: "exact" },
+      )
       .order("entry_date", { ascending: false })
       .order("created_at", { ascending: false })
       .range(fromIdx, toIdx);
@@ -1978,7 +2199,10 @@ export const getJournalEntries = createServerFn({ method: "GET" })
       }
     }
     return {
-      entries: (entries ?? []).map((e) => ({ ...e, totals: postingsByEntry[e.id] ?? { debit: 0, credit: 0, lines: 0 } })),
+      entries: (entries ?? []).map((e) => ({
+        ...e,
+        totals: postingsByEntry[e.id] ?? { debit: 0, credit: 0, lines: 0 },
+      })),
       total: count ?? 0,
       page,
       pageSize,
@@ -1988,7 +2212,14 @@ export const getJournalEntries = createServerFn({ method: "GET" })
 export const getPayments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (i: { from?: string; to?: string; channel?: string; search?: string; page?: number; pageSize?: number }) =>
+    (i: {
+      from?: string;
+      to?: string;
+      channel?: string;
+      search?: string;
+      page?: number;
+      pageSize?: number;
+    }) =>
       z
         .object({
           from: z.string().optional(),
@@ -2058,7 +2289,9 @@ export const getCompany = createServerFn({ method: "GET" })
     if (!cid) return null;
     const { data, error } = await supabase
       .from("company")
-      .select("id,name,slug,currency,country,fy_end_month,fy_end_day,timezone,owner_user_id,created_at")
+      .select(
+        "id,name,slug,currency,country,fy_end_month,fy_end_day,timezone,owner_user_id,created_at",
+      )
       .eq("id", cid)
       .maybeSingle();
     if (error) throw error;
@@ -2067,17 +2300,25 @@ export const getCompany = createServerFn({ method: "GET" })
 
 export const updateCompany = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { name?: string; currency?: string; country?: string; fy_end_month?: number; fy_end_day?: number; timezone?: string }) =>
-    z
-      .object({
-        name: z.string().trim().min(2).max(120).optional(),
-        currency: z.string().trim().length(3).optional(),
-        country: z.string().trim().min(2).max(80).optional(),
-        fy_end_month: z.number().int().min(1).max(12).optional(),
-        fy_end_day: z.number().int().min(1).max(31).optional(),
-        timezone: z.string().trim().min(2).max(60).optional(),
-      })
-      .parse(i),
+  .inputValidator(
+    (i: {
+      name?: string;
+      currency?: string;
+      country?: string;
+      fy_end_month?: number;
+      fy_end_day?: number;
+      timezone?: string;
+    }) =>
+      z
+        .object({
+          name: z.string().trim().min(2).max(120).optional(),
+          currency: z.string().trim().length(3).optional(),
+          country: z.string().trim().min(2).max(80).optional(),
+          fy_end_month: z.number().int().min(1).max(12).optional(),
+          fy_end_day: z.number().int().min(1).max(31).optional(),
+          timezone: z.string().trim().min(2).max(60).optional(),
+        })
+        .parse(i),
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
@@ -2113,11 +2354,16 @@ export const listTeam = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: cid } = await supabase.rpc("current_company_id");
     if (!cid) return { members: [], invites: [] };
-    const { data: branches } = await supabase.from("branch").select("id,name").eq("company_id", cid);
+    const { data: branches } = await supabase
+      .from("branch")
+      .select("id,name")
+      .eq("company_id", cid);
     const branchIds = (branches ?? []).map((b) => b.id);
     const { data: members } = await supabase
       .from("staff")
-      .select("id,full_name,email,role,is_active,user_id,branch_id,created_at,branch:branch_id(id,name)")
+      .select(
+        "id,full_name,email,role,is_active,user_id,branch_id,created_at,branch:branch_id(id,name)",
+      )
       .in("branch_id", branchIds.length ? branchIds : ["00000000-0000-0000-0000-000000000000"]);
     const { data: invites } = await supabase
       .from("company_invite")
@@ -2129,15 +2375,21 @@ export const listTeam = createServerFn({ method: "GET" })
 
 export const inviteMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { email: string; role: "loan_officer" | "branch_manager" | "teller" | "operations" | "admin"; branch_id?: string; invite_origin?: string }) =>
-    z
-      .object({
-        email: z.string().trim().email().max(255),
-        role: z.enum(["loan_officer", "branch_manager", "teller", "operations", "admin"]),
-        branch_id: z.string().uuid().optional(),
-        invite_origin: z.string().url().optional(),
-      })
-      .parse(i),
+  .inputValidator(
+    (i: {
+      email: string;
+      role: "loan_officer" | "branch_manager" | "teller" | "operations" | "admin";
+      branch_id?: string;
+      invite_origin?: string;
+    }) =>
+      z
+        .object({
+          email: z.string().trim().email().max(255),
+          role: z.enum(["loan_officer", "branch_manager", "teller", "operations", "admin"]),
+          branch_id: z.string().uuid().optional(),
+          invite_origin: z.string().url().optional(),
+        })
+        .parse(i),
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
@@ -2162,7 +2414,11 @@ export const inviteMember = createServerFn({ method: "POST" })
     const origin = data.invite_origin?.replace(/\/+$/, "") || "";
     if (!origin) throw new Error("Invite created, but no app URL was available to send the email");
 
-    const { data: company } = await supabase.from("company").select("name").eq("id", cid).maybeSingle();
+    const { data: company } = await supabase
+      .from("company")
+      .select("name")
+      .eq("id", cid)
+      .maybeSingle();
     const confirmationUrl = `${origin}/auth?invited=1&email=${encodeURIComponent(emailLower)}`;
     try {
       const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
@@ -2176,7 +2432,9 @@ export const inviteMember = createServerFn({ method: "POST" })
       });
     } catch (e) {
       console.error("[inviteMember] invite email failed", e);
-      throw new Error("Invite was created, but the email could not be sent. Please check email setup and try again.");
+      throw new Error(
+        "Invite was created, but the email could not be sent. Please check email setup and try again.",
+      );
     }
 
     return created;
@@ -2227,7 +2485,9 @@ export const resendInvite = createServerFn({ method: "POST" })
       });
     } catch (e) {
       console.error("[resendInvite] invite email failed", e);
-      throw new Error("The invite email could not be sent. Please check email setup and try again.");
+      throw new Error(
+        "The invite email could not be sent. Please check email setup and try again.",
+      );
     }
 
     return invite;
@@ -2299,14 +2559,17 @@ export const createPayment = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: result, error } = await supabase.rpc("record_repayment" as any, {
-      _loan_id: data.loan_id,
-      _amount: data.amount,
-      _channel: data.channel,
-      _reference: data.reference?.trim() || null,
-      _received_at: data.received_at ?? new Date().toISOString(),
-      _notes: data.notes ?? null,
-    } as any);
+    const { data: result, error } = await supabase.rpc(
+      "record_repayment" as any,
+      {
+        _loan_id: data.loan_id,
+        _amount: data.amount,
+        _channel: data.channel,
+        _reference: data.reference?.trim() || null,
+        _received_at: data.received_at ?? new Date().toISOString(),
+        _notes: data.notes ?? null,
+      } as any,
+    );
     if (error) throw new Error(error.message);
     const r = (result ?? {}) as any;
     return {
@@ -2319,7 +2582,6 @@ export const createPayment = createServerFn({ method: "POST" })
       loan_closed: !!r.loan_closed,
     };
   });
-
 
 export const createJournalEntry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -2374,17 +2636,19 @@ export const createJournalEntry = createServerFn({ method: "POST" })
 
     const ref = data.reference?.trim() || "JE-" + Math.floor(1000 + Math.random() * 9000);
 
-    const { data: result, error } = await supabase.rpc("post_manual_journal" as any, {
-      p_reference: ref,
-      p_description: data.description ?? null,
-      p_lines: clean as any,
-      p_entry_date: data.entry_date,
-    } as any);
+    const { data: result, error } = await supabase.rpc(
+      "post_manual_journal" as any,
+      {
+        p_reference: ref,
+        p_description: data.description ?? null,
+        p_lines: clean as any,
+        p_entry_date: data.entry_date,
+      } as any,
+    );
     if (error) throw new Error(error.message);
     const r = (result ?? {}) as any;
     return { ok: true, reference: r.reference ?? ref, entry_id: r.entry_id ?? null };
   });
-
 
 // Pending disbursements now come from the canonical origination table
 // (`loan_application`) rather than the legacy `loan` rows. Only approved
@@ -2403,7 +2667,7 @@ export const getPendingDisbursements = createServerFn({ method: "GET" })
     if (error) throw error;
     // Normalize shape so the UI can keep using `principal`, `submitted_at`, etc.
     return (data ?? []).map((r: any) => ({
-      id: r.id,                     // application id (used for disburseApplication)
+      id: r.id, // application id (used for disburseApplication)
       application_id: r.id,
       application_no: r.application_no,
       principal: r.requested_principal,
@@ -2418,7 +2682,6 @@ export const getPendingDisbursements = createServerFn({ method: "GET" })
       branch: r.branch,
     }));
   });
-
 
 export const createDebitNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -2543,9 +2806,7 @@ export const createDebitNote = createServerFn({ method: "POST" })
 
 export const getFacilityTerminationQuote = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { loan_id: string }) =>
-    z.object({ loan_id: z.string().uuid() }).parse(i),
-  )
+  .inputValidator((i: { loan_id: string }) => z.object({ loan_id: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { data: loan } = await supabase
@@ -2570,8 +2831,7 @@ export const getFacilityTerminationQuote = createServerFn({ method: "GET" })
 
     const outstanding = Number(outRow?.outstanding_principal ?? loan.principal ?? 0);
     const interestUnpaid = (insts ?? []).reduce(
-      (s, r: any) =>
-        s + Math.max(0, Number(r.interest_due ?? 0) - Number(r.interest_paid ?? 0)),
+      (s, r: any) => s + Math.max(0, Number(r.interest_due ?? 0) - Number(r.interest_paid ?? 0)),
       0,
     );
     const feesUnpaid = (insts ?? []).reduce(
@@ -2616,7 +2876,10 @@ export const createFacilityTermination = createServerFn({ method: "POST" })
           loan_id: z.string().uuid(),
           amount_paid: z.number().nonnegative().max(100_000_000),
           channel: z.enum(["cash", "mpesa", "bank", "internal"]).optional(),
-          entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+          entry_date: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
           reference: z.string().trim().max(60).optional(),
           reason: z.string().trim().max(300).optional(),
         })
@@ -2695,7 +2958,9 @@ export const createFacilityTermination = createServerFn({ method: "POST" })
         null;
     }
     if (!cashId || !arId || !intId || !feeId)
-      throw new Error("Chart of accounts missing — configure cash, receivable, interest & fee income");
+      throw new Error(
+        "Chart of accounts missing — configure cash, receivable, interest & fee income",
+      );
 
     const ref = data.reference?.trim() || "TERM-" + Math.floor(1000 + Math.random() * 9000);
     const entryDate = (data.entry_date || serverToday()).slice(0, 10);
@@ -2951,16 +3216,14 @@ export const getSubledgerReconciliation = createServerFn({ method: "GET" })
     // EOD snapshot tables. Only surface snapshot totals when every branch
     // has closed that business_date — otherwise the snapshot is partial
     // and would mislead the reader.
-    let snapshot:
-      | {
-          asOf: string;
-          coverage: { branchesTotal: number; branchesClosed: number };
-          complete: boolean;
-          savings: number;
-          fd: number;
-          loans: number;
-        }
-      | null = null;
+    let snapshot: {
+      asOf: string;
+      coverage: { branchesTotal: number; branchesClosed: number };
+      complete: boolean;
+      savings: number;
+      fd: number;
+      loans: number;
+    } | null = null;
 
     if (!fromDate) {
       const { data: branches } = await supabase.from("branch").select("id");
@@ -3020,7 +3283,14 @@ export const getLoan = createServerFn({ method: "GET" })
     if (error) throw error;
     if (!loan) throw new Error("Loan not found");
 
-    const [{ data: schedule }, { data: repayments }, { data: outstanding }, { data: appliedCharges }, { data: accruals }, { data: approvals }] = await Promise.all([
+    const [
+      { data: schedule },
+      { data: repayments },
+      { data: outstanding },
+      { data: appliedCharges },
+      { data: accruals },
+      { data: approvals },
+    ] = await Promise.all([
       supabase
         .from("loan_installment")
         .select("seq, due_date, principal_due, interest_due, principal_paid, interest_paid, state")
@@ -3048,7 +3318,9 @@ export const getLoan = createServerFn({ method: "GET" })
         .limit(60),
       supabase
         .from("workflow_instance")
-        .select("id, transaction_type, reference_label, amount, status, current_step, initiated_at, completed_at, workflow:workflow_id(name, steps:workflow_step(step_order, name, approver_kind, role, required_approvals)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)")
+        .select(
+          "id, transaction_type, reference_label, amount, status, current_step, initiated_at, completed_at, workflow:workflow_id(name, steps:workflow_step(step_order, name, approver_kind, role, required_approvals)), actions:workflow_action(id, step_order, actor_user_id, decision, comment, acted_at)",
+        )
         .eq("reference_id", data.id)
         .order("initiated_at", { ascending: false }),
     ]);
@@ -3081,8 +3353,14 @@ export const getLoan = createServerFn({ method: "GET" })
       : 0;
 
     const totalRepaid = (repayments ?? []).reduce((s: number, r: any) => s + Number(r.amount), 0);
-    const totalCharges = (appliedCharges ?? []).reduce((s: number, c: any) => s + Number(c.amount), 0);
-    const totalAccrued = (accruals ?? []).reduce((s: number, a: any) => s + Number(a.daily_amount), 0);
+    const totalCharges = (appliedCharges ?? []).reduce(
+      (s: number, c: any) => s + Number(c.amount),
+      0,
+    );
+    const totalAccrued = (accruals ?? []).reduce(
+      (s: number, a: any) => s + Number(a.daily_amount),
+      0,
+    );
 
     return {
       loan,
@@ -3139,7 +3417,10 @@ export const updateClient = createServerFn({ method: "POST" })
           national_id: z.string().trim().min(4).max(30),
           date_of_birth: z.string().min(1),
           gender: z.enum(["male", "female", "other"]),
-          email: z.union([z.literal(""), z.string().trim().email().max(255)]).nullable().optional(),
+          email: z
+            .union([z.literal(""), z.string().trim().email().max(255)])
+            .nullable()
+            .optional(),
           address: z.string().trim().min(3).max(200),
           gn_division: z.string().trim().min(1).max(80),
           divisional_secretariat: z.string().trim().min(1).max(80),
@@ -3203,15 +3484,16 @@ export const getReportFilterOptions = createServerFn({ method: "GET" })
 
 export const getReportGeneralLedger = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { accountId?: string; fromDate?: string; toDate?: string; branchId?: string }) =>
-    z
-      .object({
-        accountId: z.string().uuid().optional(),
-        fromDate: z.string().optional(),
-        toDate: z.string().optional(),
-        branchId: z.string().uuid().optional(),
-      })
-      .parse(i ?? {}),
+  .inputValidator(
+    (i: { accountId?: string; fromDate?: string; toDate?: string; branchId?: string }) =>
+      z
+        .object({
+          accountId: z.string().uuid().optional(),
+          fromDate: z.string().optional(),
+          toDate: z.string().optional(),
+          branchId: z.string().uuid().optional(),
+        })
+        .parse(i ?? {}),
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
@@ -3224,7 +3506,13 @@ export const getReportGeneralLedger = createServerFn({ method: "POST" })
         .select("id, code, name, normal_balance")
         .eq("id", data.accountId)
         .maybeSingle();
-      if (a) acctInfo = { id: a.id, code: a.code, name: a.name, normal_balance: Number(a.normal_balance) };
+      if (a)
+        acctInfo = {
+          id: a.id,
+          code: a.code,
+          name: a.name,
+          normal_balance: Number(a.normal_balance),
+        };
     }
 
     // Opening balance (before fromDate) for the selected account
@@ -3326,7 +3614,9 @@ export const getReportLoanBase = createServerFn({ method: "POST" })
     const [{ data: insts }, { data: accruals }] = await Promise.all([
       supabase
         .from("loan_installment")
-        .select("loan_id, due_date, principal_due, interest_due, fee_due, principal_paid, interest_paid, fee_paid"),
+        .select(
+          "loan_id, due_date, principal_due, interest_due, fee_due, principal_paid, interest_paid, fee_paid",
+        ),
       supabase
         .from("loan_accrual")
         .select("loan_id, accrual_date, cumulative_amount")
@@ -3371,7 +3661,8 @@ export const getReportLoanBase = createServerFn({ method: "POST" })
         ? Math.max(
             0,
             Math.floor(
-              (new Date(asOf).getTime() - new Date(earliestOverdue).getTime()) / (1000 * 60 * 60 * 24),
+              (new Date(asOf).getTime() - new Date(earliestOverdue).getTime()) /
+                (1000 * 60 * 60 * 24),
             ),
           )
         : 0;

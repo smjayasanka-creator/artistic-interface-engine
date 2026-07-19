@@ -1,12 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateApiKey, logApiCall, generateReference } from "@/lib/api-auth.server";
 import {
-  IbRequest, IbResponse,
-  parseJsonBody, validateAndSend, logAndReturnAuthError,
-  checkIdempotency, withIdempotencyEnvelope, errJson, ERRORS, requireHeader,
+  IbRequest,
+  IbResponse,
+  parseJsonBody,
+  validateAndSend,
+  logAndReturnAuthError,
+  checkIdempotency,
+  withIdempotencyEnvelope,
+  errJson,
+  ERRORS,
+  requireHeader,
 } from "@/lib/api-schemas.server";
 import { postApiChannelEntry } from "@/lib/api-ledger.server";
-
 
 const ENDPOINT = "/api/public/v1/ib/transaction";
 const CHANNEL = "internet_banking";
@@ -16,7 +22,14 @@ export const Route = createFileRoute("/api/public/v1/ib/transaction")({
     handlers: {
       POST: async ({ request }) => {
         const auth = await authenticateApiKey(request, "internet_banking");
-        if (!auth.ok) return logAndReturnAuthError({ status: auth.status, error: auth.error, channel: CHANNEL, endpoint: ENDPOINT, direction: "inbound" });
+        if (!auth.ok)
+          return logAndReturnAuthError({
+            status: auth.status,
+            error: auth.error,
+            channel: CHANNEL,
+            endpoint: ENDPOINT,
+            direction: "inbound",
+          });
 
         const fp = requireHeader(request, "X-Device-Fingerprint");
         if (!fp.ok) return fp.response;
@@ -25,20 +38,43 @@ export const Route = createFileRoute("/api/public/v1/ib/transaction")({
 
         const parsed = await parseJsonBody(request, IbRequest);
         if (!parsed.ok) {
-          await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
-            endpoint: ENDPOINT, method: "POST", status_code: 400, request: parsed.raw, error: "validation_failed" });
+          await logApiCall({
+            company_id: auth.key.company_id,
+            api_key_id: auth.key.id,
+            channel: CHANNEL,
+            direction: "inbound",
+            endpoint: ENDPOINT,
+            method: "POST",
+            status_code: 400,
+            request: parsed.raw,
+            error: "validation_failed",
+          });
           return parsed.response;
         }
         if (parsed.data.device_fingerprint !== fp.value) {
-          return errJson({ code: 400, error: "fingerprint_mismatch", message: "X-Device-Fingerprint header must match body device_fingerprint." });
+          return errJson({
+            code: 400,
+            error: "fingerprint_mismatch",
+            message: "X-Device-Fingerprint header must match body device_fingerprint.",
+          });
         }
         if (!parsed.data.otp_verified) {
-          return errJson({ code: 401, error: "otp_required", message: "OTP has not been verified for this session." });
+          return errJson({
+            code: 401,
+            error: "otp_required",
+            message: "OTP has not been verified for this session.",
+          });
         }
 
-        const hit = await checkIdempotency({ company_id: auth.key.company_id, endpoint: ENDPOINT, key: idem.value, body: parsed.data });
+        const hit = await checkIdempotency({
+          company_id: auth.key.company_id,
+          endpoint: ENDPOINT,
+          key: idem.value,
+          body: parsed.data,
+        });
         if (hit.kind === "conflict") return errJson(ERRORS.idempotency_conflict);
-        if (hit.kind === "replay") return validateAndSend(IbResponse, hit.response as any, hit.status);
+        if (hit.kind === "replay")
+          return validateAndSend(IbResponse, hit.response as any, hit.status);
 
         const reference = generateReference("IB");
         const response = {
@@ -54,14 +90,26 @@ export const Route = createFileRoute("/api/public/v1/ib/transaction")({
             ? "inbound"
             : "outbound";
         await postApiChannelEntry({
-          company_id: auth.key.company_id, direction: ibDir,
-          amount: parsed.data.amount, reference,
+          company_id: auth.key.company_id,
+          direction: ibDir,
+          amount: parsed.data.amount,
+          reference,
           description: `IB ${parsed.data.action} · ${parsed.data.customer_id}`,
-          source_module: "ib", idempotency_key: idem.value,
+          source_module: "ib",
+          idempotency_key: idem.value,
         });
-        await logApiCall({ company_id: auth.key.company_id, api_key_id: auth.key.id, channel: CHANNEL, direction: "inbound",
-          endpoint: ENDPOINT, method: "POST", reference, status_code: 200,
-          request: withIdempotencyEnvelope(parsed.data, idem.value), response });
+        await logApiCall({
+          company_id: auth.key.company_id,
+          api_key_id: auth.key.id,
+          channel: CHANNEL,
+          direction: "inbound",
+          endpoint: ENDPOINT,
+          method: "POST",
+          reference,
+          status_code: 200,
+          request: withIdempotencyEnvelope(parsed.data, idem.value),
+          response,
+        });
         return validateAndSend(IbResponse, response, 200);
       },
     },

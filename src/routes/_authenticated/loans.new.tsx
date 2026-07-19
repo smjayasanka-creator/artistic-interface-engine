@@ -5,7 +5,11 @@ import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getClients, getProducts, submitApplication } from "@/lib/mzizi.functions";
 import { hasActiveWorkflow, startWorkflow } from "@/lib/workflow.functions";
-import { startLoanApprovalDynamic, previewLoanApprovalChain, previewLoanApprovalChainRaw } from "@/lib/delegation.functions";
+import {
+  startLoanApprovalDynamic,
+  previewLoanApprovalChain,
+  previewLoanApprovalChainRaw,
+} from "@/lib/delegation.functions";
 import { listLoanCharges } from "@/lib/loan-charges.functions";
 import { listSecurityTypes } from "@/lib/security.functions";
 import { extractSecurityFieldsFromDocument } from "@/lib/security-ai.functions";
@@ -26,12 +30,25 @@ import { money, shortDate, getActiveCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { LoanEvaluation } from "@/components/mzizi/LoanEvaluation";
 
-import { generateSchedule, generateStructuredSchedule, FREQ_META, type Frequency, type InterestMethod, type ScheduleType } from "@/lib/loan-schedule";
+import {
+  generateSchedule,
+  generateStructuredSchedule,
+  FREQ_META,
+  type Frequency,
+  type InterestMethod,
+  type ScheduleType,
+} from "@/lib/loan-schedule";
 
 type UploadedDoc = { path: string; name: string; size: number };
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 function slugifyDoc(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "doc";
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "doc"
+  );
 }
 function formatBytes(n: number) {
   if (n < 1024) return `${n} B`;
@@ -40,7 +57,9 @@ function formatBytes(n: number) {
 }
 
 export const Route = createFileRoute("/_authenticated/loans/new")({
-  validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    id: typeof s.id === "string" ? s.id : undefined,
+  }),
   component: NewLoan,
 });
 
@@ -53,7 +72,15 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "evaluations", label: "Evaluations" },
 ];
 
-function FormHeader({ title, onBack, actions }: { title: string; onBack: () => void; actions?: React.ReactNode }) {
+function FormHeader({
+  title,
+  onBack,
+  actions,
+}: {
+  title: string;
+  onBack: () => void;
+  actions?: React.ReactNode;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 flex-wrap">
       <CardTitle>{title}</CardTitle>
@@ -97,7 +124,11 @@ function TabHeader({ tab, setTab }: { tab: TabKey; setTab: (t: TabKey) => void }
 }
 
 type ChainPreviewProps =
-  | { mode: "existing"; loanId: string; previewFn: (args: { data: { loan_id: string } }) => Promise<any> }
+  | {
+      mode: "existing";
+      loanId: string;
+      previewFn: (args: { data: { loan_id: string } }) => Promise<any>;
+    }
   | {
       mode: "raw";
       clientId: string;
@@ -166,7 +197,8 @@ function ApprovalChainPreview(props: ChainPreviewProps) {
         </div>
       ) : (
         <div className="text-[12px] text-amber-700 mb-2">
-          No delegation rule matches this application. Legacy fixed workflow will be used at submission.
+          No delegation rule matches this application. Legacy fixed workflow will be used at
+          submission.
         </div>
       )}
       {steps.length === 0 ? null : (
@@ -191,7 +223,6 @@ function ApprovalChainPreview(props: ChainPreviewProps) {
     </div>
   );
 }
-
 
 function NewLoan() {
   const nav = useNavigate();
@@ -240,7 +271,10 @@ function NewLoan() {
   });
   const { data: products } = useQuery({ queryKey: ["products"], queryFn: () => productsFn() });
   const { data: allCharges } = useQuery({ queryKey: ["loan-charges"], queryFn: () => chargesFn() });
-  const { data: securityTypes } = useQuery({ queryKey: ["security-types"], queryFn: () => securityTypesFn() });
+  const { data: securityTypes } = useQuery({
+    queryKey: ["security-types"],
+    queryFn: () => securityTypesFn(),
+  });
   const qc = useQueryClient();
   const submitFn = useServerFn(submitApplication);
   const hasWfFn = useServerFn(hasActiveWorkflow);
@@ -333,7 +367,6 @@ function NewLoan() {
     submit.mutate({ data: buildPayload(true) as any });
   }
 
-
   const product = products?.find((p: any) => p.id === productId);
   const selectedClient = (clients ?? []).find((c: any) => c.id === clientId);
 
@@ -400,7 +433,10 @@ function NewLoan() {
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
-  function updateSecurity(idx: number, patch: (row: typeof securities[number]) => typeof securities[number]) {
+  function updateSecurity(
+    idx: number,
+    patch: (row: (typeof securities)[number]) => (typeof securities)[number],
+  ) {
     setSecurities((prev) => prev.map((r, i) => (i === idx ? patch(r) : r)));
   }
 
@@ -481,7 +517,8 @@ function NewLoan() {
         data: {
           image_base64: base64,
           mime: file.type || "image/jpeg",
-          document_kind: `${type?.category ?? ""} ${type?.kind ?? "Vehicle CR"}`.trim() || "Vehicle CR",
+          document_kind:
+            `${type?.category ?? ""} ${type?.kind ?? "Vehicle CR"}`.trim() || "Vehicle CR",
           fields: defs.map((d) => ({ key: d.key, label: d.label, type: d.type })),
         },
       });
@@ -489,9 +526,18 @@ function NewLoan() {
       const filled = Object.entries(extracted).filter(([, v]) => String(v ?? "").length > 0).length;
       updateSecurity(idx, (r) => ({
         ...r,
-        values: { ...r.values, ...Object.fromEntries(Object.entries(extracted).filter(([, v]) => String(v ?? "").length > 0)) },
+        values: {
+          ...r.values,
+          ...Object.fromEntries(
+            Object.entries(extracted).filter(([, v]) => String(v ?? "").length > 0),
+          ),
+        },
       }));
-      toast.success(filled ? `Auto-filled ${filled} field${filled === 1 ? "" : "s"} from CR` : "No fields could be read from this document");
+      toast.success(
+        filled
+          ? `Auto-filled ${filled} field${filled === 1 ? "" : "s"} from CR`
+          : "No fields could be read from this document",
+      );
     } catch (e: any) {
       toast.error(e?.message ?? "Auto-fill failed");
     } finally {
@@ -505,7 +551,6 @@ function NewLoan() {
   const missingDocs = requiredDocs.filter((d) => !checkedDocs[d]);
   const docsSatisfied = requiredDocs.length === 0 || missingDocs.length === 0;
 
-
   const rateNum = typeof rate === "number" ? rate : Number(rate || 0);
   const principalNum = Number(principal || 0);
 
@@ -518,7 +563,8 @@ function NewLoan() {
 
   const chargeAmount = (c: any) => {
     if (c.charge_type === "manual") return Number(manualAmounts[c.id] ?? 0);
-    if (c.charge_type === "variable") return Math.round(((principalNum * Number(c.amount)) / 100) * 100) / 100;
+    if (c.charge_type === "variable")
+      return Math.round(((principalNum * Number(c.amount)) / 100) * 100) / 100;
     return Number(c.amount);
   };
 
@@ -533,15 +579,24 @@ function NewLoan() {
           amount: chargeAmount(c),
           canCapitalize: !!c.capitalize,
           capitalize: !!c.capitalize && capitalizedCharges[c.id] !== false, // default on when allowed
-          supplier_client_id: c.origin === "outside" ? (chargeSuppliers[c.id] || c.supplier_client_id || null) : null,
+          supplier_client_id:
+            c.origin === "outside" ? chargeSuppliers[c.id] || c.supplier_client_id || null : null,
         })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [productCharges, selectedCharges, capitalizedCharges, manualAmounts, chargeSuppliers, principalNum],
+    [
+      productCharges,
+      selectedCharges,
+      capitalizedCharges,
+      manualAmounts,
+      chargeSuppliers,
+      principalNum,
+    ],
   );
   const chargesTotal = appliedCharges.reduce((s, c) => s + c.amount, 0);
-  const capitalizedTotal = appliedCharges.filter((c) => c.capitalize).reduce((s, c) => s + c.amount, 0);
+  const capitalizedTotal = appliedCharges
+    .filter((c) => c.capitalize)
+    .reduce((s, c) => s + c.amount, 0);
   const amortizationBase = principalNum + capitalizedTotal;
-
 
   const schedule = useMemo(() => {
     if (!amortizationBase || !rateNum || !term) return null;
@@ -599,9 +654,14 @@ function NewLoan() {
     scheduleType === "structured" && schedule ? ((schedule as any).recalculatedAutoSeqs ?? []) : [];
 
   const canSubmit =
-    !!clientId && !!productId && !!principal && term !== "" && !!rateNum && docsSatisfied && scheduleValid && !submit.isPending;
-
-
+    !!clientId &&
+    !!productId &&
+    !!principal &&
+    term !== "" &&
+    !!rateNum &&
+    docsSatisfied &&
+    scheduleValid &&
+    !submit.isPending;
 
   const submitApp = () => {
     const missingSup = appliedCharges.find((c) => c.origin === "outside" && !c.supplier_client_id);
@@ -610,7 +670,8 @@ function NewLoan() {
       return;
     }
     const missingManual = productCharges.find(
-      (c: any) => c.charge_type === "manual" && selectedCharges[c.id] && !(Number(manualAmounts[c.id]) > 0),
+      (c: any) =>
+        c.charge_type === "manual" && selectedCharges[c.id] && !(Number(manualAmounts[c.id]) > 0),
     );
     if (missingManual) {
       toast.error(`Enter amount for "${missingManual.name}"`);
@@ -632,7 +693,9 @@ function NewLoan() {
     }
     if (!scheduleValid) {
       const first = scheduleErrors[0];
-      toast.error(first ? `Schedule error: ${first.message}` : "Fix schedule errors before submitting");
+      toast.error(
+        first ? `Schedule error: ${first.message}` : "Fix schedule errors before submitting",
+      );
       return;
     }
     submit.mutate({ data: buildPayload(false) as any });
@@ -688,15 +751,22 @@ function NewLoan() {
   return (
     <div className="animate-fadein">
       <Card>
-        <FormHeader title="New loan application" onBack={() => nav({ to: "/loans" })} actions={actionButtons} />
+        <FormHeader
+          title="New loan application"
+          onBack={() => nav({ to: "/loans" })}
+          actions={actionButtons}
+        />
         <TabHeader tab={tab} setTab={setTab} />
-
 
         <div className="flex flex-col gap-4 text-[12.5px] mt-5">
           {tab === "customer" && (
             <FormGrid>
               <FormField label="Select client" span={12} required>
-                <select value={clientId} onChange={(e) => setClientId(e.target.value)} className={selectCls}>
+                <select
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  className={selectCls}
+                >
                   <option value="">— pick a client —</option>
                   {(clients ?? []).map((c: any) => (
                     <option key={c.id} value={c.id}>
@@ -715,7 +785,11 @@ function NewLoan() {
                     <input value={selectedClient.phone ?? "—"} readOnly className={readOnlyCls} />
                   </FormField>
                   <FormField label="National ID" span={3}>
-                    <input value={selectedClient.national_id ?? "—"} readOnly className={readOnlyCls} />
+                    <input
+                      value={selectedClient.national_id ?? "—"}
+                      readOnly
+                      className={readOnlyCls}
+                    />
                   </FormField>
                   <FormField label="Email" span={3}>
                     <input value={selectedClient.email ?? "—"} readOnly className={readOnlyCls} />
@@ -725,7 +799,9 @@ function NewLoan() {
                   </FormField>
                   <FormField label="Date of birth" span={3}>
                     <input
-                      value={selectedClient.date_of_birth ? shortDate(selectedClient.date_of_birth) : "—"}
+                      value={
+                        selectedClient.date_of_birth ? shortDate(selectedClient.date_of_birth) : "—"
+                      }
                       readOnly
                       className={readOnlyCls}
                     />
@@ -741,18 +817,32 @@ function NewLoan() {
                     <input value={selectedClient.status ?? "—"} readOnly className={readOnlyCls} />
                   </FormField>
                   <FormField label="Risk grade" span={2}>
-                    <input value={selectedClient.risk_grade ?? "—"} readOnly className={readOnlyCls} />
+                    <input
+                      value={selectedClient.risk_grade ?? "—"}
+                      readOnly
+                      className={readOnlyCls}
+                    />
                   </FormField>
                   <FormField label="Group" span={2}>
-                    <input value={selectedClient.group?.name ?? "Individual"} readOnly className={readOnlyCls} />
+                    <input
+                      value={selectedClient.group?.name ?? "Individual"}
+                      readOnly
+                      className={readOnlyCls}
+                    />
                   </FormField>
                   <FormField label="Occupation" span={4}>
-                    <input value={selectedClient.occupation ?? "—"} readOnly className={readOnlyCls} />
+                    <input
+                      value={selectedClient.occupation ?? "—"}
+                      readOnly
+                      className={readOnlyCls}
+                    />
                   </FormField>
                   <FormField label="Monthly income" span={4}>
                     <input
                       value={
-                        selectedClient.monthly_income ? money(Number(selectedClient.monthly_income), true) : "—"
+                        selectedClient.monthly_income
+                          ? money(Number(selectedClient.monthly_income), true)
+                          : "—"
                       }
                       readOnly
                       className={readOnlyCls + " font-mono"}
@@ -803,8 +893,9 @@ function NewLoan() {
                 {product && (
                   <div className="sm:col-span-12 text-[11.5px] text-muted-foreground font-mono -mt-1">
                     Range: {money(product.min_principal)} –{" "}
-                    {product.max_principal ? money(product.max_principal) : "∞"} · {product.min_term_months}–
-                    {product.max_term_months} months · {FREQ_META[product.frequency as Frequency]?.label} · default{" "}
+                    {product.max_principal ? money(product.max_principal) : "∞"} ·{" "}
+                    {product.min_term_months}–{product.max_term_months} months ·{" "}
+                    {FREQ_META[product.frequency as Frequency]?.label} · default{" "}
                     {product.annual_rate_pct}%/yr
                   </div>
                 )}
@@ -857,7 +948,11 @@ function NewLoan() {
                   />
                 </FormField>
 
-                <FormField label="Schedule type" span={6} hint="Structured lets you set specific rentals; the rest auto-amortize.">
+                <FormField
+                  label="Schedule type"
+                  span={6}
+                  hint="Structured lets you set specific rentals; the rest auto-amortize."
+                >
                   <select
                     value={scheduleType}
                     onChange={(e) => {
@@ -889,7 +984,8 @@ function NewLoan() {
                     </div>
                     {productCharges.length === 0 ? (
                       <div className="text-[12px] text-muted-foreground border border-dashed border-border rounded-md px-3 py-2">
-                        No charges mapped to this product. Configure them in Administration → Loan charges.
+                        No charges mapped to this product. Configure them in Administration → Loan
+                        charges.
                       </div>
                     ) : (
                       <div className="border border-border rounded-md divide-y divide-row-divider">
@@ -909,7 +1005,10 @@ function NewLoan() {
                                     type="checkbox"
                                     checked={on}
                                     onChange={(e) =>
-                                      setSelectedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
+                                      setSelectedCharges((prev) => ({
+                                        ...prev,
+                                        [c.id]: e.target.checked,
+                                      }))
                                     }
                                   />
                                   <div className="flex-1 min-w-0">
@@ -919,8 +1018,8 @@ function NewLoan() {
                                       {c.charge_type === "variable"
                                         ? `${Number(c.amount)}% of principal`
                                         : c.charge_type === "manual"
-                                        ? "Manual"
-                                        : "Fixed"}
+                                          ? "Manual"
+                                          : "Fixed"}
                                       {canCap && " · capitalizable"}
                                     </div>
                                   </div>
@@ -934,7 +1033,10 @@ function NewLoan() {
                                       type="checkbox"
                                       checked={capOn}
                                       onChange={(e) =>
-                                        setCapitalizedCharges((prev) => ({ ...prev, [c.id]: e.target.checked }))
+                                        setCapitalizedCharges((prev) => ({
+                                          ...prev,
+                                          [c.id]: e.target.checked,
+                                        }))
                                       }
                                     />
                                     Capitalize
@@ -947,10 +1049,16 @@ function NewLoan() {
                                     step="0.01"
                                     value={manualAmounts[c.id] ?? ""}
                                     onChange={(e) =>
-                                      setManualAmounts((prev) => ({ ...prev, [c.id]: Number(e.target.value) }))
+                                      setManualAmounts((prev) => ({
+                                        ...prev,
+                                        [c.id]: Number(e.target.value),
+                                      }))
                                     }
                                     placeholder="Amount"
-                                    className={cn(inputCls, "font-mono text-[12px] w-28 text-right px-2 py-1")}
+                                    className={cn(
+                                      inputCls,
+                                      "font-mono text-[12px] w-28 text-right px-2 py-1",
+                                    )}
                                   />
                                 ) : (
                                   <div className="font-mono text-[12px] w-28 text-right">
@@ -960,17 +1068,24 @@ function NewLoan() {
                               </div>
                               {c.origin === "outside" && on && (
                                 <div className="flex items-center gap-2 pl-7">
-                                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">Supplier</span>
+                                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                                    Supplier
+                                  </span>
                                   <select
                                     value={chargeSuppliers[c.id] ?? c.supplier_client_id ?? ""}
                                     onChange={(e) =>
-                                      setChargeSuppliers((prev) => ({ ...prev, [c.id]: e.target.value }))
+                                      setChargeSuppliers((prev) => ({
+                                        ...prev,
+                                        [c.id]: e.target.value,
+                                      }))
                                     }
                                     className={cn(inputCls, "text-[12px] py-1 flex-1")}
                                   >
                                     <option value="">— Select supplier —</option>
                                     {((clients as any[]) ?? []).map((cl: any) => (
-                                      <option key={cl.id} value={cl.id}>{cl.full_name}</option>
+                                      <option key={cl.id} value={cl.id}>
+                                        {cl.full_name}
+                                      </option>
                                     ))}
                                   </select>
                                 </div>
@@ -981,7 +1096,9 @@ function NewLoan() {
                         <div className="flex flex-col gap-0.5 px-3 py-2 bg-secondary/40 text-[12px]">
                           <div className="flex items-center justify-between">
                             <span className="font-semibold">Total charges</span>
-                            <span className="font-mono font-semibold">{money(chargesTotal, true)}</span>
+                            <span className="font-mono font-semibold">
+                              {money(chargesTotal, true)}
+                            </span>
                           </div>
                           {capitalizedTotal > 0 && (
                             <>
@@ -994,7 +1111,8 @@ function NewLoan() {
                                 <span className="font-mono">{money(amortizationBase, true)}</span>
                               </div>
                               <div className="text-[10.5px] text-muted-foreground italic">
-                                Disbursement amount stays at {money(principalNum, true)} — customer isn't charged upfront for capitalized items.
+                                Disbursement amount stays at {money(principalNum, true)} — customer
+                                isn't charged upfront for capitalized items.
                               </div>
                             </>
                           )}
@@ -1003,8 +1121,6 @@ function NewLoan() {
                     )}
                   </div>
                 )}
-
-
 
                 {outOfRange && (
                   <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2">
@@ -1020,12 +1136,15 @@ function NewLoan() {
                   </div>
                 )}
 
-                {scheduleType === "structured" && recalculatedAutoSeqs.length > 0 && scheduleValid && (
-                  <div className="sm:col-span-12 text-[12px] rounded-md border border-blue-500/40 bg-blue-500/10 text-blue-800 px-3 py-2">
-                    Automatic rows {recalculatedAutoSeqs.slice(0, 8).join(", ")}
-                    {recalculatedAutoSeqs.length > 8 ? ", …" : ""} recalculated to balance the loan.
-                  </div>
-                )}
+                {scheduleType === "structured" &&
+                  recalculatedAutoSeqs.length > 0 &&
+                  scheduleValid && (
+                    <div className="sm:col-span-12 text-[12px] rounded-md border border-blue-500/40 bg-blue-500/10 text-blue-800 px-3 py-2">
+                      Automatic rows {recalculatedAutoSeqs.slice(0, 8).join(", ")}
+                      {recalculatedAutoSeqs.length > 8 ? ", …" : ""} recalculated to balance the
+                      loan.
+                    </div>
+                  )}
 
                 {schedule && (schedule as any).warnings?.length > 0 && (
                   <div className="sm:col-span-12 text-[12px] rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-800 px-3 py-2 space-y-0.5">
@@ -1035,12 +1154,14 @@ function NewLoan() {
                   </div>
                 )}
 
-
                 {schedule && (
                   <div className="sm:col-span-12 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px] mt-1">
                     <SummaryStat label="Installments" value={String(schedule.installmentCount)} />
                     <SummaryStat label="Per payment" value={money(schedule.perPayment, true)} />
-                    <SummaryStat label="Total interest" value={money(schedule.totalInterest, true)} />
+                    <SummaryStat
+                      label="Total interest"
+                      value={money(schedule.totalInterest, true)}
+                    />
                     <SummaryStat label="Total payable" value={money(schedule.totalPayment, true)} />
                   </div>
                 )}
@@ -1050,7 +1171,10 @@ function NewLoan() {
                 <div className="mt-2">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
-                      Repayment schedule {scheduleType === "structured" && <span className="ml-2 text-primary normal-case">· editable</span>}
+                      Repayment schedule{" "}
+                      {scheduleType === "structured" && (
+                        <span className="ml-2 text-primary normal-case">· editable</span>
+                      )}
                     </div>
                     {scheduleType === "structured" && Object.keys(overrides).length > 0 && (
                       <button
@@ -1131,17 +1255,19 @@ function NewLoan() {
                                     ✕
                                   </button>
                                 )}
-                            {editable && scheduleErrorBySeq.has(r.seq) && (
-                              <div className="text-[11px] text-red-600 mt-0.5 text-right">
-                                {scheduleErrorBySeq.get(r.seq)!.join(" · ")}
+                                {editable && scheduleErrorBySeq.has(r.seq) && (
+                                  <div className="text-[11px] text-red-600 mt-0.5 text-right">
+                                    {scheduleErrorBySeq.get(r.seq)!.join(" · ")}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
                             ) : (
                               money(r.payment, true)
                             )}
                           </div>
-                          <div className="font-mono text-muted-foreground">{money(r.balance, true)}</div>
+                          <div className="font-mono text-muted-foreground">
+                            {money(r.balance, true)}
+                          </div>
                           <div>
                             <span
                               className={cn(
@@ -1169,7 +1295,8 @@ function NewLoan() {
                 <div>
                   <div className="text-[13px] font-semibold">Securities</div>
                   <div className="text-[11.5px] text-muted-foreground">
-                    Attach one or more movable or immovable properties pledged as security for this facility.
+                    Attach one or more movable or immovable properties pledged as security for this
+                    facility.
                   </div>
                 </div>
                 <button
@@ -1177,7 +1304,18 @@ function NewLoan() {
                   onClick={() =>
                     setSecurities((prev) => [
                       ...prev.map((r) => ({ ...r, expanded: false })),
-                      { key: crypto.randomUUID(), security_type_id: "", values: {}, notes: "", documents: [], autoFillCr: false, uploadingDoc: false, extracting: false, expanded: true, saved: false },
+                      {
+                        key: crypto.randomUUID(),
+                        security_type_id: "",
+                        values: {},
+                        notes: "",
+                        documents: [],
+                        autoFillCr: false,
+                        uploadingDoc: false,
+                        extracting: false,
+                        expanded: true,
+                        saved: false,
+                      },
                     ])
                   }
                   className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-[12px] font-semibold hover:bg-primary-hover inline-flex items-center gap-1"
@@ -1193,9 +1331,15 @@ function NewLoan() {
               ) : (
                 <div className="flex flex-col gap-3">
                   {securities.map((s, idx) => {
-                    const type = (securityTypes ?? []).find((t: any) => t.id === s.security_type_id) as any;
-                    const defs: { key: string; label: string; type: "text" | "number" | "date"; required: boolean }[] =
-                      Array.isArray(type?.fields?.definitions) ? type.fields.definitions : [];
+                    const type = (securityTypes ?? []).find(
+                      (t: any) => t.id === s.security_type_id,
+                    ) as any;
+                    const defs: {
+                      key: string;
+                      label: string;
+                      type: "text" | "number" | "date";
+                      required: boolean;
+                    }[] = Array.isArray(type?.fields?.definitions) ? type.fields.definitions : [];
                     const summaryVal = defs.find((d) => s.values[d.key])?.key;
                     const summary = summaryVal ? String(s.values[summaryVal]) : "";
                     return (
@@ -1203,21 +1347,29 @@ function NewLoan() {
                         <div className="flex items-center gap-2 px-3 py-2">
                           <button
                             type="button"
-                            onClick={() => updateSecurity(idx, (r) => ({ ...r, expanded: !r.expanded }))}
+                            onClick={() =>
+                              updateSecurity(idx, (r) => ({ ...r, expanded: !r.expanded }))
+                            }
                             className="text-muted-foreground hover:text-foreground"
                             title={s.expanded ? "Collapse" : "Expand"}
                           >
                             {s.expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                           </button>
                           <div className="flex-1 min-w-0 flex items-center gap-2 text-[12px]">
-                            <span className="text-faint font-semibold uppercase tracking-wider text-[10.5px]">#{idx + 1}</span>
+                            <span className="text-faint font-semibold uppercase tracking-wider text-[10.5px]">
+                              #{idx + 1}
+                            </span>
                             {s.security_type_id ? (
                               <span className="font-medium truncate">
                                 {type ? `${type.category} · ${type.kind}` : "Security"}
-                                {summary ? <span className="text-muted-foreground"> — {summary}</span> : null}
+                                {summary ? (
+                                  <span className="text-muted-foreground"> — {summary}</span>
+                                ) : null}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground italic">New security — select a type</span>
+                              <span className="text-muted-foreground italic">
+                                New security — select a type
+                              </span>
                             )}
                             {s.saved && (
                               <span className="inline-flex items-center gap-0.5 text-[10.5px] text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -1225,12 +1377,16 @@ function NewLoan() {
                               </span>
                             )}
                             {s.documents.length > 0 && (
-                              <span className="text-[10.5px] text-muted-foreground">· {s.documents.length} doc{s.documents.length === 1 ? "" : "s"}</span>
+                              <span className="text-[10.5px] text-muted-foreground">
+                                · {s.documents.length} doc{s.documents.length === 1 ? "" : "s"}
+                              </span>
                             )}
                           </div>
                           <button
                             type="button"
-                            onClick={() => setSecurities((prev) => prev.filter((_, i) => i !== idx))}
+                            onClick={() =>
+                              setSecurities((prev) => prev.filter((_, i) => i !== idx))
+                            }
                             className="text-muted-foreground hover:text-destructive"
                             title="Remove"
                           >
@@ -1238,206 +1394,242 @@ function NewLoan() {
                           </button>
                         </div>
                         {s.expanded && (
-                        <div className="px-3 pb-3 pt-1 border-t border-border/60">
-                        <FormGrid>
-                          <FormField label="Security type" required span={12}>
-                            <select
-                              value={s.security_type_id}
-                              onChange={(e) =>
-                                setSecurities((prev) =>
-                                  prev.map((row, i) =>
-                                    i === idx ? { ...row, security_type_id: e.target.value, values: {} } : row,
-                                  ),
-                                )
-                              }
-                              className={selectCls}
-                            >
-                              <option value="">— select security type —</option>
-                              {((securityTypes ?? []) as any[])
-                                .filter((t) => t.active)
-                                .map((t: any) => (
-                                  <option key={t.id} value={t.id}>
-                                    {t.category} · {t.kind}
-                                  </option>
-                                ))}
-                            </select>
-                          </FormField>
+                          <div className="px-3 pb-3 pt-1 border-t border-border/60">
+                            <FormGrid>
+                              <FormField label="Security type" required span={12}>
+                                <select
+                                  value={s.security_type_id}
+                                  onChange={(e) =>
+                                    setSecurities((prev) =>
+                                      prev.map((row, i) =>
+                                        i === idx
+                                          ? { ...row, security_type_id: e.target.value, values: {} }
+                                          : row,
+                                      ),
+                                    )
+                                  }
+                                  className={selectCls}
+                                >
+                                  <option value="">— select security type —</option>
+                                  {((securityTypes ?? []) as any[])
+                                    .filter((t) => t.active)
+                                    .map((t: any) => (
+                                      <option key={t.id} value={t.id}>
+                                        {t.category} · {t.kind}
+                                      </option>
+                                    ))}
+                                </select>
+                              </FormField>
 
-                          {s.security_type_id && defs.length === 0 && (
-                            <div className="sm:col-span-12 text-[11.5px] text-muted-foreground italic">
-                              This security type has no fields configured.
-                            </div>
-                          )}
-
-                          {defs.map((d) => (
-                            <FormField key={d.key} label={d.label} required={d.required} span={6}>
-                              <input
-                                type={d.type}
-                                value={s.values[d.key] ?? ""}
-                                onChange={(e) =>
-                                  setSecurities((prev) =>
-                                    prev.map((row, i) =>
-                                      i === idx
-                                        ? { ...row, values: { ...row.values, [d.key]: e.target.value } }
-                                        : row,
-                                    ),
-                                  )
-                                }
-                                className={inputCls}
-                              />
-                            </FormField>
-                          ))}
-
-                          <FormField label="Notes" span={12}>
-                            <input
-                              value={s.notes}
-                              onChange={(e) =>
-                                setSecurities((prev) =>
-                                  prev.map((row, i) => (i === idx ? { ...row, notes: e.target.value } : row)),
-                                )
-                              }
-                              className={inputCls}
-                              placeholder="Optional notes"
-                            />
-                          </FormField>
-                        </FormGrid>
-
-                        {/* Documents + AI auto-fill for this security */}
-                        <div className="mt-3 rounded-md border border-border bg-background/60 p-3">
-                          <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-                            <div>
-                              <div className="text-[11.5px] font-semibold">Attached documents</div>
-                              <div className="text-[10.5px] text-muted-foreground">
-                                Deed, CR, invoice or any proof — PDF or image up to 10 MB.
-                              </div>
-                            </div>
-                            <label className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground cursor-pointer select-none">
-                              <input
-                                type="checkbox"
-                                checked={s.autoFillCr}
-                                disabled={!s.security_type_id || defs.length === 0}
-                                onChange={(e) => updateSecurity(idx, (r) => ({ ...r, autoFillCr: e.target.checked }))}
-                              />
-                              Enable AI auto-fill from Vehicle CR
-                            </label>
-                          </div>
-
-                          {s.documents.length > 0 && (
-                            <div className="mb-2 flex flex-col gap-1">
-                              {s.documents.map((d) => (
-                                <div key={d.path} className="flex items-center gap-2 text-[11.5px] border border-border rounded px-2 py-1 bg-secondary/30">
-                                  <div className="flex-1 min-w-0 truncate font-mono">{d.name}</div>
-                                  <span className="text-muted-foreground">{formatBytes(d.size)}</span>
-                                  <button
-                                    type="button"
-                                    onClick={async () => {
-                                      const { data, error } = await supabase.storage
-                                        .from("security-documents")
-                                        .createSignedUrl(d.path, 60);
-                                      if (error || !data?.signedUrl) {
-                                        toast.error(error?.message ?? "Could not open file");
-                                        return;
-                                      }
-                                      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-                                    }}
-                                    className="text-primary hover:underline"
-                                  >
-                                    Preview
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeSecurityDoc(idx, d.path)}
-                                    className="text-muted-foreground hover:text-destructive"
-                                    title="Remove"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
+                              {s.security_type_id && defs.length === 0 && (
+                                <div className="sm:col-span-12 text-[11.5px] text-muted-foreground italic">
+                                  This security type has no fields configured.
                                 </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="flex flex-wrap items-center gap-2">
-                            <input
-                              id={`sec-doc-${s.key}`}
-                              type="file"
-                              accept="application/pdf,image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                e.target.value = "";
-                                if (f) uploadSecurityDocFile(idx, f);
-                              }}
-                            />
-                            <label
-                              htmlFor={`sec-doc-${s.key}`}
-                              className={cn(
-                                "text-[11.5px] px-2.5 py-1 rounded-md border border-border cursor-pointer hover:bg-secondary",
-                                s.uploadingDoc && "opacity-60 pointer-events-none",
                               )}
-                            >
-                              {s.uploadingDoc ? "Uploading…" : "Attach document"}
-                            </label>
 
-                            {s.autoFillCr && (
-                              <>
+                              {defs.map((d) => (
+                                <FormField
+                                  key={d.key}
+                                  label={d.label}
+                                  required={d.required}
+                                  span={6}
+                                >
+                                  <input
+                                    type={d.type}
+                                    value={s.values[d.key] ?? ""}
+                                    onChange={(e) =>
+                                      setSecurities((prev) =>
+                                        prev.map((row, i) =>
+                                          i === idx
+                                            ? {
+                                                ...row,
+                                                values: { ...row.values, [d.key]: e.target.value },
+                                              }
+                                            : row,
+                                        ),
+                                      )
+                                    }
+                                    className={inputCls}
+                                  />
+                                </FormField>
+                              ))}
+
+                              <FormField label="Notes" span={12}>
                                 <input
-                                  id={`sec-cr-${s.key}`}
+                                  value={s.notes}
+                                  onChange={(e) =>
+                                    setSecurities((prev) =>
+                                      prev.map((row, i) =>
+                                        i === idx ? { ...row, notes: e.target.value } : row,
+                                      ),
+                                    )
+                                  }
+                                  className={inputCls}
+                                  placeholder="Optional notes"
+                                />
+                              </FormField>
+                            </FormGrid>
+
+                            {/* Documents + AI auto-fill for this security */}
+                            <div className="mt-3 rounded-md border border-border bg-background/60 p-3">
+                              <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                                <div>
+                                  <div className="text-[11.5px] font-semibold">
+                                    Attached documents
+                                  </div>
+                                  <div className="text-[10.5px] text-muted-foreground">
+                                    Deed, CR, invoice or any proof — PDF or image up to 10 MB.
+                                  </div>
+                                </div>
+                                <label className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground cursor-pointer select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={s.autoFillCr}
+                                    disabled={!s.security_type_id || defs.length === 0}
+                                    onChange={(e) =>
+                                      updateSecurity(idx, (r) => ({
+                                        ...r,
+                                        autoFillCr: e.target.checked,
+                                      }))
+                                    }
+                                  />
+                                  Enable AI auto-fill from Vehicle CR
+                                </label>
+                              </div>
+
+                              {s.documents.length > 0 && (
+                                <div className="mb-2 flex flex-col gap-1">
+                                  {s.documents.map((d) => (
+                                    <div
+                                      key={d.path}
+                                      className="flex items-center gap-2 text-[11.5px] border border-border rounded px-2 py-1 bg-secondary/30"
+                                    >
+                                      <div className="flex-1 min-w-0 truncate font-mono">
+                                        {d.name}
+                                      </div>
+                                      <span className="text-muted-foreground">
+                                        {formatBytes(d.size)}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          const { data, error } = await supabase.storage
+                                            .from("security-documents")
+                                            .createSignedUrl(d.path, 60);
+                                          if (error || !data?.signedUrl) {
+                                            toast.error(error?.message ?? "Could not open file");
+                                            return;
+                                          }
+                                          window.open(
+                                            data.signedUrl,
+                                            "_blank",
+                                            "noopener,noreferrer",
+                                          );
+                                        }}
+                                        className="text-primary hover:underline"
+                                      >
+                                        Preview
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeSecurityDoc(idx, d.path)}
+                                        className="text-muted-foreground hover:text-destructive"
+                                        title="Remove"
+                                      >
+                                        <Trash2 size={12} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              <div className="flex flex-wrap items-center gap-2">
+                                <input
+                                  id={`sec-doc-${s.key}`}
                                   type="file"
                                   accept="application/pdf,image/*"
                                   className="hidden"
                                   onChange={(e) => {
                                     const f = e.target.files?.[0];
                                     e.target.value = "";
-                                    if (f) autoFillFromCr(idx, f);
+                                    if (f) uploadSecurityDocFile(idx, f);
                                   }}
                                 />
                                 <label
-                                  htmlFor={`sec-cr-${s.key}`}
+                                  htmlFor={`sec-doc-${s.key}`}
                                   className={cn(
-                                    "text-[11.5px] px-2.5 py-1 rounded-md border border-primary/40 bg-primary/5 text-primary cursor-pointer hover:bg-primary/10",
-                                    s.extracting && "opacity-60 pointer-events-none",
+                                    "text-[11.5px] px-2.5 py-1 rounded-md border border-border cursor-pointer hover:bg-secondary",
+                                    s.uploadingDoc && "opacity-60 pointer-events-none",
                                   )}
                                 >
-                                  {s.extracting ? "Reading CR…" : "Upload CR & auto-fill"}
+                                  {s.uploadingDoc ? "Uploading…" : "Attach document"}
                                 </label>
-                                <span className="text-[10.5px] text-muted-foreground">
-                                  AI reads the CR and fills the fields above.
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
 
-                        <div className="mt-3 flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => updateSecurity(idx, (r) => ({ ...r, expanded: false }))}
-                            className="text-[11.5px] px-2.5 py-1 rounded-md border border-border hover:bg-secondary"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!s.security_type_id) {
-                                toast.error("Select a security type");
-                                return;
-                              }
-                              const missing = defs.find((d) => d.required && !s.values[d.key]);
-                              if (missing) {
-                                toast.error(`Fill "${missing.label}"`);
-                                return;
-                              }
-                              updateSecurity(idx, (r) => ({ ...r, saved: true, expanded: false }));
-                              toast.success(`Security #${idx + 1} saved`);
-                            }}
-                            className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1 rounded-md text-[11.5px] font-semibold hover:bg-primary-hover"
-                          >
-                            <Check size={13} /> Save security
-                          </button>
-                        </div>
-                        </div>
+                                {s.autoFillCr && (
+                                  <>
+                                    <input
+                                      id={`sec-cr-${s.key}`}
+                                      type="file"
+                                      accept="application/pdf,image/*"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const f = e.target.files?.[0];
+                                        e.target.value = "";
+                                        if (f) autoFillFromCr(idx, f);
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={`sec-cr-${s.key}`}
+                                      className={cn(
+                                        "text-[11.5px] px-2.5 py-1 rounded-md border border-primary/40 bg-primary/5 text-primary cursor-pointer hover:bg-primary/10",
+                                        s.extracting && "opacity-60 pointer-events-none",
+                                      )}
+                                    >
+                                      {s.extracting ? "Reading CR…" : "Upload CR & auto-fill"}
+                                    </label>
+                                    <span className="text-[10.5px] text-muted-foreground">
+                                      AI reads the CR and fills the fields above.
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="mt-3 flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateSecurity(idx, (r) => ({ ...r, expanded: false }))
+                                }
+                                className="text-[11.5px] px-2.5 py-1 rounded-md border border-border hover:bg-secondary"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!s.security_type_id) {
+                                    toast.error("Select a security type");
+                                    return;
+                                  }
+                                  const missing = defs.find((d) => d.required && !s.values[d.key]);
+                                  if (missing) {
+                                    toast.error(`Fill "${missing.label}"`);
+                                    return;
+                                  }
+                                  updateSecurity(idx, (r) => ({
+                                    ...r,
+                                    saved: true,
+                                    expanded: false,
+                                  }));
+                                  toast.success(`Security #${idx + 1} saved`);
+                                }}
+                                className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1 rounded-md text-[11.5px] font-semibold hover:bg-primary-hover"
+                              >
+                                <Check size={13} /> Save security
+                              </button>
+                            </div>
+                          </div>
                         )}
                       </div>
                     );
@@ -1446,8 +1638,6 @@ function NewLoan() {
               )}
             </div>
           )}
-
-
 
           {tab === "documents" && (
             <div className="flex flex-col gap-3">
@@ -1557,12 +1747,15 @@ function NewLoan() {
             </div>
           )}
 
-
           {tab === "evaluations" && (
             <>
               <LoanEvaluation loanId={editingLoanId} productId={productId || undefined} />
               {editingLoanId ? (
-                <ApprovalChainPreview mode="existing" loanId={editingLoanId} previewFn={previewChainFn} />
+                <ApprovalChainPreview
+                  mode="existing"
+                  loanId={editingLoanId}
+                  previewFn={previewChainFn}
+                />
               ) : (
                 <ApprovalChainPreview
                   mode="raw"
@@ -1581,8 +1774,6 @@ function NewLoan() {
               Cancel
             </button>
           </FormActions>
-
-
         </div>
       </Card>
     </div>

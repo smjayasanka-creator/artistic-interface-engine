@@ -12,7 +12,9 @@ export const listLoanCharges = createServerFn({ method: "GET" })
     if (!cid) return [];
     const { data: charges, error } = await (supabase as any)
       .from("loan_charge")
-      .select("id, name, origin, charge_type, amount, receivable_account_id, credit_account_id, capitalize, capitalized_receivable_account_id, supplier_client_id, active, created_at")
+      .select(
+        "id, name, origin, charge_type, amount, receivable_account_id, credit_account_id, capitalize, capitalized_receivable_account_id, supplier_client_id, active, created_at",
+      )
       .eq("company_id", cid)
       .order("name");
     if (error) throw new Error(error.message);

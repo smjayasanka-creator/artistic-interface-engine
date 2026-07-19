@@ -30,13 +30,7 @@ type Installment = {
   state: string;
 };
 
-export function LoanLifecycleActions({
-  loan,
-  schedule,
-}: {
-  loan: Loan;
-  schedule: Installment[];
-}) {
+export function LoanLifecycleActions({ loan, schedule }: { loan: Loan; schedule: Installment[] }) {
   const qc = useQueryClient();
   const [modal, setModal] = useState<null | "reschedule">(null);
 
@@ -95,7 +89,6 @@ export function LoanLifecycleActions({
   );
 }
 
-
 function ModalShell({
   title,
   onCancel,
@@ -126,9 +119,6 @@ function ModalShell({
   );
 }
 
-
-
-
 function RescheduleModal({
   schedule,
   onCancel,
@@ -156,13 +146,14 @@ function RescheduleModal({
       interest_due: Number(s.interest_due),
       fee_due: Number(s.fee_due ?? 0),
     }));
-  const [rows, setRows] = useState(upcoming.length ? upcoming : [
-    { due_date: "", principal_due: 0, interest_due: 0, fee_due: 0 },
-  ]);
+  const [rows, setRows] = useState(
+    upcoming.length ? upcoming : [{ due_date: "", principal_due: 0, interest_due: 0, fee_due: 0 }],
+  );
   const [reason, setReason] = useState("");
 
   const total = rows.reduce(
-    (s, r) => s + Number(r.principal_due || 0) + Number(r.interest_due || 0) + Number(r.fee_due || 0),
+    (s, r) =>
+      s + Number(r.principal_due || 0) + Number(r.interest_due || 0) + Number(r.fee_due || 0),
     0,
   );
 
@@ -174,8 +165,8 @@ function RescheduleModal({
   return (
     <ModalShell title="Reschedule loan" onCancel={onCancel}>
       <div className="text-[12.5px] text-muted-foreground bg-secondary/40 border border-border rounded-md px-3 py-2">
-        Voids remaining installments and installs a new schedule. Repayments already applied
-        are preserved. Existing GL postings are untouched.
+        Voids remaining installments and installs a new schedule. Repayments already applied are
+        preserved. Existing GL postings are untouched.
       </div>
       <FormField label="Reason" required span={12}>
         <textarea
@@ -194,7 +185,10 @@ function RescheduleModal({
           <button
             className="text-[11.5px] text-primary hover:underline"
             onClick={() =>
-              setRows((r) => [...r, { due_date: "", principal_due: 0, interest_due: 0, fee_due: 0 }])
+              setRows((r) => [
+                ...r,
+                { due_date: "", principal_due: 0, interest_due: 0, fee_due: 0 },
+              ])
             }
           >
             + Add row
@@ -223,7 +217,9 @@ function RescheduleModal({
               className={inputCls}
               value={r.due_date}
               onChange={(e) =>
-                setRows((rs) => rs.map((x, j) => (j === i ? { ...x, due_date: e.target.value } : x)))
+                setRows((rs) =>
+                  rs.map((x, j) => (j === i ? { ...x, due_date: e.target.value } : x)),
+                )
               }
             />
             <input

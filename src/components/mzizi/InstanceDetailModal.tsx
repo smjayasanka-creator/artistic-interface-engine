@@ -15,13 +15,7 @@ import { btnPrimaryCls, btnSecondaryCls, inputCls } from "@/components/mzizi/For
 import { cn } from "@/lib/utils";
 import { money, shortDate } from "@/lib/format";
 
-export function InstanceDetailModal({
-  instance,
-  onClose,
-}: {
-  instance: any;
-  onClose: () => void;
-}) {
+export function InstanceDetailModal({ instance, onClose }: { instance: any; onClose: () => void }) {
   const [comment, setComment] = useState("");
   const qc = useQueryClient();
   const refFn = useServerFn(getInstanceReference);
@@ -38,11 +32,15 @@ export function InstanceDetailModal({
     mutationFn: actFn,
     onSuccess: (r: any) => {
       toast.success(
-        r.status === "approved" ? "Fully approved"
-          : r.status === "declined" ? "Declined"
-          : r.status === "sent_back" ? "Sent back to initiator"
-          : r.advanced_to ? `Advanced to step ${r.advanced_to}`
-          : `Recorded (${r.approvals ?? ""} approvals)`,
+        r.status === "approved"
+          ? "Fully approved"
+          : r.status === "declined"
+            ? "Declined"
+            : r.status === "sent_back"
+              ? "Sent back to initiator"
+              : r.advanced_to
+                ? `Advanced to step ${r.advanced_to}`
+                : `Recorded (${r.approvals ?? ""} approvals)`,
       );
       qc.invalidateQueries({ queryKey: ["workflow_instances"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
@@ -75,7 +73,12 @@ export function InstanceDetailModal({
   };
 
   return (
-    <Modal open onClose={onClose} title={`Approval · ${instance.reference_label}`} width={refData?.kind === "loan" ? 1000 : 640}>
+    <Modal
+      open
+      onClose={onClose}
+      title={`Approval · ${instance.reference_label}`}
+      width={refData?.kind === "loan" ? 1000 : 640}
+    >
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[12px]">
           <MetaRow label="Transaction" value={txLabel} />
@@ -131,8 +134,8 @@ export function InstanceDetailModal({
                     a.decision === "approve"
                       ? "bg-emerald-500/10 text-emerald-700"
                       : a.decision === "send_back"
-                      ? "bg-amber-500/10 text-amber-700"
-                      : "bg-rose-500/10 text-rose-700",
+                        ? "bg-amber-500/10 text-amber-700"
+                        : "bg-rose-500/10 text-rose-700",
                   )}
                 >
                   {a.decision === "send_back" ? "sent back" : a.decision}
@@ -241,10 +244,7 @@ function ReferenceView({ kind, data }: { kind?: string; data: any }) {
         <MetaRow label="Product" value={data.product?.name} />
         <MetaRow label="Branch" value={data.branch?.code ?? data.branch?.name} />
         <MetaRow label="Principal" value={money(Number(data.principal))} />
-        <MetaRow
-          label="Rate"
-          value={data.interest_rate != null ? `${data.interest_rate}%` : "—"}
-        />
+        <MetaRow label="Rate" value={data.interest_rate != null ? `${data.interest_rate}%` : "—"} />
         <MetaRow label="Term" value={data.term_months ? `${data.term_months} mo` : "—"} />
         <MetaRow label="Status" value={data.status} />
         <MetaRow label="Submitted" value={data.submitted_at ? shortDate(data.submitted_at) : "—"} />
@@ -260,10 +260,7 @@ function ReferenceView({ kind, data }: { kind?: string; data: any }) {
         <MetaRow label="Product" value={data.product?.name} />
         <MetaRow label="Branch" value={data.branch?.code ?? data.branch?.name} />
         <MetaRow label="Principal" value={money(Number(data.principal))} />
-        <MetaRow
-          label="Rate"
-          value={data.interest_rate != null ? `${data.interest_rate}%` : "—"}
-        />
+        <MetaRow label="Rate" value={data.interest_rate != null ? `${data.interest_rate}%` : "—"} />
         <MetaRow label="Term" value={data.term_months ? `${data.term_months} mo` : "—"} />
         <MetaRow label="Status" value={data.status} />
         <MetaRow label="Opened" value={data.opened_at ? shortDate(data.opened_at) : "—"} />

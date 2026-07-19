@@ -46,7 +46,10 @@ function NewJournalEntryPage() {
   const accountsFn = useServerFn(listGlAccounts);
 
   const { data: session } = useQuery({ queryKey: ["session"], queryFn: () => sessionFn() });
-  const { data: branches } = useQuery({ queryKey: ["company-branches"], queryFn: () => branchesFn() });
+  const { data: branches } = useQuery({
+    queryKey: ["company-branches"],
+    queryFn: () => branchesFn(),
+  });
   const { data: accounts } = useQuery({ queryKey: ["gl-accounts"], queryFn: () => accountsFn() });
 
   const [branchId, setBranchId] = useState("");
@@ -119,7 +122,11 @@ function NewJournalEntryPage() {
         <Card className="p-6">
           <FormGrid>
             <FormField label="Branch" required span={5}>
-              <select value={branchId} onChange={(e) => setBranchId(e.target.value)} className={selectCls}>
+              <select
+                value={branchId}
+                onChange={(e) => setBranchId(e.target.value)}
+                className={selectCls}
+              >
                 <option value="">Select branch…</option>
                 {(branches ?? []).map((b: any) => (
                   <option key={b.id} value={b.id}>
@@ -237,12 +244,7 @@ function NewJournalEntryPage() {
               <span className="text-faint">
                 CR <span className="text-primary font-semibold">{money(totals.c)}</span>
               </span>
-              <span
-                className={cn(
-                  "font-semibold",
-                  balanced ? "text-primary" : "text-destructive",
-                )}
-              >
+              <span className={cn("font-semibold", balanced ? "text-primary" : "text-destructive")}>
                 {balanced ? "Balanced" : `Off by ${money(Math.abs(totals.diff))}`}
               </span>
             </div>

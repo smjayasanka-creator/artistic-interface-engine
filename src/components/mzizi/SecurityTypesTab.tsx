@@ -142,7 +142,10 @@ export function SecurityTypesTab() {
         <div className="flex items-center justify-between">
           <CardTitle>{form.id ? "Edit security type" : "New security type"}</CardTitle>
           <button
-            onClick={() => { setMode("list"); setForm(EMPTY); }}
+            onClick={() => {
+              setMode("list");
+              setForm(EMPTY);
+            }}
             className="text-[12px] text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-1.5"
           >
             ← Back to list
@@ -150,20 +153,34 @@ export function SecurityTypesTab() {
         </div>
         <form onSubmit={onSubmit} className="flex flex-col gap-4 mt-2">
           <FormGrid>
-            <FormField label="Security category" required span={6} hint="e.g. Movable, Immovable, Guarantor">
+            <FormField
+              label="Security category"
+              required
+              span={6}
+              hint="e.g. Movable, Immovable, Guarantor"
+            >
               <input
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
-                required minLength={2} maxLength={60}
+                required
+                minLength={2}
+                maxLength={60}
                 className={inputCls}
                 placeholder="Movable"
               />
             </FormField>
-            <FormField label="Security type" required span={6} hint="e.g. Vehicle, Machinery, Gold, Deed">
+            <FormField
+              label="Security type"
+              required
+              span={6}
+              hint="e.g. Vehicle, Machinery, Gold, Deed"
+            >
               <input
                 value={form.kind}
                 onChange={(e) => setForm({ ...form, kind: e.target.value })}
-                required minLength={2} maxLength={60}
+                required
+                minLength={2}
+                maxLength={60}
                 className={inputCls}
                 placeholder="Vehicle"
               />
@@ -175,14 +192,19 @@ export function SecurityTypesTab() {
               <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
                 Required fields shown on application
               </div>
-              <button type="button" onClick={addField} className="text-[12px] inline-flex items-center gap-1 text-primary hover:underline">
+              <button
+                type="button"
+                onClick={addField}
+                className="text-[12px] inline-flex items-center gap-1 text-primary hover:underline"
+              >
                 <Plus size={13} /> Add field
               </button>
             </div>
 
             {form.fields.definitions.length === 0 ? (
               <div className="text-[12px] text-muted-foreground text-center py-4">
-                No fields defined. Click "Add field" to build the form users will fill for this security type.
+                No fields defined. Click "Add field" to build the form users will fill for this
+                security type.
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -261,7 +283,14 @@ export function SecurityTypesTab() {
           </label>
 
           <FormActions>
-            <button type="button" onClick={() => { setMode("list"); setForm(EMPTY); }} className={btnSecondaryCls}>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("list");
+                setForm(EMPTY);
+              }}
+              className={btnSecondaryCls}
+            >
               Cancel
             </button>
             <button type="submit" disabled={save.isPending} className={btnPrimaryCls}>
@@ -277,10 +306,16 @@ export function SecurityTypesTab() {
     <Card>
       <div className="px-1 pb-3 flex items-center justify-between">
         <div className="text-sm font-semibold">
-          Security types <span className="text-[11px] text-muted-foreground font-normal ml-1">{items?.length ?? 0} total</span>
+          Security types{" "}
+          <span className="text-[11px] text-muted-foreground font-normal ml-1">
+            {items?.length ?? 0} total
+          </span>
         </div>
         <button
-          onClick={() => { setForm(EMPTY); setMode("form"); }}
+          onClick={() => {
+            setForm(EMPTY);
+            setMode("form");
+          }}
           className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-[12px] font-semibold hover:bg-primary-hover inline-flex items-center gap-1"
         >
           <Plus size={14} /> New security type
@@ -288,16 +323,21 @@ export function SecurityTypesTab() {
       </div>
       <div className="divide-y divide-border rounded-md border border-border">
         {(items ?? []).map((it: any) => {
-          const defs: FieldDef[] = Array.isArray(it.fields?.definitions) ? it.fields.definitions : [];
+          const defs: FieldDef[] = Array.isArray(it.fields?.definitions)
+            ? it.fields.definitions
+            : [];
           return (
             <div key={it.id} className="px-3 py-2.5 flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-semibold truncate">{it.kind}</div>
                 <div className="text-[11.5px] text-muted-foreground truncate">
-                  {it.category} · {defs.length} field(s){defs.length ? ` — ${defs.map((d) => d.label).join(", ")}` : ""}
+                  {it.category} · {defs.length} field(s)
+                  {defs.length ? ` — ${defs.map((d) => d.label).join(", ")}` : ""}
                 </div>
               </div>
-              <span className={`text-[11px] px-2 py-0.5 rounded-full border ${it.active ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" : "bg-muted text-muted-foreground border-border"}`}>
+              <span
+                className={`text-[11px] px-2 py-0.5 rounded-full border ${it.active ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" : "bg-muted text-muted-foreground border-border"}`}
+              >
                 {it.active ? "active" : "inactive"}
               </span>
               <button
@@ -306,7 +346,11 @@ export function SecurityTypesTab() {
                     id: it.id,
                     category: it.category ?? "",
                     kind: it.kind ?? "",
-                    fields: { definitions: Array.isArray(it.fields?.definitions) ? it.fields.definitions : [] },
+                    fields: {
+                      definitions: Array.isArray(it.fields?.definitions)
+                        ? it.fields.definitions
+                        : [],
+                    },
                     active: !!it.active,
                   });
                   setMode("form");
@@ -316,7 +360,9 @@ export function SecurityTypesTab() {
                 Edit
               </button>
               <button
-                onClick={() => { if (confirm(`Delete "${it.kind}"?`)) del.mutate(it.id); }}
+                onClick={() => {
+                  if (confirm(`Delete "${it.kind}"?`)) del.mutate(it.id);
+                }}
                 className="text-muted-foreground hover:text-destructive"
                 title="Delete"
               >

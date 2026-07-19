@@ -1,6 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CircleUser, Wallet, ArrowDownCircle, ArrowUpCircle, Vault, Scale, Loader2 } from "lucide-react";
+import {
+  CircleUser,
+  Wallet,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Vault,
+  Scale,
+  Loader2,
+} from "lucide-react";
 import { getTellerSummary } from "@/lib/mzizi.functions";
 import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -91,7 +99,15 @@ export function TellerSummary() {
   );
 }
 
-function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-xl border border-border bg-card p-3.5">
       <div className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-wider text-faint font-semibold mb-2">

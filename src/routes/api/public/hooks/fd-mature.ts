@@ -45,10 +45,7 @@ export const Route = createFileRoute("/api/public/hooks/fd-mature")({
               .from("fd_interest_schedule")
               .select("net_interest")
               .eq("deposit_id", d.id);
-            const netInterest = (sched ?? []).reduce(
-              (a, r) => a + Number(r.net_interest ?? 0),
-              0,
-            );
+            const netInterest = (sched ?? []).reduce((a, r) => a + Number(r.net_interest ?? 0), 0);
 
             if (d.maturity_instruction === "payout") {
               const payout = Number(d.principal) + netInterest;
@@ -61,7 +58,11 @@ export const Route = createFileRoute("/api/public/hooks/fd-mature")({
               });
               await supabaseAdmin
                 .from("fixed_deposit")
-                .update({ status: "matured", closed_at: new Date().toISOString(), close_reason: "matured" })
+                .update({
+                  status: "matured",
+                  closed_at: new Date().toISOString(),
+                  close_reason: "matured",
+                })
                 .eq("id", d.id);
               paid_out++;
               continue;
@@ -86,8 +87,7 @@ export const Route = createFileRoute("/api/public/hooks/fd-mature")({
                 : Number(d.principal);
 
             // Any residual interest not being rolled in gets paid out.
-            const residual =
-              d.maturity_instruction === "renew_principal" ? netInterest : 0;
+            const residual = d.maturity_instruction === "renew_principal" ? netInterest : 0;
             if (residual > 0) {
               await supabaseAdmin.from("fd_transaction").insert({
                 deposit_id: d.id,
@@ -156,7 +156,11 @@ export const Route = createFileRoute("/api/public/hooks/fd-mature")({
 
             await supabaseAdmin
               .from("fixed_deposit")
-              .update({ status: "renewed", closed_at: new Date().toISOString(), close_reason: "renewed" })
+              .update({
+                status: "renewed",
+                closed_at: new Date().toISOString(),
+                close_reason: "renewed",
+              })
               .eq("id", d.id);
 
             renewed++;

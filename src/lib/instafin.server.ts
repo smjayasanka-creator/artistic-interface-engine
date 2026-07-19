@@ -35,8 +35,17 @@ export class InstafinError extends Error {
 function regionCodeFromCallingCode(cc: string): string {
   const c = cc.replace(/[^\d+]/g, "").replace(/^\+/, "");
   const map: Record<string, string> = {
-    "94": "LK", "91": "IN", "1": "US", "44": "GB", "61": "AU",
-    "65": "SG", "60": "MY", "971": "AE", "966": "SA", "234": "NG", "254": "KE",
+    "94": "LK",
+    "91": "IN",
+    "1": "US",
+    "44": "GB",
+    "61": "AU",
+    "65": "SG",
+    "60": "MY",
+    "971": "AE",
+    "966": "SA",
+    "234": "NG",
+    "254": "KE",
   };
   return map[c] ?? "LK";
 }
@@ -60,7 +69,11 @@ export function buildCreatePersonPayload(input: InstafinCreatePersonInput) {
   };
   if (input.email) payload.email = input.email;
   const hasAddr =
-    input.address || input.gn_division || input.divisional_secretariat || input.district || input.province;
+    input.address ||
+    input.gn_division ||
+    input.divisional_secretariat ||
+    input.district ||
+    input.province;
   if (hasAddr) {
     payload.address = {
       ...(input.address ? { street1: input.address } : {}),
@@ -106,27 +119,45 @@ export async function instafinCreatePerson(input: InstafinCreatePersonInput): Pr
 
   const text = await res.text();
   let body: unknown = null;
-  try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = text;
+  }
 
   if (!res.ok) {
     const msg = friendlyError(res.status, body);
     throw new InstafinError(res.status, msg, body);
   }
-  return { result: (body as InstafinCreatePersonResult) ?? {}, requestBody, responseBody: body, status: res.status };
+  return {
+    result: (body as InstafinCreatePersonResult) ?? {},
+    requestBody,
+    responseBody: body,
+    status: res.status,
+  };
 }
 
 function friendlyError(status: number, body: unknown): string {
-  if (status === 401 || status === 403) return "Instafin credentials rejected — check backend secrets.";
+  if (status === 401 || status === 403)
+    return "Instafin credentials rejected — check backend secrets.";
   if (status === 409) return "Instafin conflict — please retry.";
   if (status === 429) return "Instafin is busy, please retry in a moment.";
   if (status >= 500) return `Instafin server error (${status}).`;
   // 400 FieldErrors — try to surface field messages
   try {
-    const b = body as { fieldErrors?: Array<{ field?: string; message?: string }>; message?: string };
+    const b = body as {
+      fieldErrors?: Array<{ field?: string; message?: string }>;
+      message?: string;
+    };
     if (b?.fieldErrors?.length) {
-      return "Instafin rejected: " + b.fieldErrors.map((f) => `${f.field ?? "?"}: ${f.message ?? ""}`).join("; ");
+      return (
+        "Instafin rejected: " +
+        b.fieldErrors.map((f) => `${f.field ?? "?"}: ${f.message ?? ""}`).join("; ")
+      );
     }
     if (b?.message) return `Instafin rejected: ${b.message}`;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return `Instafin rejected the request (${status}).`;
 }

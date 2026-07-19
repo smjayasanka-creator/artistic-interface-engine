@@ -39,7 +39,10 @@ export async function postApiChannelEntry(opts: {
   const cashId = accts?.find((a) => a.code === "1000")?.id;
   const suspenseId = accts?.find((a) => a.code === "2400")?.id;
   if (!cashId || !suspenseId) {
-    return { posted: false, skipped_reason: !cashId ? "cash_account_missing" : "suspense_account_missing" };
+    return {
+      posted: false,
+      skipped_reason: !cashId ? "cash_account_missing" : "suspense_account_missing",
+    };
   }
 
   const lines =

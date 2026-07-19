@@ -3,8 +3,18 @@ import { cn } from "@/lib/utils";
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { Badge } from "@/components/mzizi/Badge";
 import {
-  Monitor, Server, Database, Cloud, Workflow, KeyRound,
-  Radio, Timer, ShieldCheck, Boxes, Plug, Brain,
+  Monitor,
+  Server,
+  Database,
+  Cloud,
+  Workflow,
+  KeyRound,
+  Radio,
+  Timer,
+  ShieldCheck,
+  Boxes,
+  Plug,
+  Brain,
 } from "lucide-react";
 
 type Layer = "client" | "edge" | "cloud" | "external";
@@ -17,8 +27,8 @@ type Node = {
   tag: string;
   summary: string;
   responsibilities: string[];
-  reads: string[];   // node ids this node reads from
-  writes: string[];  // node ids this node writes/calls
+  reads: string[]; // node ids this node reads from
+  writes: string[]; // node ids this node writes/calls
   files?: string[];
 };
 
@@ -29,7 +39,8 @@ const NODES: Node[] = [
     layer: "client",
     icon: Monitor,
     tag: "TanStack Router · React 19",
-    summary: "Every screen the operator sees — dashboard, clients, loans, savings, FD, ALCO, accounts, transactions, admin.",
+    summary:
+      "Every screen the operator sees — dashboard, clients, loans, savings, FD, ALCO, accounts, transactions, admin.",
     responsibilities: [
       "File-based routes under src/routes/_authenticated/*",
       "Shared shell (sidebar, header, breadcrumbs) via AppShell",
@@ -45,7 +56,8 @@ const NODES: Node[] = [
     layer: "client",
     icon: Boxes,
     tag: "TanStack Query",
-    summary: "Client-side data cache. Loaders prefetch, components subscribe via useSuspenseQuery / useQuery.",
+    summary:
+      "Client-side data cache. Loaders prefetch, components subscribe via useSuspenseQuery / useQuery.",
     responsibilities: [
       "Deduplicates concurrent fetches",
       "Invalidated on mutations and company/currency changes",
@@ -92,7 +104,8 @@ const NODES: Node[] = [
     layer: "edge",
     icon: Workflow,
     tag: "createServerFn",
-    summary: "All app-internal business logic: FD engine, savings, ALCO proposals, workflow, platform admin.",
+    summary:
+      "All app-internal business logic: FD engine, savings, ALCO proposals, workflow, platform admin.",
     responsibilities: [
       "Zod-validated RPC callable from the browser",
       "Runs under requireSupabaseAuth middleware (user JWT)",
@@ -101,9 +114,12 @@ const NODES: Node[] = [
     reads: ["mw", "db"],
     writes: ["db", "lai"],
     files: [
-      "src/lib/fd.functions.ts", "src/lib/savings.functions.ts",
-      "src/lib/alco.functions.ts", "src/lib/workflow.functions.ts",
-      "src/lib/mzizi.functions.ts", "src/lib/platform-admin.functions.ts",
+      "src/lib/fd.functions.ts",
+      "src/lib/savings.functions.ts",
+      "src/lib/alco.functions.ts",
+      "src/lib/workflow.functions.ts",
+      "src/lib/mzizi.functions.ts",
+      "src/lib/platform-admin.functions.ts",
     ],
   },
   {
@@ -129,7 +145,8 @@ const NODES: Node[] = [
     layer: "edge",
     icon: Plug,
     tag: "/api/public/v1/*",
-    summary: "External-facing HTTP endpoints — CEFT, ATM, IB, CRIB, inbound/outbound transactions, health.",
+    summary:
+      "External-facing HTTP endpoints — CEFT, ATM, IB, CRIB, inbound/outbound transactions, health.",
     responsibilities: [
       "API-key + signature verification per request",
       "Uses service-role client after verification",
@@ -145,7 +162,8 @@ const NODES: Node[] = [
     layer: "cloud",
     icon: KeyRound,
     tag: "Supabase Auth",
-    summary: "Identity provider. Issues JWTs consumed by the browser and forwarded to server functions.",
+    summary:
+      "Identity provider. Issues JWTs consumed by the browser and forwarded to server functions.",
     responsibilities: [
       "Email/password + Google OAuth",
       "Session refresh; RLS uses auth.uid()",
@@ -160,7 +178,8 @@ const NODES: Node[] = [
     layer: "cloud",
     icon: Database,
     tag: "RLS · has_role · company-scoped",
-    summary: "Source of truth. Every public table has RLS + GRANTs; company scoping via current_company_id().",
+    summary:
+      "Source of truth. Every public table has RLS + GRANTs; company scoping via current_company_id().",
     responsibilities: [
       "Domain: clients, loans, savings, FD, ALCO, workflow, GL",
       "user_roles + has_role() for approver/admin gates",
@@ -175,7 +194,8 @@ const NODES: Node[] = [
     layer: "cloud",
     icon: Timer,
     tag: "scheduled jobs",
-    summary: "Calls back into /api/public/hooks/* on a schedule for FD accruals, interest payouts, maturity processing.",
+    summary:
+      "Calls back into /api/public/hooks/* on a schedule for FD accruals, interest payouts, maturity processing.",
     responsibilities: [
       "Daily accrual insert per active deposit (actual/365)",
       "Monthly interest payout scan",
@@ -204,7 +224,8 @@ const NODES: Node[] = [
     layer: "external",
     icon: Radio,
     tag: "CEFT · ATM · IB · CRIB",
-    summary: "Partner banking and credit-bureau systems that call the public API and receive callbacks.",
+    summary:
+      "Partner banking and credit-bureau systems that call the public API and receive callbacks.",
     responsibilities: [
       "Inbound transaction webhooks",
       "Outbound transfer requests",
@@ -219,7 +240,8 @@ const NODES: Node[] = [
     layer: "cloud",
     icon: Workflow,
     tag: "maker · checker",
-    summary: "Approval routing for loans, FD closures, ALCO rate changes and other sensitive mutations.",
+    summary:
+      "Approval routing for loans, FD closures, ALCO rate changes and other sensitive mutations.",
     responsibilities: [
       "Per transaction_type routing rules",
       "Records approvers, limits, timestamps",
@@ -247,10 +269,30 @@ const NODES: Node[] = [
 ];
 
 const LAYERS: { id: Layer; label: string; hint: string; className: string }[] = [
-  { id: "client",   label: "Browser",        hint: "React + TanStack Router",       className: "from-sky-500/10 to-sky-500/0 border-sky-500/30" },
-  { id: "edge",     label: "Edge (Worker)",  hint: "TanStack Start on Cloudflare",  className: "from-violet-500/10 to-violet-500/0 border-violet-500/30" },
-  { id: "cloud",    label: "Lovable Cloud",  hint: "Supabase — Auth, Postgres, Cron", className: "from-emerald-500/10 to-emerald-500/0 border-emerald-500/30" },
-  { id: "external", label: "External",       hint: "Partner systems & AI",          className: "from-amber-500/10 to-amber-500/0 border-amber-500/30" },
+  {
+    id: "client",
+    label: "Browser",
+    hint: "React + TanStack Router",
+    className: "from-sky-500/10 to-sky-500/0 border-sky-500/30",
+  },
+  {
+    id: "edge",
+    label: "Edge (Worker)",
+    hint: "TanStack Start on Cloudflare",
+    className: "from-violet-500/10 to-violet-500/0 border-violet-500/30",
+  },
+  {
+    id: "cloud",
+    label: "Lovable Cloud",
+    hint: "Supabase — Auth, Postgres, Cron",
+    className: "from-emerald-500/10 to-emerald-500/0 border-emerald-500/30",
+  },
+  {
+    id: "external",
+    label: "External",
+    hint: "Partner systems & AI",
+    className: "from-amber-500/10 to-amber-500/0 border-amber-500/30",
+  },
 ];
 
 export function ArchitectureExplorer() {
@@ -260,7 +302,9 @@ export function ArchitectureExplorer() {
   const related = new Set<string>([
     ...selected.reads,
     ...selected.writes,
-    ...NODES.filter((n) => n.reads.includes(selected.id) || n.writes.includes(selected.id)).map((n) => n.id),
+    ...NODES.filter((n) => n.reads.includes(selected.id) || n.writes.includes(selected.id)).map(
+      (n) => n.id,
+    ),
   ]);
 
   return (
@@ -270,12 +314,17 @@ export function ArchitectureExplorer() {
           <div>
             <CardTitle>System architecture</CardTitle>
             <p className="text-[12.5px] text-muted-foreground mt-1">
-              Click any component to inspect its responsibilities and see how it connects to the rest of the platform.
+              Click any component to inspect its responsibilities and see how it connects to the
+              rest of the platform.
             </p>
           </div>
           <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-primary" /> selected</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-primary/30" /> connected</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary" /> selected
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary/30" /> connected
+            </span>
           </div>
         </div>
 
@@ -291,7 +340,9 @@ export function ArchitectureExplorer() {
                 )}
               >
                 <div className="flex items-baseline justify-between px-1">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-foreground">{layer.label}</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-foreground">
+                    {layer.label}
+                  </div>
                   <div className="text-[10.5px] text-muted-foreground">{layer.hint}</div>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -312,15 +363,21 @@ export function ArchitectureExplorer() {
                         )}
                       >
                         <div className="flex items-center gap-2">
-                          <div className={cn(
-                            "w-7 h-7 rounded-md flex items-center justify-center flex-none",
-                            isSel ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
-                          )}>
+                          <div
+                            className={cn(
+                              "w-7 h-7 rounded-md flex items-center justify-center flex-none",
+                              isSel
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-foreground",
+                            )}
+                          >
                             <Icon size={15} />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="text-[13px] font-semibold truncate">{n.label}</div>
-                            <div className="text-[10.5px] text-muted-foreground truncate">{n.tag}</div>
+                            <div className="text-[10.5px] text-muted-foreground truncate">
+                              {n.tag}
+                            </div>
                           </div>
                         </div>
                       </button>
@@ -340,9 +397,13 @@ export function ArchitectureExplorer() {
 
 function DetailPanel({ node, onSelect }: { node: Node; onSelect: (id: string) => void }) {
   const Icon = node.icon;
-  const outbound = node.writes.map((id) => NODES.find((n) => n.id === id)).filter(Boolean) as Node[];
+  const outbound = node.writes
+    .map((id) => NODES.find((n) => n.id === id))
+    .filter(Boolean) as Node[];
   const inbound = NODES.filter((n) => n.writes.includes(node.id));
-  const readsFrom = node.reads.map((id) => NODES.find((n) => n.id === id)).filter(Boolean) as Node[];
+  const readsFrom = node.reads
+    .map((id) => NODES.find((n) => n.id === id))
+    .filter(Boolean) as Node[];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -359,7 +420,9 @@ function DetailPanel({ node, onSelect }: { node: Node; onSelect: (id: string) =>
         <p className="text-[13px] text-foreground/90 mt-3">{node.summary}</p>
 
         <div className="mt-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Responsibilities</div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+            Responsibilities
+          </div>
           <ul className="flex flex-col gap-1.5">
             {node.responsibilities.map((r) => (
               <li key={r} className="text-[13px] flex gap-2">
@@ -372,10 +435,17 @@ function DetailPanel({ node, onSelect }: { node: Node; onSelect: (id: string) =>
 
         {node.files && node.files.length > 0 && (
           <div className="mt-4">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Source</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+              Source
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {node.files.map((f) => (
-                <code key={f} className="text-[11.5px] px-2 py-1 rounded-md bg-muted text-foreground/80 font-mono">{f}</code>
+                <code
+                  key={f}
+                  className="text-[11.5px] px-2 py-1 rounded-md bg-muted text-foreground/80 font-mono"
+                >
+                  {f}
+                </code>
               ))}
             </div>
           </div>
@@ -385,18 +455,45 @@ function DetailPanel({ node, onSelect }: { node: Node; onSelect: (id: string) =>
       <Card>
         <CardTitle>Data flows</CardTitle>
 
-        <FlowGroup title="Reads from" nodes={readsFrom} onSelect={onSelect} empty="Doesn't read from other components." />
-        <FlowGroup title="Writes / calls" nodes={outbound} onSelect={onSelect} empty="Passive component — nothing outbound." />
-        <FlowGroup title="Called by" nodes={inbound} onSelect={onSelect} empty="No inbound callers." />
+        <FlowGroup
+          title="Reads from"
+          nodes={readsFrom}
+          onSelect={onSelect}
+          empty="Doesn't read from other components."
+        />
+        <FlowGroup
+          title="Writes / calls"
+          nodes={outbound}
+          onSelect={onSelect}
+          empty="Passive component — nothing outbound."
+        />
+        <FlowGroup
+          title="Called by"
+          nodes={inbound}
+          onSelect={onSelect}
+          empty="No inbound callers."
+        />
       </Card>
     </div>
   );
 }
 
-function FlowGroup({ title, nodes, onSelect, empty }: { title: string; nodes: Node[]; onSelect: (id: string) => void; empty: string }) {
+function FlowGroup({
+  title,
+  nodes,
+  onSelect,
+  empty,
+}: {
+  title: string;
+  nodes: Node[];
+  onSelect: (id: string) => void;
+  empty: string;
+}) {
   return (
     <div className="mt-3">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{title}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+        {title}
+      </div>
       {nodes.length === 0 ? (
         <div className="text-[12px] text-muted-foreground italic">{empty}</div>
       ) : (

@@ -12,7 +12,9 @@ function AccountStatements() {
       <Card className="p-8 text-center">
         <FileText size={32} className="mx-auto text-blue-600 mb-3" />
         <div className="font-semibold text-[15px]">Account Statements</div>
-        <div className="text-[12.5px] text-muted-foreground mt-1">Coming soon — view and download facility account statements.</div>
+        <div className="text-[12.5px] text-muted-foreground mt-1">
+          Coming soon — view and download facility account statements.
+        </div>
       </Card>
     </div>
   );
