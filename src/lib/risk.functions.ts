@@ -262,14 +262,12 @@ export const upsertRiskBand = createServerFn({ method: "POST" })
         .eq("id", (existing as any).id);
       if (error) throw error;
     } else {
-      const { error } = await supabase
-        .from("risk_band")
-        .insert({
-          company_id: companyId,
-          band: data.band,
-          min_pct: data.min_pct,
-          max_pct: data.max_pct,
-        });
+      const { error } = await supabase.from("risk_band").insert({
+        company_id: companyId,
+        band: data.band,
+        min_pct: data.min_pct,
+        max_pct: data.max_pct,
+      });
       if (error) throw error;
     }
     return { ok: true };

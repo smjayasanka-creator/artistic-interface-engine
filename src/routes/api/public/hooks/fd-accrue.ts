@@ -47,14 +47,12 @@ export const Route = createFileRoute("/api/public/hooks/fd-accrue")({
             .maybeSingle();
           const cumulative = Number((Number(prev?.cumulative_amount ?? 0) + daily).toFixed(2));
 
-          const { error: insErr } = await supabaseAdmin
-            .from("fd_accrual")
-            .insert({
-              deposit_id: d.id,
-              accrual_date: today,
-              daily_amount: daily,
-              cumulative_amount: cumulative,
-            });
+          const { error: insErr } = await supabaseAdmin.from("fd_accrual").insert({
+            deposit_id: d.id,
+            accrual_date: today,
+            daily_amount: daily,
+            cumulative_amount: cumulative,
+          });
           if (insErr) {
             // Duplicate (already accrued today) is fine; anything else is a real error.
             if (!/duplicate|unique/i.test(insErr.message)) skipped++;
