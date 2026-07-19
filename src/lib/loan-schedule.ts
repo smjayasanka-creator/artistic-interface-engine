@@ -368,7 +368,90 @@ export function generateSchedule(opts: {
 
 // ---------------------------------------------------------------------------
 // Structured schedule (same date engine)
+//
+// Manual override semantics — enforced by this engine and mirrored by the
+// database disbursement RPC:
+//
+//   * Every entry in `overrides` is the EXACT total payment the user wants
+//     for that installment. It is never silently replaced — not even the
+//     final installment.
+//   * Overrides are validated: sequence must be an integer in [1, n],
+//     duplicates are rejected, amounts must be finite and ≥ 0.
+//   * Automatic installments are recalculated around the fixed manual
+//     payments. Any rounding residual (in currency minor units) is
+//     absorbed by the LAST eligible automatic installment — never by
+//     a manually overridden row.
+//   * When every installment is manual, the schedule must fully amortize
+//     the loan within the currency tolerance (1 minor unit). Under- or
+//     over-payment surfaces as a structured error and is NOT silently
+//     corrected.
+//   * Flat interest: contractual interest total is fixed; manual payments
+//     below their row's interest are rejected (capitalization is not
+//     supported for flat schedules). Remaining principal is distributed
+//     across automatic rows and any resulting negative auto principal is
+//     rejected.
+//   * Declining balance: interest is recomputed from the opening balance
+//     each period. Manual payments below accrued interest are rejected
+//     unless the caller explicitly opts into capitalization
+//     (`allowCapitalization: true`). Automatic payments are solved so the
+//     balance amortizes to zero; a negative solved payment is rejected.
+//   * All internal arithmetic runs in integer minor units (cents) so
+//     rounding is deterministic and the preview matches the DB result.
 // ---------------------------------------------------------------------------
+
+export interface StructuredScheduleError {
+  code:
+    | "invalid_sequence"
+    | "duplicate_sequence"
+    | "not_finite"
+    | "negative_amount"
+    | "below_interest"
+    | "negative_auto_principal"
+    | "negative_auto_payment"
+    | "underpayment"
+    | "overpayment"
+    | "all_manual_mismatch"
+    | "row_imbalance";
+  seq?: number;
+  message: string;
+}
+
+export interface StructuredScheduleResult extends ScheduleSummary {
+  errors: StructuredScheduleError[];
+  /** Kept for back-compat; new callers should use `errors`. */
+  warnings: string[];
+  isValid: boolean;
+  /** Auto rows whose payment/principal were recalculated because of overrides. */
+  recalculatedAutoSeqs: number[];
+  /** Normalized overrides actually applied (invalid entries dropped). */
+  appliedOverrides: Record<number, number>;
+}
+
+// ----- integer minor-unit (cents) helpers ---------------------------------
+
+const CENT = 100;
+const CENT_TOLERANCE = 1; // 1 cent
+const toCents = (v: number): number => Math.round(v * CENT);
+const fromCents = (c: number): number => Math.round(c) / CENT;
+
+/**
+ * Distribute `totalCents` across `n` slots so the cumulative floor is
+ * exact — `sum(slot_i) === totalCents` and each slot differs by at most
+ * one cent from `totalCents / n`.
+ */
+function distributeCents(totalCents: number, n: number): number[] {
+  if (n <= 0) return [];
+  const sign = totalCents < 0 ? -1 : 1;
+  const abs = Math.abs(totalCents);
+  const out: number[] = new Array(n);
+  let prev = 0;
+  for (let i = 1; i <= n; i++) {
+    const cur = Math.floor((abs * i) / n);
+    out[i - 1] = sign * (cur - prev);
+    prev = cur;
+  }
+  return out;
+}
 
 export function generateStructuredSchedule(opts: {
   principal: number;
@@ -377,109 +460,263 @@ export function generateStructuredSchedule(opts: {
   frequency: Frequency;
   method?: InterestMethod;
   overrides: Record<number, number>;
-} & DateOpts): ScheduleSummary & { warnings: string[] } {
-  const { principal, annualRatePct, termMonths, frequency, method = "flat", overrides } = opts;
+  /**
+   * If true AND method === "declining_balance", a manual payment below the
+   * period's accrued interest is allowed and the shortfall capitalizes
+   * (balance grows). Never enabled implicitly.
+   */
+  allowCapitalization?: boolean;
+} & DateOpts): StructuredScheduleResult {
+  const {
+    principal,
+    annualRatePct,
+    termMonths,
+    frequency,
+    method = "flat",
+    overrides,
+    allowCapitalization = false,
+  } = opts;
   const meta = FREQ_META[frequency];
   const n = installmentCount(termMonths, frequency);
   const periodRate = annualRatePct / 100 / meta.perYear;
+
+  const errors: StructuredScheduleError[] = [];
   const warnings: string[] = [];
 
   const firstDue = resolveFirstDueDate(opts, frequency);
   const dueDates = buildDueDates(firstDue, n, frequency, opts.businessDay);
 
-  const manualSeqs = new Set(
-    Object.keys(overrides)
-      .map((k) => Number(k))
-      .filter((k) => k >= 1 && k <= n && Number.isFinite(overrides[k])),
-  );
+  // ----- validate + normalize overrides -----
+  const appliedOverrides: Record<number, number> = {};
+  const overrideCents: Record<number, number> = {};
+  const seenSeqs = new Set<number>();
+  for (const key of Object.keys(overrides)) {
+    const raw = (overrides as Record<string, unknown>)[key];
+    if (!/^-?\d+$/.test(key)) {
+      errors.push({ code: "invalid_sequence", message: `Invalid override sequence key: "${key}"` });
+      continue;
+    }
+    const seq = Number(key);
+    if (!Number.isInteger(seq) || seq < 1 || seq > n) {
+      errors.push({ code: "invalid_sequence", seq, message: `Override sequence ${seq} is out of range 1..${n}` });
+      continue;
+    }
+    if (seenSeqs.has(seq)) {
+      errors.push({ code: "duplicate_sequence", seq, message: `Duplicate override for row ${seq}` });
+      continue;
+    }
+    seenSeqs.add(seq);
+    if (typeof raw !== "number" || !Number.isFinite(raw)) {
+      errors.push({ code: "not_finite", seq, message: `Row ${seq}: payment must be a finite number` });
+      continue;
+    }
+    if (raw < 0) {
+      errors.push({ code: "negative_amount", seq, message: `Row ${seq}: payment must be ≥ 0` });
+      continue;
+    }
+    appliedOverrides[seq] = raw;
+    overrideCents[seq] = toCents(raw);
+  }
 
-  const rows: ScheduleRow[] = [];
+  const manualSeqs = new Set<number>(Object.keys(appliedOverrides).map(Number));
+  const autoSeqs: number[] = [];
+  for (let i = 1; i <= n; i++) if (!manualSeqs.has(i)) autoSeqs.push(i);
+  const lastAutoSeq = autoSeqs.length > 0 ? autoSeqs[autoSeqs.length - 1] : null;
+  const recalculatedAutoSeqs = manualSeqs.size > 0 ? [...autoSeqs] : [];
+
+  const principalCents = toCents(principal);
+  const rows: ScheduleRow[] = new Array(n);
 
   if (method === "flat") {
-    const totalInt = principal * (annualRatePct / 100) * (termMonths / 12);
-    const interestPer = totalInt / n;
+    // Fixed contractual interest total, distributed exactly across rows.
+    const totalIntCents = toCents(principal * (annualRatePct / 100) * (termMonths / 12));
+    const interestPerRow = distributeCents(totalIntCents, n);
+
+    // Manual principal per row = payment - interest for that row.
+    const manualPrincipalCents: Record<number, number> = {};
     let manualPrincipalSum = 0;
-    const manualPrincipal: Record<number, number> = {};
-    for (const s of manualSeqs) {
-      const p = overrides[s] - interestPer;
-      manualPrincipal[s] = p;
+    for (const seq of manualSeqs) {
+      const p = overrideCents[seq] - interestPerRow[seq - 1];
+      if (p < 0) {
+        errors.push({
+          code: "below_interest",
+          seq,
+          message: `Row ${seq}: payment is below the row's interest (flat schedules do not support capitalization).`,
+        });
+      }
+      manualPrincipalCents[seq] = p;
       manualPrincipalSum += p;
     }
-    const autoCount = n - manualSeqs.size;
-    const autoPrincipalTotal = principal - manualPrincipalSum;
-    const autoPrincipalPer = autoCount > 0 ? autoPrincipalTotal / autoCount : 0;
-    if (autoCount > 0 && autoPrincipalPer < 0) {
-      warnings.push("Manual rentals exceed the principal; auto rows would be negative.");
+
+    const autoPrincipalTotal = principalCents - manualPrincipalSum;
+    let autoPrincipals: number[] = [];
+    if (autoSeqs.length > 0) {
+      autoPrincipals = distributeCents(autoPrincipalTotal, autoSeqs.length);
+      // Move rounding residual to the LAST auto row is already implicit in
+      // distributeCents (last slot absorbs residual because of cumulative
+      // flooring). Any negative slot means overrides exceed the loan.
+      for (let idx = 0; idx < autoSeqs.length; idx++) {
+        if (autoPrincipals[idx] < 0) {
+          errors.push({
+            code: "negative_auto_principal",
+            seq: autoSeqs[idx],
+            message: `Row ${autoSeqs[idx]}: automatic principal would be negative — manual rentals exceed the loan.`,
+          });
+        }
+      }
+    } else if (Math.abs(autoPrincipalTotal) > CENT_TOLERANCE) {
+      errors.push({
+        code: autoPrincipalTotal > 0 ? "underpayment" : "overpayment",
+        message: `Manual rentals do not fully amortize the loan (residual ${fromCents(autoPrincipalTotal)}).`,
+      });
     }
-    let balance = principal;
+
+    let autoIdx = 0;
+    let balCents = principalCents;
     for (let i = 1; i <= n; i++) {
       const isManual = manualSeqs.has(i);
-      let principalPart = isManual ? manualPrincipal[i] : autoPrincipalPer;
-      if (i === n) principalPart = balance;
-      balance = round2(balance - principalPart);
-      rows.push({
+      const interestCents = interestPerRow[i - 1];
+      const principalPartCents = isManual ? manualPrincipalCents[i] : autoPrincipals[autoIdx++] ?? 0;
+      const paymentCents = principalPartCents + interestCents;
+      balCents -= principalPartCents;
+      rows[i - 1] = {
         seq: i,
         dueDate: dueDates[i - 1],
-        principal: round2(principalPart),
-        interest: round2(interestPer),
-        payment: round2(principalPart + interestPer),
-        balance: Math.max(0, balance),
+        principal: fromCents(principalPartCents),
+        interest: fromCents(interestCents),
+        payment: fromCents(paymentCents),
+        balance: fromCents(Math.max(0, balCents)),
         isManual,
+      };
+    }
+    if (errors.length === 0 && Math.abs(balCents) > CENT_TOLERANCE) {
+      // Should not happen with distributeCents, but guard anyway.
+      errors.push({
+        code: balCents > 0 ? "underpayment" : "overpayment",
+        message: `Final balance is ${fromCents(balCents)} (should be 0).`,
       });
     }
   } else {
+    // Declining balance. Solve autoPayment via closed-form future-value
+    // identity, then simulate row-by-row in cents. The last auto row
+    // absorbs the rounding residual so the closing balance is exactly 0.
     const growth = (k: number) => Math.pow(1 + periodRate, k);
     let manualFV = 0;
     let autoCoeff = 0;
     for (let i = 1; i <= n; i++) {
       const w = growth(n - i);
-      if (manualSeqs.has(i)) manualFV += (overrides[i] ?? 0) * w;
+      if (manualSeqs.has(i)) manualFV += appliedOverrides[i] * w;
       else autoCoeff += w;
     }
-    const autoCount = n - manualSeqs.size;
     const targetFV = principal * growth(n);
-    let autoPayment = 0;
-    if (autoCount > 0) {
-      autoPayment = (targetFV - manualFV) / autoCoeff;
-      if (autoPayment < 0) {
-        warnings.push("Manual rentals exceed the loan requirement; auto rentals would be negative.");
+
+    let autoPaymentCents = 0;
+    if (autoSeqs.length > 0) {
+      const solved = periodRate === 0
+        ? (targetFV - manualFV) / autoSeqs.length
+        : (targetFV - manualFV) / autoCoeff;
+      autoPaymentCents = toCents(solved);
+      if (autoPaymentCents < 0) {
+        errors.push({
+          code: "negative_auto_payment",
+          message: `Manual rentals exceed the loan requirement — automatic payments would be negative.`,
+        });
       }
-    } else if (Math.abs(manualFV - targetFV) > 0.01) {
-      warnings.push("Manual rentals do not fully amortize the loan.");
     }
 
-    let balance = principal;
+    let balCents = principalCents;
     for (let i = 1; i <= n; i++) {
       const isManual = manualSeqs.has(i);
-      const interest = balance * periodRate;
-      const payment = isManual ? overrides[i] : autoPayment;
-      let principalPart = payment - interest;
-      if (isManual && principalPart < 0) {
-        warnings.push(`Row ${i}: rental below interest — shortfall capitalized.`);
+      // Interest from opening balance, in cents.
+      const interestCents = Math.round(balCents * periodRate);
+      let paymentCents: number;
+      let principalPartCents: number;
+
+      if (isManual) {
+        paymentCents = overrideCents[i];
+        principalPartCents = paymentCents - interestCents;
+        if (principalPartCents < 0 && !allowCapitalization) {
+          errors.push({
+            code: "below_interest",
+            seq: i,
+            message: `Row ${i}: payment is below accrued interest and capitalization is not enabled.`,
+          });
+        }
+      } else if (i === lastAutoSeq) {
+        // Residual absorption — always on an automatic row.
+        principalPartCents = balCents;
+        paymentCents = principalPartCents + interestCents;
+        if (paymentCents < 0) {
+          errors.push({
+            code: "negative_auto_payment",
+            seq: i,
+            message: `Row ${i}: automatic payment would be negative.`,
+          });
+        }
+      } else {
+        paymentCents = autoPaymentCents;
+        principalPartCents = paymentCents - interestCents;
+        if (principalPartCents < 0) {
+          errors.push({
+            code: "negative_auto_principal",
+            seq: i,
+            message: `Row ${i}: automatic payment does not cover interest.`,
+          });
+        }
       }
-      if (i === n) principalPart = balance;
-      balance = balance - principalPart;
-      rows.push({
+
+      balCents -= principalPartCents;
+
+      rows[i - 1] = {
         seq: i,
         dueDate: dueDates[i - 1],
-        principal: round2(principalPart),
-        interest: round2(interest),
-        payment: round2(principalPart + interest),
-        balance: round2(Math.max(0, balance)),
+        principal: fromCents(principalPartCents),
+        interest: fromCents(interestCents),
+        payment: fromCents(paymentCents),
+        balance: fromCents(Math.max(0, balCents)),
         isManual,
+      };
+    }
+
+    if (autoSeqs.length === 0 && Math.abs(balCents) > CENT_TOLERANCE) {
+      errors.push({
+        code: balCents > 0 ? "underpayment" : "overpayment",
+        message: `Manual rentals do not fully amortize the loan (residual ${fromCents(balCents)}).`,
+      });
+    } else if (autoSeqs.length > 0 && errors.length === 0 && Math.abs(balCents) > CENT_TOLERANCE) {
+      errors.push({
+        code: "row_imbalance",
+        message: `Final balance is ${fromCents(balCents)} after residual absorption (should be 0).`,
       });
     }
   }
 
-  const totalPayment = round2(rows.reduce((s, r) => s + r.payment, 0));
-  const totalInterest = round2(rows.reduce((s, r) => s + r.interest, 0));
+  const totalPaymentCents = rows.reduce((s, r) => s + toCents(r.payment), 0);
+  const totalInterestCents = rows.reduce((s, r) => s + toCents(r.interest), 0);
+
+  // Per-row invariant sanity check (payment = principal + interest within tol).
+  for (const r of rows) {
+    const diff = toCents(r.payment) - toCents(r.principal) - toCents(r.interest);
+    if (Math.abs(diff) > CENT_TOLERANCE) {
+      errors.push({
+        code: "row_imbalance",
+        seq: r.seq,
+        message: `Row ${r.seq}: payment ≠ principal + interest.`,
+      });
+    }
+  }
+
   return {
     rows,
-    totalPayment,
-    totalInterest,
+    totalPayment: fromCents(totalPaymentCents),
+    totalInterest: fromCents(totalInterestCents),
     installmentCount: n,
     perPayment: rows[0]?.payment ?? 0,
     maturityDate: rows[rows.length - 1]?.dueDate,
+    errors,
     warnings,
+    isValid: errors.length === 0,
+    recalculatedAutoSeqs,
+    appliedOverrides,
   };
 }
