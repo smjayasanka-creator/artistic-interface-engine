@@ -38,7 +38,7 @@ function LoanNotFound() {
   );
 }
 
-type TabKey = "overview" | "schedule" | "repayments" | "charges" | "accruals" | "approvals";
+type TabKey = "overview" | "schedule" | "repayments" | "charges" | "accruals" | "approvals" | "application";
 
 const TABS: { key: TabKey; label: string; icon: any }[] = [
   { key: "overview", label: "Overview", icon: FileText },
@@ -47,7 +47,9 @@ const TABS: { key: TabKey; label: string; icon: any }[] = [
   { key: "charges", label: "Charges", icon: TrendingUp },
   { key: "accruals", label: "Accruals", icon: Activity },
   { key: "approvals", label: "Approvals", icon: ShieldCheck },
+  { key: "application", label: "Application", icon: ClipboardList },
 ];
+
 
 function LoanDetail() {
   const { id } = Route.useParams();
