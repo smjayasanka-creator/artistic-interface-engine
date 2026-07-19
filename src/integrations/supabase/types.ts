@@ -6915,6 +6915,15 @@ export type Database = {
         Returns: string
       }
       resolve_loan_approval_chain: { Args: { _loan_id: string }; Returns: Json }
+      resolve_loan_approval_chain_raw: {
+        Args: {
+          _annual_rate_pct: number
+          _client_id: string
+          _principal: number
+          _product_id: string
+        }
+        Returns: Json
+      }
       seed_default_risk_scheme: {
         Args: { _company_id: string }
         Returns: undefined
