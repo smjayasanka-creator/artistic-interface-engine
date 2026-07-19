@@ -186,7 +186,7 @@ export const getPlatformProgress = createServerFn({ method: "GET" })
       const actor = (row.actor_role as string) ?? (row.actor_user_id as string) ?? null;
       const summary = `${row.action ?? ""} ${entity}${row.entity_id ? ` #${String(row.entity_id).slice(0, 8)}` : ""}`;
       for (const tab of Object.keys(TAB_SCOPE) as ProgressTab[]) {
-        const ents = TAB_SCOPE[tab].entities;
+        const ents = TAB_SCOPE[tab].entities as readonly string[] | null;
         if (ents === null || ents.includes(entity)) {
           activity_by_tab[tab].push({
             id: String(row.id),
