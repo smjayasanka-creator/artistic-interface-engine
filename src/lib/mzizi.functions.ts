@@ -2338,17 +2338,39 @@ export const createJournalEntry = createServerFn({ method: "POST" })
   });
 
 
+// Pending disbursements now come from the canonical origination table
+// (`loan_application`) rather than the legacy `loan` rows. Only approved
+// applications that have not yet been copied into a `loan` are eligible.
 export const getPendingDisbursements = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("loan")
-      .select("id, principal, term_months, annual_rate_pct, frequency, submitted_at, approved_at, status, client:client_id(id, full_name, avatar_color), product:product_id(name), branch:branch_id(id, name, code)")
+    const { data, error } = await (context.supabase as any)
+      .from("loan_application")
+      .select(
+        "id, application_no, requested_principal, requested_tenor_months, requested_rate_pct, frequency, submitted_at, decided_at, status, loan_id, client:client_id(id, full_name, avatar_color), product:product_id(id, name), branch:branch_id(id, name, code)",
+      )
       .eq("status", "approved")
-      .order("approved_at", { ascending: false });
+      .is("loan_id", null)
+      .order("decided_at", { ascending: false });
     if (error) throw error;
-    return data ?? [];
+    // Normalize shape so the UI can keep using `principal`, `submitted_at`, etc.
+    return (data ?? []).map((r: any) => ({
+      id: r.id,                     // application id (used for disburseApplication)
+      application_id: r.id,
+      application_no: r.application_no,
+      principal: r.requested_principal,
+      term_months: r.requested_tenor_months,
+      annual_rate_pct: r.requested_rate_pct,
+      frequency: r.frequency,
+      submitted_at: r.submitted_at,
+      approved_at: r.decided_at,
+      status: r.status,
+      client: r.client,
+      product: r.product,
+      branch: r.branch,
+    }));
   });
+
 
 export const createDebitNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
