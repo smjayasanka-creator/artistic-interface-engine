@@ -1306,6 +1306,33 @@ export const submitApplication = createServerFn({ method: "POST" })
     });
     if (cerr) throw new Error(cerr.message);
 
+    // Origination-first: create a loan_application row alongside the operational loan.
+    const nowIso = new Date().toISOString();
+    const { data: appRow, error: appErr } = await (supabase as any)
+      .from("loan_application")
+      .insert({
+        company_id: (product as any).company_id,
+        branch_id: staff.branch_id,
+        client_id: data.client_id,
+        product_id: data.product_id,
+        officer_id: staff.id,
+        requested_principal: data.principal,
+        requested_tenor_months: data.term_months,
+        requested_rate_pct: data.annual_rate_pct ?? (product as any).annual_rate_pct,
+        frequency: (data.frequency ?? (product as any).frequency) as any,
+        currency: "KES",
+        purpose: data.purpose ?? null,
+        channel: "branch",
+        status: data.draft ? "draft" : "submitted",
+        submitted_at: data.draft ? null : nowIso,
+        created_by: context.userId,
+      })
+      .select("id, application_no")
+      .single();
+    if (appErr) throw new Error(appErr.message);
+    const appId = (appRow as any).id as string;
+    const appNo = (appRow as any).application_no as string;
+
     const { data: loan, error } = await supabase
       .from("loan")
       .insert({
@@ -1325,10 +1352,13 @@ export const submitApplication = createServerFn({ method: "POST" })
             ? (data.schedule_overrides as Record<string, number>)
             : null,
         contract_no: contractNo,
+        application_id: appId,
+        application_no: appNo,
       } as never)
       .select()
       .single();
     if (error) throw error;
+
 
     if (data.initial_charges && data.initial_charges.length) {
       const rows = data.initial_charges.map((c) => ({
@@ -1354,8 +1384,32 @@ export const submitApplication = createServerFn({ method: "POST" })
       if (secErr) throw new Error(secErr.message);
     }
 
-    return loan;
+    // Mirror securities into origination trail for retention/audit.
+    if (data.securities && data.securities.length) {
+      const collateralRows = data.securities.map((s) => ({
+        application_id: appId,
+        application_no: appNo,
+        security_type_id: s.security_type_id,
+        values: s.values ?? {},
+        notes: s.notes ?? null,
+        documents: s.documents ?? [],
+      }));
+      await (supabase as any).from("loan_application_collateral").insert(collateralRows);
+    }
+
+    // Seed status history so the origination trail reflects the initial state.
+    await (supabase as any).from("loan_application_status_history").insert({
+      application_id: appId,
+      application_no: appNo,
+      from_status: null,
+      to_status: data.draft ? "draft" : "submitted",
+      actor_id: context.userId,
+      reason: data.draft ? "Draft saved" : "Submitted from application form",
+    });
+
+    return { ...(loan as any), application_id: appId, application_no: appNo };
   });
+
 
 export const declineLoan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
