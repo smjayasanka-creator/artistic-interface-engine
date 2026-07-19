@@ -68,7 +68,7 @@ export function PlatformProgress({ tab }: Props) {
       >
         <div className="flex items-center gap-2">
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          <CardTitle className="!mb-0">Progress snapshot</CardTitle>
+          <CardTitle>Progress snapshot</CardTitle>
           <span className="text-[11px] text-muted-foreground">
             {data.generated_at ? `updated ${shortDate(data.generated_at)}` : ""}
           </span>
