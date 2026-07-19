@@ -10,6 +10,7 @@ import {
   CANONICAL_TX_TYPES,
 } from "@/lib/workflow.functions";
 import { Modal } from "@/components/mzizi/Modal";
+import { LoanApprovalDetail } from "@/components/mzizi/LoanApprovalDetail";
 import { btnPrimaryCls, btnSecondaryCls, inputCls } from "@/components/mzizi/FormGrid";
 import { cn } from "@/lib/utils";
 import { money, shortDate } from "@/lib/format";
@@ -74,7 +75,7 @@ export function InstanceDetailModal({
   };
 
   return (
-    <Modal open onClose={onClose} title={`Approval · ${instance.reference_label}`} width={640}>
+    <Modal open onClose={onClose} title={`Approval · ${instance.reference_label}`} width={refData?.kind === "loan" ? 1000 : 640}>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[12px]">
           <MetaRow label="Transaction" value={txLabel} />
@@ -96,6 +97,8 @@ export function InstanceDetailModal({
           </div>
           {refLoading ? (
             <div className="text-[12px] text-faint">Loading…</div>
+          ) : refData?.kind === "loan" && refData?.data ? (
+            <LoanApprovalDetail loan={refData.data} />
           ) : (
             <ReferenceView kind={refData?.kind} data={refData?.data} />
           )}
