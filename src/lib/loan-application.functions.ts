@@ -66,12 +66,46 @@ export const createLoanApplication = createServerFn({ method: "POST" })
     return row as unknown as { id: string; application_no: string };
   });
 
+// Fields a company member may edit while the application is still mutable
+// (draft / under_review). Sensitive fields (company_id, status,
+// application_no, created_by, submitted_at, decided_at, disbursed_at,
+// loan_id, workflow_instance_id) are intentionally excluded.
+const UpdatableAppFields = z.object({
+  client_id: z.string().uuid().nullable().optional(),
+  product_id: z.string().uuid().nullable().optional(),
+  officer_id: z.string().uuid().nullable().optional(),
+  branch_id: z.string().uuid().optional(),
+  requested_principal: z.number().nonnegative().optional(),
+  requested_tenor_months: z.number().int().nonnegative().optional(),
+  requested_rate_pct: z.number().nullable().optional(),
+  frequency: z.string().nullable().optional(),
+  currency: z.string().optional(),
+  purpose: z.string().nullable().optional(),
+  channel: z.string().nullable().optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
+}).strict();
+
 export const updateLoanApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { id: string; patch: Record<string, any> }) =>
-    z.object({ id: z.string().uuid(), patch: z.record(z.string(), z.any()) }).parse(i))
+  .inputValidator((i: { id: string; patch: Record<string, unknown> }) =>
+    z.object({
+      id: z.string().uuid(),
+      patch: UpdatableAppFields,
+    }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
+    // Guard: only mutable statuses (draft / under_review) may be edited.
+    const { data: cur, error: curErr } = await supabase
+      .from("loan_application" as any)
+      .select("status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (curErr) throw new Error(curErr.message);
+    if (!cur) throw new Error("Application not found");
+    const status = (cur as any).status as string;
+    if (!["draft", "under_review"].includes(status)) {
+      throw new Error(`Application in status '${status}' is not editable`);
+    }
     const { error } = await supabase.from("loan_application" as any)
       .update(data.patch as any).eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -172,28 +206,18 @@ export const recordApplicationDecision = createServerFn({ method: "POST" })
     workflow_instance_id: z.string().uuid().optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: app, error } = await supabase.from("loan_application" as any)
-      .select("id, application_no, status").eq("id", data.application_id).maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!app) throw new Error("Application not found");
-    await supabase.from("loan_application_approval" as any).insert({
-      application_id: data.application_id,
-      application_no: (app as any).application_no,
-      workflow_instance_id: data.workflow_instance_id ?? null,
-      step_key: data.step_key ?? null,
-      decision: data.decision,
-      decided_by: userId,
-      comment: data.comment ?? null,
+    const { supabase } = context;
+    // Atomic authorization + writes happen server-side in the RPC.
+    const { data: res, error } = await supabase.rpc("decide_loan_application" as any, {
+      _application_id: data.application_id,
+      _decision: data.decision,
+      _comment: data.comment ?? null,
+      _step_key: data.step_key ?? null,
+      _workflow_instance_id: data.workflow_instance_id ?? null,
     } as any);
-    const next = data.decision === "approve" ? "approved"
-      : data.decision === "reject" ? "rejected" : "under_review";
-    const patch: any = { status: next };
-    if (next === "approved" || next === "rejected") patch.decided_at = new Date().toISOString();
-    const { error: e2 } = await supabase.from("loan_application" as any).update(patch).eq("id", data.application_id);
-    if (e2) throw new Error(e2.message);
-    await pushStatus(supabase, (app as any).id, (app as any).application_no, (app as any).status, next, data.comment, userId);
-    return { ok: true, status: next };
+    if (error) throw new Error(error.message);
+    const status = (res as any)?.status as string | undefined;
+    return { ok: true, status: status ?? "under_review" };
   });
 
 export const cancelLoanApplication = createServerFn({ method: "POST" })
