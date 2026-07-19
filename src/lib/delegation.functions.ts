@@ -209,6 +209,30 @@ export const previewLoanApprovalChain = createServerFn({ method: "POST" })
     return r as { rule_id: string | null; rule_name: string | null; steps: any[] };
   });
 
+export const previewLoanApprovalChainRaw = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      client_id: z.string().uuid(),
+      product_id: z.string().uuid(),
+      principal: z.number().nonnegative(),
+      annual_rate_pct: z.number().nonnegative(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: r, error } = await context.supabase.rpc(
+      "resolve_loan_approval_chain_raw" as any,
+      {
+        _client_id: data.client_id,
+        _product_id: data.product_id,
+        _principal: data.principal,
+        _annual_rate_pct: data.annual_rate_pct,
+      } as any,
+    );
+    if (error) throw new Error(error.message);
+    return r as { rule_id: string | null; rule_name: string | null; steps: any[] };
+  });
+
 /* ---------------- Start dynamic loan workflow ---------------- */
 
 export const startLoanApprovalDynamic = createServerFn({ method: "POST" })
