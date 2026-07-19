@@ -2,14 +2,16 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { ArrowLeft, Building2, AlertTriangle, Calendar, TrendingUp, FileText, Receipt, Activity, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Building2, AlertTriangle, Calendar, TrendingUp, FileText, Receipt, Activity, ShieldCheck, ClipboardList } from "lucide-react";
 import { getLoan } from "@/lib/mzizi.functions";
+import { getLoanApplication } from "@/lib/loan-application.functions";
 import { Card } from "@/components/mzizi/Card";
 import { StatusBadge } from "@/components/mzizi/Badge";
 import { Avatar } from "@/components/mzizi/Avatar";
 import { LoanLifecycleActions } from "@/components/mzizi/LoanLifecycleActions";
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/loans/$id")({
   component: LoanDetail,
