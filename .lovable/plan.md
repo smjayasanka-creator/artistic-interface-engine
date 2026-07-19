@@ -1,140 +1,107 @@
 
-# Loan Application Data Model
+# Dynamic Delegation Authority & Workflow Engine
 
-Separate loan **origination** (pre-disbursement) from **loan servicing** (post-disbursement). Origination lives in a new `loan_application_*` family. The existing `loan` table stays as the operational system of record, populated at disbursement.
+Replace the current fixed `delegation_authority` (security-type / LTV / amount / rate ranges only) with a rules-driven authority engine that resolves loan approval chains at submission time — no code changes needed to adjust limits.
 
-## Answers we're building against
-- Back-fill: synthetic application rows for every existing loan.
-- Cutover: copy-on-disburse — new `loan` row is created when disbursement completes, linked by `application_no`.
-- Sub-tables: all 12.
-- Numbering: single global sequence, `AP` + 6-digit zero-padded (`AP000001`).
+## 1. Data model (new tables, old kept for back-compat until cutover)
 
----
+### `delegation_authority` (redesigned — MASTER)
+Replaces current table. Fields:
+- `code` (unique per company, e.g. `L1`, `BM`, `CREDIT_CMTE`)
+- `name`, `description`
+- `level` int (1 = lowest, higher = stronger; used for escalation ordering)
+- `effective_from`, `effective_to` (nullable), `status` (`active`/`inactive`)
+- `company_id`, timestamps, `created_by`
 
-## 1. Schema (migration)
+### `delegation_authority_member`
+Who can act as this authority. One authority ↔ many members.
+- `authority_id`
+- `member_type` (`user` | `custom_role` | `staff_role`)
+- `member_ref` (uuid for user/custom_role, text for staff_role enum)
+- `is_backup` bool (used for absence delegation)
 
-### 1.1 Global sequence + generator
+### `delegation_authority_delegate` (absence delegation)
+- `authority_id`, `from_user_id`, `to_user_id`, `from_date`, `to_date`, `reason`
 
-```sql
-CREATE SEQUENCE public.loan_application_no_seq START 1;
+### `delegation_rule`
+Configurable matcher → authority chain.
+- `company_id`, `name`, `active`, `priority` int (lower = evaluated first)
+- `rule_scope` enum: `user` | `branch` | `region` | `product` | `default` (drives tie-break per spec)
+- Filters (all nullable — NULL = wildcard):
+  - `user_id`, `custom_role_id`, `branch_id`, `region` text,
+  - `product_id`, `security_type_id` (equipment type),
+  - `amount_min`, `amount_max`,
+  - `rate_min`, `rate_max`,
+  - `risk_grade` text (matches `client.risk_grade`)
+- `effective_from`, `effective_to`, timestamps
 
-CREATE OR REPLACE FUNCTION public.next_loan_application_no()
-RETURNS text LANGUAGE sql VOLATILE SET search_path=public AS $$
-  SELECT 'AP' || lpad(nextval('public.loan_application_no_seq')::text, 6, '0');
-$$;
-```
+### `delegation_rule_step`
+Ordered approval chain for a rule.
+- `rule_id`, `seq` int, `authority_id`, `mode` (`sequential` default),
+- `sla_hours` int (for escalation), `escalate_to_authority_id` nullable
 
-### 1.2 Master
+### Audit
+Extend existing `workflow_action` + add `workflow_instance.applied_rule_id`, `workflow_step.authority_id`, `workflow_step.escalated_at`. Existing `audit_log` captures decisions/comments.
 
-```
-loan_application
-  id, application_no (unique, default next_loan_application_no())
-  company_id, branch_id, client_id, product_id
-  requested_principal, requested_tenor_months, currency
-  purpose, channel, status  -- draft|submitted|under_review|approved|rejected|disbursed|cancelled
-  submitted_at, decided_at, disbursed_at
-  loan_id (nullable, set on disburse)
-  created_by, created_at, updated_at
-```
+RLS: company-scoped read for members; write for company admins + `workflow.manage` permission. GRANTs to `authenticated` + `service_role`.
 
-### 1.3 Related tables (all keyed by `application_id uuid → loan_application.id`, plus a denormalized `application_no` for reporting joins)
+## 2. Rule resolution engine (server function)
 
-| Table | Purpose |
-|---|---|
-| `loan_application_applicant` | Snapshot of applicant + co-applicants at submission time |
-| `loan_application_evaluation` | Rows keyed to `evaluation_section` (replaces current `loan_evaluation` writes for new apps) |
-| `loan_application_employment` | Employer, position, income, tenure |
-| `loan_application_business` | Business name, sector, turnover, ownership |
-| `loan_application_existing_facility` | Other lenders, outstanding, monthly commitment |
-| `loan_application_guarantor` | Guarantor party + coverage |
-| `loan_application_collateral` | Security type + dynamic fields (mirrors current securities JSON) |
-| `loan_application_document` | Attachments: type, file_name, storage_path, uploaded_by, uploaded_at, version |
-| `loan_application_approval` | Workflow instance link, per-step decisions |
-| `loan_application_note` | Free-text notes/remarks with author + timestamp |
-| `loan_application_status_history` | Every status change with actor, from/to, reason |
+`resolveLoanApprovalChain({ loan_id })` — pure server function, called at loan submission.
 
-Every table:
-- `GRANT SELECT, INSERT, UPDATE, DELETE ... TO authenticated; GRANT ALL ... TO service_role;`
-- RLS: `is_company_member(company_id)` for read/write; `is_company_admin` for delete on non-master rows only. **Master `loan_application` is delete-blocked once `status <> 'draft'`** (trigger) — enforces retention.
-- `updated_at` trigger via existing `set_updated_at()`.
+Algorithm:
+1. Load loan + client + product + branch + region.
+2. Query active rules in company, `effective_from <= now < effective_to`.
+3. Score each rule by scope priority per spec: `user` (1) → `branch` (2) → `region` (3) → `product` (4) → `default` (5); ties broken by rule `priority`, then most-specific (fewer NULL filters wins).
+4. First matching rule (after filters pass) wins. Return its ordered `delegation_rule_step[]` → authorities.
+5. If no rule matches → fall back to `rule_scope='default'` else throw "No delegation rule matches".
 
-### 1.4 Retention trigger
+## 3. Workflow generation
 
-```sql
-CREATE TRIGGER trg_loan_application_no_delete
-BEFORE DELETE ON public.loan_application
-FOR EACH ROW EXECUTE FUNCTION public.loan_application_block_delete();
-```
-Blocks delete unless `status='draft'` and no child rows exist.
+Replace hard-coded `loan_disbursement` workflow lookup for loan approvals:
+- On `submitLoanApplication`, call `resolveLoanApprovalChain`, then create a `workflow_instance` with dynamically materialised `workflow_step` rows (`authority_id` per step).
+- Approver eligibility = user matches any `delegation_authority_member` of the current step's authority, OR is an active delegate.
+- Existing modal supports approve / reject / send-back — reuse. Add "resubmission" path on reject: initiator can edit & resubmit → re-resolves chain.
+- Escalation: cron/EOD hook checks steps past `sla_hours`; auto-advances to `escalate_to_authority_id` and logs escalation.
 
-### 1.5 `loan` linkage
+## 4. UI changes
 
-Add `application_id uuid REFERENCES loan_application(id)` and `application_no text` to `public.loan`. Index both.
+Replace `src/components/mzizi/DelegationAuthorityTab.tsx` (currently one flat form) with a 3-tab admin surface:
 
----
+1. **Authorities** — CRUD list of masters + members panel.
+2. **Rules** — CRUD list with filters, priority, chain builder (drag-order steps → pick authority, SLA, escalation).
+3. **Delegates (absence)** — CRUD absence delegations.
 
-## 2. Back-fill (same migration, after DDL)
+Add a **read-only "Approval chain preview"** on the loan application page so users see who will approve before submitting.
 
-For every existing `loan`:
-1. Insert a `loan_application` row with `status='disbursed'`, `disbursed_at = loan.disbursed_at`, snapshot of principal/tenor/purpose, new `application_no` from the global sequence.
-2. Copy any existing `loan_evaluation` rows into `loan_application_evaluation`.
-3. Copy `loan_security` rows into `loan_application_collateral`.
-4. Copy `loan_applied_charge` metadata into a `loan_application_note` summary (charges themselves stay on `loan`).
-5. Update `loan.application_id` / `loan.application_no` with the new IDs.
+Audit trail already visible in the approval modal (extend to show `applied_rule` name + `authority` per step).
 
-Wrapped in a single `DO` block so it's atomic with the DDL.
+## 5. Migration/back-compat
 
----
+- Keep old `delegation_authority` columns for read; add new columns via migration; back-fill any existing rows into scope=`product` rules where possible.
+- Old `security-type` LTV/amount/rate ranges become one `delegation_rule` per existing row (scope=`product`, filters populated).
 
-## 3. Copy-on-disburse RPC
+## Technical notes
 
-New `public.disburse_loan_from_application(_application_id, _payment_channel, ...)`:
-1. Verify status `= 'approved'` and workflow complete.
-2. Insert into `loan` with values copied from application + child tables (charges, securities).
-3. Set `loan_application.status='disbursed'`, `loan_id`, `disbursed_at`.
-4. Post GL entry via `post_entry_system` (unchanged).
-5. Append `loan_application_status_history` row.
+- All resolution logic in Postgres `SECURITY DEFINER` function `resolve_loan_approval_chain(loan_id uuid)` returning `jsonb` (rule_id + steps). Server function wraps it.
+- `workflow_step.authority_id` FK to `delegation_authority`; approver check via new `has_authority(user_id, authority_id)` SQL function that checks members + active delegates.
+- Escalation runs inside existing EOD orchestrator as a new step.
+- Full audit via existing `workflow_action` + `audit_log` (emit `workflow.rule_applied`, `workflow.escalated`).
 
-Existing `disburse_loan` RPC becomes a thin wrapper that resolves the application by `loan.application_id` and calls the new function — no behavior change for callers that already pass `loan_id`.
+## Files to add/change
 
----
+- Migration: new tables, columns, functions, RLS, GRANTs.
+- `src/lib/delegation.functions.ts` (new) — CRUD + `resolveLoanApprovalChain`.
+- `src/lib/workflow.functions.ts` — use resolver when starting loan approval instance; expose `previewApprovalChain`.
+- `src/lib/mzizi.functions.ts` — `submitApplication` calls resolver.
+- `src/components/mzizi/DelegationAuthorityTab.tsx` — rewritten as tabbed admin.
+- `src/components/mzizi/InstanceDetailModal.tsx` — show applied rule + authority per step.
+- `src/routes/_authenticated/loans.new.tsx` — approval chain preview panel.
 
-## 4. Server functions (`src/lib/loan-application.functions.ts`)
+## Rollout
 
-- `createLoanApplication` (draft)
-- `updateLoanApplication`
-- `submitLoanApplication` (draft → submitted, kicks approval workflow)
-- `listLoanApplications` (with status filter)
-- `getLoanApplication` (master + all children)
-- `addApplicationDocument` / `deleteApplicationDocument`
-- `addApplicationNote`
-- `recordApplicationDecision` (used by workflow)
-- `disburseApplication` (calls new RPC)
+1. Ship migration + resolver + admin UI (rules default to "everyone stays as-is").
+2. Cut submission path over to resolver.
+3. Remove legacy fields after one release.
 
-All use `requireSupabaseAuth` middleware and RLS-scoped queries.
-
----
-
-## 5. UI changes
-
-Minimal — keep the visual layout of `loans.new.tsx` and `loans.$id.tsx`:
-- `loans.new.tsx` writes to `loan_application` + children instead of `loan`. On disburse it triggers `disburseApplication`.
-- `loans.$id.tsx` reads from `loan` post-disbursement; adds an "Application" tab showing the retained origination record (read-only) linked by `application_no`.
-- `LoanEvaluation.tsx` targets `loan_application_evaluation` when an application context is present, `loan_evaluation` otherwise (back-compat for already-disbursed loans).
-- Approvals list keys on `application_no` for pre-disbursement items; on `loan.reference` for post.
-
-No new pages, no design changes.
-
----
-
-## 6. Rollout order (single migration + code batch)
-
-1. Migration: DDL for all 12 tables + sequence + generator + trigger + `loan` FK columns + back-fill + `disburse_loan_from_application` RPC. Regenerated types afterward.
-2. New `loan-application.functions.ts`.
-3. Refactor `loans.new.tsx`, `loans.$id.tsx`, `LoanEvaluation.tsx`, disbursement page, approvals page to use application IDs.
-4. Typecheck.
-
-## Out of scope (call out for later)
-- Version comparison UI for evaluation snapshots.
-- Application → application clone (re-application).
-- Migration of write-off / reschedule records into origination history (they belong to servicing).
+Shall I proceed with the migration first?

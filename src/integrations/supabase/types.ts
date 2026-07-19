@@ -1023,6 +1023,304 @@ export type Database = {
           },
         ]
       }
+      delegation_authority_delegate: {
+        Row: {
+          authority_id: string
+          created_at: string
+          from_date: string
+          from_user_id: string
+          id: string
+          reason: string | null
+          to_date: string
+          to_user_id: string
+        }
+        Insert: {
+          authority_id: string
+          created_at?: string
+          from_date: string
+          from_user_id: string
+          id?: string
+          reason?: string | null
+          to_date: string
+          to_user_id: string
+        }
+        Update: {
+          authority_id?: string
+          created_at?: string
+          from_date?: string
+          from_user_id?: string
+          id?: string
+          reason?: string | null
+          to_date?: string
+          to_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delegation_authority_delegate_authority_id_fkey"
+            columns: ["authority_id"]
+            isOneToOne: false
+            referencedRelation: "delegation_authority_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delegation_authority_master: {
+        Row: {
+          code: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          level: number
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          level?: number
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          level?: number
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delegation_authority_master_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delegation_authority_member: {
+        Row: {
+          authority_id: string
+          created_at: string
+          id: string
+          is_backup: boolean
+          member_ref: string
+          member_type: string
+        }
+        Insert: {
+          authority_id: string
+          created_at?: string
+          id?: string
+          is_backup?: boolean
+          member_ref: string
+          member_type: string
+        }
+        Update: {
+          authority_id?: string
+          created_at?: string
+          id?: string
+          is_backup?: boolean
+          member_ref?: string
+          member_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delegation_authority_member_authority_id_fkey"
+            columns: ["authority_id"]
+            isOneToOne: false
+            referencedRelation: "delegation_authority_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delegation_rule: {
+        Row: {
+          active: boolean
+          amount_max: number | null
+          amount_min: number | null
+          branch_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          custom_role_id: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          name: string
+          priority: number
+          product_id: string | null
+          rate_max: number | null
+          rate_min: number | null
+          region: string | null
+          risk_grade: string | null
+          rule_scope: string
+          security_type_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          amount_max?: number | null
+          amount_min?: number | null
+          branch_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          custom_role_id?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          name: string
+          priority?: number
+          product_id?: string | null
+          rate_max?: number | null
+          rate_min?: number | null
+          region?: string | null
+          risk_grade?: string | null
+          rule_scope: string
+          security_type_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          amount_max?: number | null
+          amount_min?: number | null
+          branch_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          custom_role_id?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          name?: string
+          priority?: number
+          product_id?: string | null
+          rate_max?: number | null
+          rate_min?: number | null
+          region?: string | null
+          risk_grade?: string | null
+          rule_scope?: string
+          security_type_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delegation_rule_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegation_rule_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegation_rule_custom_role_id_fkey"
+            columns: ["custom_role_id"]
+            isOneToOne: false
+            referencedRelation: "custom_role"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegation_rule_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "loan_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegation_rule_security_type_id_fkey"
+            columns: ["security_type_id"]
+            isOneToOne: false
+            referencedRelation: "security_type"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delegation_rule_step: {
+        Row: {
+          authority_id: string
+          created_at: string
+          escalate_to_authority_id: string | null
+          id: string
+          mode: string
+          required_approvals: number
+          rule_id: string
+          seq: number
+          sla_hours: number | null
+        }
+        Insert: {
+          authority_id: string
+          created_at?: string
+          escalate_to_authority_id?: string | null
+          id?: string
+          mode?: string
+          required_approvals?: number
+          rule_id: string
+          seq: number
+          sla_hours?: number | null
+        }
+        Update: {
+          authority_id?: string
+          created_at?: string
+          escalate_to_authority_id?: string | null
+          id?: string
+          mode?: string
+          required_approvals?: number
+          rule_id?: string
+          seq?: number
+          sla_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delegation_rule_step_authority_id_fkey"
+            columns: ["authority_id"]
+            isOneToOne: false
+            referencedRelation: "delegation_authority_master"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegation_rule_step_escalate_to_authority_id_fkey"
+            columns: ["escalate_to_authority_id"]
+            isOneToOne: false
+            referencedRelation: "delegation_authority_master"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegation_rule_step_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "delegation_rule"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domain_event: {
         Row: {
           actor_user_id: string | null
@@ -6202,6 +6500,7 @@ export type Database = {
       workflow_instance: {
         Row: {
           amount: number | null
+          applied_rule_id: string | null
           company_id: string
           completed_at: string | null
           created_at: string
@@ -6218,6 +6517,7 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          applied_rule_id?: string | null
           company_id: string
           completed_at?: string | null
           created_at?: string
@@ -6234,6 +6534,7 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          applied_rule_id?: string | null
           company_id?: string
           completed_at?: string | null
           created_at?: string
@@ -6249,6 +6550,13 @@ export type Database = {
           workflow_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workflow_instance_applied_rule_id_fkey"
+            columns: ["applied_rule_id"]
+            isOneToOne: false
+            referencedRelation: "delegation_rule"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workflow_instance_company_id_fkey"
             columns: ["company_id"]
@@ -6481,6 +6789,10 @@ export type Database = {
         Returns: undefined
       }
       hardening_autocheck: { Args: never; Returns: Json }
+      has_authority: {
+        Args: { _authority_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_permission: {
         Args: { _permission: string; _user_id: string }
         Returns: boolean
@@ -6599,6 +6911,7 @@ export type Database = {
         Args: { _loan_id: string; _new_installments: Json; _reason: string }
         Returns: string
       }
+      resolve_loan_approval_chain: { Args: { _loan_id: string }; Returns: Json }
       seed_default_risk_scheme: {
         Args: { _company_id: string }
         Returns: undefined
