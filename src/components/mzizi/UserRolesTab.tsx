@@ -126,7 +126,8 @@ export function UserRolesTab() {
 
   function togglePerm(code: string) {
     const next = new Set(form.permissions);
-    next.has(code) ? next.delete(code) : next.add(code);
+    if (next.has(code)) next.delete(code);
+    else next.add(code);
     setForm({ ...form, permissions: next });
   }
 
