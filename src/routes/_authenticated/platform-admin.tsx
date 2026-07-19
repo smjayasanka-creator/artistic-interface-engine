@@ -31,6 +31,7 @@ import { HardeningChecklist } from "@/components/mzizi/HardeningChecklist";
 import { ArchitectureExplorer } from "@/components/mzizi/ArchitectureExplorer";
 import { ServiceBoundaries } from "@/components/mzizi/ServiceBoundaries";
 import { ProcessDiagrams } from "@/components/mzizi/ProcessDiagrams";
+import { PlatformProgress } from "@/components/mzizi/PlatformProgress";
 
 export const Route = createFileRoute("/_authenticated/platform-admin")({
   component: PlatformAdmin,
@@ -112,6 +113,8 @@ function PlatformAdmin() {
           </button>
         ))}
       </div>
+
+      <PlatformProgress tab={tab} />
 
       {tab === "overview" && <OverviewTab />}
       {tab === "companies" && <CompaniesTab />}
