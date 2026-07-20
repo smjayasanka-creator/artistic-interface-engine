@@ -6011,6 +6011,41 @@ export type Database = {
           },
         ]
       }
+      savings_auto_collection_dispatch: {
+        Row: {
+          business_date: string
+          company_id: string
+          dispatched_at: string
+          http_request_id: number | null
+          id: string
+          run_window: string
+        }
+        Insert: {
+          business_date: string
+          company_id: string
+          dispatched_at?: string
+          http_request_id?: number | null
+          id?: string
+          run_window: string
+        }
+        Update: {
+          business_date?: string
+          company_id?: string
+          dispatched_at?: string
+          http_request_id?: number | null
+          id?: string
+          run_window?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_auto_collection_dispatch_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       savings_auto_collection_result: {
         Row: {
           collected: number
@@ -8025,6 +8060,10 @@ export type Database = {
         }
         Returns: string
       }
+      dispatch_savings_auto_collections: {
+        Args: { _apikey: string; _webhook_url: string }
+        Returns: Json
+      }
       emit_audit: {
         Args: {
           _action: string
@@ -8155,14 +8194,23 @@ export type Database = {
           schedule: string
         }[]
       }
-      loan_arrears_snapshot: {
-        Args: { _loan_id: string }
-        Returns: {
-          arrears: number
-          full_installment: number
-          next_due: string
-        }[]
-      }
+      loan_arrears_snapshot:
+        | {
+            Args: { _loan_id: string }
+            Returns: {
+              arrears: number
+              full_installment: number
+              next_due: string
+            }[]
+          }
+        | {
+            Args: { _as_of?: string; _loan_id: string }
+            Returns: {
+              arrears: number
+              full_installment: number
+              next_due: string
+            }[]
+          }
       mark_domain_event_dispatched: {
         Args: { _id: string }
         Returns: undefined
