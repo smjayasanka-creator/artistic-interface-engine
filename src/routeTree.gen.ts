@@ -49,6 +49,7 @@ import { Route as AuthenticatedTransactionsChequeBankRouteImport } from './route
 import { Route as AuthenticatedTransactionsCashWalletRouteImport } from './routes/_authenticated/transactions.cash-wallet'
 import { Route as AuthenticatedTransactionsCashBankRouteImport } from './routes/_authenticated/transactions.cash-bank'
 import { Route as AuthenticatedSavingsStandingOrdersRouteImport } from './routes/_authenticated/savings.standing-orders'
+import { Route as AuthenticatedSavingsReversalsRouteImport } from './routes/_authenticated/savings.reversals'
 import { Route as AuthenticatedSavingsPassbookRouteImport } from './routes/_authenticated/savings.passbook'
 import { Route as AuthenticatedSavingsNewRouteImport } from './routes/_authenticated/savings.new'
 import { Route as AuthenticatedSavingsMandatesRouteImport } from './routes/_authenticated/savings.mandates'
@@ -323,6 +324,12 @@ const AuthenticatedSavingsStandingOrdersRoute =
   AuthenticatedSavingsStandingOrdersRouteImport.update({
     id: '/standing-orders',
     path: '/standing-orders',
+    getParentRoute: () => AuthenticatedSavingsRoute,
+  } as any)
+const AuthenticatedSavingsReversalsRoute =
+  AuthenticatedSavingsReversalsRouteImport.update({
+    id: '/reversals',
+    path: '/reversals',
     getParentRoute: () => AuthenticatedSavingsRoute,
   } as any)
 const AuthenticatedSavingsPassbookRoute =
@@ -665,6 +672,7 @@ export interface FileRoutesByFullPath {
   '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/savings/reversals': typeof AuthenticatedSavingsReversalsRoute
   '/savings/standing-orders': typeof AuthenticatedSavingsStandingOrdersRoute
   '/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
   '/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
@@ -754,6 +762,7 @@ export interface FileRoutesByTo {
   '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/savings/reversals': typeof AuthenticatedSavingsReversalsRoute
   '/savings/standing-orders': typeof AuthenticatedSavingsStandingOrdersRoute
   '/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
   '/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
@@ -849,6 +858,7 @@ export interface FileRoutesById {
   '/_authenticated/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/_authenticated/savings/new': typeof AuthenticatedSavingsNewRoute
   '/_authenticated/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/_authenticated/savings/reversals': typeof AuthenticatedSavingsReversalsRoute
   '/_authenticated/savings/standing-orders': typeof AuthenticatedSavingsStandingOrdersRoute
   '/_authenticated/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
   '/_authenticated/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
@@ -944,6 +954,7 @@ export interface FileRouteTypes {
     | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
+    | '/savings/reversals'
     | '/savings/standing-orders'
     | '/transactions/cash-bank'
     | '/transactions/cash-wallet'
@@ -1033,6 +1044,7 @@ export interface FileRouteTypes {
     | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
+    | '/savings/reversals'
     | '/savings/standing-orders'
     | '/transactions/cash-bank'
     | '/transactions/cash-wallet'
@@ -1127,6 +1139,7 @@ export interface FileRouteTypes {
     | '/_authenticated/savings/mandates'
     | '/_authenticated/savings/new'
     | '/_authenticated/savings/passbook'
+    | '/_authenticated/savings/reversals'
     | '/_authenticated/savings/standing-orders'
     | '/_authenticated/transactions/cash-bank'
     | '/_authenticated/transactions/cash-wallet'
@@ -1483,6 +1496,13 @@ declare module '@tanstack/react-router' {
       path: '/standing-orders'
       fullPath: '/savings/standing-orders'
       preLoaderRoute: typeof AuthenticatedSavingsStandingOrdersRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
+    }
+    '/_authenticated/savings/reversals': {
+      id: '/_authenticated/savings/reversals'
+      path: '/reversals'
+      fullPath: '/savings/reversals'
+      preLoaderRoute: typeof AuthenticatedSavingsReversalsRouteImport
       parentRoute: typeof AuthenticatedSavingsRoute
     }
     '/_authenticated/savings/passbook': {
@@ -1870,6 +1890,7 @@ interface AuthenticatedSavingsRouteChildren {
   AuthenticatedSavingsMandatesRoute: typeof AuthenticatedSavingsMandatesRoute
   AuthenticatedSavingsNewRoute: typeof AuthenticatedSavingsNewRoute
   AuthenticatedSavingsPassbookRoute: typeof AuthenticatedSavingsPassbookRoute
+  AuthenticatedSavingsReversalsRoute: typeof AuthenticatedSavingsReversalsRoute
   AuthenticatedSavingsStandingOrdersRoute: typeof AuthenticatedSavingsStandingOrdersRoute
   AuthenticatedSavingsIndexRoute: typeof AuthenticatedSavingsIndexRoute
 }
@@ -1881,6 +1902,7 @@ const AuthenticatedSavingsRouteChildren: AuthenticatedSavingsRouteChildren = {
   AuthenticatedSavingsMandatesRoute: AuthenticatedSavingsMandatesRoute,
   AuthenticatedSavingsNewRoute: AuthenticatedSavingsNewRoute,
   AuthenticatedSavingsPassbookRoute: AuthenticatedSavingsPassbookRoute,
+  AuthenticatedSavingsReversalsRoute: AuthenticatedSavingsReversalsRoute,
   AuthenticatedSavingsStandingOrdersRoute:
     AuthenticatedSavingsStandingOrdersRoute,
   AuthenticatedSavingsIndexRoute: AuthenticatedSavingsIndexRoute,
