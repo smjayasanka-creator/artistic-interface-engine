@@ -471,6 +471,12 @@ export const actOnInstance = createServerFn({ method: "POST" })
         .from("workflow_instance")
         .update({ status: "declined", completed_at: new Date().toISOString() })
         .eq("id", data.instance_id);
+      if ((inst as any).transaction_type === "savings_hold_release") {
+        await supabase.rpc("finalize_savings_hold_release" as any, {
+          _instance_id: data.instance_id,
+          _decision: "rejected",
+        } as any);
+      }
       return { ok: true, status: "declined" };
     }
 
@@ -479,6 +485,12 @@ export const actOnInstance = createServerFn({ method: "POST" })
         .from("workflow_instance")
         .update({ status: "cancelled", completed_at: new Date().toISOString() })
         .eq("id", data.instance_id);
+      if ((inst as any).transaction_type === "savings_hold_release") {
+        await supabase.rpc("finalize_savings_hold_release" as any, {
+          _instance_id: data.instance_id,
+          _decision: "rejected",
+        } as any);
+      }
       return { ok: true, status: "sent_back" };
     }
 
