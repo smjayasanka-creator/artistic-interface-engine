@@ -8034,6 +8034,21 @@ export type Database = {
         }
         Returns: Json
       }
+      record_savings_txn: {
+        Args: {
+          _account_id: string
+          _amount: number
+          _channel?: string
+          _external_ref?: string
+          _idempotency_key?: string
+          _narration?: string
+          _payment_details?: Json
+          _payment_method?: string
+          _reference?: string
+          _txn_type: string
+        }
+        Returns: string
+      }
       record_write_off_recovery: {
         Args: {
           _amount: number
@@ -8070,6 +8085,14 @@ export type Database = {
           _transition_key: string
         }
         Returns: Json
+      }
+      reverse_savings_txn: {
+        Args: { _reason: string; _txn_id: string }
+        Returns: string
+      }
+      savings_active_hold_amount: {
+        Args: { _account_id: string }
+        Returns: number
       }
       seed_default_risk_scheme: {
         Args: { _company_id: string }
