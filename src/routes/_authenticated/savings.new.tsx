@@ -111,8 +111,8 @@ function NewSavings() {
   const createFn = useServerFn(createSavingsAccount);
 
   const { data: clients } = useQuery({
-    queryKey: ["clients", "active"],
-    queryFn: () => clientFn({ data: { filter: "active" } }),
+    queryKey: ["clients", "all"],
+    queryFn: () => clientFn({ data: { filter: "all" } }),
   });
   const { data: branches } = useQuery({
     queryKey: ["company-branches"],
