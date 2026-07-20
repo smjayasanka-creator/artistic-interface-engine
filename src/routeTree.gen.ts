@@ -38,6 +38,7 @@ import { Route as AuthenticatedTransactionsSupplierPaymentRouteImport } from './
 import { Route as AuthenticatedTransactionsSavingsWithdrawalRouteImport } from './routes/_authenticated/transactions.savings-withdrawal'
 import { Route as AuthenticatedTransactionsSavingsTransferRouteImport } from './routes/_authenticated/transactions.savings-transfer'
 import { Route as AuthenticatedTransactionsSavingsDepositRouteImport } from './routes/_authenticated/transactions.savings-deposit'
+import { Route as AuthenticatedTransactionsSavingsAdjustmentRouteImport } from './routes/_authenticated/transactions.savings-adjustment'
 import { Route as AuthenticatedTransactionsRepaymentRouteImport } from './routes/_authenticated/transactions.repayment'
 import { Route as AuthenticatedTransactionsPaymentsRouteImport } from './routes/_authenticated/transactions.payments'
 import { Route as AuthenticatedTransactionsDisbursementRouteImport } from './routes/_authenticated/transactions.disbursement'
@@ -255,6 +256,12 @@ const AuthenticatedTransactionsSavingsDepositRoute =
   AuthenticatedTransactionsSavingsDepositRouteImport.update({
     id: '/savings-deposit',
     path: '/savings-deposit',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
+const AuthenticatedTransactionsSavingsAdjustmentRoute =
+  AuthenticatedTransactionsSavingsAdjustmentRouteImport.update({
+    id: '/savings-adjustment',
+    path: '/savings-adjustment',
     getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedTransactionsRepaymentRoute =
@@ -660,6 +667,7 @@ export interface FileRoutesByFullPath {
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/transactions/savings-adjustment': typeof AuthenticatedTransactionsSavingsAdjustmentRoute
   '/transactions/savings-deposit': typeof AuthenticatedTransactionsSavingsDepositRoute
   '/transactions/savings-transfer': typeof AuthenticatedTransactionsSavingsTransferRoute
   '/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
@@ -747,6 +755,7 @@ export interface FileRoutesByTo {
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/transactions/savings-adjustment': typeof AuthenticatedTransactionsSavingsAdjustmentRoute
   '/transactions/savings-deposit': typeof AuthenticatedTransactionsSavingsDepositRoute
   '/transactions/savings-transfer': typeof AuthenticatedTransactionsSavingsTransferRoute
   '/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
@@ -840,6 +849,7 @@ export interface FileRoutesById {
   '/_authenticated/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/_authenticated/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/_authenticated/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/_authenticated/transactions/savings-adjustment': typeof AuthenticatedTransactionsSavingsAdjustmentRoute
   '/_authenticated/transactions/savings-deposit': typeof AuthenticatedTransactionsSavingsDepositRoute
   '/_authenticated/transactions/savings-transfer': typeof AuthenticatedTransactionsSavingsTransferRoute
   '/_authenticated/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
@@ -933,6 +943,7 @@ export interface FileRouteTypes {
     | '/transactions/disbursement'
     | '/transactions/payments'
     | '/transactions/repayment'
+    | '/transactions/savings-adjustment'
     | '/transactions/savings-deposit'
     | '/transactions/savings-transfer'
     | '/transactions/savings-withdrawal'
@@ -1020,6 +1031,7 @@ export interface FileRouteTypes {
     | '/transactions/disbursement'
     | '/transactions/payments'
     | '/transactions/repayment'
+    | '/transactions/savings-adjustment'
     | '/transactions/savings-deposit'
     | '/transactions/savings-transfer'
     | '/transactions/savings-withdrawal'
@@ -1112,6 +1124,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions/disbursement'
     | '/_authenticated/transactions/payments'
     | '/_authenticated/transactions/repayment'
+    | '/_authenticated/transactions/savings-adjustment'
     | '/_authenticated/transactions/savings-deposit'
     | '/_authenticated/transactions/savings-transfer'
     | '/_authenticated/transactions/savings-withdrawal'
@@ -1380,6 +1393,13 @@ declare module '@tanstack/react-router' {
       path: '/savings-deposit'
       fullPath: '/transactions/savings-deposit'
       preLoaderRoute: typeof AuthenticatedTransactionsSavingsDepositRouteImport
+      parentRoute: typeof AuthenticatedTransactionsRoute
+    }
+    '/_authenticated/transactions/savings-adjustment': {
+      id: '/_authenticated/transactions/savings-adjustment'
+      path: '/savings-adjustment'
+      fullPath: '/transactions/savings-adjustment'
+      preLoaderRoute: typeof AuthenticatedTransactionsSavingsAdjustmentRouteImport
       parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/transactions/repayment': {
@@ -1856,6 +1876,7 @@ interface AuthenticatedTransactionsRouteChildren {
   AuthenticatedTransactionsDisbursementRoute: typeof AuthenticatedTransactionsDisbursementRoute
   AuthenticatedTransactionsPaymentsRoute: typeof AuthenticatedTransactionsPaymentsRoute
   AuthenticatedTransactionsRepaymentRoute: typeof AuthenticatedTransactionsRepaymentRoute
+  AuthenticatedTransactionsSavingsAdjustmentRoute: typeof AuthenticatedTransactionsSavingsAdjustmentRoute
   AuthenticatedTransactionsSavingsDepositRoute: typeof AuthenticatedTransactionsSavingsDepositRoute
   AuthenticatedTransactionsSavingsTransferRoute: typeof AuthenticatedTransactionsSavingsTransferRoute
   AuthenticatedTransactionsSavingsWithdrawalRoute: typeof AuthenticatedTransactionsSavingsWithdrawalRoute
@@ -1884,6 +1905,8 @@ const AuthenticatedTransactionsRouteChildren: AuthenticatedTransactionsRouteChil
       AuthenticatedTransactionsPaymentsRoute,
     AuthenticatedTransactionsRepaymentRoute:
       AuthenticatedTransactionsRepaymentRoute,
+    AuthenticatedTransactionsSavingsAdjustmentRoute:
+      AuthenticatedTransactionsSavingsAdjustmentRoute,
     AuthenticatedTransactionsSavingsDepositRoute:
       AuthenticatedTransactionsSavingsDepositRoute,
     AuthenticatedTransactionsSavingsTransferRoute:
