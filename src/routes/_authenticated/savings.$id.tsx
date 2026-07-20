@@ -15,9 +15,11 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/mzizi/Card";
 import { StatusBadge } from "@/components/mzizi/Badge";
-import { getSavingsAccountDetail } from "@/lib/savings.functions";
+import { getSavingsAccountDetail, activateSavingsAccount } from "@/lib/savings.functions";
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/savings/$id")({
   loader: ({ context, params }) =>
