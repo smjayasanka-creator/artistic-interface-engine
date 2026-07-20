@@ -974,7 +974,6 @@ export const createSavingsHold = createServerFn({ method: "POST" })
       .from("staff")
       .select("id")
       .eq("user_id", userId)
-      .eq("company_id", (acct as any).company_id)
       .maybeSingle();
     const { data: hold, error } = await supabase
       .from("savings_hold")
