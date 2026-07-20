@@ -1439,3 +1439,227 @@ export const toggleSavingsWhtRule = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+// ─────────── Phase 7: Transfers, adjustments, standing orders ───────────
+
+export const postSavingsTransfer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: {
+    from_account_id: string;
+    to_account_id: string;
+    amount: number;
+    channel?: string;
+    reference?: string | null;
+    narration?: string | null;
+    idempotency_key?: string | null;
+  }) =>
+    z.object({
+      from_account_id: z.string().uuid(),
+      to_account_id: z.string().uuid(),
+      amount: z.number().positive(),
+      channel: z.string().optional(),
+      reference: z.string().nullable().optional(),
+      narration: z.string().nullable().optional(),
+      idempotency_key: z.string().nullable().optional(),
+    }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    if (data.from_account_id === data.to_account_id)
+      throw new Error("From and to accounts must differ");
+    const { data: res, error } = await context.supabase.rpc("post_savings_transfer", {
+      _from_account_id: data.from_account_id,
+      _to_account_id: data.to_account_id,
+      _amount: data.amount,
+      _channel: data.channel ?? "branch",
+      _reference: data.reference ?? undefined,
+      _narration: data.narration ?? undefined,
+      _idempotency_key: data.idempotency_key ?? undefined,
+    } as any);
+    if (error) throw new Error(error.message);
+    return res as { ok: boolean; out_txn_id: string; in_txn_id: string; reference: string };
+  });
+
+export const postSavingsAdjustment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: {
+    account_id: string;
+    direction: "credit" | "debit";
+    amount: number;
+    reason: string;
+    reference?: string | null;
+    idempotency_key?: string | null;
+  }) =>
+    z.object({
+      account_id: z.string().uuid(),
+      direction: z.enum(["credit", "debit"]),
+      amount: z.number().positive(),
+      reason: z.string().min(3),
+      reference: z.string().nullable().optional(),
+      idempotency_key: z.string().nullable().optional(),
+    }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    // Adjustments are posted as signed 'adjustment' savings transactions via RPC.
+    const signed = data.direction === "credit" ? data.amount : -data.amount;
+    const { data: txnId, error } = await context.supabase.rpc("record_savings_txn", {
+      _account_id: data.account_id,
+      _txn_type: "adjustment",
+      _amount: signed,
+      _channel: "branch",
+      _reference: data.reference ?? undefined,
+      _narration: `Adjustment (${data.direction}): ${data.reason}`,
+      _idempotency_key: data.idempotency_key ?? undefined,
+    } as any);
+    if (error) throw new Error(error.message);
+    return { txn_id: txnId as string };
+  });
+
+export const listStandingOrders = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { status?: "active" | "paused" | "cancelled" | "completed" | "all" }) => i)
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) return [];
+    let q = (supabase as any)
+      .from("savings_standing_order")
+      .select(
+        "*, from_account:from_account_id(id, account_no, client:client_id(full_name)), to_account:to_account_id(id, account_no, client:client_id(full_name))",
+      )
+      .eq("company_id", cid)
+      .order("next_run_date", { ascending: true });
+    if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const upsertStandingOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: {
+    id?: string;
+    from_account_id: string;
+    to_account_id: string;
+    amount: number;
+    frequency: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+    next_run_date: string;
+    end_date?: string | null;
+    max_runs?: number | null;
+    narration?: string | null;
+    reference_prefix?: string | null;
+    consent_ref?: string | null;
+  }) =>
+    z.object({
+      id: z.string().uuid().optional(),
+      from_account_id: z.string().uuid(),
+      to_account_id: z.string().uuid(),
+      amount: z.number().positive(),
+      frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "yearly"]),
+      next_run_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+      max_runs: z.number().int().positive().nullable().optional(),
+      narration: z.string().nullable().optional(),
+      reference_prefix: z.string().nullable().optional(),
+      consent_ref: z.string().nullable().optional(),
+    }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    if (data.from_account_id === data.to_account_id)
+      throw new Error("From and to accounts must differ");
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
+    const payload = {
+      company_id: cid,
+      from_account_id: data.from_account_id,
+      to_account_id: data.to_account_id,
+      amount: data.amount,
+      frequency: data.frequency,
+      next_run_date: data.next_run_date,
+      end_date: data.end_date ?? null,
+      max_runs: data.max_runs ?? null,
+      narration: data.narration ?? null,
+      reference_prefix: data.reference_prefix ?? null,
+      consent_ref: data.consent_ref ?? null,
+      created_by: userId,
+    };
+    if (data.id) {
+      const { error } = await (supabase as any)
+        .from("savings_standing_order")
+        .update(payload)
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { id: data.id };
+    }
+    const { data: row, error } = await (supabase as any)
+      .from("savings_standing_order")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const setStandingOrderStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; status: "active" | "paused" | "cancelled"; reason?: string | null }) =>
+    z.object({
+      id: z.string().uuid(),
+      status: z.enum(["active", "paused", "cancelled"]),
+      reason: z.string().nullable().optional(),
+    }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const patch: any = { status: data.status };
+    if (data.status === "cancelled") {
+      patch.cancelled_by = userId;
+      patch.cancelled_at = new Date().toISOString();
+      patch.cancel_reason = data.reason ?? null;
+    }
+    const { error } = await (supabase as any)
+      .from("savings_standing_order")
+      .update(patch)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const runStandingOrderNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; business_date?: string }) =>
+    z.object({
+      id: z.string().uuid(),
+      business_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const biz = data.business_date ?? new Date().toISOString().slice(0, 10);
+    const { data: res, error } = await context.supabase.rpc("execute_savings_standing_order", {
+      _id: data.id,
+      _business_date: biz,
+    } as any);
+    if (error) throw new Error(error.message);
+    return res as any;
+  });
+
+export const listRecentSavingsTransactions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { limit?: number; only_reversible?: boolean }) => i)
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) return [];
+    let q = (supabase as any)
+      .from("savings_transaction")
+      .select(
+        "id, txn_type, amount, running_balance, reference, external_ref, narration, created_at, reversed_by_txn_id, reverses_txn_id, account:account_id(id, account_no, client:client_id(full_name))",
+      )
+      .eq("company_id", cid)
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 50);
+    if (data.only_reversible) q = q.is("reversed_by_txn_id", null);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
