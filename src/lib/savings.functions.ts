@@ -1284,3 +1284,158 @@ export const triggerSavingsAutoCollection = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return result;
   });
+
+// ─────────── Interest: accruals, postings & WHT rules ───────────
+export const listSavingsAccruals = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { account_id?: string; from?: string; to?: string; limit?: number } = {}) =>
+    z.object({
+      account_id: z.string().uuid().optional(),
+      from: z.string().optional(),
+      to: z.string().optional(),
+      limit: z.number().int().min(1).max(500).default(200),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    let q = context.supabase
+      .from("savings_interest_accrual")
+      .select("id, account_id, accrual_date, eligible_balance, rate_pct, day_count, gross_interest, created_at")
+      .order("accrual_date", { ascending: false })
+      .limit(data.limit);
+    if (data.account_id) q = q.eq("account_id", data.account_id);
+    if (data.from) q = q.gte("accrual_date", data.from);
+    if (data.to) q = q.lte("accrual_date", data.to);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const listSavingsPostings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { account_id?: string; limit?: number } = {}) =>
+    z.object({
+      account_id: z.string().uuid().optional(),
+      limit: z.number().int().min(1).max(500).default(200),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    let q = context.supabase
+      .from("savings_interest_posting")
+      .select("id, account_id, period_start, period_end, gross_interest, wht_amount, net_interest, wht_rule_id, gl_entry_id, created_at")
+      .order("period_end", { ascending: false })
+      .limit(data.limit);
+    if (data.account_id) q = q.eq("account_id", data.account_id);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const runSavingsInterestAccrual = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { business_date?: string } = {}) =>
+    z.object({ business_date: z.string().optional() }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: cid } = await context.supabase.rpc("current_company_id" as any);
+    if (!cid) throw new Error("No active company");
+    const { data: allowed } = await context.supabase.rpc("has_permission" as any, {
+      _user_id: (context as any).userId,
+      _code: "savings.automation.run",
+      _company_id: cid,
+    } as any);
+    const { data: isAdmin } = await context.supabase.rpc("is_company_admin" as any, {
+      _company_id: cid,
+    } as any);
+    if (!allowed && !isAdmin) throw new Error("Not authorized");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: result, error } = await supabaseAdmin.rpc("accrue_savings_interest_daily" as any, {
+      _company_id: cid,
+      _business_date: data.business_date ?? new Date().toISOString().slice(0, 10),
+    } as any);
+    if (error) throw new Error(error.message);
+    return result;
+  });
+
+export const runSavingsInterestCapitalization = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { period_end?: string; force?: boolean } = {}) =>
+    z.object({
+      period_end: z.string().optional(),
+      force: z.boolean().default(false),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: cid } = await context.supabase.rpc("current_company_id" as any);
+    if (!cid) throw new Error("No active company");
+    const { data: allowed } = await context.supabase.rpc("has_permission" as any, {
+      _user_id: (context as any).userId,
+      _code: "savings.automation.run",
+      _company_id: cid,
+    } as any);
+    const { data: isAdmin } = await context.supabase.rpc("is_company_admin" as any, {
+      _company_id: cid,
+    } as any);
+    if (!allowed && !isAdmin) throw new Error("Not authorized");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: result, error } = await supabaseAdmin.rpc("capitalize_savings_interest" as any, {
+      _company_id: cid,
+      _period_end: data.period_end ?? new Date().toISOString().slice(0, 10),
+      _force: data.force,
+    } as any);
+    if (error) throw new Error(error.message);
+    return result;
+  });
+
+export const listSavingsWhtRules = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("savings_wht_rule")
+      .select("*, product:product_id(id, code, name), wht_gl:wht_gl_account_id(id, code, name)")
+      .order("effective_from", { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  });
+
+export const upsertSavingsWhtRule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) =>
+    z.object({
+      id: z.string().uuid().optional(),
+      jurisdiction: z.string().default("LK"),
+      tax_type: z.string().default("wht"),
+      residency: z.enum(["any", "resident", "non_resident"]).default("any"),
+      entity_type: z.enum(["any", "individual", "entity"]).default("any"),
+      product_id: z.string().uuid().nullable().optional(),
+      effective_from: z.string(),
+      effective_to: z.string().nullable().optional(),
+      rate_pct: z.number().min(0).max(100),
+      threshold: z.number().min(0).default(0),
+      wht_gl_account_id: z.string().uuid(),
+      active: z.boolean().default(true),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: cid } = await context.supabase.rpc("current_company_id" as any);
+    if (!cid) throw new Error("No active company");
+    const payload = { ...data, company_id: cid, created_by: (context as any).userId };
+    if (data.id) {
+      const { error } = await context.supabase.from("savings_wht_rule").update(payload).eq("id", data.id);
+      if (error) throw error;
+      return { id: data.id };
+    }
+    const { data: row, error } = await context.supabase.from("savings_wht_rule").insert(payload).select("id").single();
+    if (error) throw error;
+    return row;
+  });
+
+export const toggleSavingsWhtRule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; active: boolean }) =>
+    z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from("savings_wht_rule").update({ active: data.active }).eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
