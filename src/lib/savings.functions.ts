@@ -899,3 +899,167 @@ export const issuePassbook = createServerFn({ method: "POST" })
       .eq("id", data.stock_id);
     return issue;
   });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 4: Holds / Blocks / Liens
+// ─────────────────────────────────────────────────────────────────────────────
+
+const HOLD_TYPES = [
+  "debit_block",
+  "credit_block",
+  "full_block",
+  "amount_hold",
+  "lien",
+  "legal",
+  "aml",
+  "deceased",
+  "customer",
+  "loan_lien",
+  "administrative",
+  "temporary",
+] as const;
+
+export const listSavingsHolds = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        account_id: z.string().uuid().optional(),
+        active_only: z.boolean().optional(),
+      })
+      .partial()
+      .parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    let q = context.supabase
+      .from("savings_hold")
+      .select(
+        "id, account_id, hold_type, amount, reason_code, reason, doc_ref, effective_from, expires_at, active, approval_state, release_status, release_requested_at, release_requested_reason, release_workflow_instance_id, released_at, created_at, account:account_id(id, account_no, client:client_id(id, full_name))",
+      )
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (data.account_id) q = q.eq("account_id", data.account_id);
+    if (data.active_only) q = q.eq("active", true);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const createSavingsHold = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        account_id: z.string().uuid(),
+        hold_type: z.enum(HOLD_TYPES),
+        amount: z.number().nonnegative().default(0),
+        reason: z.string().min(3),
+        reason_code: z.string().optional().nullable(),
+        doc_ref: z.string().optional().nullable(),
+        expires_at: z.string().datetime().optional().nullable(),
+        linked_loan_id: z.string().uuid().optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: acct, error: aErr } = await supabase
+      .from("savings_account")
+      .select("id, company_id")
+      .eq("id", data.account_id)
+      .maybeSingle();
+    if (aErr) throw aErr;
+    if (!acct) throw new Error("Account not found");
+    const { data: staff } = await supabase
+      .from("staff")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("company_id", (acct as any).company_id)
+      .maybeSingle();
+    const { data: hold, error } = await supabase
+      .from("savings_hold")
+      .insert({
+        company_id: (acct as any).company_id,
+        account_id: data.account_id,
+        hold_type: data.hold_type,
+        amount: data.amount,
+        reason: data.reason,
+        reason_code: data.reason_code ?? null,
+        doc_ref: data.doc_ref ?? null,
+        expires_at: data.expires_at ?? null,
+        linked_loan_id: data.linked_loan_id ?? null,
+        active: true,
+        approval_state: "approved",
+        created_by: staff?.id ?? null,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return hold;
+  });
+
+export const requestSavingsHoldRelease = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        hold_id: z.string().uuid(),
+        reason: z.string().min(3),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // Load hold to build reference label and confirm eligibility.
+    const { data: hold, error: hErr } = await supabase
+      .from("savings_hold")
+      .select(
+        "id, company_id, hold_type, amount, active, release_status, account:account_id(account_no, client:client_id(full_name))",
+      )
+      .eq("id", data.hold_id)
+      .maybeSingle();
+    if (hErr) throw hErr;
+    if (!hold) throw new Error("Hold not found");
+    if (!(hold as any).active) throw new Error("Hold already inactive");
+    if (!["none", "rejected"].includes((hold as any).release_status))
+      throw new Error("Release already in progress");
+
+    // Find active workflow definition for this tx type in the company.
+    const { data: wf, error: wErr } = await supabase
+      .from("workflow_definition")
+      .select("id, is_enabled")
+      .eq("company_id", (hold as any).company_id)
+      .eq("transaction_type", "savings_hold_release")
+      .eq("is_enabled", true)
+      .maybeSingle();
+    if (wErr) throw wErr;
+    if (!wf) throw new Error("No active workflow configured for Savings hold release");
+
+    const acct: any = (hold as any).account;
+    const refLabel = `Release ${(hold as any).hold_type} · ${acct?.account_no ?? "acct"}${
+      acct?.client?.full_name ? " · " + acct.client.full_name : ""
+    }`;
+    const { data: inst, error: iErr } = await supabase
+      .from("workflow_instance")
+      .insert({
+        workflow_id: (wf as any).id,
+        company_id: (hold as any).company_id,
+        transaction_type: "savings_hold_release",
+        reference_id: data.hold_id,
+        reference_label: refLabel,
+        amount: Number((hold as any).amount ?? 0) || null,
+        initiated_by: userId,
+        current_step: 1,
+      })
+      .select("id")
+      .single();
+    if (iErr) throw iErr;
+
+    const { error: rErr } = await supabase.rpc("request_savings_hold_release" as any, {
+      _hold_id: data.hold_id,
+      _instance_id: (inst as any).id,
+      _reason: data.reason,
+    } as any);
+    if (rErr) throw new Error(rErr.message);
+    return { ok: true, instance_id: (inst as any).id };
+  });
