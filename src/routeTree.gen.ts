@@ -49,6 +49,7 @@ import { Route as AuthenticatedTransactionsCashBankRouteImport } from './routes/
 import { Route as AuthenticatedSavingsPassbookRouteImport } from './routes/_authenticated/savings.passbook'
 import { Route as AuthenticatedSavingsNewRouteImport } from './routes/_authenticated/savings.new'
 import { Route as AuthenticatedSavingsMandatesRouteImport } from './routes/_authenticated/savings.mandates'
+import { Route as AuthenticatedSavingsInterestRouteImport } from './routes/_authenticated/savings.interest'
 import { Route as AuthenticatedSavingsHoldsRouteImport } from './routes/_authenticated/savings.holds'
 import { Route as AuthenticatedSavingsCloseRouteImport } from './routes/_authenticated/savings.close'
 import { Route as AuthenticatedLoansWriteOffRouteImport } from './routes/_authenticated/loans.write-off'
@@ -78,6 +79,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
+import { Route as ApiPublicHooksSavingsInterestRouteImport } from './routes/api/public/hooks/savings-interest'
 import { Route as ApiPublicHooksSavingsAutoCollectionRouteImport } from './routes/api/public/hooks/savings-auto-collection'
 import { Route as ApiPublicHooksLoanAccrueRouteImport } from './routes/api/public/hooks/loan-accrue'
 import { Route as ApiPublicHooksFdMatureRouteImport } from './routes/api/public/hooks/fd-mature'
@@ -85,6 +87,7 @@ import { Route as ApiPublicHooksFdAccrueRouteImport } from './routes/api/public/
 import { Route as ApiPublicHooksEodCloseRouteImport } from './routes/api/public/hooks/eod-close'
 import { Route as ApiPublicHooksDispatchDomainEventsRouteImport } from './routes/api/public/hooks/dispatch-domain-events'
 import { Route as AuthenticatedClientsIdEditRouteImport } from './routes/_authenticated/clients.$id.edit'
+import { Route as AuthenticatedAdminSavingsWhtRouteImport } from './routes/_authenticated/admin.savings.wht'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
 import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/api/public/v1/transactions.outbound'
@@ -317,6 +320,12 @@ const AuthenticatedSavingsMandatesRoute =
     path: '/mandates',
     getParentRoute: () => AuthenticatedSavingsRoute,
   } as any)
+const AuthenticatedSavingsInterestRoute =
+  AuthenticatedSavingsInterestRouteImport.update({
+    id: '/interest',
+    path: '/interest',
+    getParentRoute: () => AuthenticatedSavingsRoute,
+  } as any)
 const AuthenticatedSavingsHoldsRoute =
   AuthenticatedSavingsHoldsRouteImport.update({
     id: '/holds',
@@ -481,6 +490,12 @@ const ApiPublicV1HealthRoute = ApiPublicV1HealthRouteImport.update({
   path: '/api/public/v1/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSavingsInterestRoute =
+  ApiPublicHooksSavingsInterestRouteImport.update({
+    id: '/api/public/hooks/savings-interest',
+    path: '/api/public/hooks/savings-interest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSavingsAutoCollectionRoute =
   ApiPublicHooksSavingsAutoCollectionRouteImport.update({
     id: '/api/public/hooks/savings-auto-collection',
@@ -519,6 +534,12 @@ const AuthenticatedClientsIdEditRoute =
     id: '/edit',
     path: '/edit',
     getParentRoute: () => AuthenticatedClientsIdRoute,
+  } as any)
+const AuthenticatedAdminSavingsWhtRoute =
+  AuthenticatedAdminSavingsWhtRouteImport.update({
+    id: '/savings/wht',
+    path: '/savings/wht',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAccountsPaymentsNewRoute =
   AuthenticatedAccountsPaymentsNewRouteImport.update({
@@ -576,7 +597,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/api': typeof AuthenticatedApiRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/audit-log': typeof AuthenticatedAuditLogRoute
@@ -612,6 +633,7 @@ export interface FileRoutesByFullPath {
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/savings/holds': typeof AuthenticatedSavingsHoldsRoute
+  '/savings/interest': typeof AuthenticatedSavingsInterestRoute
   '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
@@ -637,6 +659,7 @@ export interface FileRoutesByFullPath {
   '/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/admin/savings/wht': typeof AuthenticatedAdminSavingsWhtRoute
   '/clients/$id/edit': typeof AuthenticatedClientsIdEditRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
@@ -644,6 +667,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
+  '/api/public/hooks/savings-interest': typeof ApiPublicHooksSavingsInterestRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -662,7 +686,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/api': typeof AuthenticatedApiRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/audit-log': typeof AuthenticatedAuditLogRoute
@@ -694,6 +718,7 @@ export interface FileRoutesByTo {
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/savings/holds': typeof AuthenticatedSavingsHoldsRoute
+  '/savings/interest': typeof AuthenticatedSavingsInterestRoute
   '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
@@ -719,6 +744,7 @@ export interface FileRoutesByTo {
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/admin/savings/wht': typeof AuthenticatedAdminSavingsWhtRoute
   '/clients/$id/edit': typeof AuthenticatedClientsIdEditRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
@@ -726,6 +752,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
+  '/api/public/hooks/savings-interest': typeof ApiPublicHooksSavingsInterestRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -746,7 +773,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/api': typeof AuthenticatedApiRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/audit-log': typeof AuthenticatedAuditLogRoute
@@ -782,6 +809,7 @@ export interface FileRoutesById {
   '/_authenticated/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/_authenticated/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/_authenticated/savings/holds': typeof AuthenticatedSavingsHoldsRoute
+  '/_authenticated/savings/interest': typeof AuthenticatedSavingsInterestRoute
   '/_authenticated/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/_authenticated/savings/new': typeof AuthenticatedSavingsNewRoute
   '/_authenticated/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
@@ -807,6 +835,7 @@ export interface FileRoutesById {
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/_authenticated/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/_authenticated/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/_authenticated/admin/savings/wht': typeof AuthenticatedAdminSavingsWhtRoute
   '/_authenticated/clients/$id/edit': typeof AuthenticatedClientsIdEditRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
@@ -814,6 +843,7 @@ export interface FileRoutesById {
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
+  '/api/public/hooks/savings-interest': typeof ApiPublicHooksSavingsInterestRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -870,6 +900,7 @@ export interface FileRouteTypes {
     | '/loans/write-off'
     | '/savings/close'
     | '/savings/holds'
+    | '/savings/interest'
     | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
@@ -895,6 +926,7 @@ export interface FileRouteTypes {
     | '/transactions/'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
+    | '/admin/savings/wht'
     | '/clients/$id/edit'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/eod-close'
@@ -902,6 +934,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
     | '/api/public/hooks/savings-auto-collection'
+    | '/api/public/hooks/savings-interest'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -952,6 +985,7 @@ export interface FileRouteTypes {
     | '/loans/write-off'
     | '/savings/close'
     | '/savings/holds'
+    | '/savings/interest'
     | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
@@ -977,6 +1011,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
+    | '/admin/savings/wht'
     | '/clients/$id/edit'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/eod-close'
@@ -984,6 +1019,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
     | '/api/public/hooks/savings-auto-collection'
+    | '/api/public/hooks/savings-interest'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1039,6 +1075,7 @@ export interface FileRouteTypes {
     | '/_authenticated/loans/write-off'
     | '/_authenticated/savings/close'
     | '/_authenticated/savings/holds'
+    | '/_authenticated/savings/interest'
     | '/_authenticated/savings/mandates'
     | '/_authenticated/savings/new'
     | '/_authenticated/savings/passbook'
@@ -1064,6 +1101,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions/'
     | '/_authenticated/accounts/journal/new'
     | '/_authenticated/accounts/payments/new'
+    | '/_authenticated/admin/savings/wht'
     | '/_authenticated/clients/$id/edit'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/eod-close'
@@ -1071,6 +1109,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
     | '/api/public/hooks/savings-auto-collection'
+    | '/api/public/hooks/savings-interest'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1097,6 +1136,7 @@ export interface RootRouteChildren {
   ApiPublicHooksFdMatureRoute: typeof ApiPublicHooksFdMatureRoute
   ApiPublicHooksLoanAccrueRoute: typeof ApiPublicHooksLoanAccrueRoute
   ApiPublicHooksSavingsAutoCollectionRoute: typeof ApiPublicHooksSavingsAutoCollectionRoute
+  ApiPublicHooksSavingsInterestRoute: typeof ApiPublicHooksSavingsInterestRoute
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1392,6 +1432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSavingsMandatesRouteImport
       parentRoute: typeof AuthenticatedSavingsRoute
     }
+    '/_authenticated/savings/interest': {
+      id: '/_authenticated/savings/interest'
+      path: '/interest'
+      fullPath: '/savings/interest'
+      preLoaderRoute: typeof AuthenticatedSavingsInterestRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
+    }
     '/_authenticated/savings/holds': {
       id: '/_authenticated/savings/holds'
       path: '/holds'
@@ -1595,6 +1642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/savings-interest': {
+      id: '/api/public/hooks/savings-interest'
+      path: '/api/public/hooks/savings-interest'
+      fullPath: '/api/public/hooks/savings-interest'
+      preLoaderRoute: typeof ApiPublicHooksSavingsInterestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/savings-auto-collection': {
       id: '/api/public/hooks/savings-auto-collection'
       path: '/api/public/hooks/savings-auto-collection'
@@ -1643,6 +1697,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/clients/$id/edit'
       preLoaderRoute: typeof AuthenticatedClientsIdEditRouteImport
       parentRoute: typeof AuthenticatedClientsIdRoute
+    }
+    '/_authenticated/admin/savings/wht': {
+      id: '/_authenticated/admin/savings/wht'
+      path: '/savings/wht'
+      fullPath: '/admin/savings/wht'
+      preLoaderRoute: typeof AuthenticatedAdminSavingsWhtRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/accounts/payments/new': {
       id: '/_authenticated/accounts/payments/new'
@@ -1710,9 +1771,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminSavingsWhtRoute: typeof AuthenticatedAdminSavingsWhtRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminSavingsWhtRoute: AuthenticatedAdminSavingsWhtRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedSavingsRouteChildren {
   AuthenticatedSavingsCloseRoute: typeof AuthenticatedSavingsCloseRoute
   AuthenticatedSavingsHoldsRoute: typeof AuthenticatedSavingsHoldsRoute
+  AuthenticatedSavingsInterestRoute: typeof AuthenticatedSavingsInterestRoute
   AuthenticatedSavingsMandatesRoute: typeof AuthenticatedSavingsMandatesRoute
   AuthenticatedSavingsNewRoute: typeof AuthenticatedSavingsNewRoute
   AuthenticatedSavingsPassbookRoute: typeof AuthenticatedSavingsPassbookRoute
@@ -1722,6 +1795,7 @@ interface AuthenticatedSavingsRouteChildren {
 const AuthenticatedSavingsRouteChildren: AuthenticatedSavingsRouteChildren = {
   AuthenticatedSavingsCloseRoute: AuthenticatedSavingsCloseRoute,
   AuthenticatedSavingsHoldsRoute: AuthenticatedSavingsHoldsRoute,
+  AuthenticatedSavingsInterestRoute: AuthenticatedSavingsInterestRoute,
   AuthenticatedSavingsMandatesRoute: AuthenticatedSavingsMandatesRoute,
   AuthenticatedSavingsNewRoute: AuthenticatedSavingsNewRoute,
   AuthenticatedSavingsPassbookRoute: AuthenticatedSavingsPassbookRoute,
@@ -1834,7 +1908,7 @@ const AuthenticatedClientsIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedApiRoute: typeof AuthenticatedApiRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedAuditLogRoute: typeof AuthenticatedAuditLogRoute
@@ -1876,7 +1950,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedApiRoute: AuthenticatedApiRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedAuditLogRoute: AuthenticatedAuditLogRoute,
@@ -1938,6 +2012,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksLoanAccrueRoute: ApiPublicHooksLoanAccrueRoute,
   ApiPublicHooksSavingsAutoCollectionRoute:
     ApiPublicHooksSavingsAutoCollectionRoute,
+  ApiPublicHooksSavingsInterestRoute: ApiPublicHooksSavingsInterestRoute,
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,

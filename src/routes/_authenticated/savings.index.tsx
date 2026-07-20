@@ -9,6 +9,7 @@ import {
   Archive,
   Lock,
   Repeat,
+  Percent,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -67,6 +68,13 @@ const CARDS = [
     title: "Loan Mandates",
     desc: "Automatic savings-to-loan collections, twice-daily runs",
     accent: "from-sky-500/15 to-sky-500/0 text-sky-600",
+  },
+  {
+    to: "/savings/interest",
+    icon: Percent,
+    title: "Interest & WHT",
+    desc: "Daily accrual, periodic capitalization, and withholding tax posting",
+    accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600",
   },
 ] as const;
 
