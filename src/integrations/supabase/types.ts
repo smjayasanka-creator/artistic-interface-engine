@@ -6942,20 +6942,26 @@ export type Database = {
       }
       savings_product: {
         Row: {
+          accrual_frequency: string
           active: boolean
+          capitalization_frequency: string
           cash_account_id: string | null
           closure_fee: number
           code: string
           company_id: string
           created_at: string
           currency: string
+          day_count: number
           deposit_liability_account_id: string | null
           dormancy_days: number
+          dormant_treatment: string
           fee_income_account_id: string | null
           id: string
           interest_expense_account_id: string | null
           interest_rate_pct: number
+          interest_rounding: string
           min_balance: number
+          min_earn_balance: number
           min_opening_balance: number
           name: string
           opening_fee: number
@@ -6964,22 +6970,29 @@ export type Database = {
           segment: string
           unclaimed_deposit_liability_account_id: string | null
           updated_at: string
+          wht_payable_account_id: string | null
         }
         Insert: {
+          accrual_frequency?: string
           active?: boolean
+          capitalization_frequency?: string
           cash_account_id?: string | null
           closure_fee?: number
           code: string
           company_id: string
           created_at?: string
           currency?: string
+          day_count?: number
           deposit_liability_account_id?: string | null
           dormancy_days?: number
+          dormant_treatment?: string
           fee_income_account_id?: string | null
           id?: string
           interest_expense_account_id?: string | null
           interest_rate_pct?: number
+          interest_rounding?: string
           min_balance?: number
+          min_earn_balance?: number
           min_opening_balance?: number
           name: string
           opening_fee?: number
@@ -6988,22 +7001,29 @@ export type Database = {
           segment?: string
           unclaimed_deposit_liability_account_id?: string | null
           updated_at?: string
+          wht_payable_account_id?: string | null
         }
         Update: {
+          accrual_frequency?: string
           active?: boolean
+          capitalization_frequency?: string
           cash_account_id?: string | null
           closure_fee?: number
           code?: string
           company_id?: string
           created_at?: string
           currency?: string
+          day_count?: number
           deposit_liability_account_id?: string | null
           dormancy_days?: number
+          dormant_treatment?: string
           fee_income_account_id?: string | null
           id?: string
           interest_expense_account_id?: string | null
           interest_rate_pct?: number
+          interest_rounding?: string
           min_balance?: number
+          min_earn_balance?: number
           min_opening_balance?: number
           name?: string
           opening_fee?: number
@@ -7012,6 +7032,7 @@ export type Database = {
           segment?: string
           unclaimed_deposit_liability_account_id?: string | null
           updated_at?: string
+          wht_payable_account_id?: string | null
         }
         Relationships: [
           {
@@ -7052,6 +7073,13 @@ export type Database = {
           {
             foreignKeyName: "savings_product_unclaimed_deposit_liability_account_id_fkey"
             columns: ["unclaimed_deposit_liability_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_product_wht_payable_account_id_fkey"
+            columns: ["wht_payable_account_id"]
             isOneToOne: false
             referencedRelation: "gl_account"
             referencedColumns: ["id"]
@@ -7796,6 +7824,10 @@ export type Database = {
     }
     Functions: {
       _app_row_company_ok: { Args: { _app_id: string }; Returns: boolean }
+      accrue_savings_interest_daily: {
+        Args: { _business_date?: string; _company_id: string }
+        Returns: Json
+      }
       can_backdate_repayment: { Args: { _loan_id: string }; Returns: boolean }
       cancel_loan_application: {
         Args: {
@@ -7803,6 +7835,10 @@ export type Database = {
           _reason: string
           _transition_key: string
         }
+        Returns: Json
+      }
+      capitalize_savings_interest: {
+        Args: { _company_id: string; _force?: boolean; _period_end?: string }
         Returns: Json
       }
       claim_pending_domain_events: {
@@ -7960,6 +7996,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_capitalization_date: {
+        Args: { _date: string; _freq: string }
         Returns: boolean
       }
       is_company_admin: { Args: { _company_id: string }; Returns: boolean }
@@ -8127,6 +8167,15 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_savings_wht_rule: {
+        Args: { _account_id: string; _as_of: string; _company_id: string }
+        Returns: {
+          rate_pct: number
+          rule_id: string
+          threshold: number
+          wht_gl_account_id: string
+        }[]
+      }
       return_loan_application: {
         Args: {
           _application_id: string
@@ -8150,6 +8199,10 @@ export type Database = {
       }
       savings_active_hold_amount: {
         Args: { _account_id: string }
+        Returns: number
+      }
+      savings_round: {
+        Args: { _amount: number; _dp?: number; _mode: string }
         Returns: number
       }
       seed_default_risk_scheme: {
