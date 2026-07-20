@@ -79,6 +79,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
+import { Route as ApiPublicHooksSavingsStandingOrdersRouteImport } from './routes/api/public/hooks/savings-standing-orders'
 import { Route as ApiPublicHooksSavingsInterestRouteImport } from './routes/api/public/hooks/savings-interest'
 import { Route as ApiPublicHooksSavingsAutoCollectionRouteImport } from './routes/api/public/hooks/savings-auto-collection'
 import { Route as ApiPublicHooksLoanAccrueRouteImport } from './routes/api/public/hooks/loan-accrue'
@@ -490,6 +491,12 @@ const ApiPublicV1HealthRoute = ApiPublicV1HealthRouteImport.update({
   path: '/api/public/v1/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSavingsStandingOrdersRoute =
+  ApiPublicHooksSavingsStandingOrdersRouteImport.update({
+    id: '/api/public/hooks/savings-standing-orders',
+    path: '/api/public/hooks/savings-standing-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSavingsInterestRoute =
   ApiPublicHooksSavingsInterestRouteImport.update({
     id: '/api/public/hooks/savings-interest',
@@ -668,6 +675,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/hooks/savings-interest': typeof ApiPublicHooksSavingsInterestRoute
+  '/api/public/hooks/savings-standing-orders': typeof ApiPublicHooksSavingsStandingOrdersRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -753,6 +761,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/hooks/savings-interest': typeof ApiPublicHooksSavingsInterestRoute
+  '/api/public/hooks/savings-standing-orders': typeof ApiPublicHooksSavingsStandingOrdersRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -844,6 +853,7 @@ export interface FileRoutesById {
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/hooks/savings-interest': typeof ApiPublicHooksSavingsInterestRoute
+  '/api/public/hooks/savings-standing-orders': typeof ApiPublicHooksSavingsStandingOrdersRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -935,6 +945,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/loan-accrue'
     | '/api/public/hooks/savings-auto-collection'
     | '/api/public/hooks/savings-interest'
+    | '/api/public/hooks/savings-standing-orders'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1020,6 +1031,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/loan-accrue'
     | '/api/public/hooks/savings-auto-collection'
     | '/api/public/hooks/savings-interest'
+    | '/api/public/hooks/savings-standing-orders'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1110,6 +1122,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/loan-accrue'
     | '/api/public/hooks/savings-auto-collection'
     | '/api/public/hooks/savings-interest'
+    | '/api/public/hooks/savings-standing-orders'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1137,6 +1150,7 @@ export interface RootRouteChildren {
   ApiPublicHooksLoanAccrueRoute: typeof ApiPublicHooksLoanAccrueRoute
   ApiPublicHooksSavingsAutoCollectionRoute: typeof ApiPublicHooksSavingsAutoCollectionRoute
   ApiPublicHooksSavingsInterestRoute: typeof ApiPublicHooksSavingsInterestRoute
+  ApiPublicHooksSavingsStandingOrdersRoute: typeof ApiPublicHooksSavingsStandingOrdersRoute
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1642,6 +1656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/savings-standing-orders': {
+      id: '/api/public/hooks/savings-standing-orders'
+      path: '/api/public/hooks/savings-standing-orders'
+      fullPath: '/api/public/hooks/savings-standing-orders'
+      preLoaderRoute: typeof ApiPublicHooksSavingsStandingOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/savings-interest': {
       id: '/api/public/hooks/savings-interest'
       path: '/api/public/hooks/savings-interest'
@@ -2013,6 +2034,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSavingsAutoCollectionRoute:
     ApiPublicHooksSavingsAutoCollectionRoute,
   ApiPublicHooksSavingsInterestRoute: ApiPublicHooksSavingsInterestRoute,
+  ApiPublicHooksSavingsStandingOrdersRoute:
+    ApiPublicHooksSavingsStandingOrdersRoute,
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
