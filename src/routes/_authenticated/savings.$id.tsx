@@ -132,7 +132,9 @@ function SavingsDetail() {
             {activeHolds.length} active hold{activeHolds.length > 1 ? "s" : ""} — {money(heldAmount)} restricted
           </div>
         )}
+        <LifecycleBanner account={a} accountId={id} />
       </Card>
+
 
       <div className="flex flex-wrap gap-1 border-b border-border">
         {TABS.map((t) => {
