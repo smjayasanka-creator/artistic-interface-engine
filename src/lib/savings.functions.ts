@@ -569,12 +569,12 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
       _txn_type: data.txn_type,
       _amount: Math.abs(data.amount),
       _channel: data.channel ?? "branch",
-      _reference: data.reference ?? null,
-      _external_ref: data.external_ref ?? null,
-      _narration: data.narration ?? null,
-      _payment_method: data.payment_method ?? null,
+      _reference: data.reference ?? undefined,
+      _external_ref: data.external_ref ?? undefined,
+      _narration: data.narration ?? undefined,
+      _payment_method: data.payment_method ?? undefined,
       _payment_details: paymentDetails as any,
-      _idempotency_key: data.idempotency_key ?? null,
+      _idempotency_key: data.idempotency_key ?? undefined,
     });
     if (rpcErr) throw new Error(rpcErr.message);
 
