@@ -49,6 +49,7 @@ import { Route as AuthenticatedTransactionsCashBankRouteImport } from './routes/
 import { Route as AuthenticatedSavingsPassbookRouteImport } from './routes/_authenticated/savings.passbook'
 import { Route as AuthenticatedSavingsNewRouteImport } from './routes/_authenticated/savings.new'
 import { Route as AuthenticatedSavingsMandatesRouteImport } from './routes/_authenticated/savings.mandates'
+import { Route as AuthenticatedSavingsInterestRouteImport } from './routes/_authenticated/savings.interest'
 import { Route as AuthenticatedSavingsHoldsRouteImport } from './routes/_authenticated/savings.holds'
 import { Route as AuthenticatedSavingsCloseRouteImport } from './routes/_authenticated/savings.close'
 import { Route as AuthenticatedLoansWriteOffRouteImport } from './routes/_authenticated/loans.write-off'
@@ -316,6 +317,12 @@ const AuthenticatedSavingsMandatesRoute =
   AuthenticatedSavingsMandatesRouteImport.update({
     id: '/mandates',
     path: '/mandates',
+    getParentRoute: () => AuthenticatedSavingsRoute,
+  } as any)
+const AuthenticatedSavingsInterestRoute =
+  AuthenticatedSavingsInterestRouteImport.update({
+    id: '/interest',
+    path: '/interest',
     getParentRoute: () => AuthenticatedSavingsRoute,
   } as any)
 const AuthenticatedSavingsHoldsRoute =
@@ -619,6 +626,7 @@ export interface FileRoutesByFullPath {
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/savings/holds': typeof AuthenticatedSavingsHoldsRoute
+  '/savings/interest': typeof AuthenticatedSavingsInterestRoute
   '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
@@ -702,6 +710,7 @@ export interface FileRoutesByTo {
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/savings/holds': typeof AuthenticatedSavingsHoldsRoute
+  '/savings/interest': typeof AuthenticatedSavingsInterestRoute
   '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
@@ -791,6 +800,7 @@ export interface FileRoutesById {
   '/_authenticated/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/_authenticated/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/_authenticated/savings/holds': typeof AuthenticatedSavingsHoldsRoute
+  '/_authenticated/savings/interest': typeof AuthenticatedSavingsInterestRoute
   '/_authenticated/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/_authenticated/savings/new': typeof AuthenticatedSavingsNewRoute
   '/_authenticated/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
@@ -880,6 +890,7 @@ export interface FileRouteTypes {
     | '/loans/write-off'
     | '/savings/close'
     | '/savings/holds'
+    | '/savings/interest'
     | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
@@ -963,6 +974,7 @@ export interface FileRouteTypes {
     | '/loans/write-off'
     | '/savings/close'
     | '/savings/holds'
+    | '/savings/interest'
     | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
@@ -1051,6 +1063,7 @@ export interface FileRouteTypes {
     | '/_authenticated/loans/write-off'
     | '/_authenticated/savings/close'
     | '/_authenticated/savings/holds'
+    | '/_authenticated/savings/interest'
     | '/_authenticated/savings/mandates'
     | '/_authenticated/savings/new'
     | '/_authenticated/savings/passbook'
@@ -1406,6 +1419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSavingsMandatesRouteImport
       parentRoute: typeof AuthenticatedSavingsRoute
     }
+    '/_authenticated/savings/interest': {
+      id: '/_authenticated/savings/interest'
+      path: '/interest'
+      fullPath: '/savings/interest'
+      preLoaderRoute: typeof AuthenticatedSavingsInterestRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
+    }
     '/_authenticated/savings/holds': {
       id: '/_authenticated/savings/holds'
       path: '/holds'
@@ -1734,6 +1754,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedSavingsRouteChildren {
   AuthenticatedSavingsCloseRoute: typeof AuthenticatedSavingsCloseRoute
   AuthenticatedSavingsHoldsRoute: typeof AuthenticatedSavingsHoldsRoute
+  AuthenticatedSavingsInterestRoute: typeof AuthenticatedSavingsInterestRoute
   AuthenticatedSavingsMandatesRoute: typeof AuthenticatedSavingsMandatesRoute
   AuthenticatedSavingsNewRoute: typeof AuthenticatedSavingsNewRoute
   AuthenticatedSavingsPassbookRoute: typeof AuthenticatedSavingsPassbookRoute
@@ -1743,6 +1764,7 @@ interface AuthenticatedSavingsRouteChildren {
 const AuthenticatedSavingsRouteChildren: AuthenticatedSavingsRouteChildren = {
   AuthenticatedSavingsCloseRoute: AuthenticatedSavingsCloseRoute,
   AuthenticatedSavingsHoldsRoute: AuthenticatedSavingsHoldsRoute,
+  AuthenticatedSavingsInterestRoute: AuthenticatedSavingsInterestRoute,
   AuthenticatedSavingsMandatesRoute: AuthenticatedSavingsMandatesRoute,
   AuthenticatedSavingsNewRoute: AuthenticatedSavingsNewRoute,
   AuthenticatedSavingsPassbookRoute: AuthenticatedSavingsPassbookRoute,
