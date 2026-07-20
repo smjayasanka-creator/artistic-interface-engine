@@ -7928,6 +7928,10 @@ export type Database = {
         Args: { _business_date?: string; _company_id: string }
         Returns: Json
       }
+      assert_savings_txn_permission: {
+        Args: { _company_id: string; _txn_type: string }
+        Returns: undefined
+      }
       can_backdate_repayment: { Args: { _loan_id: string }; Returns: boolean }
       cancel_loan_application: {
         Args: {
