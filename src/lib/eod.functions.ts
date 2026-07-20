@@ -303,6 +303,7 @@ export const runStep = createServerFn({ method: "POST" })
       {
         _user_id: context.userId,
         _permission: "eod.process",
+        _company_id: run.company_id,
       } as any,
     );
     const { data: companyAdmin } = await context.supabase.rpc(
