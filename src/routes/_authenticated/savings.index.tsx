@@ -78,6 +78,20 @@ const CARDS = [
     desc: "Daily accrual, periodic capitalization, and withholding tax posting",
     accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600",
   },
+  {
+    to: "/savings/standing-orders",
+    icon: CalendarClock,
+    title: "Standing Orders",
+    desc: "Customer-authorised recurring transfers processed daily",
+    accent: "from-teal-500/15 to-teal-500/0 text-teal-600",
+  },
+  {
+    to: "/savings/reversals",
+    icon: Undo2,
+    title: "Reversals",
+    desc: "Reverse a posted transaction with a linked opposite entry and GL",
+    accent: "from-rose-500/15 to-rose-500/0 text-rose-600",
+  },
 ] as const;
 
 function SavingsIndex() {
