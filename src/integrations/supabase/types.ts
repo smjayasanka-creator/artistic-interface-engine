@@ -8236,15 +8236,25 @@ export type Database = {
         Returns: undefined
       }
       mark_savings_dormant: { Args: { _account_id: string }; Returns: string }
-      next_contract_no: {
-        Args: {
-          _branch_id: string
-          _company_id: string
-          _product_id: string
-          _segment: number
-        }
-        Returns: string
-      }
+      next_contract_no:
+        | {
+            Args: {
+              _branch_id: string
+              _company_id: string
+              _product_id: string
+              _segment: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _branch_id: string
+              _company_id: string
+              _product_id: string
+              _segment: number
+            }
+            Returns: string
+          }
       next_fd_certificate_no: { Args: { _company_id: string }; Returns: string }
       next_loan_application_no: { Args: never; Returns: string }
       next_savings_account_no: {
