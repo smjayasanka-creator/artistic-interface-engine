@@ -29,6 +29,7 @@ export const CANONICAL_TX_TYPES: { code: string; label: string }[] = [
   { code: "customer_screening_tier1", label: "Customer screening — Tier 1 review" },
   { code: "customer_screening_tier2", label: "Customer screening — Tier 2 escalation" },
   { code: "savings_hold_release", label: "Savings hold/block release" },
+  { code: "savings_account_opening", label: "Savings account opening" },
 ];
 
 const stepSchema = z.object({
@@ -478,6 +479,12 @@ export const actOnInstance = createServerFn({ method: "POST" })
           _decision: "rejected",
         } as any);
       }
+      if ((inst as any).transaction_type === "savings_account_opening") {
+        await supabase.rpc("finalize_savings_account_opening" as any, {
+          _instance_id: data.instance_id,
+          _decision: "rejected",
+        } as any);
+      }
       return { ok: true, status: "declined" };
     }
 
@@ -488,6 +495,12 @@ export const actOnInstance = createServerFn({ method: "POST" })
         .eq("id", data.instance_id);
       if ((inst as any).transaction_type === "savings_hold_release") {
         await supabase.rpc("finalize_savings_hold_release" as any, {
+          _instance_id: data.instance_id,
+          _decision: "rejected",
+        } as any);
+      }
+      if ((inst as any).transaction_type === "savings_account_opening") {
+        await supabase.rpc("finalize_savings_account_opening" as any, {
           _instance_id: data.instance_id,
           _decision: "rejected",
         } as any);
@@ -535,6 +548,13 @@ export const actOnInstance = createServerFn({ method: "POST" })
 
     if ((inst as any).transaction_type === "savings_hold_release") {
       await supabase.rpc("finalize_savings_hold_release" as any, {
+        _instance_id: data.instance_id,
+        _decision: "approved",
+      } as any);
+    }
+
+    if ((inst as any).transaction_type === "savings_account_opening") {
+      await supabase.rpc("finalize_savings_account_opening" as any, {
         _instance_id: data.instance_id,
         _decision: "approved",
       } as any);
