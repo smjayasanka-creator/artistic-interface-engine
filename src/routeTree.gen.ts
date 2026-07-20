@@ -77,6 +77,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
+import { Route as ApiPublicHooksSavingsAutoCollectionRouteImport } from './routes/api/public/hooks/savings-auto-collection'
 import { Route as ApiPublicHooksLoanAccrueRouteImport } from './routes/api/public/hooks/loan-accrue'
 import { Route as ApiPublicHooksFdMatureRouteImport } from './routes/api/public/hooks/fd-mature'
 import { Route as ApiPublicHooksFdAccrueRouteImport } from './routes/api/public/hooks/fd-accrue'
@@ -473,6 +474,12 @@ const ApiPublicV1HealthRoute = ApiPublicV1HealthRouteImport.update({
   path: '/api/public/v1/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSavingsAutoCollectionRoute =
+  ApiPublicHooksSavingsAutoCollectionRouteImport.update({
+    id: '/api/public/hooks/savings-auto-collection',
+    path: '/api/public/hooks/savings-auto-collection',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksLoanAccrueRoute =
   ApiPublicHooksLoanAccrueRouteImport.update({
     id: '/api/public/hooks/loan-accrue',
@@ -628,6 +635,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
+  '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -708,6 +716,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
+  '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -794,6 +803,7 @@ export interface FileRoutesById {
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
+  '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -880,6 +890,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
+    | '/api/public/hooks/savings-auto-collection'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -960,6 +971,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
+    | '/api/public/hooks/savings-auto-collection'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1045,6 +1057,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
+    | '/api/public/hooks/savings-auto-collection'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1070,6 +1083,7 @@ export interface RootRouteChildren {
   ApiPublicHooksFdAccrueRoute: typeof ApiPublicHooksFdAccrueRoute
   ApiPublicHooksFdMatureRoute: typeof ApiPublicHooksFdMatureRoute
   ApiPublicHooksLoanAccrueRoute: typeof ApiPublicHooksLoanAccrueRoute
+  ApiPublicHooksSavingsAutoCollectionRoute: typeof ApiPublicHooksSavingsAutoCollectionRoute
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1561,6 +1575,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/savings-auto-collection': {
+      id: '/api/public/hooks/savings-auto-collection'
+      path: '/api/public/hooks/savings-auto-collection'
+      fullPath: '/api/public/hooks/savings-auto-collection'
+      preLoaderRoute: typeof ApiPublicHooksSavingsAutoCollectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/loan-accrue': {
       id: '/api/public/hooks/loan-accrue'
       path: '/api/public/hooks/loan-accrue'
@@ -1893,6 +1914,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksFdAccrueRoute: ApiPublicHooksFdAccrueRoute,
   ApiPublicHooksFdMatureRoute: ApiPublicHooksFdMatureRoute,
   ApiPublicHooksLoanAccrueRoute: ApiPublicHooksLoanAccrueRoute,
+  ApiPublicHooksSavingsAutoCollectionRoute:
+    ApiPublicHooksSavingsAutoCollectionRoute,
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,

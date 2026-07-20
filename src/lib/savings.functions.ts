@@ -1062,3 +1062,225 @@ export const requestSavingsHoldRelease = createServerFn({ method: "POST" })
     if (rErr) throw new Error(rErr.message);
     return { ok: true, instance_id: (inst as any).id };
   });
+
+// ─────────── Phase 5: Loan repayment mandates ───────────
+export const listSavingsLoanMandates = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        loan_id: z.string().uuid().optional(),
+        savings_account_id: z.string().uuid().optional(),
+        status: z.enum(["pending", "active", "suspended", "cancelled", "all"]).optional(),
+      })
+      .partial()
+      .parse(d ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    let q = (supabase as any)
+      .from("savings_loan_mandate")
+      .select(
+        "*, savings_account:savings_account_id(id, account_no, balance, available_balance, status, client:client_id(id, full_name)), loan:loan_id(id, loan_no, principal, status, outstanding_principal)",
+      )
+      .order("created_at", { ascending: false });
+    if (data.loan_id) q = q.eq("loan_id", data.loan_id);
+    if (data.savings_account_id) q = q.eq("savings_account_id", data.savings_account_id);
+    if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const createSavingsLoanMandate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        savings_account_id: z.string().uuid(),
+        loan_id: z.string().uuid(),
+        mandate_type: z.enum(["arrears_only", "full_installment", "minimum_due", "fixed_amount"]),
+        fixed_amount: z.number().nonnegative().optional().nullable(),
+        max_amount_per_run: z.number().nonnegative().optional().nullable(),
+        min_protected_balance: z.number().nonnegative().default(0),
+        priority: z.number().int().min(1).max(999).default(100),
+        morning_run: z.boolean().default(true),
+        afternoon_run: z.boolean().default(true),
+        allow_partial: z.boolean().default(true),
+        ignore_debit_block: z.boolean().default(false),
+        effective_from: z.string().optional().nullable(),
+        effective_to: z.string().optional().nullable(),
+        consent_reference: z.string().max(120).optional().nullable(),
+        consent_date: z.string().optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    // Resolve company + client from savings account & confirm the loan belongs to the same client
+    const { data: acct, error: aErr } = await (supabase as any)
+      .from("savings_account")
+      .select("id, company_id, client_id")
+      .eq("id", data.savings_account_id)
+      .single();
+    if (aErr) throw aErr;
+    const { data: loan, error: lErr } = await (supabase as any)
+      .from("loan")
+      .select("id, client_id")
+      .eq("id", data.loan_id)
+      .single();
+    if (lErr) throw lErr;
+    if (loan.client_id !== acct.client_id) {
+      throw new Error("Savings account and loan must belong to the same customer");
+    }
+    if (data.mandate_type === "fixed_amount" && !(Number(data.fixed_amount) > 0)) {
+      throw new Error("Fixed amount is required for fixed-amount mandates");
+    }
+
+    const { data: staff } = await (supabase as any)
+      .from("staff")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const insert = {
+      company_id: acct.company_id,
+      client_id: acct.client_id,
+      savings_account_id: data.savings_account_id,
+      loan_id: data.loan_id,
+      mandate_type: data.mandate_type,
+      fixed_amount: data.fixed_amount ?? null,
+      max_amount_per_run: data.max_amount_per_run ?? null,
+      min_protected_balance: data.min_protected_balance ?? 0,
+      priority: data.priority ?? 100,
+      morning_run: data.morning_run ?? true,
+      afternoon_run: data.afternoon_run ?? true,
+      allow_partial: data.allow_partial ?? true,
+      ignore_debit_block: data.ignore_debit_block ?? false,
+      effective_from: data.effective_from || new Date().toISOString().slice(0, 10),
+      effective_to: data.effective_to || null,
+      consent_reference: data.consent_reference ?? null,
+      consent_date: data.consent_date ?? null,
+      status: "pending",
+      created_by: staff?.id ?? null,
+    };
+    const { data: row, error } = await (supabase as any)
+      .from("savings_loan_mandate")
+      .insert(insert)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const setSavingsLoanMandateStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        action: z.enum(["activate", "suspend", "cancel"]),
+        reason: z.string().max(400).optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: staff } = await (supabase as any)
+      .from("staff")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const patch: any = { updated_at: new Date().toISOString() };
+    if (data.action === "activate") {
+      patch.status = "active";
+      patch.approved_by = staff?.id ?? null;
+      patch.approved_at = new Date().toISOString();
+    } else if (data.action === "suspend") {
+      patch.status = "suspended";
+      patch.suspended_at = new Date().toISOString();
+      patch.suspended_reason = data.reason ?? null;
+    } else {
+      patch.status = "cancelled";
+      patch.cancelled_at = new Date().toISOString();
+      patch.cancelled_reason = data.reason ?? null;
+    }
+    const { data: row, error } = await (supabase as any)
+      .from("savings_loan_mandate")
+      .update(patch)
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const listSavingsAutoCollectionRuns = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ limit: z.number().int().min(1).max(200).optional() }).partial().parse(d ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: rows, error } = await (supabase as any)
+      .from("savings_auto_collection_run")
+      .select("*")
+      .order("started_at", { ascending: false })
+      .limit(data.limit ?? 50);
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const listSavingsAutoCollectionResults = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ run_id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: rows, error } = await (supabase as any)
+      .from("savings_auto_collection_result")
+      .select(
+        "*, savings_account:savings_account_id(account_no, client:client_id(full_name)), loan:loan_id(loan_no)",
+      )
+      .eq("run_id", data.run_id)
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+// Manual trigger — reuses the same server-role RPC; requires savings.automation.run permission
+// enforced at the DB level (RPC checks) or via admin bypass. Here we simply invoke.
+export const triggerSavingsAutoCollection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        window: z.enum(["morning", "afternoon", "manual"]).default("manual"),
+        business_date: z.string().optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: cid, error: cErr } = await supabase.rpc("current_company_id" as any);
+    if (cErr) throw cErr;
+    if (!cid) throw new Error("No active company");
+    // Only company admin or automation.run permission may manually trigger.
+    const { data: allowed } = await supabase.rpc("has_permission" as any, {
+      _user_id: (context as any).userId,
+      _code: "savings.automation.run",
+      _company_id: cid,
+    } as any);
+    const { data: isAdmin } = await supabase.rpc("is_company_admin" as any, {
+      _company_id: cid,
+    } as any);
+    if (!allowed && !isAdmin) throw new Error("Not authorized to run auto-collection");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: result, error } = await supabaseAdmin.rpc("run_savings_auto_collection", {
+      _company_id: cid,
+      _window: data.window,
+      _business_date: data.business_date ?? new Date().toISOString().slice(0, 10),
+      _triggered_by: null,
+    } as any);
+    if (error) throw new Error(error.message);
+    return result;
+  });
