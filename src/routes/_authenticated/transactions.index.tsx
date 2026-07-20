@@ -11,6 +11,7 @@ import {
   FileCheck2,
   Lock,
   ArrowDownFromLine,
+  ArrowUpFromLine,
   Truck,
   Undo2,
 } from "lucide-react";
@@ -57,6 +58,12 @@ const TILES = [
     label: "Deposit Withdrawal",
     icon: Wallet,
     accent: "from-rose-500/15 to-rose-500/0 text-rose-600",
+  },
+  {
+    to: "/transactions/savings-deposit",
+    label: "Savings Deposit",
+    icon: ArrowUpFromLine,
+    accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
   },
   {
     to: "/transactions/savings-withdrawal",

@@ -547,122 +547,60 @@ export const postSavingsTransaction = createServerFn({ method: "POST" })
         reference: data.reference ?? null,
       });
     }
-    const { supabase, userId } = context;
-    const { data: cid } = await supabase.rpc("current_company_id");
-    if (!cid) throw new Error("No company");
-    const { data: staff } = await (supabase as any)
-      .from("staff")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle();
+    const { supabase } = context;
 
-    const { data: acct, error } = await (supabase as any)
-      .from("savings_account")
-      .select(
-        "id, account_no, branch_id, balance, available_balance, status, product:product_id(min_balance, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)",
-      )
-      .eq("id", data.account_id)
-      .single();
-    if (error) throw new Error(error.message);
-    if (acct.status !== "active")
-      throw new Error(`Account is ${acct.status}, cannot post transactions`);
+    // Delegate the entire deposit/withdrawal to the atomic RPC:
+    //   * row-locks the account
+    //   * subtracts active holds/liens from available balance
+    //   * enforces block statuses (frozen / debit_blocked / credit_blocked / fully_blocked / closed)
+    //   * dedupes on idempotency_key
+    //   * posts the balanced GL entry
+    const paymentDetails =
+      data.payment_method || data.bank_account_id || data.savings_account_id
+        ? {
+            payment_method: data.payment_method ?? null,
+            bank_account_id: data.bank_account_id ?? null,
+            savings_account_id: data.savings_account_id ?? null,
+          }
+        : null;
 
-    const signed =
-      data.txn_type === "withdrawal" || data.txn_type === "fee"
-        ? -Math.abs(data.amount)
-        : Math.abs(data.amount);
-    const newBal = Number(acct.balance) + signed;
-    if (newBal < Number(acct.product?.min_balance ?? 0)) {
-      throw new Error("Balance would fall below product minimum");
-    }
+    const { data: newTxnId, error: rpcErr } = await supabase.rpc("record_savings_txn", {
+      _account_id: data.account_id,
+      _txn_type: data.txn_type,
+      _amount: Math.abs(data.amount),
+      _channel: data.channel ?? "branch",
+      _reference: data.reference ?? undefined,
+      _external_ref: data.external_ref ?? undefined,
+      _narration: data.narration ?? undefined,
+      _payment_method: data.payment_method ?? undefined,
+      _payment_details: paymentDetails as any,
+      _idempotency_key: data.idempotency_key ?? undefined,
+    });
+    if (rpcErr) throw new Error(rpcErr.message);
 
-    const { data: txn, error: terr } = await (supabase as any)
+    const { data: txn } = await (supabase as any)
       .from("savings_transaction")
-      .insert({
-        company_id: cid,
-        account_id: data.account_id,
-        txn_type: data.txn_type,
-        channel: data.channel ?? "branch",
-        amount: signed,
-        running_balance: newBal,
-        reference: data.reference ?? null,
-        external_ref: data.external_ref ?? null,
-        narration: data.narration ?? null,
-        performed_by: staff?.id ?? null,
-        idempotency_key: data.idempotency_key ?? null,
-      })
-      .select()
+      .select("*")
+      .eq("id", newTxnId)
       .single();
-    if (terr) throw new Error(terr.message);
-
-    await (supabase as any)
-      .from("savings_account")
-      .update({ balance: newBal, available_balance: newBal, last_txn_at: new Date().toISOString() })
-      .eq("id", data.account_id);
-
-    // Ledger posting via kernel
-    const gl = await resolveSavingsAccounts(supabase, acct.product);
-    const amt = Math.abs(data.amount);
-    const today = new Date().toISOString().slice(0, 10);
-    let lines: Array<{ account_id: string; debit: number; credit: number }> | null = null;
-    let refPrefix = "";
-    const needCashLiab = () => {
-      if (!gl.cash || !gl.liab) {
-        throw new Error(
-          "Savings product is missing GL mapping (cash and deposit-liability accounts). Configure them under Admin → Savings products.",
-        );
-      }
-    };
-    if (data.txn_type === "deposit") {
-      needCashLiab();
-      refPrefix = "SAV-DEP";
-      lines = [
-        { account_id: gl.cash!, debit: amt, credit: 0 },
-        { account_id: gl.liab!, debit: 0, credit: amt },
-      ];
-    } else if (data.txn_type === "withdrawal") {
-      needCashLiab();
-      refPrefix = "SAV-WD";
-      lines = [
-        { account_id: gl.liab!, debit: amt, credit: 0 },
-        { account_id: gl.cash!, debit: 0, credit: amt },
-      ];
-    } else if (data.txn_type === "fee") {
-      if (!gl.liab || !gl.fee)
-        throw new Error(
-          "Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to post a fee.",
-        );
-      refPrefix = "SAV-FEE";
-      lines = [
-        { account_id: gl.liab, debit: amt, credit: 0 },
-        { account_id: gl.fee, debit: 0, credit: amt },
-      ];
-    } else if (data.txn_type === "interest") {
-      if (!gl.liab || !gl.intr)
-        throw new Error(
-          "Savings product is missing GL mapping (deposit-liability and interest-expense accounts) required to credit interest.",
-        );
-      refPrefix = "SAV-INT";
-      lines = [
-        { account_id: gl.intr, debit: amt, credit: 0 },
-        { account_id: gl.liab, debit: 0, credit: amt },
-      ];
-    }
-    if (lines) {
-      const idem = data.idempotency_key ?? `savings:${data.txn_type}:${txn.id}`;
-      await supabase.rpc("post_entry", {
-        _entry_date: today,
-        _reference: `${refPrefix}-${acct.account_no}`,
-        _description: data.narration ?? `${data.txn_type} · ${acct.account_no}`,
-        _lines: lines as any,
-        _branch_id: acct.branch_id,
-        _source_module: "savings",
-        _source_ref: txn.id,
-        _idempotency_key: `savings:txn:${idem}`,
-      });
-    }
     return txn;
   });
+
+export const reverseSavingsTransaction = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { txn_id: string; reason: string }) => i)
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    if (!data.reason || data.reason.trim().length < 3)
+      throw new Error("Reversal reason is required");
+    const { data: newId, error } = await supabase.rpc("reverse_savings_txn", {
+      _txn_id: data.txn_id,
+      _reason: data.reason.trim(),
+    });
+    if (error) throw new Error(error.message);
+    return { reversal_txn_id: newId };
+  });
+
 
 export const closeSavingsAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
