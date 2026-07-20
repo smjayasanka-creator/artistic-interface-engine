@@ -48,6 +48,7 @@ import { Route as AuthenticatedTransactionsCloseCashierRouteImport } from './rou
 import { Route as AuthenticatedTransactionsChequeBankRouteImport } from './routes/_authenticated/transactions.cheque-bank'
 import { Route as AuthenticatedTransactionsCashWalletRouteImport } from './routes/_authenticated/transactions.cash-wallet'
 import { Route as AuthenticatedTransactionsCashBankRouteImport } from './routes/_authenticated/transactions.cash-bank'
+import { Route as AuthenticatedSavingsStandingOrdersRouteImport } from './routes/_authenticated/savings.standing-orders'
 import { Route as AuthenticatedSavingsPassbookRouteImport } from './routes/_authenticated/savings.passbook'
 import { Route as AuthenticatedSavingsNewRouteImport } from './routes/_authenticated/savings.new'
 import { Route as AuthenticatedSavingsMandatesRouteImport } from './routes/_authenticated/savings.mandates'
@@ -317,6 +318,12 @@ const AuthenticatedTransactionsCashBankRoute =
     id: '/cash-bank',
     path: '/cash-bank',
     getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
+const AuthenticatedSavingsStandingOrdersRoute =
+  AuthenticatedSavingsStandingOrdersRouteImport.update({
+    id: '/standing-orders',
+    path: '/standing-orders',
+    getParentRoute: () => AuthenticatedSavingsRoute,
   } as any)
 const AuthenticatedSavingsPassbookRoute =
   AuthenticatedSavingsPassbookRouteImport.update({
@@ -658,6 +665,7 @@ export interface FileRoutesByFullPath {
   '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/savings/standing-orders': typeof AuthenticatedSavingsStandingOrdersRoute
   '/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
   '/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
   '/transactions/cheque-bank': typeof AuthenticatedTransactionsChequeBankRoute
@@ -746,6 +754,7 @@ export interface FileRoutesByTo {
   '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/savings/standing-orders': typeof AuthenticatedSavingsStandingOrdersRoute
   '/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
   '/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
   '/transactions/cheque-bank': typeof AuthenticatedTransactionsChequeBankRoute
@@ -840,6 +849,7 @@ export interface FileRoutesById {
   '/_authenticated/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/_authenticated/savings/new': typeof AuthenticatedSavingsNewRoute
   '/_authenticated/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/_authenticated/savings/standing-orders': typeof AuthenticatedSavingsStandingOrdersRoute
   '/_authenticated/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
   '/_authenticated/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
   '/_authenticated/transactions/cheque-bank': typeof AuthenticatedTransactionsChequeBankRoute
@@ -934,6 +944,7 @@ export interface FileRouteTypes {
     | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
+    | '/savings/standing-orders'
     | '/transactions/cash-bank'
     | '/transactions/cash-wallet'
     | '/transactions/cheque-bank'
@@ -1022,6 +1033,7 @@ export interface FileRouteTypes {
     | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
+    | '/savings/standing-orders'
     | '/transactions/cash-bank'
     | '/transactions/cash-wallet'
     | '/transactions/cheque-bank'
@@ -1115,6 +1127,7 @@ export interface FileRouteTypes {
     | '/_authenticated/savings/mandates'
     | '/_authenticated/savings/new'
     | '/_authenticated/savings/passbook'
+    | '/_authenticated/savings/standing-orders'
     | '/_authenticated/transactions/cash-bank'
     | '/_authenticated/transactions/cash-wallet'
     | '/_authenticated/transactions/cheque-bank'
@@ -1464,6 +1477,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/transactions/cash-bank'
       preLoaderRoute: typeof AuthenticatedTransactionsCashBankRouteImport
       parentRoute: typeof AuthenticatedTransactionsRoute
+    }
+    '/_authenticated/savings/standing-orders': {
+      id: '/_authenticated/savings/standing-orders'
+      path: '/standing-orders'
+      fullPath: '/savings/standing-orders'
+      preLoaderRoute: typeof AuthenticatedSavingsStandingOrdersRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
     }
     '/_authenticated/savings/passbook': {
       id: '/_authenticated/savings/passbook'
@@ -1850,6 +1870,7 @@ interface AuthenticatedSavingsRouteChildren {
   AuthenticatedSavingsMandatesRoute: typeof AuthenticatedSavingsMandatesRoute
   AuthenticatedSavingsNewRoute: typeof AuthenticatedSavingsNewRoute
   AuthenticatedSavingsPassbookRoute: typeof AuthenticatedSavingsPassbookRoute
+  AuthenticatedSavingsStandingOrdersRoute: typeof AuthenticatedSavingsStandingOrdersRoute
   AuthenticatedSavingsIndexRoute: typeof AuthenticatedSavingsIndexRoute
 }
 
@@ -1860,6 +1881,8 @@ const AuthenticatedSavingsRouteChildren: AuthenticatedSavingsRouteChildren = {
   AuthenticatedSavingsMandatesRoute: AuthenticatedSavingsMandatesRoute,
   AuthenticatedSavingsNewRoute: AuthenticatedSavingsNewRoute,
   AuthenticatedSavingsPassbookRoute: AuthenticatedSavingsPassbookRoute,
+  AuthenticatedSavingsStandingOrdersRoute:
+    AuthenticatedSavingsStandingOrdersRoute,
   AuthenticatedSavingsIndexRoute: AuthenticatedSavingsIndexRoute,
 }
 
