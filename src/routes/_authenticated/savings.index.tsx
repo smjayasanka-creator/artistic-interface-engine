@@ -226,7 +226,15 @@ function SavingsIndex() {
                 const busy = dormantM.isPending || unclaimedM.isPending;
                 return (
                   <tr key={a.id} className="border-b border-border last:border-0">
-                    <td className="py-2 pr-3 font-mono text-xs">{a.account_no}</td>
+                    <td className="py-2 pr-3 font-mono text-xs">
+                      <Link
+                        to="/savings/$id"
+                        params={{ id: a.id }}
+                        className="text-primary hover:underline"
+                      >
+                        {a.account_no}
+                      </Link>
+                    </td>
                     <td className="py-2 pr-3">{a.client?.full_name}</td>
                     <td className="py-2 pr-3">{a.product?.name}</td>
                     <td className="py-2 pr-3">{a.branch?.name}</td>
