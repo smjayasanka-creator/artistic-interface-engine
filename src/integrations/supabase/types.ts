@@ -7936,6 +7936,10 @@ export type Database = {
         Args: { _reports: Json; _run_id: string }
         Returns: undefined
       }
+      execute_savings_loan_mandate: {
+        Args: { _mandate_id: string; _run_id: string }
+        Returns: Json
+      }
       finalize_savings_hold_release: {
         Args: { _decision: string; _instance_id: string }
         Returns: undefined
@@ -7991,6 +7995,14 @@ export type Database = {
           last_start: string
           last_status: string
           schedule: string
+        }[]
+      }
+      loan_arrears_snapshot: {
+        Args: { _loan_id: string }
+        Returns: {
+          arrears: number
+          full_installment: number
+          next_due: string
         }[]
       }
       mark_domain_event_dispatched: {
@@ -8126,6 +8138,15 @@ export type Database = {
       reverse_savings_txn: {
         Args: { _reason: string; _txn_id: string }
         Returns: string
+      }
+      run_savings_auto_collection: {
+        Args: {
+          _business_date?: string
+          _company_id: string
+          _triggered_by?: string
+          _window: string
+        }
+        Returns: Json
       }
       savings_active_hold_amount: {
         Args: { _account_id: string }
