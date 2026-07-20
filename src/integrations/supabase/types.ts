@@ -6979,6 +6979,7 @@ export type Database = {
         Row: {
           accrual_frequency: string
           active: boolean
+          adjustment_account_id: string | null
           capitalization_frequency: string
           cash_account_id: string | null
           closure_fee: number
@@ -7010,6 +7011,7 @@ export type Database = {
         Insert: {
           accrual_frequency?: string
           active?: boolean
+          adjustment_account_id?: string | null
           capitalization_frequency?: string
           cash_account_id?: string | null
           closure_fee?: number
@@ -7041,6 +7043,7 @@ export type Database = {
         Update: {
           accrual_frequency?: string
           active?: boolean
+          adjustment_account_id?: string | null
           capitalization_frequency?: string
           cash_account_id?: string | null
           closure_fee?: number
@@ -7070,6 +7073,13 @@ export type Database = {
           wht_payable_account_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "savings_product_adjustment_account_id_fkey"
+            columns: ["adjustment_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "savings_product_cash_account_id_fkey"
             columns: ["cash_account_id"]
