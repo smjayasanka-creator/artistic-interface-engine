@@ -445,6 +445,7 @@ export type Database = {
           district: string | null
           divisional_secretariat: string | null
           email: string | null
+          entity_type: string
           external_client_id: string | null
           external_person_id: string | null
           first_name: string | null
@@ -468,6 +469,7 @@ export type Database = {
           phone_country_code: string | null
           photo_url: string | null
           province: string | null
+          residency: string
           risk_grade: Database["public"]["Enums"]["risk_grade"] | null
           status: Database["public"]["Enums"]["client_status"]
         }
@@ -482,6 +484,7 @@ export type Database = {
           district?: string | null
           divisional_secretariat?: string | null
           email?: string | null
+          entity_type?: string
           external_client_id?: string | null
           external_person_id?: string | null
           first_name?: string | null
@@ -505,6 +508,7 @@ export type Database = {
           phone_country_code?: string | null
           photo_url?: string | null
           province?: string | null
+          residency?: string
           risk_grade?: Database["public"]["Enums"]["risk_grade"] | null
           status?: Database["public"]["Enums"]["client_status"]
         }
@@ -519,6 +523,7 @@ export type Database = {
           district?: string | null
           divisional_secretariat?: string | null
           email?: string | null
+          entity_type?: string
           external_client_id?: string | null
           external_person_id?: string | null
           first_name?: string | null
@@ -542,6 +547,7 @@ export type Database = {
           phone_country_code?: string | null
           photo_url?: string | null
           province?: string | null
+          residency?: string
           risk_grade?: Database["public"]["Enums"]["risk_grade"] | null
           status?: Database["public"]["Enums"]["client_status"]
         }

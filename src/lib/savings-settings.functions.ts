@@ -28,9 +28,9 @@ const whtSchema = z
   .object({
     id: z.string().uuid().optional(),
     jurisdiction: z.string().trim().min(2).max(10),
-    tax_type: z.enum(["WHT", "AIT"]),
-    residency: z.enum(["resident", "non_resident"]),
-    entity_type: z.enum(["individual", "corporate", "partnership", "trust", "other"]),
+    tax_type: z.enum(["wht", "ait"]),
+    residency: z.enum(["resident", "nonresident", "any"]),
+    entity_type: z.enum(["individual", "entity", "any"]),
     product_id: z.string().uuid().nullable().optional(),
     effective_from: z.string().min(10),
     effective_to: z.string().min(10).nullable().optional(),
@@ -46,6 +46,7 @@ const whtSchema = z
     message: "Effective-to must be on/after effective-from",
     path: ["effective_to"],
   });
+
 
 export const upsertWhtRule = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
