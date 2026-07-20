@@ -28,6 +28,7 @@ export const CANONICAL_TX_TYPES: { code: string; label: string }[] = [
   { code: "alco_rate_change", label: "ALCO deposit rate change" },
   { code: "customer_screening_tier1", label: "Customer screening — Tier 1 review" },
   { code: "customer_screening_tier2", label: "Customer screening — Tier 2 escalation" },
+  { code: "savings_hold_release", label: "Savings hold/block release" },
 ];
 
 const stepSchema = z.object({
