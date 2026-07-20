@@ -436,116 +436,15 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
         .parse(i),
   )
   .handler(async ({ context, data }) => {
-    const { supabase, userId } = context;
-    const { data: cid } = await supabase.rpc("current_company_id");
-    if (!cid) throw new Error("No company");
-    const { data: staff } = await (supabase as any)
-      .from("staff")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const { data: acct, error } = await (supabase as any)
-      .from("savings_account")
-      .select(
-        "id, account_no, branch_id, balance, status, product:product_id(closure_fee, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)",
-      )
-      .eq("id", data.account_id)
-      .single();
+    const { supabase } = context;
+    const { data: closed, error } = await supabase.rpc("close_savings_account" as any, {
+      _account_id: data.account_id,
+      _reason: data.reason,
+      _payout_channel: data.payout_channel ?? "branch",
+      _external_ref: data.external_ref ?? null,
+      _idempotency_key: null,
+    } as any);
     if (error) throw new Error(error.message);
-    if (acct.status === "closed") throw new Error("Account is already closed");
-
-    const fee = Number(acct.product?.closure_fee ?? 0);
-    const balAfterFee = Number(acct.balance) - fee;
-
-    const rows: any[] = [];
-    if (fee > 0) {
-      rows.push({
-        company_id: cid,
-        account_id: data.account_id,
-        txn_type: "fee",
-        channel: data.payout_channel ?? "branch",
-        amount: -fee,
-        running_balance: balAfterFee,
-        reference: "CLOSURE-FEE",
-        narration: "Account closure fee",
-        performed_by: staff?.id ?? null,
-      });
-    }
-    if (balAfterFee > 0) {
-      rows.push({
-        company_id: cid,
-        account_id: data.account_id,
-        txn_type: "closure",
-        channel: data.payout_channel ?? "branch",
-        amount: -balAfterFee,
-        running_balance: 0,
-        reference: "CLOSURE-PAYOUT",
-        external_ref: data.external_ref ?? null,
-        narration: "Final balance payout on closure",
-        performed_by: staff?.id ?? null,
-      });
-    }
-    if (rows.length) await (supabase as any).from("savings_transaction").insert(rows);
-
-    // Ledger postings via kernel
-    const gl = await resolveSavingsAccounts(supabase, acct.product);
-    const today = new Date().toISOString().slice(0, 10);
-    if (fee > 0) {
-      if (!gl.liab || !gl.fee) {
-        throw new Error(
-          "Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to post the closure fee.",
-        );
-      }
-      await supabase.rpc("post_entry", {
-        _entry_date: today,
-        _reference: `SAV-CLOSE-FEE-${acct.account_no}`,
-        _description: `Savings closure fee · ${acct.account_no}`,
-        _lines: [
-          { account_id: gl.liab, debit: fee, credit: 0 },
-          { account_id: gl.fee, debit: 0, credit: fee },
-        ] as any,
-        _branch_id: acct.branch_id,
-        _source_module: "savings",
-        _source_ref: acct.id,
-        _idempotency_key: `savings:close-fee:${acct.id}`,
-      });
-    }
-    if (balAfterFee > 0) {
-      if (!gl.cash || !gl.liab) {
-        throw new Error(
-          "Savings product is missing GL mapping (cash and deposit-liability accounts) required to pay out on closure.",
-        );
-      }
-      await supabase.rpc("post_entry", {
-        _entry_date: today,
-        _reference: `SAV-CLOSE-${acct.account_no}`,
-        _description: `Savings closure payout · ${acct.account_no}`,
-        _lines: [
-          { account_id: gl.liab, debit: balAfterFee, credit: 0 },
-          { account_id: gl.cash, debit: 0, credit: balAfterFee },
-        ] as any,
-        _branch_id: acct.branch_id,
-        _source_module: "savings",
-        _source_ref: acct.id,
-        _idempotency_key: `savings:close:${acct.id}`,
-      });
-    }
-
-    const { data: closed, error: cerr } = await (supabase as any)
-      .from("savings_account")
-      .update({
-        status: "closed",
-        balance: 0,
-        available_balance: 0,
-        closed_on: new Date().toISOString().slice(0, 10),
-        closed_by: staff?.id ?? null,
-        closure_reason: data.reason,
-      })
-      .eq("id", data.account_id)
-      .select()
-      .single();
-    if (cerr) throw new Error(cerr.message);
     return closed;
   });
 
