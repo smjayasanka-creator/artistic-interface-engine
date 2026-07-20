@@ -334,6 +334,96 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
     return acct;
   });
 
+// Workflow-controlled account opening. Creates the account in pending_approval
+// (or pending_funding when no workflow is configured) without moving any money.
+// The opening deposit intent + payment method are stored on the account and
+// picked up later at the funding step.
+export const submitSavingsAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      client_id: string;
+      branch_id: string;
+      product_id: string;
+      opening_deposit: number;
+      payment_method?: (typeof PAYMENT_METHODS)[number] | null;
+      payment_details?: Record<string, unknown> | null;
+      channel?: "branch" | "atm" | "ceft" | "internet_banking" | "mobile" | "api" | "other";
+      external_ref?: string | null;
+      narration?: string | null;
+      statement_preference?: "monthly" | "quarterly" | "on_demand" | "none" | null;
+      communication_preference?: "email" | "sms" | "both" | "none" | null;
+      special_instructions?: string | null;
+      holders?: Array<{
+        client_id?: string | null;
+        role: "primary" | "joint" | "minor_guardian" | "trustee" | "power_of_attorney";
+        ownership_pct?: number;
+        full_name?: string | null;
+        nic?: string | null;
+        relation?: string | null;
+        is_signatory?: boolean;
+        signing_order?: number | null;
+      }>;
+      nominees?: Array<{
+        full_name: string;
+        nic?: string | null;
+        relation?: string | null;
+        percentage: number;
+        contact?: string | null;
+      }>;
+      mandate?: {
+        signing_rule: "single" | "any_one" | "jointly" | "any_two" | "custom";
+        min_signatories?: number | null;
+        rule_details?: unknown;
+      } | null;
+    }) =>
+      z
+        .object({
+          client_id: z.string().uuid(),
+          branch_id: z.string().uuid(),
+          product_id: z.string().uuid(),
+          opening_deposit: z.number().min(0),
+          payment_method: z.string().nullable().optional(),
+          payment_details: z.record(z.unknown()).nullable().optional(),
+          channel: z.string().optional(),
+          external_ref: z.string().nullable().optional(),
+          narration: z.string().nullable().optional(),
+          statement_preference: z.string().nullable().optional(),
+          communication_preference: z.string().nullable().optional(),
+          special_instructions: z.string().nullable().optional(),
+          holders: z.array(z.any()).optional(),
+          nominees: z.array(z.any()).optional(),
+          mandate: z.any().nullable().optional(),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: acct, error } = await supabase.rpc(
+      "submit_savings_account_opening" as any,
+      {
+        _client_id: data.client_id,
+        _branch_id: data.branch_id,
+        _product_id: data.product_id,
+        _opening_deposit: Number(data.opening_deposit),
+        _payment_method: data.payment_method ?? null,
+        _payment_details: (data.payment_details ?? null) as any,
+        _channel: data.channel ?? "branch",
+        _external_ref: data.external_ref ?? null,
+        _narration: data.narration ?? null,
+        _statement_preference: data.statement_preference ?? null,
+        _communication_preference: data.communication_preference ?? null,
+        _special_instructions: data.special_instructions ?? null,
+        _holders: (data.holders ?? []) as any,
+        _nominees: (data.nominees ?? []) as any,
+        _mandate: (data.mandate ?? null) as any,
+        _idempotency_key: data.external_ref ?? null,
+      } as any,
+    );
+    if (error) throw new Error(error.message);
+    return acct;
+  });
+
 export const postSavingsTransaction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
