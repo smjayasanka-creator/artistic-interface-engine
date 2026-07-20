@@ -5512,6 +5512,8 @@ export type Database = {
       savings_account: {
         Row: {
           account_no: string
+          approved_at: string | null
+          approved_by: string | null
           available_balance: number
           balance: number
           branch_id: string
@@ -5519,21 +5521,35 @@ export type Database = {
           closed_by: string | null
           closed_on: string | null
           closure_reason: string | null
+          communication_preference: string | null
           company_id: string
           created_at: string
           currency: string
           external_ref: string | null
+          fees_snapshot: Json | null
           id: string
           interest_accrued: number
           last_txn_at: string | null
+          mandate_snapshot: Json | null
           opened_by: string | null
           opened_on: string
+          opened_via: string | null
           product_id: string
+          product_snapshot: Json | null
+          rate_override_approved_by: string | null
+          rate_override_pct: number | null
+          rate_override_reason: string | null
+          rate_snapshot: Json | null
+          special_instructions: string | null
+          statement_preference: string | null
           status: Database["public"]["Enums"]["savings_account_status"]
+          uncleared_balance: number
           updated_at: string
         }
         Insert: {
           account_no: string
+          approved_at?: string | null
+          approved_by?: string | null
           available_balance?: number
           balance?: number
           branch_id: string
@@ -5541,21 +5557,35 @@ export type Database = {
           closed_by?: string | null
           closed_on?: string | null
           closure_reason?: string | null
+          communication_preference?: string | null
           company_id: string
           created_at?: string
           currency?: string
           external_ref?: string | null
+          fees_snapshot?: Json | null
           id?: string
           interest_accrued?: number
           last_txn_at?: string | null
+          mandate_snapshot?: Json | null
           opened_by?: string | null
           opened_on?: string
+          opened_via?: string | null
           product_id: string
+          product_snapshot?: Json | null
+          rate_override_approved_by?: string | null
+          rate_override_pct?: number | null
+          rate_override_reason?: string | null
+          rate_snapshot?: Json | null
+          special_instructions?: string | null
+          statement_preference?: string | null
           status?: Database["public"]["Enums"]["savings_account_status"]
+          uncleared_balance?: number
           updated_at?: string
         }
         Update: {
           account_no?: string
+          approved_at?: string | null
+          approved_by?: string | null
           available_balance?: number
           balance?: number
           branch_id?: string
@@ -5563,20 +5593,39 @@ export type Database = {
           closed_by?: string | null
           closed_on?: string | null
           closure_reason?: string | null
+          communication_preference?: string | null
           company_id?: string
           created_at?: string
           currency?: string
           external_ref?: string | null
+          fees_snapshot?: Json | null
           id?: string
           interest_accrued?: number
           last_txn_at?: string | null
+          mandate_snapshot?: Json | null
           opened_by?: string | null
           opened_on?: string
+          opened_via?: string | null
           product_id?: string
+          product_snapshot?: Json | null
+          rate_override_approved_by?: string | null
+          rate_override_pct?: number | null
+          rate_override_reason?: string | null
+          rate_snapshot?: Json | null
+          special_instructions?: string | null
+          statement_preference?: string | null
           status?: Database["public"]["Enums"]["savings_account_status"]
+          uncleared_balance?: number
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "savings_account_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "savings_account_branch_id_fkey"
             columns: ["branch_id"]
@@ -5617,6 +5666,217 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "savings_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_rate_override_approved_by_fkey"
+            columns: ["rate_override_approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_account_holder: {
+        Row: {
+          account_id: string
+          client_id: string | null
+          company_id: string
+          created_at: string
+          full_name: string | null
+          id: string
+          is_signatory: boolean
+          nic: string | null
+          ownership_pct: number
+          relation: string | null
+          role: string
+          signing_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          client_id?: string | null
+          company_id: string
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_signatory?: boolean
+          nic?: string | null
+          ownership_pct?: number
+          relation?: string | null
+          role: string
+          signing_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_signatory?: boolean
+          nic?: string | null
+          ownership_pct?: number
+          relation?: string | null
+          role?: string
+          signing_order?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_account_holder_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_holder_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_holder_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_account_mandate: {
+        Row: {
+          account_id: string
+          active: boolean
+          approved_at: string | null
+          approved_by: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          min_signatories: number | null
+          rule_details: Json | null
+          signing_rule: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          active?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          min_signatories?: number | null
+          rule_details?: Json | null
+          signing_rule: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          active?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          min_signatories?: number | null
+          rule_details?: Json | null
+          signing_rule?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_account_mandate_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_mandate_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_mandate_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_mandate_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_account_nominee: {
+        Row: {
+          account_id: string
+          company_id: string
+          contact: string | null
+          created_at: string
+          full_name: string
+          id: string
+          nic: string | null
+          percentage: number
+          relation: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          company_id: string
+          contact?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          nic?: string | null
+          percentage: number
+          relation?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          company_id?: string
+          contact?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          nic?: string | null
+          percentage?: number
+          relation?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_account_nominee_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_nominee_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
             referencedColumns: ["id"]
           },
         ]
@@ -5690,6 +5950,168 @@ export type Database = {
             columns: ["superseded_by"]
             isOneToOne: false
             referencedRelation: "savings_alco_rate"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_auto_collection_result: {
+        Row: {
+          collected: number
+          created_at: string
+          gl_entry_id: string | null
+          id: string
+          loan_id: string
+          loan_repayment_id: string | null
+          mandate_id: string
+          reason: string | null
+          requested: number
+          run_id: string
+          savings_account_id: string
+          savings_txn_id: string | null
+          status: string
+        }
+        Insert: {
+          collected?: number
+          created_at?: string
+          gl_entry_id?: string | null
+          id?: string
+          loan_id: string
+          loan_repayment_id?: string | null
+          mandate_id: string
+          reason?: string | null
+          requested?: number
+          run_id: string
+          savings_account_id: string
+          savings_txn_id?: string | null
+          status: string
+        }
+        Update: {
+          collected?: number
+          created_at?: string
+          gl_entry_id?: string | null
+          id?: string
+          loan_id?: string
+          loan_repayment_id?: string | null
+          mandate_id?: string
+          reason?: string | null
+          requested?: number
+          run_id?: string
+          savings_account_id?: string
+          savings_txn_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_auto_collection_result_gl_entry_id_fkey"
+            columns: ["gl_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_auto_collection_result_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_auto_collection_result_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "v_loan_outstanding"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "savings_auto_collection_result_loan_repayment_id_fkey"
+            columns: ["loan_repayment_id"]
+            isOneToOne: false
+            referencedRelation: "repayment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_auto_collection_result_mandate_id_fkey"
+            columns: ["mandate_id"]
+            isOneToOne: false
+            referencedRelation: "savings_loan_mandate"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_auto_collection_result_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "savings_auto_collection_run"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_auto_collection_result_savings_account_id_fkey"
+            columns: ["savings_account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_auto_collection_result_savings_txn_id_fkey"
+            columns: ["savings_txn_id"]
+            isOneToOne: false
+            referencedRelation: "savings_transaction"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_auto_collection_run: {
+        Row: {
+          business_date: string
+          company_id: string
+          completed_at: string | null
+          counts: Json
+          error: string | null
+          id: string
+          run_window: string
+          started_at: string
+          status: string
+          totals: Json
+          triggered_by: string | null
+        }
+        Insert: {
+          business_date: string
+          company_id: string
+          completed_at?: string | null
+          counts?: Json
+          error?: string | null
+          id?: string
+          run_window: string
+          started_at?: string
+          status?: string
+          totals?: Json
+          triggered_by?: string | null
+        }
+        Update: {
+          business_date?: string
+          company_id?: string
+          completed_at?: string | null
+          counts?: Json
+          error?: string | null
+          id?: string
+          run_window?: string
+          started_at?: string
+          status?: string
+          totals?: Json
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_auto_collection_run_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_auto_collection_run_triggered_by_fkey"
+            columns: ["triggered_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
@@ -6003,6 +6425,409 @@ export type Database = {
         }
         Relationships: []
       }
+      savings_hold: {
+        Row: {
+          account_id: string
+          active: boolean
+          amount: number
+          approval_state: string
+          approved_at: string | null
+          approved_by: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          doc_ref: string | null
+          effective_from: string
+          expires_at: string | null
+          hold_type: string
+          id: string
+          linked_loan_id: string | null
+          reason: string
+          reason_code: string | null
+          released_at: string | null
+          released_by: string | null
+          released_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          active?: boolean
+          amount?: number
+          approval_state?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          doc_ref?: string | null
+          effective_from?: string
+          expires_at?: string | null
+          hold_type: string
+          id?: string
+          linked_loan_id?: string | null
+          reason: string
+          reason_code?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          released_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          active?: boolean
+          amount?: number
+          approval_state?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          doc_ref?: string | null
+          effective_from?: string
+          expires_at?: string | null
+          hold_type?: string
+          id?: string
+          linked_loan_id?: string | null
+          reason?: string
+          reason_code?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          released_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_hold_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_hold_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_hold_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_hold_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_hold_linked_loan_id_fkey"
+            columns: ["linked_loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_hold_linked_loan_id_fkey"
+            columns: ["linked_loan_id"]
+            isOneToOne: false
+            referencedRelation: "v_loan_outstanding"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "savings_hold_released_by_fkey"
+            columns: ["released_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_interest_accrual: {
+        Row: {
+          account_id: string
+          accrual_date: string
+          company_id: string
+          created_at: string
+          day_count: number
+          eligible_balance: number
+          gross_interest: number
+          id: string
+          rate_pct: number
+        }
+        Insert: {
+          account_id: string
+          accrual_date: string
+          company_id: string
+          created_at?: string
+          day_count?: number
+          eligible_balance: number
+          gross_interest: number
+          id?: string
+          rate_pct: number
+        }
+        Update: {
+          account_id?: string
+          accrual_date?: string
+          company_id?: string
+          created_at?: string
+          day_count?: number
+          eligible_balance?: number
+          gross_interest?: number
+          id?: string
+          rate_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_interest_accrual_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_interest_accrual_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_interest_posting: {
+        Row: {
+          account_id: string
+          company_id: string
+          created_at: string
+          gl_entry_id: string | null
+          gross_interest: number
+          id: string
+          idempotency_key: string
+          net_interest: number
+          period_end: string
+          period_start: string
+          savings_txn_id: string | null
+          wht_amount: number
+          wht_rule_id: string | null
+          wht_txn_id: string | null
+        }
+        Insert: {
+          account_id: string
+          company_id: string
+          created_at?: string
+          gl_entry_id?: string | null
+          gross_interest: number
+          id?: string
+          idempotency_key: string
+          net_interest: number
+          period_end: string
+          period_start: string
+          savings_txn_id?: string | null
+          wht_amount?: number
+          wht_rule_id?: string | null
+          wht_txn_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          company_id?: string
+          created_at?: string
+          gl_entry_id?: string | null
+          gross_interest?: number
+          id?: string
+          idempotency_key?: string
+          net_interest?: number
+          period_end?: string
+          period_start?: string
+          savings_txn_id?: string | null
+          wht_amount?: number
+          wht_rule_id?: string | null
+          wht_txn_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_interest_posting_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_interest_posting_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_interest_posting_gl_entry_id_fkey"
+            columns: ["gl_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_interest_posting_savings_txn_id_fkey"
+            columns: ["savings_txn_id"]
+            isOneToOne: false
+            referencedRelation: "savings_transaction"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_interest_posting_wht_txn_id_fkey"
+            columns: ["wht_txn_id"]
+            isOneToOne: false
+            referencedRelation: "savings_transaction"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_loan_mandate: {
+        Row: {
+          afternoon_run: boolean
+          allow_partial: boolean
+          approved_at: string | null
+          approved_by: string | null
+          cancelled_at: string | null
+          cancelled_reason: string | null
+          client_id: string
+          company_id: string
+          consent_date: string | null
+          consent_reference: string | null
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          effective_to: string | null
+          fixed_amount: number | null
+          id: string
+          ignore_debit_block: boolean
+          loan_id: string
+          mandate_type: string
+          max_amount_per_run: number | null
+          min_protected_balance: number
+          morning_run: boolean
+          priority: number
+          savings_account_id: string
+          status: string
+          suspended_at: string | null
+          suspended_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          afternoon_run?: boolean
+          allow_partial?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
+          client_id: string
+          company_id: string
+          consent_date?: string | null
+          consent_reference?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          fixed_amount?: number | null
+          id?: string
+          ignore_debit_block?: boolean
+          loan_id: string
+          mandate_type?: string
+          max_amount_per_run?: number | null
+          min_protected_balance?: number
+          morning_run?: boolean
+          priority?: number
+          savings_account_id: string
+          status?: string
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          afternoon_run?: boolean
+          allow_partial?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
+          client_id?: string
+          company_id?: string
+          consent_date?: string | null
+          consent_reference?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          fixed_amount?: number | null
+          id?: string
+          ignore_debit_block?: boolean
+          loan_id?: string
+          mandate_type?: string
+          max_amount_per_run?: number | null
+          min_protected_balance?: number
+          morning_run?: boolean
+          priority?: number
+          savings_account_id?: string
+          status?: string
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_loan_mandate_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_loan_mandate_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_loan_mandate_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_loan_mandate_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_loan_mandate_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_loan_mandate_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "v_loan_outstanding"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "savings_loan_mandate_savings_account_id_fkey"
+            columns: ["savings_account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       savings_number_seq: {
         Row: {
           company_id: string
@@ -6151,15 +6976,25 @@ export type Database = {
         Row: {
           account_id: string
           amount: number
+          approval_state: string | null
+          approved_at: string | null
+          approved_by: string | null
           channel: Database["public"]["Enums"]["savings_channel"]
+          cleared_on: string | null
+          clearing_status: string
           company_id: string
           created_at: string
           external_ref: string | null
+          gl_entry_id: string | null
           id: string
           idempotency_key: string | null
           narration: string | null
+          payment_details: Json | null
+          payment_method: string | null
           performed_by: string | null
           reference: string | null
+          reversed_by_txn_id: string | null
+          reverses_txn_id: string | null
           running_balance: number
           txn_date: string
           txn_type: Database["public"]["Enums"]["savings_txn_type"]
@@ -6167,15 +7002,25 @@ export type Database = {
         Insert: {
           account_id: string
           amount: number
+          approval_state?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           channel?: Database["public"]["Enums"]["savings_channel"]
+          cleared_on?: string | null
+          clearing_status?: string
           company_id: string
           created_at?: string
           external_ref?: string | null
+          gl_entry_id?: string | null
           id?: string
           idempotency_key?: string | null
           narration?: string | null
+          payment_details?: Json | null
+          payment_method?: string | null
           performed_by?: string | null
           reference?: string | null
+          reversed_by_txn_id?: string | null
+          reverses_txn_id?: string | null
           running_balance: number
           txn_date?: string
           txn_type: Database["public"]["Enums"]["savings_txn_type"]
@@ -6183,15 +7028,25 @@ export type Database = {
         Update: {
           account_id?: string
           amount?: number
+          approval_state?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           channel?: Database["public"]["Enums"]["savings_channel"]
+          cleared_on?: string | null
+          clearing_status?: string
           company_id?: string
           created_at?: string
           external_ref?: string | null
+          gl_entry_id?: string | null
           id?: string
           idempotency_key?: string | null
           narration?: string | null
+          payment_details?: Json | null
+          payment_method?: string | null
           performed_by?: string | null
           reference?: string | null
+          reversed_by_txn_id?: string | null
+          reverses_txn_id?: string | null
           running_balance?: number
           txn_date?: string
           txn_type?: Database["public"]["Enums"]["savings_txn_type"]
@@ -6205,6 +7060,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "savings_transaction_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "savings_transaction_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -6212,10 +7074,139 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "savings_transaction_gl_entry_id_fkey"
+            columns: ["gl_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entry"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "savings_transaction_performed_by_fkey"
             columns: ["performed_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_transaction_reversed_by_txn_id_fkey"
+            columns: ["reversed_by_txn_id"]
+            isOneToOne: false
+            referencedRelation: "savings_transaction"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_transaction_reverses_txn_id_fkey"
+            columns: ["reverses_txn_id"]
+            isOneToOne: false
+            referencedRelation: "savings_transaction"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_wht_rule: {
+        Row: {
+          active: boolean
+          approved_at: string | null
+          approved_by: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          effective_to: string | null
+          entity_type: string
+          exemption_expiry: string | null
+          exemption_ref: string | null
+          exemption_type: string | null
+          id: string
+          jurisdiction: string
+          product_id: string | null
+          rate_pct: number
+          residency: string
+          tax_type: string
+          threshold: number
+          updated_at: string
+          wht_gl_account_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          effective_from: string
+          effective_to?: string | null
+          entity_type: string
+          exemption_expiry?: string | null
+          exemption_ref?: string | null
+          exemption_type?: string | null
+          id?: string
+          jurisdiction: string
+          product_id?: string | null
+          rate_pct: number
+          residency: string
+          tax_type: string
+          threshold?: number
+          updated_at?: string
+          wht_gl_account_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          entity_type?: string
+          exemption_expiry?: string | null
+          exemption_ref?: string | null
+          exemption_type?: string | null
+          id?: string
+          jurisdiction?: string
+          product_id?: string | null
+          rate_pct?: number
+          residency?: string
+          tax_type?: string
+          threshold?: number
+          updated_at?: string
+          wht_gl_account_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_wht_rule_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_wht_rule_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_wht_rule_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_wht_rule_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "savings_product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_wht_rule_wht_gl_account_id_fkey"
+            columns: ["wht_gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_account"
             referencedColumns: ["id"]
           },
         ]
@@ -7170,7 +8161,15 @@ export type Database = {
       risk_applies_to: "both" | "individual" | "corporate"
       risk_band_level: "low" | "medium" | "high"
       risk_grade: "low" | "medium" | "high"
-      savings_account_status: "active" | "dormant" | "frozen" | "closed"
+      savings_account_status:
+        | "active"
+        | "dormant"
+        | "frozen"
+        | "closed"
+        | "pending_funding"
+        | "debit_blocked"
+        | "credit_blocked"
+        | "fully_blocked"
       savings_channel:
         | "branch"
         | "atm"
@@ -7188,6 +8187,13 @@ export type Database = {
         | "opening"
         | "closure"
         | "adjustment"
+        | "reversal"
+        | "transfer_in"
+        | "transfer_out"
+        | "loan_deduction"
+        | "wht"
+        | "hold"
+        | "hold_release"
       staff_role:
         | "loan_officer"
         | "branch_manager"
@@ -7407,7 +8413,16 @@ export const Constants = {
       risk_applies_to: ["both", "individual", "corporate"],
       risk_band_level: ["low", "medium", "high"],
       risk_grade: ["low", "medium", "high"],
-      savings_account_status: ["active", "dormant", "frozen", "closed"],
+      savings_account_status: [
+        "active",
+        "dormant",
+        "frozen",
+        "closed",
+        "pending_funding",
+        "debit_blocked",
+        "credit_blocked",
+        "fully_blocked",
+      ],
       savings_channel: [
         "branch",
         "atm",
@@ -7426,6 +8441,13 @@ export const Constants = {
         "opening",
         "closure",
         "adjustment",
+        "reversal",
+        "transfer_in",
+        "transfer_out",
+        "loan_deduction",
+        "wht",
+        "hold",
+        "hold_release",
       ],
       staff_role: [
         "loan_officer",
