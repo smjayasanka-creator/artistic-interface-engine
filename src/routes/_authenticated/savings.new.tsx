@@ -654,7 +654,7 @@ function NewSavings() {
                 <div>Customer</div>
                 <div className="text-foreground">
                   {selectedClient
-                    ? `${selectedClient.client_no} · ${selectedClient.full_name}`
+                    ? selectedClient.full_name
                     : "—"}
                 </div>
                 <div>Product</div>
