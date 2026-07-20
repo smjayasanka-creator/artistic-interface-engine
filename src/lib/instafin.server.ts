@@ -8,6 +8,7 @@ export type InstafinCreatePersonInput = {
   phone: string;
   date_of_birth?: string | null;
   email?: string | null;
+  gender?: string | null;
   address?: string | null;
   gn_division?: string | null;
   divisional_secretariat?: string | null;
