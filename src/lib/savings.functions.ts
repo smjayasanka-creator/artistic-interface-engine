@@ -232,6 +232,31 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
       channel?: "branch" | "atm" | "ceft" | "internet_banking" | "mobile" | "api" | "other";
       external_ref?: string | null;
       narration?: string | null;
+      statement_preference?: "monthly" | "quarterly" | "on_demand" | "none" | null;
+      communication_preference?: "email" | "sms" | "both" | "none" | null;
+      special_instructions?: string | null;
+      holders?: Array<{
+        client_id?: string | null;
+        role: "primary" | "joint" | "minor_guardian" | "trustee" | "power_of_attorney";
+        ownership_pct?: number;
+        full_name?: string | null;
+        nic?: string | null;
+        relation?: string | null;
+        is_signatory?: boolean;
+        signing_order?: number | null;
+      }>;
+      nominees?: Array<{
+        full_name: string;
+        nic?: string | null;
+        relation?: string | null;
+        percentage: number;
+        contact?: string | null;
+      }>;
+      mandate?: {
+        signing_rule: "single" | "any_one" | "jointly" | "any_two" | "custom";
+        min_signatories?: number | null;
+        rule_details?: unknown;
+      } | null;
     }) =>
       z
         .object({
@@ -242,6 +267,48 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
           channel: z.string().optional(),
           external_ref: z.string().nullable().optional(),
           narration: z.string().nullable().optional(),
+          statement_preference: z.string().nullable().optional(),
+          communication_preference: z.string().nullable().optional(),
+          special_instructions: z.string().nullable().optional(),
+          holders: z
+            .array(
+              z.object({
+                client_id: z.string().uuid().nullable().optional(),
+                role: z.enum([
+                  "primary",
+                  "joint",
+                  "minor_guardian",
+                  "trustee",
+                  "power_of_attorney",
+                ]),
+                ownership_pct: z.number().min(0).max(100).optional(),
+                full_name: z.string().nullable().optional(),
+                nic: z.string().nullable().optional(),
+                relation: z.string().nullable().optional(),
+                is_signatory: z.boolean().optional(),
+                signing_order: z.number().int().nullable().optional(),
+              }),
+            )
+            .optional(),
+          nominees: z
+            .array(
+              z.object({
+                full_name: z.string().min(1),
+                nic: z.string().nullable().optional(),
+                relation: z.string().nullable().optional(),
+                percentage: z.number().min(0).max(100),
+                contact: z.string().nullable().optional(),
+              }),
+            )
+            .optional(),
+          mandate: z
+            .object({
+              signing_rule: z.enum(["single", "any_one", "jointly", "any_two", "custom"]),
+              min_signatories: z.number().int().min(1).nullable().optional(),
+              rule_details: z.unknown().optional(),
+            })
+            .nullable()
+            .optional(),
         })
         .parse(i),
   )
@@ -267,6 +334,19 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
       );
     }
 
+    if (data.nominees && data.nominees.length > 0) {
+      const total = data.nominees.reduce((s, n) => s + Number(n.percentage || 0), 0);
+      if (Math.abs(total - 100) > 0.01) {
+        throw new Error(`Nominee percentages must sum to 100 (got ${total.toFixed(2)})`);
+      }
+    }
+    if (data.holders && data.holders.length > 0) {
+      const total = data.holders.reduce((s, h) => s + Number(h.ownership_pct ?? 0), 0);
+      if (Math.abs(total - 100) > 0.01) {
+        throw new Error(`Holder ownership must sum to 100% (got ${total.toFixed(2)})`);
+      }
+    }
+
     const { data: acctNo, error: nerr } = await supabase.rpc("next_contract_no", {
       _company_id: cid,
       _branch_id: data.branch_id,
@@ -290,11 +370,78 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
         available_balance: openingBalance,
         status: "active",
         opened_by: staff?.id ?? null,
+        opened_via: data.channel ?? "branch",
+        approved_by: staff?.id ?? null,
+        approved_at: new Date().toISOString(),
+        statement_preference: data.statement_preference ?? null,
+        communication_preference: data.communication_preference ?? null,
+        special_instructions: data.special_instructions ?? null,
+        product_snapshot: product,
         external_ref: data.external_ref ?? null,
       })
       .select()
       .single();
     if (aerr) throw new Error(aerr.message);
+
+    // Holders — always ensure a primary holder exists
+    const holders =
+      data.holders && data.holders.length > 0
+        ? data.holders
+        : [
+            {
+              client_id: data.client_id,
+              role: "primary" as const,
+              ownership_pct: 100,
+              is_signatory: true,
+              signing_order: 1,
+            },
+          ];
+    const { error: herr } = await (supabase as any).from("savings_account_holder").insert(
+      holders.map((h) => ({
+        company_id: cid,
+        account_id: acct.id,
+        client_id: h.client_id ?? null,
+        role: h.role,
+        ownership_pct: h.ownership_pct ?? 0,
+        full_name: h.full_name ?? null,
+        nic: h.nic ?? null,
+        relation: h.relation ?? null,
+        is_signatory: h.is_signatory ?? true,
+        signing_order: h.signing_order ?? null,
+      })),
+    );
+    if (herr) throw new Error(`Holders: ${herr.message}`);
+
+    if (data.nominees && data.nominees.length > 0) {
+      const { error: nomerr } = await (supabase as any).from("savings_account_nominee").insert(
+        data.nominees.map((n) => ({
+          company_id: cid,
+          account_id: acct.id,
+          full_name: n.full_name,
+          nic: n.nic ?? null,
+          relation: n.relation ?? null,
+          percentage: n.percentage,
+          contact: n.contact ?? null,
+        })),
+      );
+      if (nomerr) throw new Error(`Nominees: ${nomerr.message}`);
+    }
+
+    if (data.mandate) {
+      const { error: merr } = await (supabase as any).from("savings_account_mandate").insert({
+        company_id: cid,
+        account_id: acct.id,
+        signing_rule: data.mandate.signing_rule,
+        min_signatories: data.mandate.min_signatories ?? null,
+        rule_details: (data.mandate.rule_details as any) ?? null,
+        effective_from: new Date().toISOString().slice(0, 10),
+        active: true,
+        created_by: staff?.id ?? null,
+        approved_by: staff?.id ?? null,
+        approved_at: new Date().toISOString(),
+      });
+      if (merr) throw new Error(`Mandate: ${merr.message}`);
+    }
 
     const txnRows: any[] = [];
     if (Number(product.opening_fee ?? 0) > 0) {
