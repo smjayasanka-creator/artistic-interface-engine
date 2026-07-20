@@ -426,6 +426,8 @@ function Admin() {
       {tab === "screening" && <ScreeningConfigTab />}
       {tab === "bank_directory" && <BankDirectoryTab />}
       {tab === "eod" && <EodTab />}
+      {tab === "savings_wht" && <SavingsWhtTab />}
+      {tab === "savings_auto_collection" && <SavingsAutoCollectionTab />}
       {tab === "time_travel" && <TimeTravelTab />}
     </div>
   );
