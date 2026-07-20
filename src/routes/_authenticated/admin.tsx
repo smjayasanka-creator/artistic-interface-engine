@@ -310,6 +310,22 @@ const SECTIONS: Section[] = [
     accent: "from-orange-500/15 to-orange-500/0 text-orange-600",
     group: "savings_fd",
   },
+  {
+    id: "savings_wht",
+    label: "Savings WHT / AIT rules",
+    desc: "Effective-dated withholding tax used at interest capitalisation",
+    icon: ShieldCheck,
+    accent: "from-rose-500/15 to-rose-500/0 text-rose-600",
+    group: "savings_fd",
+  },
+  {
+    id: "savings_auto_collection",
+    label: "Loan auto-collection windows",
+    desc: "Morning & afternoon savings sweep times for loan repayments",
+    icon: CalendarClock,
+    accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600",
+    group: "savings_fd",
+  },
 ];
 
 const GROUPS: { id: Group; label: string }[] = [
