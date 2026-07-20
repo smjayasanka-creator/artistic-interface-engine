@@ -53,7 +53,6 @@ function regionCodeFromCallingCode(cc: string): string {
 
 export function buildCreatePersonPayload(input: InstafinCreatePersonInput) {
   const regionCode = regionCodeFromCallingCode(input.phone_country_code);
-  const payload: Record<string, unknown> = {
   // NOTE: The CreatePerson endpoint does not accept the "IndividualClient" role
   // (Instafin returns "Cannot create a person with the following roles using this endpoint").
   // Also, the free-text address block is validated against Instafin's hierarchical
