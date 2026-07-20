@@ -14,7 +14,7 @@ import {
   btnSecondaryCls,
 } from "@/components/mzizi/FormGrid";
 import { getClients, listCompanyBranches } from "@/lib/mzizi.functions";
-import { listSavingsProducts, createSavingsAccount } from "@/lib/savings.functions";
+import { listSavingsProducts, submitSavingsAccount } from "@/lib/savings.functions";
 
 export const Route = createFileRoute("/_authenticated/savings/new")({
   component: NewSavings,
@@ -108,7 +108,7 @@ function NewSavings() {
   const clientFn = useServerFn(getClients);
   const branchFn = useServerFn(listCompanyBranches);
   const prodFn = useServerFn(listSavingsProducts);
-  const createFn = useServerFn(createSavingsAccount);
+  const createFn = useServerFn(submitSavingsAccount);
 
   const { data: clients } = useQuery({
     queryKey: ["clients", "all"],
@@ -191,7 +191,14 @@ function NewSavings() {
         },
       }),
     onSuccess: (acct: any) => {
-      toast.success(`Savings account ${acct.account_no} opened`);
+      const status = acct?.status as string | undefined;
+      if (status === "pending_approval") {
+        toast.success(`Account ${acct.account_no} submitted for approval`);
+      } else if (status === "pending_funding") {
+        toast.success(`Account ${acct.account_no} approved — ready for initial deposit`);
+      } else {
+        toast.success(`Savings account ${acct.account_no} opened`);
+      }
       navigate({ to: "/savings" });
     },
     onError: (e: Error) => toast.error(e.message),
