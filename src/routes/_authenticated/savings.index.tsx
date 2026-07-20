@@ -7,6 +7,7 @@ import {
   Wallet,
   MoonStar,
   Archive,
+  Lock,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -51,6 +52,13 @@ const CARDS = [
     title: "Passbook Stock",
     desc: "Manage stock, distribute serials, and issue passbooks",
     accent: "from-amber-500/15 to-amber-500/0 text-amber-600",
+  },
+  {
+    to: "/savings/holds",
+    icon: Lock,
+    title: "Holds & Blocks",
+    desc: "Place liens/blocks and route releases through workflow approval",
+    accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600",
   },
 ] as const;
 

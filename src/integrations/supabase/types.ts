@@ -6501,6 +6501,11 @@ export type Database = {
           linked_loan_id: string | null
           reason: string
           reason_code: string | null
+          release_requested_at: string | null
+          release_requested_by: string | null
+          release_requested_reason: string | null
+          release_status: string
+          release_workflow_instance_id: string | null
           released_at: string | null
           released_by: string | null
           released_reason: string | null
@@ -6524,6 +6529,11 @@ export type Database = {
           linked_loan_id?: string | null
           reason: string
           reason_code?: string | null
+          release_requested_at?: string | null
+          release_requested_by?: string | null
+          release_requested_reason?: string | null
+          release_status?: string
+          release_workflow_instance_id?: string | null
           released_at?: string | null
           released_by?: string | null
           released_reason?: string | null
@@ -6547,6 +6557,11 @@ export type Database = {
           linked_loan_id?: string | null
           reason?: string
           reason_code?: string | null
+          release_requested_at?: string | null
+          release_requested_by?: string | null
+          release_requested_reason?: string | null
+          release_status?: string
+          release_workflow_instance_id?: string | null
           released_at?: string | null
           released_by?: string | null
           released_reason?: string | null
@@ -6594,6 +6609,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_loan_outstanding"
             referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "savings_hold_release_requested_by_fkey"
+            columns: ["release_requested_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_hold_release_workflow_instance_id_fkey"
+            columns: ["release_workflow_instance_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_instance"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "savings_hold_released_by_fkey"
@@ -7907,6 +7936,10 @@ export type Database = {
         Args: { _reports: Json; _run_id: string }
         Returns: undefined
       }
+      finalize_savings_hold_release: {
+        Args: { _decision: string; _instance_id: string }
+        Returns: undefined
+      }
       hardening_autocheck: { Args: never; Returns: Json }
       has_authority: {
         Args: { _authority_id: string; _user_id: string }
@@ -8063,6 +8096,10 @@ export type Database = {
           _write_off_id: string
         }
         Returns: string
+      }
+      request_savings_hold_release: {
+        Args: { _hold_id: string; _instance_id: string; _reason: string }
+        Returns: undefined
       }
       reschedule_loan: {
         Args: { _loan_id: string; _new_installments: Json; _reason: string }

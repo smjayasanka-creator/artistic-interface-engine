@@ -28,6 +28,7 @@ export const CANONICAL_TX_TYPES: { code: string; label: string }[] = [
   { code: "alco_rate_change", label: "ALCO deposit rate change" },
   { code: "customer_screening_tier1", label: "Customer screening — Tier 1 review" },
   { code: "customer_screening_tier2", label: "Customer screening — Tier 2 escalation" },
+  { code: "savings_hold_release", label: "Savings hold/block release" },
 ];
 
 const stepSchema = z.object({
@@ -471,6 +472,12 @@ export const actOnInstance = createServerFn({ method: "POST" })
         .from("workflow_instance")
         .update({ status: "declined", completed_at: new Date().toISOString() })
         .eq("id", data.instance_id);
+      if ((inst as any).transaction_type === "savings_hold_release") {
+        await supabase.rpc("finalize_savings_hold_release" as any, {
+          _instance_id: data.instance_id,
+          _decision: "rejected",
+        } as any);
+      }
       return { ok: true, status: "declined" };
     }
 
@@ -479,6 +486,12 @@ export const actOnInstance = createServerFn({ method: "POST" })
         .from("workflow_instance")
         .update({ status: "cancelled", completed_at: new Date().toISOString() })
         .eq("id", data.instance_id);
+      if ((inst as any).transaction_type === "savings_hold_release") {
+        await supabase.rpc("finalize_savings_hold_release" as any, {
+          _instance_id: data.instance_id,
+          _decision: "rejected",
+        } as any);
+      }
       return { ok: true, status: "sent_back" };
     }
 
@@ -518,6 +531,13 @@ export const actOnInstance = createServerFn({ method: "POST" })
         .update({ status: "approved" })
         .eq("id", (inst as any).reference_id)
         .eq("status", "submitted");
+    }
+
+    if ((inst as any).transaction_type === "savings_hold_release") {
+      await supabase.rpc("finalize_savings_hold_release" as any, {
+        _instance_id: data.instance_id,
+        _decision: "approved",
+      } as any);
     }
 
     return { ok: true, status: "approved" };
