@@ -232,8 +232,8 @@ export function SavingsWhtTab() {
                     setEditing({ ...editing, tax_type: e.target.value as Rule["tax_type"] })
                   }
                 >
-                  <option value="WHT">WHT</option>
-                  <option value="AIT">AIT</option>
+                  <option value="wht">WHT</option>
+                  <option value="ait">AIT</option>
                 </select>
               </FormField>
               <FormField label="Residency" span={3}>
@@ -245,7 +245,8 @@ export function SavingsWhtTab() {
                   }
                 >
                   <option value="resident">Resident</option>
-                  <option value="non_resident">Non-resident</option>
+                  <option value="nonresident">Non-resident</option>
+                  <option value="any">Any</option>
                 </select>
               </FormField>
               <FormField label="Entity type" span={3}>
@@ -257,12 +258,11 @@ export function SavingsWhtTab() {
                   }
                 >
                   <option value="individual">Individual</option>
-                  <option value="corporate">Corporate</option>
-                  <option value="partnership">Partnership</option>
-                  <option value="trust">Trust</option>
-                  <option value="other">Other</option>
+                  <option value="entity">Entity</option>
+                  <option value="any">Any</option>
                 </select>
               </FormField>
+
 
               <FormField label="Product" span={6} hint="Leave blank to apply to all products">
                 <select
