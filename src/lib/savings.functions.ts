@@ -313,209 +313,24 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
         .parse(i),
   )
   .handler(async ({ context, data }) => {
-    const { supabase, userId } = context;
-    const { data: cid } = await supabase.rpc("current_company_id");
-    if (!cid) throw new Error("No company");
-    const { data: staff } = await (supabase as any)
-      .from("staff")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const { data: product, error: perr } = await (supabase as any)
-      .from("savings_product")
-      .select("*")
-      .eq("id", data.product_id)
-      .single();
-    if (perr) throw new Error(perr.message);
-    if (data.opening_deposit < Number(product.min_opening_balance ?? 0)) {
-      throw new Error(
-        `Opening deposit must be at least ${product.min_opening_balance} ${product.currency}`,
-      );
-    }
-
-    if (data.nominees && data.nominees.length > 0) {
-      const total = data.nominees.reduce((s, n) => s + Number(n.percentage || 0), 0);
-      if (Math.abs(total - 100) > 0.01) {
-        throw new Error(`Nominee percentages must sum to 100 (got ${total.toFixed(2)})`);
-      }
-    }
-    if (data.holders && data.holders.length > 0) {
-      const total = data.holders.reduce((s, h) => s + Number(h.ownership_pct ?? 0), 0);
-      if (Math.abs(total - 100) > 0.01) {
-        throw new Error(`Holder ownership must sum to 100% (got ${total.toFixed(2)})`);
-      }
-    }
-
-    const { data: acctNo, error: nerr } = await supabase.rpc("next_contract_no", {
-      _company_id: cid,
+    const { supabase } = context;
+    const { data: acct, error } = await supabase.rpc("open_savings_account" as any, {
+      _client_id: data.client_id,
       _branch_id: data.branch_id,
       _product_id: data.product_id,
-      _segment: 1,
-    });
-    if (nerr) throw new Error(nerr.message);
-
-    const openingBalance = Number(data.opening_deposit) - Number(product.opening_fee ?? 0);
-
-    const { data: acct, error: aerr } = await (supabase as any)
-      .from("savings_account")
-      .insert({
-        company_id: cid,
-        branch_id: data.branch_id,
-        product_id: data.product_id,
-        client_id: data.client_id,
-        account_no: acctNo,
-        currency: product.currency,
-        balance: openingBalance,
-        available_balance: openingBalance,
-        status: "active",
-        opened_by: staff?.id ?? null,
-        opened_via: data.channel ?? "branch",
-        approved_by: staff?.id ?? null,
-        approved_at: new Date().toISOString(),
-        statement_preference: data.statement_preference ?? null,
-        communication_preference: data.communication_preference ?? null,
-        special_instructions: data.special_instructions ?? null,
-        product_snapshot: product,
-        external_ref: data.external_ref ?? null,
-      })
-      .select()
-      .single();
-    if (aerr) throw new Error(aerr.message);
-
-    // Holders — always ensure a primary holder exists
-    const holders =
-      data.holders && data.holders.length > 0
-        ? data.holders
-        : [
-            {
-              client_id: data.client_id,
-              role: "primary" as const,
-              ownership_pct: 100,
-              is_signatory: true,
-              signing_order: 1,
-            },
-          ];
-    const { error: herr } = await (supabase as any).from("savings_account_holder").insert(
-      holders.map((h) => ({
-        company_id: cid,
-        account_id: acct.id,
-        client_id: h.client_id ?? null,
-        role: h.role,
-        ownership_pct: h.ownership_pct ?? 0,
-        full_name: h.full_name ?? null,
-        nic: h.nic ?? null,
-        relation: h.relation ?? null,
-        is_signatory: h.is_signatory ?? true,
-        signing_order: h.signing_order ?? null,
-      })),
-    );
-    if (herr) throw new Error(`Holders: ${herr.message}`);
-
-    if (data.nominees && data.nominees.length > 0) {
-      const { error: nomerr } = await (supabase as any).from("savings_account_nominee").insert(
-        data.nominees.map((n) => ({
-          company_id: cid,
-          account_id: acct.id,
-          full_name: n.full_name,
-          nic: n.nic ?? null,
-          relation: n.relation ?? null,
-          percentage: n.percentage,
-          contact: n.contact ?? null,
-        })),
-      );
-      if (nomerr) throw new Error(`Nominees: ${nomerr.message}`);
-    }
-
-    if (data.mandate) {
-      const { error: merr } = await (supabase as any).from("savings_account_mandate").insert({
-        company_id: cid,
-        account_id: acct.id,
-        signing_rule: data.mandate.signing_rule,
-        min_signatories: data.mandate.min_signatories ?? null,
-        rule_details: (data.mandate.rule_details as any) ?? null,
-        effective_from: new Date().toISOString().slice(0, 10),
-        active: true,
-        created_by: staff?.id ?? null,
-        approved_by: staff?.id ?? null,
-        approved_at: new Date().toISOString(),
-      });
-      if (merr) throw new Error(`Mandate: ${merr.message}`);
-    }
-
-    const txnRows: any[] = [];
-    if (Number(product.opening_fee ?? 0) > 0) {
-      txnRows.push({
-        company_id: cid,
-        account_id: acct.id,
-        txn_type: "fee",
-        channel: data.channel ?? "branch",
-        amount: -Number(product.opening_fee),
-        running_balance: Number(data.opening_deposit) - Number(product.opening_fee),
-        reference: "OPENING-FEE",
-        narration: "Account opening fee",
-        performed_by: staff?.id ?? null,
-      });
-    }
-    txnRows.unshift({
-      company_id: cid,
-      account_id: acct.id,
-      txn_type: "opening",
-      channel: data.channel ?? "branch",
-      amount: Number(data.opening_deposit),
-      running_balance: Number(data.opening_deposit),
-      reference: "OPENING-DEPOSIT",
-      external_ref: data.external_ref ?? null,
-      narration: data.narration ?? "Account opening deposit",
-      performed_by: staff?.id ?? null,
-    });
-    await (supabase as any).from("savings_transaction").insert(txnRows);
-
-    // Ledger postings via kernel — required. Missing GL mapping is a hard error
-    // so no sub-ledger row exists without a matching GL entry.
-    const gl = await resolveSavingsAccounts(supabase, product);
-    const today = new Date().toISOString().slice(0, 10);
-    const fee = Number(product.opening_fee ?? 0);
-    if (Number(data.opening_deposit) > 0) {
-      if (!gl.cash || !gl.liab) {
-        throw new Error(
-          "Savings product is missing GL mapping (cash and deposit-liability accounts). Set them under Admin → Savings products before opening accounts.",
-        );
-      }
-      await supabase.rpc("post_entry", {
-        _entry_date: today,
-        _reference: `SAV-OPEN-${acct.account_no}`,
-        _description: `Savings opening deposit · ${acct.account_no}`,
-        _lines: [
-          { account_id: gl.cash, debit: Number(data.opening_deposit), credit: 0 },
-          { account_id: gl.liab, debit: 0, credit: Number(data.opening_deposit) },
-        ] as any,
-        _branch_id: data.branch_id,
-        _source_module: "savings",
-        _source_ref: acct.id,
-        _idempotency_key: `savings:open:${acct.id}`,
-      });
-    }
-    if (fee > 0) {
-      if (!gl.liab || !gl.fee) {
-        throw new Error(
-          "Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to charge the opening fee.",
-        );
-      }
-      await supabase.rpc("post_entry", {
-        _entry_date: today,
-        _reference: `SAV-FEE-${acct.account_no}`,
-        _description: `Savings opening fee · ${acct.account_no}`,
-        _lines: [
-          { account_id: gl.liab, debit: fee, credit: 0 },
-          { account_id: gl.fee, debit: 0, credit: fee },
-        ] as any,
-        _branch_id: data.branch_id,
-        _source_module: "savings",
-        _source_ref: acct.id,
-        _idempotency_key: `savings:open-fee:${acct.id}`,
-      });
-    }
+      _opening_deposit: Number(data.opening_deposit),
+      _channel: data.channel ?? "branch",
+      _external_ref: data.external_ref ?? null,
+      _narration: data.narration ?? null,
+      _statement_preference: data.statement_preference ?? null,
+      _communication_preference: data.communication_preference ?? null,
+      _special_instructions: data.special_instructions ?? null,
+      _holders: (data.holders ?? []) as any,
+      _nominees: (data.nominees ?? []) as any,
+      _mandate: (data.mandate ?? null) as any,
+      _idempotency_key: data.external_ref ?? null,
+    } as any);
+    if (error) throw new Error(error.message);
     return acct;
   });
 
@@ -621,116 +436,15 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
         .parse(i),
   )
   .handler(async ({ context, data }) => {
-    const { supabase, userId } = context;
-    const { data: cid } = await supabase.rpc("current_company_id");
-    if (!cid) throw new Error("No company");
-    const { data: staff } = await (supabase as any)
-      .from("staff")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const { data: acct, error } = await (supabase as any)
-      .from("savings_account")
-      .select(
-        "id, account_no, branch_id, balance, status, product:product_id(closure_fee, cash_account_id, deposit_liability_account_id, fee_income_account_id, interest_expense_account_id)",
-      )
-      .eq("id", data.account_id)
-      .single();
+    const { supabase } = context;
+    const { data: closed, error } = await supabase.rpc("close_savings_account" as any, {
+      _account_id: data.account_id,
+      _reason: data.reason,
+      _payout_channel: data.payout_channel ?? "branch",
+      _external_ref: data.external_ref ?? null,
+      _idempotency_key: null,
+    } as any);
     if (error) throw new Error(error.message);
-    if (acct.status === "closed") throw new Error("Account is already closed");
-
-    const fee = Number(acct.product?.closure_fee ?? 0);
-    const balAfterFee = Number(acct.balance) - fee;
-
-    const rows: any[] = [];
-    if (fee > 0) {
-      rows.push({
-        company_id: cid,
-        account_id: data.account_id,
-        txn_type: "fee",
-        channel: data.payout_channel ?? "branch",
-        amount: -fee,
-        running_balance: balAfterFee,
-        reference: "CLOSURE-FEE",
-        narration: "Account closure fee",
-        performed_by: staff?.id ?? null,
-      });
-    }
-    if (balAfterFee > 0) {
-      rows.push({
-        company_id: cid,
-        account_id: data.account_id,
-        txn_type: "closure",
-        channel: data.payout_channel ?? "branch",
-        amount: -balAfterFee,
-        running_balance: 0,
-        reference: "CLOSURE-PAYOUT",
-        external_ref: data.external_ref ?? null,
-        narration: "Final balance payout on closure",
-        performed_by: staff?.id ?? null,
-      });
-    }
-    if (rows.length) await (supabase as any).from("savings_transaction").insert(rows);
-
-    // Ledger postings via kernel
-    const gl = await resolveSavingsAccounts(supabase, acct.product);
-    const today = new Date().toISOString().slice(0, 10);
-    if (fee > 0) {
-      if (!gl.liab || !gl.fee) {
-        throw new Error(
-          "Savings product is missing GL mapping (deposit-liability and fee-income accounts) required to post the closure fee.",
-        );
-      }
-      await supabase.rpc("post_entry", {
-        _entry_date: today,
-        _reference: `SAV-CLOSE-FEE-${acct.account_no}`,
-        _description: `Savings closure fee · ${acct.account_no}`,
-        _lines: [
-          { account_id: gl.liab, debit: fee, credit: 0 },
-          { account_id: gl.fee, debit: 0, credit: fee },
-        ] as any,
-        _branch_id: acct.branch_id,
-        _source_module: "savings",
-        _source_ref: acct.id,
-        _idempotency_key: `savings:close-fee:${acct.id}`,
-      });
-    }
-    if (balAfterFee > 0) {
-      if (!gl.cash || !gl.liab) {
-        throw new Error(
-          "Savings product is missing GL mapping (cash and deposit-liability accounts) required to pay out on closure.",
-        );
-      }
-      await supabase.rpc("post_entry", {
-        _entry_date: today,
-        _reference: `SAV-CLOSE-${acct.account_no}`,
-        _description: `Savings closure payout · ${acct.account_no}`,
-        _lines: [
-          { account_id: gl.liab, debit: balAfterFee, credit: 0 },
-          { account_id: gl.cash, debit: 0, credit: balAfterFee },
-        ] as any,
-        _branch_id: acct.branch_id,
-        _source_module: "savings",
-        _source_ref: acct.id,
-        _idempotency_key: `savings:close:${acct.id}`,
-      });
-    }
-
-    const { data: closed, error: cerr } = await (supabase as any)
-      .from("savings_account")
-      .update({
-        status: "closed",
-        balance: 0,
-        available_balance: 0,
-        closed_on: new Date().toISOString().slice(0, 10),
-        closed_by: staff?.id ?? null,
-        closure_reason: data.reason,
-      })
-      .eq("id", data.account_id)
-      .select()
-      .single();
-    if (cerr) throw new Error(cerr.message);
     return closed;
   });
 

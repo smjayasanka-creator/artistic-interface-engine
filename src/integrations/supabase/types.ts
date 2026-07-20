@@ -7975,6 +7975,16 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      close_savings_account: {
+        Args: {
+          _account_id: string
+          _external_ref?: string
+          _idempotency_key?: string
+          _payout_channel?: string
+          _reason: string
+        }
+        Returns: Json
+      }
       company_id_of_branch: { Args: { _branch_id: string }; Returns: string }
       compute_trial_balance: {
         Args: { _as_at: string; _company_id: string }
@@ -8183,6 +8193,25 @@ export type Database = {
           _from: string
         }
         Returns: string
+      }
+      open_savings_account: {
+        Args: {
+          _branch_id: string
+          _channel?: string
+          _client_id: string
+          _communication_preference?: string
+          _external_ref?: string
+          _holders?: Json
+          _idempotency_key?: string
+          _mandate?: Json
+          _narration?: string
+          _nominees?: Json
+          _opening_deposit: number
+          _product_id: string
+          _special_instructions?: string
+          _statement_preference?: string
+        }
+        Returns: Json
       }
       post_entry: {
         Args: {
