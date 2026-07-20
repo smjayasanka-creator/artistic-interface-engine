@@ -532,6 +532,13 @@ export const actOnInstance = createServerFn({ method: "POST" })
         .eq("status", "submitted");
     }
 
+    if ((inst as any).transaction_type === "savings_hold_release") {
+      await supabase.rpc("finalize_savings_hold_release" as any, {
+        _instance_id: data.instance_id,
+        _decision: "approved",
+      } as any);
+    }
+
     return { ok: true, status: "approved" };
   });
 
