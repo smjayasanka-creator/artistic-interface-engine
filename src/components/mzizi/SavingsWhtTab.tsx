@@ -20,9 +20,9 @@ import {
 type Rule = {
   id?: string;
   jurisdiction: string;
-  tax_type: "WHT" | "AIT";
-  residency: "resident" | "non_resident";
-  entity_type: "individual" | "corporate" | "partnership" | "trust" | "other";
+  tax_type: "wht" | "ait";
+  residency: "resident" | "nonresident" | "any";
+  entity_type: "individual" | "entity" | "any";
   product_id: string | null;
   effective_from: string;
   effective_to: string | null;
@@ -37,7 +37,7 @@ type Rule = {
 
 const EMPTY: Rule = {
   jurisdiction: "LK",
-  tax_type: "WHT",
+  tax_type: "wht",
   residency: "resident",
   entity_type: "individual",
   product_id: null,
@@ -51,6 +51,7 @@ const EMPTY: Rule = {
   wht_gl_account_id: null,
   active: true,
 };
+
 
 export function SavingsWhtTab() {
   const qc = useQueryClient();
