@@ -8011,6 +8011,18 @@ export type Database = {
         Args: { _business_date?: string; _company_id: string }
         Returns: Json
       }
+      activate_savings_account: {
+        Args: {
+          _account_id: string
+          _channel?: string
+          _external_ref?: string
+          _idempotency_key?: string
+          _opening_deposit?: number
+          _payment_details?: Json
+          _payment_method?: string
+        }
+        Returns: Json
+      }
       assert_savings_txn_permission: {
         Args: { _company_id: string; _txn_type: string }
         Returns: undefined
