@@ -8,6 +8,7 @@ export type InstafinCreatePersonInput = {
   phone: string;
   date_of_birth?: string | null;
   email?: string | null;
+  gender?: string | null;
   address?: string | null;
   gn_division?: string | null;
   divisional_secretariat?: string | null;
@@ -52,8 +53,13 @@ function regionCodeFromCallingCode(cc: string): string {
 
 export function buildCreatePersonPayload(input: InstafinCreatePersonInput) {
   const regionCode = regionCodeFromCallingCode(input.phone_country_code);
+  // NOTE: The CreatePerson endpoint does not accept the "IndividualClient" role
+  // (Instafin returns "Cannot create a person with the following roles using this endpoint").
+  // Also, the free-text address block is validated against Instafin's hierarchical
+  // "Address" custom lookup and will be rejected — omit it here and let the local
+  // record retain the address.
+  const genderID = mapGenderID(input.gender);
   const payload: Record<string, unknown> = {
-    roles: ["IndividualClient"],
     name: "",
     beneficiaries: [],
     tagsID: [],
@@ -63,27 +69,22 @@ export function buildCreatePersonPayload(input: InstafinCreatePersonInput) {
       sourceOfIncomeIDs: [],
       dependants: [],
       ownedBusinessesIDs: [],
+      ...(genderID ? { genderID } : {}),
       ...(input.date_of_birth ? { dateOfBirth: input.date_of_birth } : {}),
     },
     mobile: { regionCode, number: input.phone },
   };
   if (input.email) payload.email = input.email;
-  const hasAddr =
-    input.address ||
-    input.gn_division ||
-    input.divisional_secretariat ||
-    input.district ||
-    input.province;
-  if (hasAddr) {
-    payload.address = {
-      ...(input.address ? { street1: input.address } : {}),
-      ...(input.gn_division ? { village: input.gn_division } : {}),
-      ...(input.divisional_secretariat ? { city: input.divisional_secretariat } : {}),
-      ...(input.province ? { state: input.province } : {}),
-      country: "LK",
-    };
-  }
   return payload;
+}
+
+function mapGenderID(g?: string | null): string | null {
+  if (!g) return null;
+  const v = g.trim().toLowerCase();
+  if (v === "m" || v === "male") return "Male";
+  if (v === "f" || v === "female") return "Female";
+  if (v === "other" || v === "o") return "Other";
+  return g;
 }
 
 export async function instafinCreatePerson(input: InstafinCreatePersonInput): Promise<{

@@ -161,6 +161,7 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
             phone: parsed.data.phone,
             date_of_birth: parsed.data.date_of_birth,
             email: parsed.data.email ?? null,
+            gender: parsed.data.gender ?? null,
             address: parsed.data.address,
             gn_division: parsed.data.gn_division,
             divisional_secretariat: parsed.data.divisional_secretariat,
