@@ -1663,3 +1663,84 @@ export const listRecentSavingsTransactions = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
+
+// ─────────── Phase 8: Account detail aggregate ───────────
+export const getSavingsAccountDetail = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string }) =>
+    z.object({ id: z.string().uuid() }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: acct, error } = await (supabase as any)
+      .from("savings_account")
+      .select(
+        "*, client:client_id(id, full_name, phone, email, nic), branch:branch_id(id, name), product:product_id(id, name, code, currency, interest_rate_pct, passbook_required)",
+      )
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!acct) throw new Error("Account not found");
+
+    const [txns, holds, mandates, accruals, postings, holders, nominees, mandate] = await Promise.all([
+      (supabase as any)
+        .from("savings_transaction")
+        .select(
+          "id, txn_type, amount, running_balance, reference, external_ref, narration, created_at, reversed_by_txn_id, reverses_txn_id",
+        )
+        .eq("account_id", data.id)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      (supabase as any)
+        .from("savings_hold")
+        .select(
+          "id, hold_type, amount, reason, reason_code, doc_ref, effective_from, expires_at, active, approval_state, release_status, created_at",
+        )
+        .eq("account_id", data.id)
+        .order("created_at", { ascending: false }),
+      (supabase as any)
+        .from("savings_loan_mandate")
+        .select(
+          "id, mandate_type, status, priority, fixed_amount, max_amount_per_run, min_protected_balance, morning_run, afternoon_run, loan:loan_id(id, loan_no, outstanding_principal)",
+        )
+        .eq("savings_account_id", data.id)
+        .order("created_at", { ascending: false }),
+      (supabase as any)
+        .from("savings_interest_accrual")
+        .select("id, accrual_date, eligible_balance, rate_pct, gross_interest")
+        .eq("account_id", data.id)
+        .order("accrual_date", { ascending: false })
+        .limit(60),
+      (supabase as any)
+        .from("savings_interest_posting")
+        .select("id, period_start, period_end, gross_interest, wht_amount, net_interest, created_at")
+        .eq("account_id", data.id)
+        .order("period_end", { ascending: false })
+        .limit(30),
+      (supabase as any)
+        .from("savings_account_holder")
+        .select("id, role, ownership_pct, full_name, nic, relation, is_signatory, signing_order, client:client_id(id, full_name)")
+        .eq("account_id", data.id),
+      (supabase as any)
+        .from("savings_account_nominee")
+        .select("id, full_name, nic, relation, percentage, contact")
+        .eq("account_id", data.id),
+      (supabase as any)
+        .from("savings_account_mandate")
+        .select("id, signing_rule, min_signatories, rule_details")
+        .eq("account_id", data.id)
+        .maybeSingle(),
+    ]);
+
+    return {
+      account: acct,
+      transactions: txns.data ?? [],
+      holds: holds.data ?? [],
+      mandates: mandates.data ?? [],
+      accruals: accruals.data ?? [],
+      postings: postings.data ?? [],
+      holders: holders.data ?? [],
+      nominees: nominees.data ?? [],
+      signing_mandate: mandate.data ?? null,
+    };
+  });

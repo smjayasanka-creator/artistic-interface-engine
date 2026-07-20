@@ -56,6 +56,7 @@ import { Route as AuthenticatedSavingsMandatesRouteImport } from './routes/_auth
 import { Route as AuthenticatedSavingsInterestRouteImport } from './routes/_authenticated/savings.interest'
 import { Route as AuthenticatedSavingsHoldsRouteImport } from './routes/_authenticated/savings.holds'
 import { Route as AuthenticatedSavingsCloseRouteImport } from './routes/_authenticated/savings.close'
+import { Route as AuthenticatedSavingsIdRouteImport } from './routes/_authenticated/savings.$id'
 import { Route as AuthenticatedLoansWriteOffRouteImport } from './routes/_authenticated/loans.write-off'
 import { Route as AuthenticatedLoansTransferRouteImport } from './routes/_authenticated/loans.transfer'
 import { Route as AuthenticatedLoansTerminationRouteImport } from './routes/_authenticated/loans.termination'
@@ -367,6 +368,11 @@ const AuthenticatedSavingsCloseRoute =
     path: '/close',
     getParentRoute: () => AuthenticatedSavingsRoute,
   } as any)
+const AuthenticatedSavingsIdRoute = AuthenticatedSavingsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedSavingsRoute,
+} as any)
 const AuthenticatedLoansWriteOffRoute =
   AuthenticatedLoansWriteOffRouteImport.update({
     id: '/loans/write-off',
@@ -666,6 +672,7 @@ export interface FileRoutesByFullPath {
   '/loans/termination': typeof AuthenticatedLoansTerminationRoute
   '/loans/transfer': typeof AuthenticatedLoansTransferRoute
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
+  '/savings/$id': typeof AuthenticatedSavingsIdRoute
   '/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/savings/holds': typeof AuthenticatedSavingsHoldsRoute
   '/savings/interest': typeof AuthenticatedSavingsInterestRoute
@@ -756,6 +763,7 @@ export interface FileRoutesByTo {
   '/loans/termination': typeof AuthenticatedLoansTerminationRoute
   '/loans/transfer': typeof AuthenticatedLoansTransferRoute
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
+  '/savings/$id': typeof AuthenticatedSavingsIdRoute
   '/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/savings/holds': typeof AuthenticatedSavingsHoldsRoute
   '/savings/interest': typeof AuthenticatedSavingsInterestRoute
@@ -852,6 +860,7 @@ export interface FileRoutesById {
   '/_authenticated/loans/termination': typeof AuthenticatedLoansTerminationRoute
   '/_authenticated/loans/transfer': typeof AuthenticatedLoansTransferRoute
   '/_authenticated/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
+  '/_authenticated/savings/$id': typeof AuthenticatedSavingsIdRoute
   '/_authenticated/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/_authenticated/savings/holds': typeof AuthenticatedSavingsHoldsRoute
   '/_authenticated/savings/interest': typeof AuthenticatedSavingsInterestRoute
@@ -948,6 +957,7 @@ export interface FileRouteTypes {
     | '/loans/termination'
     | '/loans/transfer'
     | '/loans/write-off'
+    | '/savings/$id'
     | '/savings/close'
     | '/savings/holds'
     | '/savings/interest'
@@ -1038,6 +1048,7 @@ export interface FileRouteTypes {
     | '/loans/termination'
     | '/loans/transfer'
     | '/loans/write-off'
+    | '/savings/$id'
     | '/savings/close'
     | '/savings/holds'
     | '/savings/interest'
@@ -1133,6 +1144,7 @@ export interface FileRouteTypes {
     | '/_authenticated/loans/termination'
     | '/_authenticated/loans/transfer'
     | '/_authenticated/loans/write-off'
+    | '/_authenticated/savings/$id'
     | '/_authenticated/savings/close'
     | '/_authenticated/savings/holds'
     | '/_authenticated/savings/interest'
@@ -1547,6 +1559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSavingsCloseRouteImport
       parentRoute: typeof AuthenticatedSavingsRoute
     }
+    '/_authenticated/savings/$id': {
+      id: '/_authenticated/savings/$id'
+      path: '/$id'
+      fullPath: '/savings/$id'
+      preLoaderRoute: typeof AuthenticatedSavingsIdRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
+    }
     '/_authenticated/loans/write-off': {
       id: '/_authenticated/loans/write-off'
       path: '/loans/write-off'
@@ -1884,6 +1903,7 @@ const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedSavingsRouteChildren {
+  AuthenticatedSavingsIdRoute: typeof AuthenticatedSavingsIdRoute
   AuthenticatedSavingsCloseRoute: typeof AuthenticatedSavingsCloseRoute
   AuthenticatedSavingsHoldsRoute: typeof AuthenticatedSavingsHoldsRoute
   AuthenticatedSavingsInterestRoute: typeof AuthenticatedSavingsInterestRoute
@@ -1896,6 +1916,7 @@ interface AuthenticatedSavingsRouteChildren {
 }
 
 const AuthenticatedSavingsRouteChildren: AuthenticatedSavingsRouteChildren = {
+  AuthenticatedSavingsIdRoute: AuthenticatedSavingsIdRoute,
   AuthenticatedSavingsCloseRoute: AuthenticatedSavingsCloseRoute,
   AuthenticatedSavingsHoldsRoute: AuthenticatedSavingsHoldsRoute,
   AuthenticatedSavingsInterestRoute: AuthenticatedSavingsInterestRoute,
