@@ -60,6 +60,12 @@ const TILES = [
     accent: "from-rose-500/15 to-rose-500/0 text-rose-600",
   },
   {
+    to: "/transactions/savings-deposit",
+    label: "Savings Deposit",
+    icon: ArrowUpFromLine,
+    accent: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
+  },
+  {
     to: "/transactions/savings-withdrawal",
     label: "Savings Withdrawal",
     icon: ArrowDownFromLine,
