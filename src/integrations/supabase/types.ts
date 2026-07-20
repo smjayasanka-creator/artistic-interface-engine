@@ -7086,6 +7086,106 @@ export type Database = {
           },
         ]
       }
+      savings_standing_order: {
+        Row: {
+          amount: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          company_id: string
+          consent_ref: string | null
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          frequency: Database["public"]["Enums"]["standing_order_frequency"]
+          from_account_id: string
+          id: string
+          last_run_at: string | null
+          last_run_error: string | null
+          last_run_status: string | null
+          max_runs: number | null
+          narration: string | null
+          next_run_date: string
+          reference_prefix: string | null
+          runs_completed: number
+          status: Database["public"]["Enums"]["standing_order_status"]
+          to_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          company_id: string
+          consent_ref?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          frequency: Database["public"]["Enums"]["standing_order_frequency"]
+          from_account_id: string
+          id?: string
+          last_run_at?: string | null
+          last_run_error?: string | null
+          last_run_status?: string | null
+          max_runs?: number | null
+          narration?: string | null
+          next_run_date: string
+          reference_prefix?: string | null
+          runs_completed?: number
+          status?: Database["public"]["Enums"]["standing_order_status"]
+          to_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          company_id?: string
+          consent_ref?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          frequency?: Database["public"]["Enums"]["standing_order_frequency"]
+          from_account_id?: string
+          id?: string
+          last_run_at?: string | null
+          last_run_error?: string | null
+          last_run_status?: string | null
+          max_runs?: number | null
+          narration?: string | null
+          next_run_date?: string
+          reference_prefix?: string | null
+          runs_completed?: number
+          status?: Database["public"]["Enums"]["standing_order_status"]
+          to_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_standing_order_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_standing_order_from_account_id_fkey"
+            columns: ["from_account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_standing_order_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_account"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       savings_transaction: {
         Row: {
           account_id: string
@@ -7976,6 +8076,10 @@ export type Database = {
         Args: { _mandate_id: string; _run_id: string }
         Returns: Json
       }
+      execute_savings_standing_order: {
+        Args: { _business_date?: string; _id: string }
+        Returns: Json
+      }
       finalize_savings_hold_release: {
         Args: { _decision: string; _instance_id: string }
         Returns: undefined
@@ -8069,6 +8173,13 @@ export type Database = {
         Args: { _company_id: string }
         Returns: string
       }
+      next_standing_order_date: {
+        Args: {
+          _freq: Database["public"]["Enums"]["standing_order_frequency"]
+          _from: string
+        }
+        Returns: string
+      }
       post_entry: {
         Args: {
           _branch_id?: string
@@ -8104,6 +8215,18 @@ export type Database = {
           p_entry_date: string
           p_lines: Json
           p_reference: string
+        }
+        Returns: Json
+      }
+      post_savings_transfer: {
+        Args: {
+          _amount: number
+          _channel?: string
+          _from_account_id: string
+          _idempotency_key?: string
+          _narration?: string
+          _reference?: string
+          _to_account_id: string
         }
         Returns: Json
       }
@@ -8195,6 +8318,10 @@ export type Database = {
           _triggered_by?: string
           _window: string
         }
+        Returns: Json
+      }
+      run_savings_standing_orders: {
+        Args: { _business_date?: string; _company_id: string }
         Returns: Json
       }
       savings_active_hold_amount: {
@@ -8391,6 +8518,13 @@ export type Database = {
         | "teller"
         | "operations"
         | "admin"
+      standing_order_frequency:
+        | "daily"
+        | "weekly"
+        | "monthly"
+        | "quarterly"
+        | "yearly"
+      standing_order_status: "active" | "paused" | "cancelled" | "completed"
       workflow_action_decision: "approve" | "decline" | "send_back"
       workflow_approver_kind: "role" | "branch_role" | "user"
       workflow_instance_status:
@@ -8647,6 +8781,14 @@ export const Constants = {
         "operations",
         "admin",
       ],
+      standing_order_frequency: [
+        "daily",
+        "weekly",
+        "monthly",
+        "quarterly",
+        "yearly",
+      ],
+      standing_order_status: ["active", "paused", "cancelled", "completed"],
       workflow_action_decision: ["approve", "decline", "send_back"],
       workflow_approver_kind: ["role", "branch_role", "user"],
       workflow_instance_status: [
