@@ -15,9 +15,11 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/mzizi/Card";
 import { StatusBadge } from "@/components/mzizi/Badge";
-import { getSavingsAccountDetail } from "@/lib/savings.functions";
+import { getSavingsAccountDetail, activateSavingsAccount } from "@/lib/savings.functions";
 import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/savings/$id")({
   loader: ({ context, params }) =>
@@ -130,7 +132,9 @@ function SavingsDetail() {
             {activeHolds.length} active hold{activeHolds.length > 1 ? "s" : ""} — {money(heldAmount)} restricted
           </div>
         )}
+        <LifecycleBanner account={a} accountId={id} />
       </Card>
+
 
       <div className="flex flex-wrap gap-1 border-b border-border">
         {TABS.map((t) => {
@@ -466,3 +470,75 @@ function AuditTab({ accountId: _accountId }: { accountId: string }) {
     </Card>
   );
 }
+
+function LifecycleBanner({ account, accountId }: { account: any; accountId: string }) {
+  const router = useRouter();
+  const activate = useServerFn(activateSavingsAccount);
+  const [busy, setBusy] = useState(false);
+  const [amount, setAmount] = useState<string>(
+    account.pending_opening_deposit != null ? String(account.pending_opening_deposit) : "",
+  );
+  const status = String(account.status);
+
+  if (status === "pending_approval") {
+    return (
+      <div className="mt-3 rounded-md border border-blue-500/40 bg-blue-500/5 px-3 py-2 text-[12px] text-blue-800 dark:text-blue-200">
+        Awaiting workflow approval. No money has been moved. Once approved the account will move to <b>pending funding</b>.
+      </div>
+    );
+  }
+  if (status !== "pending_funding") return null;
+
+  const onActivate = async () => {
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value <= 0) {
+      toast.error("Enter a valid initial deposit");
+      return;
+    }
+    setBusy(true);
+    try {
+      await activate({
+        data: {
+          account_id: accountId,
+          opening_deposit: value,
+          payment_method: (account.pending_payment_method ?? null) as any,
+          payment_details: (account.pending_payment_details ?? null) as any,
+          idempotency_key: `activate:${accountId}`,
+        },
+      });
+      toast.success("Account activated with initial deposit");
+      router.invalidate();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Activation failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2.5 text-[12.5px] text-emerald-900 dark:text-emerald-100 space-y-2">
+      <div>
+        Approved — awaiting <b>initial deposit</b> to activate. Ledger entries will use the product's configured GL accounts.
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="text-[12px]">Initial deposit</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="editable-cell px-2 py-1 rounded border border-input bg-background font-mono text-[12px] w-32"
+        />
+        <button
+          onClick={onActivate}
+          disabled={busy}
+          className="px-3 py-1 rounded bg-primary text-primary-foreground text-[12px] font-medium disabled:opacity-50"
+        >
+          {busy ? "Activating…" : "Activate account"}
+        </button>
+      </div>
+    </div>
+  );
+}
+

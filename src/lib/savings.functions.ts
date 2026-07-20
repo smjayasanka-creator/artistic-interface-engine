@@ -424,6 +424,49 @@ export const submitSavingsAccount = createServerFn({ method: "POST" })
     return acct;
   });
 
+// Activate a pending_funding account with the initial deposit. GL accounts
+// come from product setup; the RPC raises if any required mapping is missing.
+export const activateSavingsAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (i: {
+      account_id: string;
+      opening_deposit?: number | null;
+      payment_method?: (typeof PAYMENT_METHODS)[number] | null;
+      payment_details?: Record<string, unknown> | null;
+      channel?: "branch" | "atm" | "ceft" | "internet_banking" | "mobile" | "api" | "other";
+      external_ref?: string | null;
+      idempotency_key?: string | null;
+    }) =>
+      z
+        .object({
+          account_id: z.string().uuid(),
+          opening_deposit: z.number().positive().nullable().optional(),
+          payment_method: z.string().nullable().optional(),
+          payment_details: z.record(z.unknown()).nullable().optional(),
+          channel: z.string().optional(),
+          external_ref: z.string().nullable().optional(),
+          idempotency_key: z.string().nullable().optional(),
+        })
+        .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: result, error } = await supabase.rpc("activate_savings_account" as any, {
+      _account_id: data.account_id,
+      _opening_deposit: data.opening_deposit ?? null,
+      _payment_method: data.payment_method ?? null,
+      _payment_details: (data.payment_details ?? null) as any,
+      _channel: data.channel ?? "branch",
+      _external_ref: data.external_ref ?? null,
+      _idempotency_key: data.idempotency_key ?? null,
+    } as any);
+    if (error) throw new Error(error.message);
+    return result;
+  });
+
+
+
 export const postSavingsTransaction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
