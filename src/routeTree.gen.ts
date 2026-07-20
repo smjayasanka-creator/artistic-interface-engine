@@ -36,7 +36,9 @@ import { Route as AuthenticatedAccountsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedTransactionsWriteOffCollectionRouteImport } from './routes/_authenticated/transactions.write-off-collection'
 import { Route as AuthenticatedTransactionsSupplierPaymentRouteImport } from './routes/_authenticated/transactions.supplier-payment'
 import { Route as AuthenticatedTransactionsSavingsWithdrawalRouteImport } from './routes/_authenticated/transactions.savings-withdrawal'
+import { Route as AuthenticatedTransactionsSavingsTransferRouteImport } from './routes/_authenticated/transactions.savings-transfer'
 import { Route as AuthenticatedTransactionsSavingsDepositRouteImport } from './routes/_authenticated/transactions.savings-deposit'
+import { Route as AuthenticatedTransactionsSavingsAdjustmentRouteImport } from './routes/_authenticated/transactions.savings-adjustment'
 import { Route as AuthenticatedTransactionsRepaymentRouteImport } from './routes/_authenticated/transactions.repayment'
 import { Route as AuthenticatedTransactionsPaymentsRouteImport } from './routes/_authenticated/transactions.payments'
 import { Route as AuthenticatedTransactionsDisbursementRouteImport } from './routes/_authenticated/transactions.disbursement'
@@ -46,6 +48,8 @@ import { Route as AuthenticatedTransactionsCloseCashierRouteImport } from './rou
 import { Route as AuthenticatedTransactionsChequeBankRouteImport } from './routes/_authenticated/transactions.cheque-bank'
 import { Route as AuthenticatedTransactionsCashWalletRouteImport } from './routes/_authenticated/transactions.cash-wallet'
 import { Route as AuthenticatedTransactionsCashBankRouteImport } from './routes/_authenticated/transactions.cash-bank'
+import { Route as AuthenticatedSavingsStandingOrdersRouteImport } from './routes/_authenticated/savings.standing-orders'
+import { Route as AuthenticatedSavingsReversalsRouteImport } from './routes/_authenticated/savings.reversals'
 import { Route as AuthenticatedSavingsPassbookRouteImport } from './routes/_authenticated/savings.passbook'
 import { Route as AuthenticatedSavingsNewRouteImport } from './routes/_authenticated/savings.new'
 import { Route as AuthenticatedSavingsMandatesRouteImport } from './routes/_authenticated/savings.mandates'
@@ -79,6 +83,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
+import { Route as ApiPublicHooksSavingsStandingOrdersRouteImport } from './routes/api/public/hooks/savings-standing-orders'
 import { Route as ApiPublicHooksSavingsInterestRouteImport } from './routes/api/public/hooks/savings-interest'
 import { Route as ApiPublicHooksSavingsAutoCollectionRouteImport } from './routes/api/public/hooks/savings-auto-collection'
 import { Route as ApiPublicHooksLoanAccrueRouteImport } from './routes/api/public/hooks/loan-accrue'
@@ -243,10 +248,22 @@ const AuthenticatedTransactionsSavingsWithdrawalRoute =
     path: '/savings-withdrawal',
     getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
+const AuthenticatedTransactionsSavingsTransferRoute =
+  AuthenticatedTransactionsSavingsTransferRouteImport.update({
+    id: '/savings-transfer',
+    path: '/savings-transfer',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
 const AuthenticatedTransactionsSavingsDepositRoute =
   AuthenticatedTransactionsSavingsDepositRouteImport.update({
     id: '/savings-deposit',
     path: '/savings-deposit',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
+const AuthenticatedTransactionsSavingsAdjustmentRoute =
+  AuthenticatedTransactionsSavingsAdjustmentRouteImport.update({
+    id: '/savings-adjustment',
+    path: '/savings-adjustment',
     getParentRoute: () => AuthenticatedTransactionsRoute,
   } as any)
 const AuthenticatedTransactionsRepaymentRoute =
@@ -302,6 +319,18 @@ const AuthenticatedTransactionsCashBankRoute =
     id: '/cash-bank',
     path: '/cash-bank',
     getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
+const AuthenticatedSavingsStandingOrdersRoute =
+  AuthenticatedSavingsStandingOrdersRouteImport.update({
+    id: '/standing-orders',
+    path: '/standing-orders',
+    getParentRoute: () => AuthenticatedSavingsRoute,
+  } as any)
+const AuthenticatedSavingsReversalsRoute =
+  AuthenticatedSavingsReversalsRouteImport.update({
+    id: '/reversals',
+    path: '/reversals',
+    getParentRoute: () => AuthenticatedSavingsRoute,
   } as any)
 const AuthenticatedSavingsPassbookRoute =
   AuthenticatedSavingsPassbookRouteImport.update({
@@ -490,6 +519,12 @@ const ApiPublicV1HealthRoute = ApiPublicV1HealthRouteImport.update({
   path: '/api/public/v1/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSavingsStandingOrdersRoute =
+  ApiPublicHooksSavingsStandingOrdersRouteImport.update({
+    id: '/api/public/hooks/savings-standing-orders',
+    path: '/api/public/hooks/savings-standing-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSavingsInterestRoute =
   ApiPublicHooksSavingsInterestRouteImport.update({
     id: '/api/public/hooks/savings-interest',
@@ -637,6 +672,8 @@ export interface FileRoutesByFullPath {
   '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/savings/reversals': typeof AuthenticatedSavingsReversalsRoute
+  '/savings/standing-orders': typeof AuthenticatedSavingsStandingOrdersRoute
   '/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
   '/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
   '/transactions/cheque-bank': typeof AuthenticatedTransactionsChequeBankRoute
@@ -646,7 +683,9 @@ export interface FileRoutesByFullPath {
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/transactions/savings-adjustment': typeof AuthenticatedTransactionsSavingsAdjustmentRoute
   '/transactions/savings-deposit': typeof AuthenticatedTransactionsSavingsDepositRoute
+  '/transactions/savings-transfer': typeof AuthenticatedTransactionsSavingsTransferRoute
   '/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   '/transactions/supplier-payment': typeof AuthenticatedTransactionsSupplierPaymentRoute
   '/transactions/write-off-collection': typeof AuthenticatedTransactionsWriteOffCollectionRoute
@@ -668,6 +707,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/hooks/savings-interest': typeof ApiPublicHooksSavingsInterestRoute
+  '/api/public/hooks/savings-standing-orders': typeof ApiPublicHooksSavingsStandingOrdersRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -722,6 +762,8 @@ export interface FileRoutesByTo {
   '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/savings/reversals': typeof AuthenticatedSavingsReversalsRoute
+  '/savings/standing-orders': typeof AuthenticatedSavingsStandingOrdersRoute
   '/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
   '/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
   '/transactions/cheque-bank': typeof AuthenticatedTransactionsChequeBankRoute
@@ -731,7 +773,9 @@ export interface FileRoutesByTo {
   '/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/transactions/savings-adjustment': typeof AuthenticatedTransactionsSavingsAdjustmentRoute
   '/transactions/savings-deposit': typeof AuthenticatedTransactionsSavingsDepositRoute
+  '/transactions/savings-transfer': typeof AuthenticatedTransactionsSavingsTransferRoute
   '/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   '/transactions/supplier-payment': typeof AuthenticatedTransactionsSupplierPaymentRoute
   '/transactions/write-off-collection': typeof AuthenticatedTransactionsWriteOffCollectionRoute
@@ -753,6 +797,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/hooks/savings-interest': typeof ApiPublicHooksSavingsInterestRoute
+  '/api/public/hooks/savings-standing-orders': typeof ApiPublicHooksSavingsStandingOrdersRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -813,6 +858,8 @@ export interface FileRoutesById {
   '/_authenticated/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/_authenticated/savings/new': typeof AuthenticatedSavingsNewRoute
   '/_authenticated/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
+  '/_authenticated/savings/reversals': typeof AuthenticatedSavingsReversalsRoute
+  '/_authenticated/savings/standing-orders': typeof AuthenticatedSavingsStandingOrdersRoute
   '/_authenticated/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
   '/_authenticated/transactions/cash-wallet': typeof AuthenticatedTransactionsCashWalletRoute
   '/_authenticated/transactions/cheque-bank': typeof AuthenticatedTransactionsChequeBankRoute
@@ -822,7 +869,9 @@ export interface FileRoutesById {
   '/_authenticated/transactions/disbursement': typeof AuthenticatedTransactionsDisbursementRoute
   '/_authenticated/transactions/payments': typeof AuthenticatedTransactionsPaymentsRoute
   '/_authenticated/transactions/repayment': typeof AuthenticatedTransactionsRepaymentRoute
+  '/_authenticated/transactions/savings-adjustment': typeof AuthenticatedTransactionsSavingsAdjustmentRoute
   '/_authenticated/transactions/savings-deposit': typeof AuthenticatedTransactionsSavingsDepositRoute
+  '/_authenticated/transactions/savings-transfer': typeof AuthenticatedTransactionsSavingsTransferRoute
   '/_authenticated/transactions/savings-withdrawal': typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   '/_authenticated/transactions/supplier-payment': typeof AuthenticatedTransactionsSupplierPaymentRoute
   '/_authenticated/transactions/write-off-collection': typeof AuthenticatedTransactionsWriteOffCollectionRoute
@@ -844,6 +893,7 @@ export interface FileRoutesById {
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
   '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/hooks/savings-interest': typeof ApiPublicHooksSavingsInterestRoute
+  '/api/public/hooks/savings-standing-orders': typeof ApiPublicHooksSavingsStandingOrdersRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -904,6 +954,8 @@ export interface FileRouteTypes {
     | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
+    | '/savings/reversals'
+    | '/savings/standing-orders'
     | '/transactions/cash-bank'
     | '/transactions/cash-wallet'
     | '/transactions/cheque-bank'
@@ -913,7 +965,9 @@ export interface FileRouteTypes {
     | '/transactions/disbursement'
     | '/transactions/payments'
     | '/transactions/repayment'
+    | '/transactions/savings-adjustment'
     | '/transactions/savings-deposit'
+    | '/transactions/savings-transfer'
     | '/transactions/savings-withdrawal'
     | '/transactions/supplier-payment'
     | '/transactions/write-off-collection'
@@ -935,6 +989,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/loan-accrue'
     | '/api/public/hooks/savings-auto-collection'
     | '/api/public/hooks/savings-interest'
+    | '/api/public/hooks/savings-standing-orders'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -989,6 +1044,8 @@ export interface FileRouteTypes {
     | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
+    | '/savings/reversals'
+    | '/savings/standing-orders'
     | '/transactions/cash-bank'
     | '/transactions/cash-wallet'
     | '/transactions/cheque-bank'
@@ -998,7 +1055,9 @@ export interface FileRouteTypes {
     | '/transactions/disbursement'
     | '/transactions/payments'
     | '/transactions/repayment'
+    | '/transactions/savings-adjustment'
     | '/transactions/savings-deposit'
+    | '/transactions/savings-transfer'
     | '/transactions/savings-withdrawal'
     | '/transactions/supplier-payment'
     | '/transactions/write-off-collection'
@@ -1020,6 +1079,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/loan-accrue'
     | '/api/public/hooks/savings-auto-collection'
     | '/api/public/hooks/savings-interest'
+    | '/api/public/hooks/savings-standing-orders'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1079,6 +1139,8 @@ export interface FileRouteTypes {
     | '/_authenticated/savings/mandates'
     | '/_authenticated/savings/new'
     | '/_authenticated/savings/passbook'
+    | '/_authenticated/savings/reversals'
+    | '/_authenticated/savings/standing-orders'
     | '/_authenticated/transactions/cash-bank'
     | '/_authenticated/transactions/cash-wallet'
     | '/_authenticated/transactions/cheque-bank'
@@ -1088,7 +1150,9 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions/disbursement'
     | '/_authenticated/transactions/payments'
     | '/_authenticated/transactions/repayment'
+    | '/_authenticated/transactions/savings-adjustment'
     | '/_authenticated/transactions/savings-deposit'
+    | '/_authenticated/transactions/savings-transfer'
     | '/_authenticated/transactions/savings-withdrawal'
     | '/_authenticated/transactions/supplier-payment'
     | '/_authenticated/transactions/write-off-collection'
@@ -1110,6 +1174,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/loan-accrue'
     | '/api/public/hooks/savings-auto-collection'
     | '/api/public/hooks/savings-interest'
+    | '/api/public/hooks/savings-standing-orders'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1137,6 +1202,7 @@ export interface RootRouteChildren {
   ApiPublicHooksLoanAccrueRoute: typeof ApiPublicHooksLoanAccrueRoute
   ApiPublicHooksSavingsAutoCollectionRoute: typeof ApiPublicHooksSavingsAutoCollectionRoute
   ApiPublicHooksSavingsInterestRoute: typeof ApiPublicHooksSavingsInterestRoute
+  ApiPublicHooksSavingsStandingOrdersRoute: typeof ApiPublicHooksSavingsStandingOrdersRoute
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1341,11 +1407,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransactionsSavingsWithdrawalRouteImport
       parentRoute: typeof AuthenticatedTransactionsRoute
     }
+    '/_authenticated/transactions/savings-transfer': {
+      id: '/_authenticated/transactions/savings-transfer'
+      path: '/savings-transfer'
+      fullPath: '/transactions/savings-transfer'
+      preLoaderRoute: typeof AuthenticatedTransactionsSavingsTransferRouteImport
+      parentRoute: typeof AuthenticatedTransactionsRoute
+    }
     '/_authenticated/transactions/savings-deposit': {
       id: '/_authenticated/transactions/savings-deposit'
       path: '/savings-deposit'
       fullPath: '/transactions/savings-deposit'
       preLoaderRoute: typeof AuthenticatedTransactionsSavingsDepositRouteImport
+      parentRoute: typeof AuthenticatedTransactionsRoute
+    }
+    '/_authenticated/transactions/savings-adjustment': {
+      id: '/_authenticated/transactions/savings-adjustment'
+      path: '/savings-adjustment'
+      fullPath: '/transactions/savings-adjustment'
+      preLoaderRoute: typeof AuthenticatedTransactionsSavingsAdjustmentRouteImport
       parentRoute: typeof AuthenticatedTransactionsRoute
     }
     '/_authenticated/transactions/repayment': {
@@ -1410,6 +1490,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/transactions/cash-bank'
       preLoaderRoute: typeof AuthenticatedTransactionsCashBankRouteImport
       parentRoute: typeof AuthenticatedTransactionsRoute
+    }
+    '/_authenticated/savings/standing-orders': {
+      id: '/_authenticated/savings/standing-orders'
+      path: '/standing-orders'
+      fullPath: '/savings/standing-orders'
+      preLoaderRoute: typeof AuthenticatedSavingsStandingOrdersRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
+    }
+    '/_authenticated/savings/reversals': {
+      id: '/_authenticated/savings/reversals'
+      path: '/reversals'
+      fullPath: '/savings/reversals'
+      preLoaderRoute: typeof AuthenticatedSavingsReversalsRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
     }
     '/_authenticated/savings/passbook': {
       id: '/_authenticated/savings/passbook'
@@ -1642,6 +1736,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/savings-standing-orders': {
+      id: '/api/public/hooks/savings-standing-orders'
+      path: '/api/public/hooks/savings-standing-orders'
+      fullPath: '/api/public/hooks/savings-standing-orders'
+      preLoaderRoute: typeof ApiPublicHooksSavingsStandingOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/savings-interest': {
       id: '/api/public/hooks/savings-interest'
       path: '/api/public/hooks/savings-interest'
@@ -1789,6 +1890,8 @@ interface AuthenticatedSavingsRouteChildren {
   AuthenticatedSavingsMandatesRoute: typeof AuthenticatedSavingsMandatesRoute
   AuthenticatedSavingsNewRoute: typeof AuthenticatedSavingsNewRoute
   AuthenticatedSavingsPassbookRoute: typeof AuthenticatedSavingsPassbookRoute
+  AuthenticatedSavingsReversalsRoute: typeof AuthenticatedSavingsReversalsRoute
+  AuthenticatedSavingsStandingOrdersRoute: typeof AuthenticatedSavingsStandingOrdersRoute
   AuthenticatedSavingsIndexRoute: typeof AuthenticatedSavingsIndexRoute
 }
 
@@ -1799,6 +1902,9 @@ const AuthenticatedSavingsRouteChildren: AuthenticatedSavingsRouteChildren = {
   AuthenticatedSavingsMandatesRoute: AuthenticatedSavingsMandatesRoute,
   AuthenticatedSavingsNewRoute: AuthenticatedSavingsNewRoute,
   AuthenticatedSavingsPassbookRoute: AuthenticatedSavingsPassbookRoute,
+  AuthenticatedSavingsReversalsRoute: AuthenticatedSavingsReversalsRoute,
+  AuthenticatedSavingsStandingOrdersRoute:
+    AuthenticatedSavingsStandingOrdersRoute,
   AuthenticatedSavingsIndexRoute: AuthenticatedSavingsIndexRoute,
 }
 
@@ -1815,7 +1921,9 @@ interface AuthenticatedTransactionsRouteChildren {
   AuthenticatedTransactionsDisbursementRoute: typeof AuthenticatedTransactionsDisbursementRoute
   AuthenticatedTransactionsPaymentsRoute: typeof AuthenticatedTransactionsPaymentsRoute
   AuthenticatedTransactionsRepaymentRoute: typeof AuthenticatedTransactionsRepaymentRoute
+  AuthenticatedTransactionsSavingsAdjustmentRoute: typeof AuthenticatedTransactionsSavingsAdjustmentRoute
   AuthenticatedTransactionsSavingsDepositRoute: typeof AuthenticatedTransactionsSavingsDepositRoute
+  AuthenticatedTransactionsSavingsTransferRoute: typeof AuthenticatedTransactionsSavingsTransferRoute
   AuthenticatedTransactionsSavingsWithdrawalRoute: typeof AuthenticatedTransactionsSavingsWithdrawalRoute
   AuthenticatedTransactionsSupplierPaymentRoute: typeof AuthenticatedTransactionsSupplierPaymentRoute
   AuthenticatedTransactionsWriteOffCollectionRoute: typeof AuthenticatedTransactionsWriteOffCollectionRoute
@@ -1842,8 +1950,12 @@ const AuthenticatedTransactionsRouteChildren: AuthenticatedTransactionsRouteChil
       AuthenticatedTransactionsPaymentsRoute,
     AuthenticatedTransactionsRepaymentRoute:
       AuthenticatedTransactionsRepaymentRoute,
+    AuthenticatedTransactionsSavingsAdjustmentRoute:
+      AuthenticatedTransactionsSavingsAdjustmentRoute,
     AuthenticatedTransactionsSavingsDepositRoute:
       AuthenticatedTransactionsSavingsDepositRoute,
+    AuthenticatedTransactionsSavingsTransferRoute:
+      AuthenticatedTransactionsSavingsTransferRoute,
     AuthenticatedTransactionsSavingsWithdrawalRoute:
       AuthenticatedTransactionsSavingsWithdrawalRoute,
     AuthenticatedTransactionsSupplierPaymentRoute:
@@ -2013,6 +2125,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSavingsAutoCollectionRoute:
     ApiPublicHooksSavingsAutoCollectionRoute,
   ApiPublicHooksSavingsInterestRoute: ApiPublicHooksSavingsInterestRoute,
+  ApiPublicHooksSavingsStandingOrdersRoute:
+    ApiPublicHooksSavingsStandingOrdersRoute,
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
