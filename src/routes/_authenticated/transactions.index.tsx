@@ -72,6 +72,18 @@ const TILES = [
     accent: "from-pink-500/15 to-pink-500/0 text-pink-600",
   },
   {
+    to: "/transactions/savings-transfer",
+    label: "Savings Transfer",
+    icon: Send,
+    accent: "from-sky-500/15 to-sky-500/0 text-sky-600",
+  },
+  {
+    to: "/transactions/savings-adjustment",
+    label: "Savings Adjustment",
+    icon: FileCheck2,
+    accent: "from-fuchsia-500/15 to-fuchsia-500/0 text-fuchsia-600",
+  },
+  {
     to: "/transactions/cash-wallet",
     label: "Cash ↔ Wallet Transfer",
     icon: Smartphone,
