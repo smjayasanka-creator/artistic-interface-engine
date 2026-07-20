@@ -265,7 +265,7 @@ function NewSavings() {
                   <option value="">— select branch —</option>
                   {(branches ?? []).map((b: any) => (
                     <option key={b.id} value={b.id}>
-                      {b.branch_code} · {b.branch_name}
+                      {b.code} · {b.name}
                     </option>
                   ))}
                 </select>
