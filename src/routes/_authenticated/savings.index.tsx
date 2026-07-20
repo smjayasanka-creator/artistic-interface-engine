@@ -8,6 +8,7 @@ import {
   MoonStar,
   Archive,
   Lock,
+  Repeat,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -59,6 +60,13 @@ const CARDS = [
     title: "Holds & Blocks",
     desc: "Place liens/blocks and route releases through workflow approval",
     accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600",
+  },
+  {
+    to: "/savings/mandates",
+    icon: Repeat,
+    title: "Loan Mandates",
+    desc: "Automatic savings-to-loan collections, twice-daily runs",
+    accent: "from-sky-500/15 to-sky-500/0 text-sky-600",
   },
 ] as const;
 

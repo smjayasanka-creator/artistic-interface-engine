@@ -48,6 +48,7 @@ import { Route as AuthenticatedTransactionsCashWalletRouteImport } from './route
 import { Route as AuthenticatedTransactionsCashBankRouteImport } from './routes/_authenticated/transactions.cash-bank'
 import { Route as AuthenticatedSavingsPassbookRouteImport } from './routes/_authenticated/savings.passbook'
 import { Route as AuthenticatedSavingsNewRouteImport } from './routes/_authenticated/savings.new'
+import { Route as AuthenticatedSavingsMandatesRouteImport } from './routes/_authenticated/savings.mandates'
 import { Route as AuthenticatedSavingsHoldsRouteImport } from './routes/_authenticated/savings.holds'
 import { Route as AuthenticatedSavingsCloseRouteImport } from './routes/_authenticated/savings.close'
 import { Route as AuthenticatedLoansWriteOffRouteImport } from './routes/_authenticated/loans.write-off'
@@ -77,6 +78,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicV1HealthRouteImport } from './routes/api/public/v1/health'
+import { Route as ApiPublicHooksSavingsAutoCollectionRouteImport } from './routes/api/public/hooks/savings-auto-collection'
 import { Route as ApiPublicHooksLoanAccrueRouteImport } from './routes/api/public/hooks/loan-accrue'
 import { Route as ApiPublicHooksFdMatureRouteImport } from './routes/api/public/hooks/fd-mature'
 import { Route as ApiPublicHooksFdAccrueRouteImport } from './routes/api/public/hooks/fd-accrue'
@@ -309,6 +311,12 @@ const AuthenticatedSavingsNewRoute = AuthenticatedSavingsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AuthenticatedSavingsRoute,
 } as any)
+const AuthenticatedSavingsMandatesRoute =
+  AuthenticatedSavingsMandatesRouteImport.update({
+    id: '/mandates',
+    path: '/mandates',
+    getParentRoute: () => AuthenticatedSavingsRoute,
+  } as any)
 const AuthenticatedSavingsHoldsRoute =
   AuthenticatedSavingsHoldsRouteImport.update({
     id: '/holds',
@@ -473,6 +481,12 @@ const ApiPublicV1HealthRoute = ApiPublicV1HealthRouteImport.update({
   path: '/api/public/v1/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSavingsAutoCollectionRoute =
+  ApiPublicHooksSavingsAutoCollectionRouteImport.update({
+    id: '/api/public/hooks/savings-auto-collection',
+    path: '/api/public/hooks/savings-auto-collection',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksLoanAccrueRoute =
   ApiPublicHooksLoanAccrueRouteImport.update({
     id: '/api/public/hooks/loan-accrue',
@@ -598,6 +612,7 @@ export interface FileRoutesByFullPath {
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/savings/holds': typeof AuthenticatedSavingsHoldsRoute
+  '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
   '/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
@@ -628,6 +643,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
+  '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -678,6 +694,7 @@ export interface FileRoutesByTo {
   '/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/savings/holds': typeof AuthenticatedSavingsHoldsRoute
+  '/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/savings/new': typeof AuthenticatedSavingsNewRoute
   '/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
   '/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
@@ -708,6 +725,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
+  '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -764,6 +782,7 @@ export interface FileRoutesById {
   '/_authenticated/loans/write-off': typeof AuthenticatedLoansWriteOffRoute
   '/_authenticated/savings/close': typeof AuthenticatedSavingsCloseRoute
   '/_authenticated/savings/holds': typeof AuthenticatedSavingsHoldsRoute
+  '/_authenticated/savings/mandates': typeof AuthenticatedSavingsMandatesRoute
   '/_authenticated/savings/new': typeof AuthenticatedSavingsNewRoute
   '/_authenticated/savings/passbook': typeof AuthenticatedSavingsPassbookRoute
   '/_authenticated/transactions/cash-bank': typeof AuthenticatedTransactionsCashBankRoute
@@ -794,6 +813,7 @@ export interface FileRoutesById {
   '/api/public/hooks/fd-accrue': typeof ApiPublicHooksFdAccrueRoute
   '/api/public/hooks/fd-mature': typeof ApiPublicHooksFdMatureRoute
   '/api/public/hooks/loan-accrue': typeof ApiPublicHooksLoanAccrueRoute
+  '/api/public/hooks/savings-auto-collection': typeof ApiPublicHooksSavingsAutoCollectionRoute
   '/api/public/v1/health': typeof ApiPublicV1HealthRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -850,6 +870,7 @@ export interface FileRouteTypes {
     | '/loans/write-off'
     | '/savings/close'
     | '/savings/holds'
+    | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
     | '/transactions/cash-bank'
@@ -880,6 +901,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
+    | '/api/public/hooks/savings-auto-collection'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -930,6 +952,7 @@ export interface FileRouteTypes {
     | '/loans/write-off'
     | '/savings/close'
     | '/savings/holds'
+    | '/savings/mandates'
     | '/savings/new'
     | '/savings/passbook'
     | '/transactions/cash-bank'
@@ -960,6 +983,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
+    | '/api/public/hooks/savings-auto-collection'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1015,6 +1039,7 @@ export interface FileRouteTypes {
     | '/_authenticated/loans/write-off'
     | '/_authenticated/savings/close'
     | '/_authenticated/savings/holds'
+    | '/_authenticated/savings/mandates'
     | '/_authenticated/savings/new'
     | '/_authenticated/savings/passbook'
     | '/_authenticated/transactions/cash-bank'
@@ -1045,6 +1070,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fd-accrue'
     | '/api/public/hooks/fd-mature'
     | '/api/public/hooks/loan-accrue'
+    | '/api/public/hooks/savings-auto-collection'
     | '/api/public/v1/health'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1070,6 +1096,7 @@ export interface RootRouteChildren {
   ApiPublicHooksFdAccrueRoute: typeof ApiPublicHooksFdAccrueRoute
   ApiPublicHooksFdMatureRoute: typeof ApiPublicHooksFdMatureRoute
   ApiPublicHooksLoanAccrueRoute: typeof ApiPublicHooksLoanAccrueRoute
+  ApiPublicHooksSavingsAutoCollectionRoute: typeof ApiPublicHooksSavingsAutoCollectionRoute
   ApiPublicV1HealthRoute: typeof ApiPublicV1HealthRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1358,6 +1385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSavingsNewRouteImport
       parentRoute: typeof AuthenticatedSavingsRoute
     }
+    '/_authenticated/savings/mandates': {
+      id: '/_authenticated/savings/mandates'
+      path: '/mandates'
+      fullPath: '/savings/mandates'
+      preLoaderRoute: typeof AuthenticatedSavingsMandatesRouteImport
+      parentRoute: typeof AuthenticatedSavingsRoute
+    }
     '/_authenticated/savings/holds': {
       id: '/_authenticated/savings/holds'
       path: '/holds'
@@ -1561,6 +1595,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/savings-auto-collection': {
+      id: '/api/public/hooks/savings-auto-collection'
+      path: '/api/public/hooks/savings-auto-collection'
+      fullPath: '/api/public/hooks/savings-auto-collection'
+      preLoaderRoute: typeof ApiPublicHooksSavingsAutoCollectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/loan-accrue': {
       id: '/api/public/hooks/loan-accrue'
       path: '/api/public/hooks/loan-accrue'
@@ -1672,6 +1713,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedSavingsRouteChildren {
   AuthenticatedSavingsCloseRoute: typeof AuthenticatedSavingsCloseRoute
   AuthenticatedSavingsHoldsRoute: typeof AuthenticatedSavingsHoldsRoute
+  AuthenticatedSavingsMandatesRoute: typeof AuthenticatedSavingsMandatesRoute
   AuthenticatedSavingsNewRoute: typeof AuthenticatedSavingsNewRoute
   AuthenticatedSavingsPassbookRoute: typeof AuthenticatedSavingsPassbookRoute
   AuthenticatedSavingsIndexRoute: typeof AuthenticatedSavingsIndexRoute
@@ -1680,6 +1722,7 @@ interface AuthenticatedSavingsRouteChildren {
 const AuthenticatedSavingsRouteChildren: AuthenticatedSavingsRouteChildren = {
   AuthenticatedSavingsCloseRoute: AuthenticatedSavingsCloseRoute,
   AuthenticatedSavingsHoldsRoute: AuthenticatedSavingsHoldsRoute,
+  AuthenticatedSavingsMandatesRoute: AuthenticatedSavingsMandatesRoute,
   AuthenticatedSavingsNewRoute: AuthenticatedSavingsNewRoute,
   AuthenticatedSavingsPassbookRoute: AuthenticatedSavingsPassbookRoute,
   AuthenticatedSavingsIndexRoute: AuthenticatedSavingsIndexRoute,
@@ -1893,6 +1936,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksFdAccrueRoute: ApiPublicHooksFdAccrueRoute,
   ApiPublicHooksFdMatureRoute: ApiPublicHooksFdMatureRoute,
   ApiPublicHooksLoanAccrueRoute: ApiPublicHooksLoanAccrueRoute,
+  ApiPublicHooksSavingsAutoCollectionRoute:
+    ApiPublicHooksSavingsAutoCollectionRoute,
   ApiPublicV1HealthRoute: ApiPublicV1HealthRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
