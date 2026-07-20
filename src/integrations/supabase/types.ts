@@ -5540,6 +5540,10 @@ export type Database = {
           opened_by: string | null
           opened_on: string
           opened_via: string | null
+          opening_workflow_instance_id: string | null
+          pending_opening_deposit: number | null
+          pending_payment_details: Json | null
+          pending_payment_method: string | null
           product_id: string
           product_snapshot: Json | null
           rate_override_approved_by: string | null
@@ -5549,6 +5553,8 @@ export type Database = {
           special_instructions: string | null
           statement_preference: string | null
           status: Database["public"]["Enums"]["savings_account_status"]
+          submitted_at: string | null
+          submitted_by: string | null
           uncleared_balance: number
           updated_at: string
         }
@@ -5576,6 +5582,10 @@ export type Database = {
           opened_by?: string | null
           opened_on?: string
           opened_via?: string | null
+          opening_workflow_instance_id?: string | null
+          pending_opening_deposit?: number | null
+          pending_payment_details?: Json | null
+          pending_payment_method?: string | null
           product_id: string
           product_snapshot?: Json | null
           rate_override_approved_by?: string | null
@@ -5585,6 +5595,8 @@ export type Database = {
           special_instructions?: string | null
           statement_preference?: string | null
           status?: Database["public"]["Enums"]["savings_account_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
           uncleared_balance?: number
           updated_at?: string
         }
@@ -5612,6 +5624,10 @@ export type Database = {
           opened_by?: string | null
           opened_on?: string
           opened_via?: string | null
+          opening_workflow_instance_id?: string | null
+          pending_opening_deposit?: number | null
+          pending_payment_details?: Json | null
+          pending_payment_method?: string | null
           product_id?: string
           product_snapshot?: Json | null
           rate_override_approved_by?: string | null
@@ -5621,6 +5637,8 @@ export type Database = {
           special_instructions?: string | null
           statement_preference?: string | null
           status?: Database["public"]["Enums"]["savings_account_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
           uncleared_balance?: number
           updated_at?: string
         }
@@ -5668,6 +5686,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "savings_account_opening_workflow_instance_id_fkey"
+            columns: ["opening_workflow_instance_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_instance"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "savings_account_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -5677,6 +5702,13 @@ export type Database = {
           {
             foreignKeyName: "savings_account_rate_override_approved_by_fkey"
             columns: ["rate_override_approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_account_submitted_by_fkey"
+            columns: ["submitted_by"]
             isOneToOne: false
             referencedRelation: "staff"
             referencedColumns: ["id"]
@@ -8149,6 +8181,10 @@ export type Database = {
         Args: { _business_date?: string; _id: string }
         Returns: Json
       }
+      finalize_savings_account_opening: {
+        Args: { _decision: string; _instance_id: string }
+        Returns: undefined
+      }
       finalize_savings_hold_release: {
         Args: { _decision: string; _instance_id: string }
         Returns: undefined
@@ -8452,6 +8488,27 @@ export type Database = {
         Args: { _application_id: string; _transition_key: string }
         Returns: Json
       }
+      submit_savings_account_opening: {
+        Args: {
+          _branch_id: string
+          _channel?: string
+          _client_id: string
+          _communication_preference?: string
+          _external_ref?: string
+          _holders?: Json
+          _idempotency_key?: string
+          _mandate?: Json
+          _narration?: string
+          _nominees?: Json
+          _opening_deposit: number
+          _payment_details?: Json
+          _payment_method?: string
+          _product_id: string
+          _special_instructions?: string
+          _statement_preference?: string
+        }
+        Returns: Json
+      }
       transfer_savings_to_unclaimed: {
         Args: { _account_id: string; _idempotency_key?: string }
         Returns: string
@@ -8595,6 +8652,7 @@ export type Database = {
         | "debit_blocked"
         | "credit_blocked"
         | "fully_blocked"
+        | "pending_approval"
       savings_channel:
         | "branch"
         | "atm"
@@ -8854,6 +8912,7 @@ export const Constants = {
         "debit_blocked",
         "credit_blocked",
         "fully_blocked",
+        "pending_approval",
       ],
       savings_channel: [
         "branch",
