@@ -102,6 +102,8 @@ type Tab =
   | "screening"
   | "bank_directory"
   | "eod"
+  | "savings_wht"
+  | "savings_auto_collection"
   | "time_travel";
 type Mode = "list" | "create" | "edit";
 type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
