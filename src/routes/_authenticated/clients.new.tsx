@@ -257,10 +257,20 @@ function NewClientPage() {
   const missingDocs = REQUIRED_DOCS.filter((d) => !docFiles[d.key]);
   const docsSatisfied = missingDocs.length === 0;
 
-  const applicableRiskFactors = useMemo(
-    () => (riskScheme ? applicableFactors(riskScheme, null) : []),
-    [riskScheme],
-  );
+  const applicableRiskFactors = useMemo(() => {
+    if (!riskScheme) return [];
+    const catFactor = riskScheme.factors.find((f) => f.code === "client_category");
+    const catAns = riskAnswers.find((a) => a.factor_id === catFactor?.id);
+    const catLabel = catFactor?.options
+      .find((o) => o.id === catAns?.option_ids[0])
+      ?.label?.toLowerCase();
+    const category: "individual" | "corporate" | null = catLabel?.includes("corporate")
+      ? "corporate"
+      : catLabel?.includes("individual")
+        ? "individual"
+        : null;
+    return applicableFactors(riskScheme, category);
+  }, [riskScheme, riskAnswers]);
   const riskMissing = applicableRiskFactors.filter(
     (f) => !riskAnswers.find((a) => a.factor_id === f.id && a.option_ids.length > 0),
   );
