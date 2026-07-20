@@ -5954,6 +5954,63 @@ export type Database = {
           },
         ]
       }
+      savings_auto_collection_config: {
+        Row: {
+          afternoon_enabled: boolean
+          afternoon_time: string
+          company_id: string
+          created_at: string
+          id: string
+          max_retries: number
+          morning_enabled: boolean
+          morning_time: string
+          timezone_override: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          afternoon_enabled?: boolean
+          afternoon_time?: string
+          company_id: string
+          created_at?: string
+          id?: string
+          max_retries?: number
+          morning_enabled?: boolean
+          morning_time?: string
+          timezone_override?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          afternoon_enabled?: boolean
+          afternoon_time?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          max_retries?: number
+          morning_enabled?: boolean
+          morning_time?: string
+          timezone_override?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_auto_collection_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "savings_auto_collection_config_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       savings_auto_collection_result: {
         Row: {
           collected: number

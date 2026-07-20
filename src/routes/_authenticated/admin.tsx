@@ -75,6 +75,8 @@ import { LoanAlcoRatesPanel } from "@/components/mzizi/LoanAlcoRatesPanel";
 import { RiskProfilingTab } from "@/components/mzizi/RiskProfilingTab";
 import { ScreeningConfigTab } from "@/components/mzizi/ScreeningConfigTab";
 import { LoanProductEvaluationTab } from "@/components/mzizi/LoanProductEvaluationTab";
+import { SavingsWhtTab } from "@/components/mzizi/SavingsWhtTab";
+import { SavingsAutoCollectionTab } from "@/components/mzizi/SavingsAutoCollectionTab";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
@@ -100,6 +102,8 @@ type Tab =
   | "screening"
   | "bank_directory"
   | "eod"
+  | "savings_wht"
+  | "savings_auto_collection"
   | "time_travel";
 type Mode = "list" | "create" | "edit";
 type LoanSegment = "micro" | "sme" | "leasing" | "housing" | "society" | "cashback" | "gold";
@@ -306,6 +310,22 @@ const SECTIONS: Section[] = [
     accent: "from-orange-500/15 to-orange-500/0 text-orange-600",
     group: "savings_fd",
   },
+  {
+    id: "savings_wht",
+    label: "Savings WHT / AIT rules",
+    desc: "Effective-dated withholding tax used at interest capitalisation",
+    icon: ShieldCheck,
+    accent: "from-rose-500/15 to-rose-500/0 text-rose-600",
+    group: "savings_fd",
+  },
+  {
+    id: "savings_auto_collection",
+    label: "Loan auto-collection windows",
+    desc: "Morning & afternoon savings sweep times for loan repayments",
+    icon: CalendarClock,
+    accent: "from-indigo-500/15 to-indigo-500/0 text-indigo-600",
+    group: "savings_fd",
+  },
 ];
 
 const GROUPS: { id: Group; label: string }[] = [
@@ -406,6 +426,8 @@ function Admin() {
       {tab === "screening" && <ScreeningConfigTab />}
       {tab === "bank_directory" && <BankDirectoryTab />}
       {tab === "eod" && <EodTab />}
+      {tab === "savings_wht" && <SavingsWhtTab />}
+      {tab === "savings_auto_collection" && <SavingsAutoCollectionTab />}
       {tab === "time_travel" && <TimeTravelTab />}
     </div>
   );
