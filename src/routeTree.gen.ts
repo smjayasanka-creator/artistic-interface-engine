@@ -87,6 +87,7 @@ import { Route as ApiPublicHooksFdAccrueRouteImport } from './routes/api/public/
 import { Route as ApiPublicHooksEodCloseRouteImport } from './routes/api/public/hooks/eod-close'
 import { Route as ApiPublicHooksDispatchDomainEventsRouteImport } from './routes/api/public/hooks/dispatch-domain-events'
 import { Route as AuthenticatedClientsIdEditRouteImport } from './routes/_authenticated/clients.$id.edit'
+import { Route as AuthenticatedAdminSavingsWhtRouteImport } from './routes/_authenticated/admin.savings.wht'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
 import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/api/public/v1/transactions.outbound'
@@ -534,6 +535,12 @@ const AuthenticatedClientsIdEditRoute =
     path: '/edit',
     getParentRoute: () => AuthenticatedClientsIdRoute,
   } as any)
+const AuthenticatedAdminSavingsWhtRoute =
+  AuthenticatedAdminSavingsWhtRouteImport.update({
+    id: '/savings/wht',
+    path: '/savings/wht',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAccountsPaymentsNewRoute =
   AuthenticatedAccountsPaymentsNewRouteImport.update({
     id: '/new',
@@ -590,7 +597,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/api': typeof AuthenticatedApiRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/audit-log': typeof AuthenticatedAuditLogRoute
@@ -652,6 +659,7 @@ export interface FileRoutesByFullPath {
   '/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/admin/savings/wht': typeof AuthenticatedAdminSavingsWhtRoute
   '/clients/$id/edit': typeof AuthenticatedClientsIdEditRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
@@ -678,7 +686,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/api': typeof AuthenticatedApiRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/audit-log': typeof AuthenticatedAuditLogRoute
@@ -736,6 +744,7 @@ export interface FileRoutesByTo {
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
   '/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/admin/savings/wht': typeof AuthenticatedAdminSavingsWhtRoute
   '/clients/$id/edit': typeof AuthenticatedClientsIdEditRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
@@ -764,7 +773,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/api': typeof AuthenticatedApiRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/audit-log': typeof AuthenticatedAuditLogRoute
@@ -826,6 +835,7 @@ export interface FileRoutesById {
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
   '/_authenticated/accounts/journal/new': typeof AuthenticatedAccountsJournalNewRoute
   '/_authenticated/accounts/payments/new': typeof AuthenticatedAccountsPaymentsNewRoute
+  '/_authenticated/admin/savings/wht': typeof AuthenticatedAdminSavingsWhtRoute
   '/_authenticated/clients/$id/edit': typeof AuthenticatedClientsIdEditRoute
   '/api/public/hooks/dispatch-domain-events': typeof ApiPublicHooksDispatchDomainEventsRoute
   '/api/public/hooks/eod-close': typeof ApiPublicHooksEodCloseRoute
@@ -916,6 +926,7 @@ export interface FileRouteTypes {
     | '/transactions/'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
+    | '/admin/savings/wht'
     | '/clients/$id/edit'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/eod-close'
@@ -1000,6 +1011,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/accounts/journal/new'
     | '/accounts/payments/new'
+    | '/admin/savings/wht'
     | '/clients/$id/edit'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/eod-close'
@@ -1089,6 +1101,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions/'
     | '/_authenticated/accounts/journal/new'
     | '/_authenticated/accounts/payments/new'
+    | '/_authenticated/admin/savings/wht'
     | '/_authenticated/clients/$id/edit'
     | '/api/public/hooks/dispatch-domain-events'
     | '/api/public/hooks/eod-close'
@@ -1685,6 +1698,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientsIdEditRouteImport
       parentRoute: typeof AuthenticatedClientsIdRoute
     }
+    '/_authenticated/admin/savings/wht': {
+      id: '/_authenticated/admin/savings/wht'
+      path: '/savings/wht'
+      fullPath: '/admin/savings/wht'
+      preLoaderRoute: typeof AuthenticatedAdminSavingsWhtRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/accounts/payments/new': {
       id: '/_authenticated/accounts/payments/new'
       path: '/new'
@@ -1750,6 +1770,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminSavingsWhtRoute: typeof AuthenticatedAdminSavingsWhtRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminSavingsWhtRoute: AuthenticatedAdminSavingsWhtRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedSavingsRouteChildren {
   AuthenticatedSavingsCloseRoute: typeof AuthenticatedSavingsCloseRoute
@@ -1877,7 +1908,7 @@ const AuthenticatedClientsIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedApiRoute: typeof AuthenticatedApiRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedAuditLogRoute: typeof AuthenticatedAuditLogRoute
@@ -1919,7 +1950,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedApiRoute: AuthenticatedApiRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedAuditLogRoute: AuthenticatedAuditLogRoute,
