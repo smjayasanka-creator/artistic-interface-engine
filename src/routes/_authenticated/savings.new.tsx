@@ -251,7 +251,7 @@ function NewSavings() {
                   <option value="">— select customer —</option>
                   {(clients ?? []).map((c: any) => (
                     <option key={c.id} value={c.id}>
-                      {c.client_no} · {c.full_name}
+                      {c.full_name}
                     </option>
                   ))}
                 </select>
@@ -368,7 +368,7 @@ function NewSavings() {
                       <option value="">— none —</option>
                       {(clients ?? []).map((c: any) => (
                         <option key={c.id} value={c.id}>
-                          {c.client_no} · {c.full_name}
+                          {c.full_name}
                         </option>
                       ))}
                     </select>
