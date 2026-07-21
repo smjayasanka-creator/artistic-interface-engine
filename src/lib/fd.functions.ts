@@ -1047,7 +1047,7 @@ export async function processFdMaturityCore(
         .select(FD_PRODUCT_ACCOUNT_COLUMNS)
         .eq("id", fd.product_id)
         .maybeSingle();
-      const glm = await resolveFdAccounts(supabase, fdProdM, cid);
+      const glm = await resolveFdAccounts(supabase, fdProdM, fd.company_id);
       if (glm.cash && glm.liab && glm.intr && glm.accrued && settlement > 0) {
         const { data: accRows } = await supabase
           .from("fd_accrual")
