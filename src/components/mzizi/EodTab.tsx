@@ -5,10 +5,12 @@ import { toast } from "sonner";
 import {
   approveEod,
   getAutoEodSettings,
+  getEodDefaultBusinessDate,
   getEodRun,
   initiateEod,
   listBranches,
   listEodRuns,
+  resumeEod,
   runAllSteps,
   runCompanyEod,
   runPreCheck,
@@ -74,6 +76,8 @@ export function EodTab() {
   const runAllFn = useServerFn(runAllSteps);
   const runStepFn = useServerFn(runStep);
   const getRunFn = useServerFn(getEodRun);
+  const resumeFn = useServerFn(resumeEod);
+  const defaultDateFn = useServerFn(getEodDefaultBusinessDate);
 
   const { data: settings } = useQuery({ queryKey: ["eod-settings"], queryFn: () => settingsFn() });
   const { data: branches } = useQuery({ queryKey: ["eod-branches"], queryFn: () => branchesFn() });
@@ -81,12 +85,20 @@ export function EodTab() {
     queryKey: ["eod-runs-all"],
     queryFn: () => runsFn({ data: { limit: 100 } }),
   });
+  const { data: defaultDate } = useQuery({
+    queryKey: ["eod-default-business-date"],
+    queryFn: () => defaultDateFn(),
+    staleTime: 60_000,
+  });
 
   const [businessDate, setBusinessDate] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
     return d.toISOString().slice(0, 10);
   });
+  useEffect(() => {
+    if (defaultDate && typeof defaultDate === "string") setBusinessDate(defaultDate);
+  }, [defaultDate]);
   const [autoEnabled, setAutoEnabled] = useState<boolean>(false);
   const [autoTime, setAutoTime] = useState<string>("00:30");
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
@@ -408,39 +420,90 @@ export function EodTab() {
 }
 
 function PreCheckResults({ data }: { data: any }) {
-  const checks = (data?.checks ?? data ?? []) as Array<{
-    key: string;
-    ok: boolean;
-    blocking?: boolean;
-    message?: string;
-  }>;
-  const list = Array.isArray(checks)
-    ? checks
-    : Object.entries(checks).map(([k, v]) => ({ key: k, ok: !!(v as any)?.ok, ...(v as any) }));
+  // Server RPC shape: { business_date, blockers:[], warnings:[], blocking, checked_at }.
+  // Older shape ({ checks:[] }) is also handled defensively.
+  const blockers: Array<{ code?: string; label?: string; count?: number }> = Array.isArray(
+    data?.blockers,
+  )
+    ? data.blockers
+    : [];
+  const warnings: Array<{ code?: string; label?: string; count?: number }> = Array.isArray(
+    data?.warnings,
+  )
+    ? data.warnings
+    : [];
+  const legacy: Array<{ key: string; ok: boolean; blocking?: boolean; message?: string }> =
+    Array.isArray(data?.checks) ? data.checks : [];
 
-  const blockers = list.filter((c) => !c.ok && c.blocking !== false);
+  if (blockers.length === 0 && warnings.length === 0 && legacy.length === 0) {
+    return (
+      <div className="flex items-center gap-2 text-[12px] text-emerald-600">
+        <CheckCircle2 size={13} /> All pre-checks passed.
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="space-y-3">
       {blockers.length > 0 && (
-        <div className="mb-2 flex items-center gap-2 text-[12px] text-destructive">
-          <AlertTriangle size={13} />
-          {blockers.length} blocker(s) — day-end cannot proceed.
+        <div>
+          <div className="mb-1 flex items-center gap-2 text-[12px] font-semibold text-destructive">
+            <AlertTriangle size={13} />
+            {blockers.length} blocker(s) — day-end cannot proceed
+          </div>
+          <ul className="text-[12px] space-y-1">
+            {blockers.map((b, i) => (
+              <li key={`b-${i}`} className="flex items-start gap-2">
+                <XCircle size={13} className="text-destructive mt-0.5 shrink-0" />
+                <span className="font-mono text-[11px] text-muted-foreground">
+                  {b.code ?? "blocker"}
+                </span>
+                <span>— {b.label ?? "Blocking issue"}</span>
+                {typeof b.count === "number" && (
+                  <span className="text-muted-foreground">({b.count})</span>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
-      <ul className="text-[12px] space-y-1">
-        {list.map((c) => (
-          <li key={c.key} className="flex items-start gap-2">
-            {c.ok ? (
-              <CheckCircle2 size={13} className="text-emerald-600 mt-0.5 shrink-0" />
-            ) : (
-              <XCircle size={13} className="text-destructive mt-0.5 shrink-0" />
-            )}
-            <span className="font-mono text-[11px] text-muted-foreground">{c.key}</span>
-            {c.message && <span className="text-muted-foreground">— {c.message}</span>}
-          </li>
-        ))}
-        {list.length === 0 && <li className="text-muted-foreground">No checks reported.</li>}
-      </ul>
+      {warnings.length > 0 && (
+        <div>
+          <div className="mb-1 flex items-center gap-2 text-[12px] font-semibold text-amber-600">
+            <AlertTriangle size={13} />
+            {warnings.length} warning(s) — informational
+          </div>
+          <ul className="text-[12px] space-y-1">
+            {warnings.map((w, i) => (
+              <li key={`w-${i}`} className="flex items-start gap-2">
+                <AlertTriangle size={13} className="text-amber-600 mt-0.5 shrink-0" />
+                <span className="font-mono text-[11px] text-muted-foreground">
+                  {w.code ?? "warning"}
+                </span>
+                <span>— {w.label ?? "Informational"}</span>
+                {typeof w.count === "number" && (
+                  <span className="text-muted-foreground">({w.count})</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {legacy.length > 0 && (
+        <ul className="text-[12px] space-y-1">
+          {legacy.map((c) => (
+            <li key={c.key} className="flex items-start gap-2">
+              {c.ok ? (
+                <CheckCircle2 size={13} className="text-emerald-600 mt-0.5 shrink-0" />
+              ) : (
+                <XCircle size={13} className="text-destructive mt-0.5 shrink-0" />
+              )}
+              <span className="font-mono text-[11px] text-muted-foreground">{c.key}</span>
+              {c.message && <span className="text-muted-foreground">— {c.message}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
