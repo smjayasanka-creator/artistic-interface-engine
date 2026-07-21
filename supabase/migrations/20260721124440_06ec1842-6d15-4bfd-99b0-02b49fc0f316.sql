@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.eod_precheck_system_diagnostic(uuid,date);
