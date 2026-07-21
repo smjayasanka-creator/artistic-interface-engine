@@ -114,10 +114,15 @@ function ApiConsole() {
         <div className="text-[11.5px] uppercase tracking-wider text-muted-foreground font-semibold">
           Integration
         </div>
-        <div className="text-[18px] font-semibold mt-0.5">API console</div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <div className="text-[18px] font-semibold">API &amp; Integration Hub</div>
+          <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30 uppercase tracking-wider">
+            API-first platform
+          </span>
+        </div>
         <p className="text-[12.5px] text-muted-foreground mt-1 max-w-2xl">
-          REST endpoints for connecting third-party accounts, CEFT clearing, ATM switch, internet
-          banking, and CRIB. Bearer-token authenticated over HTTPS.
+          Connect any system to the platform through secure REST APIs, outbound webhooks and
+          field-level data mapping.
         </p>
       </div>
 
