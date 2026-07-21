@@ -77,7 +77,10 @@ function SavingsReversalsPage() {
                     >
                       {money(amt, true)}
                     </td>
-                    <td className="py-2 pr-3 text-xs truncate max-w-[240px]" title={t.narration ?? ""}>
+                    <td
+                      className="py-2 pr-3 text-xs truncate max-w-[240px]"
+                      title={t.narration ?? ""}
+                    >
                       {t.narration ?? "—"}
                     </td>
                     <td className="py-2 pr-3">

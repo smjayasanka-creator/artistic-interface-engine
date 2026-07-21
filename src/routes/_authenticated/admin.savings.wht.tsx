@@ -140,8 +140,12 @@ function WhtRulesPage() {
                   <td className="py-2 pr-3 text-xs">{r.product?.name ?? "All"}</td>
                   <td className="py-2 pr-3 capitalize text-xs">{r.entity_type}</td>
                   <td className="py-2 pr-3 capitalize text-xs">{r.residency}</td>
-                  <td className="py-2 pr-3 text-right font-mono">{Number(r.rate_pct).toFixed(2)}</td>
-                  <td className="py-2 pr-3 text-right font-mono">{Number(r.threshold).toFixed(2)}</td>
+                  <td className="py-2 pr-3 text-right font-mono">
+                    {Number(r.rate_pct).toFixed(2)}
+                  </td>
+                  <td className="py-2 pr-3 text-right font-mono">
+                    {Number(r.threshold).toFixed(2)}
+                  </td>
                   <td className="py-2 pr-3 text-xs">
                     {r.wht_gl?.code} · {r.wht_gl?.name}
                   </td>
@@ -223,7 +227,11 @@ function WhtRulesPage() {
               </select>
             </FormField>
             <FormField label="Entity type">
-              <select name="entity_type" defaultValue={edit?.entity_type ?? "any"} className={selectCls}>
+              <select
+                name="entity_type"
+                defaultValue={edit?.entity_type ?? "any"}
+                className={selectCls}
+              >
                 {ENTITY.map((o) => (
                   <option key={o.v} value={o.v}>
                     {o.l}
@@ -232,7 +240,11 @@ function WhtRulesPage() {
               </select>
             </FormField>
             <FormField label="Residency">
-              <select name="residency" defaultValue={edit?.residency ?? "any"} className={selectCls}>
+              <select
+                name="residency"
+                defaultValue={edit?.residency ?? "any"}
+                className={selectCls}
+              >
                 {RESIDENCY.map((o) => (
                   <option key={o.v} value={o.v}>
                     {o.l}

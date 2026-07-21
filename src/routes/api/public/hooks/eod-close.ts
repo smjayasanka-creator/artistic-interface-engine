@@ -185,22 +185,28 @@ export const Route = createFileRoute("/api/public/hooks/eod-close")({
                     status: "failed",
                     error: (e as Error).message,
                   };
-                  await supabaseAdmin.rpc("eod_record_step" as any, {
-                    _run_id: runId,
-                    _step_key: key,
-                    _status: "failed",
-                    _metrics: {} as any,
-                    _error: (e as Error).message,
-                  } as any);
+                  await supabaseAdmin.rpc(
+                    "eod_record_step" as any,
+                    {
+                      _run_id: runId,
+                      _step_key: key,
+                      _status: "failed",
+                      _metrics: {} as any,
+                      _error: (e as Error).message,
+                    } as any,
+                  );
                   failed = true;
                   break;
                 }
               }
 
-              await supabaseAdmin.rpc("eod_finalize" as any, {
-                _run_id: runId,
-                _status: failed ? "failed" : "completed",
-              } as any);
+              await supabaseAdmin.rpc(
+                "eod_finalize" as any,
+                {
+                  _run_id: runId,
+                  _status: failed ? "failed" : "completed",
+                } as any,
+              );
 
               results.push({
                 company_id: co.id,

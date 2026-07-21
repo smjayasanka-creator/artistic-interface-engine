@@ -66,7 +66,10 @@ function InterestPage() {
     <div className="animate-fadein flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to="/savings" className="text-primary hover:underline inline-flex items-center gap-1 text-sm">
+          <Link
+            to="/savings"
+            className="text-primary hover:underline inline-flex items-center gap-1 text-sm"
+          >
             <ArrowLeft size={14} /> Back to Savings
           </Link>
           <h1 className="text-lg font-semibold">Interest & WHT</h1>
@@ -108,7 +111,8 @@ function InterestPage() {
         <Card className="p-3.5">
           <div className="mb-2 text-sm font-semibold">Capitalisation</div>
           <p className="text-xs text-muted-foreground mb-2">
-            Posts accrued interest to deposits, deducts WHT per rule, and writes a balanced GL entry.
+            Posts accrued interest to deposits, deducts WHT per rule, and writes a balanced GL
+            entry.
           </p>
           <div className="flex flex-wrap items-end gap-2">
             <label className="text-xs">
@@ -170,10 +174,14 @@ function InterestPage() {
                   <tr key={r.id} className="border-b border-border last:border-0">
                     <td className="py-2 pr-3 font-mono text-xs">{r.accrual_date}</td>
                     <td className="py-2 pr-3 font-mono text-xs">{r.account_id.slice(0, 8)}</td>
-                    <td className="py-2 pr-3 text-right font-mono">{money(r.eligible_balance, true)}</td>
+                    <td className="py-2 pr-3 text-right font-mono">
+                      {money(r.eligible_balance, true)}
+                    </td>
                     <td className="py-2 pr-3 text-right">{Number(r.rate_pct).toFixed(3)}</td>
                     <td className="py-2 pr-3 text-right">{r.day_count}</td>
-                    <td className="py-2 pr-3 text-right font-mono">{money(r.gross_interest, true)}</td>
+                    <td className="py-2 pr-3 text-right font-mono">
+                      {money(r.gross_interest, true)}
+                    </td>
                   </tr>
                 ))}
                 {!accruals.length && (
@@ -203,7 +211,9 @@ function InterestPage() {
                       {r.period_start} → {r.period_end}
                     </td>
                     <td className="py-2 pr-3 font-mono text-xs">{r.account_id.slice(0, 8)}</td>
-                    <td className="py-2 pr-3 text-right font-mono">{money(r.gross_interest, true)}</td>
+                    <td className="py-2 pr-3 text-right font-mono">
+                      {money(r.gross_interest, true)}
+                    </td>
                     <td className="py-2 pr-3 text-right font-mono">{money(r.wht_amount, true)}</td>
                     <td className="py-2 pr-3 text-right font-mono font-semibold">
                       {money(r.net_interest, true)}

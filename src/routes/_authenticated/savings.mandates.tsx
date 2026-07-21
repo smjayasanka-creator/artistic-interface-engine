@@ -223,7 +223,10 @@ function MandatesPage() {
                             className={cn(btnSecondaryCls, "h-7 px-2 text-[11px]")}
                             onClick={() => {
                               const r = window.prompt("Suspend reason?");
-                              if (r) statusM.mutate({ data: { id: m.id, action: "suspend", reason: r } });
+                              if (r)
+                                statusM.mutate({
+                                  data: { id: m.id, action: "suspend", reason: r },
+                                });
                             }}
                           >
                             <PauseCircle size={12} className="inline mr-1" /> Suspend
@@ -244,7 +247,8 @@ function MandatesPage() {
                             className={cn(btnSecondaryCls, "h-7 px-2 text-[11px] text-rose-600")}
                             onClick={() => {
                               const r = window.prompt("Cancellation reason?");
-                              if (r) statusM.mutate({ data: { id: m.id, action: "cancel", reason: r } });
+                              if (r)
+                                statusM.mutate({ data: { id: m.id, action: "cancel", reason: r } });
                             }}
                           >
                             <XCircle size={12} className="inline mr-1" /> Cancel
@@ -323,9 +327,7 @@ function MandatesPage() {
         />
       )}
 
-      {viewRun && (
-        <RunResultsModal run={viewRun} onClose={() => setViewRun(null)} />
-      )}
+      {viewRun && <RunResultsModal run={viewRun} onClose={() => setViewRun(null)} />}
     </div>
   );
 }
@@ -389,7 +391,12 @@ function CreateMandateModal({
             ))}
           </select>
         </FormField>
-        <FormField label="Loan ID" required span={12} hint={clientId ? `Client ${clientId.slice(0, 8)}…` : undefined}>
+        <FormField
+          label="Loan ID"
+          required
+          span={12}
+          hint={clientId ? `Client ${clientId.slice(0, 8)}…` : undefined}
+        >
           <input
             className={`${inputCls} font-mono`}
             placeholder="Paste loan UUID"
@@ -462,13 +469,28 @@ function CreateMandateModal({
         <FormField label="Runs" span={6}>
           <div className="flex gap-3 items-center h-9 text-[12px]">
             <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={morning_run} onChange={(e) => setMorning(e.target.checked)} /> Morning
+              <input
+                type="checkbox"
+                checked={morning_run}
+                onChange={(e) => setMorning(e.target.checked)}
+              />{" "}
+              Morning
             </label>
             <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={afternoon_run} onChange={(e) => setAfternoon(e.target.checked)} /> Afternoon
+              <input
+                type="checkbox"
+                checked={afternoon_run}
+                onChange={(e) => setAfternoon(e.target.checked)}
+              />{" "}
+              Afternoon
             </label>
             <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={allow_partial} onChange={(e) => setPartial(e.target.checked)} /> Allow partial
+              <input
+                type="checkbox"
+                checked={allow_partial}
+                onChange={(e) => setPartial(e.target.checked)}
+              />{" "}
+              Allow partial
             </label>
           </div>
         </FormField>
@@ -529,7 +551,12 @@ function RunResultsModal({ run, onClose }: { run: any; onClose: () => void }) {
     queryFn: () => listFn({ data: { run_id: run.id } }),
   });
   return (
-    <Modal open title={`Run · ${run.business_date} · ${run.run_window}`} onClose={onClose} width={780}>
+    <Modal
+      open
+      title={`Run · ${run.business_date} · ${run.run_window}`}
+      onClose={onClose}
+      width={780}
+    >
       <div className="overflow-x-auto max-h-[60vh]">
         <table className="w-full text-sm">
           <thead>
@@ -566,7 +593,10 @@ function RunResultsModal({ run, onClose }: { run: any; onClose: () => void }) {
                 <td className="py-2 pr-3 text-right font-mono text-xs">
                   {money(Number(r.collected ?? 0), true)}
                 </td>
-                <td className="py-2 pr-3 text-[11px] text-muted-foreground max-w-[240px] truncate" title={r.reason ?? ""}>
+                <td
+                  className="py-2 pr-3 text-[11px] text-muted-foreground max-w-[240px] truncate"
+                  title={r.reason ?? ""}
+                >
                   {r.reason ?? "—"}
                 </td>
               </tr>

@@ -474,16 +474,22 @@ export const actOnInstance = createServerFn({ method: "POST" })
         .update({ status: "declined", completed_at: new Date().toISOString() })
         .eq("id", data.instance_id);
       if ((inst as any).transaction_type === "savings_hold_release") {
-        await supabase.rpc("finalize_savings_hold_release" as any, {
-          _instance_id: data.instance_id,
-          _decision: "rejected",
-        } as any);
+        await supabase.rpc(
+          "finalize_savings_hold_release" as any,
+          {
+            _instance_id: data.instance_id,
+            _decision: "rejected",
+          } as any,
+        );
       }
       if ((inst as any).transaction_type === "savings_account_opening") {
-        await supabase.rpc("finalize_savings_account_opening" as any, {
-          _instance_id: data.instance_id,
-          _decision: "rejected",
-        } as any);
+        await supabase.rpc(
+          "finalize_savings_account_opening" as any,
+          {
+            _instance_id: data.instance_id,
+            _decision: "rejected",
+          } as any,
+        );
       }
       return { ok: true, status: "declined" };
     }
@@ -494,16 +500,22 @@ export const actOnInstance = createServerFn({ method: "POST" })
         .update({ status: "cancelled", completed_at: new Date().toISOString() })
         .eq("id", data.instance_id);
       if ((inst as any).transaction_type === "savings_hold_release") {
-        await supabase.rpc("finalize_savings_hold_release" as any, {
-          _instance_id: data.instance_id,
-          _decision: "rejected",
-        } as any);
+        await supabase.rpc(
+          "finalize_savings_hold_release" as any,
+          {
+            _instance_id: data.instance_id,
+            _decision: "rejected",
+          } as any,
+        );
       }
       if ((inst as any).transaction_type === "savings_account_opening") {
-        await supabase.rpc("finalize_savings_account_opening" as any, {
-          _instance_id: data.instance_id,
-          _decision: "rejected",
-        } as any);
+        await supabase.rpc(
+          "finalize_savings_account_opening" as any,
+          {
+            _instance_id: data.instance_id,
+            _decision: "rejected",
+          } as any,
+        );
       }
       return { ok: true, status: "sent_back" };
     }
@@ -547,17 +559,23 @@ export const actOnInstance = createServerFn({ method: "POST" })
     }
 
     if ((inst as any).transaction_type === "savings_hold_release") {
-      await supabase.rpc("finalize_savings_hold_release" as any, {
-        _instance_id: data.instance_id,
-        _decision: "approved",
-      } as any);
+      await supabase.rpc(
+        "finalize_savings_hold_release" as any,
+        {
+          _instance_id: data.instance_id,
+          _decision: "approved",
+        } as any,
+      );
     }
 
     if ((inst as any).transaction_type === "savings_account_opening") {
-      await supabase.rpc("finalize_savings_account_opening" as any, {
-        _instance_id: data.instance_id,
-        _decision: "approved",
-      } as any);
+      await supabase.rpc(
+        "finalize_savings_account_opening" as any,
+        {
+          _instance_id: data.instance_id,
+          _decision: "approved",
+        } as any,
+      );
     }
 
     return { ok: true, status: "approved" };

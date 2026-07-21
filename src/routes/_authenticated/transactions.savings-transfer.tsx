@@ -49,11 +49,9 @@ function SavingsTransferPage() {
 
   const from = (accounts ?? []).find((a: any) => a.id === fromId);
   const to = (accounts ?? []).find((a: any) => a.id === toId);
-  const currencyMismatch =
-    from && to && String(from.currency ?? "") !== String(to.currency ?? "");
+  const currencyMismatch = from && to && String(from.currency ?? "") !== String(to.currency ?? "");
   const sameAcct = fromId && toId && fromId === toId;
-  const valid =
-    fromId && toId && !sameAcct && !currencyMismatch && amount && Number(amount) > 0;
+  const valid = fromId && toId && !sameAcct && !currencyMismatch && amount && Number(amount) > 0;
 
   return (
     <div className="animate-fadein flex flex-col gap-4">

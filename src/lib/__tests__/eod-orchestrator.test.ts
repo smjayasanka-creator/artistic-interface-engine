@@ -42,7 +42,7 @@ describe("EOD — canonical orchestrator surface", () => {
   });
 
   it("scheduled hook shares the orchestrator step function (req 1, 11)", () => {
-    expect(hook).toContain('@/lib/eod.functions');
+    expect(hook).toContain("@/lib/eod.functions");
     expect(hook).toContain("runOrchestratorStep");
   });
 });
@@ -170,7 +170,9 @@ describe("EOD — snapshot RPC matches hardened schema", () => {
   const latestWithSnapshots = [...migrations]
     .reverse()
     .find((f: string) =>
-      read(`supabase/migrations/${f}`).includes("CREATE OR REPLACE FUNCTION public.eod_write_snapshots"),
+      read(`supabase/migrations/${f}`).includes(
+        "CREATE OR REPLACE FUNCTION public.eod_write_snapshots",
+      ),
     );
 
   it("uses current accrual, repayment, EOD balance, and journal column names", () => {
@@ -191,4 +193,3 @@ describe("EOD — snapshot RPC matches hardened schema", () => {
     expect(sql).not.toContain("principal_outstanding");
   });
 });
-

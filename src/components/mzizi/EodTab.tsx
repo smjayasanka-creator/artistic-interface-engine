@@ -57,8 +57,7 @@ const STATUS_STYLE: Record<string, string> = {
 function StepIcon({ status }: { status: string }) {
   if (status === "completed") return <CheckCircle2 size={13} className="text-emerald-600" />;
   if (status === "failed") return <XCircle size={13} className="text-destructive" />;
-  if (status === "processing")
-    return <Loader2 size={13} className="animate-spin text-blue-600" />;
+  if (status === "processing") return <Loader2 size={13} className="animate-spin text-blue-600" />;
   return <Clock size={13} className="text-muted-foreground" />;
 }
 
@@ -316,8 +315,7 @@ export function EodTab() {
             <div className="flex items-center gap-2 mb-2">
               <ShieldCheck size={14} className="text-primary" />
               <div className="font-semibold text-[13px]">
-                Pre-check —{" "}
-                {branches?.find((b) => b.id === preCheckBranch)?.name ?? preCheckBranch}
+                Pre-check — {branches?.find((b) => b.id === preCheckBranch)?.name ?? preCheckBranch}
               </div>
               <button
                 className="ml-auto text-[11px] text-muted-foreground hover:text-foreground"
@@ -441,9 +439,7 @@ function PreCheckResults({ data }: { data: any }) {
             {c.message && <span className="text-muted-foreground">— {c.message}</span>}
           </li>
         ))}
-        {list.length === 0 && (
-          <li className="text-muted-foreground">No checks reported.</li>
-        )}
+        {list.length === 0 && <li className="text-muted-foreground">No checks reported.</li>}
       </ul>
     </div>
   );
@@ -535,11 +531,26 @@ function RunDetailModal({
                 </span>
               }
             />
-            <Meta label="Duration" value={run.duration_ms ? `${(run.duration_ms / 1000).toFixed(1)}s` : "—"} />
-            <Meta label="Initiated" value={run.initiated_at ? new Date(run.initiated_at).toLocaleString() : "—"} />
-            <Meta label="Approved" value={run.approved_at ? new Date(run.approved_at).toLocaleString() : "—"} />
-            <Meta label="Started" value={run.started_at ? new Date(run.started_at).toLocaleString() : "—"} />
-            <Meta label="Completed" value={run.completed_at ? new Date(run.completed_at).toLocaleString() : "—"} />
+            <Meta
+              label="Duration"
+              value={run.duration_ms ? `${(run.duration_ms / 1000).toFixed(1)}s` : "—"}
+            />
+            <Meta
+              label="Initiated"
+              value={run.initiated_at ? new Date(run.initiated_at).toLocaleString() : "—"}
+            />
+            <Meta
+              label="Approved"
+              value={run.approved_at ? new Date(run.approved_at).toLocaleString() : "—"}
+            />
+            <Meta
+              label="Started"
+              value={run.started_at ? new Date(run.started_at).toLocaleString() : "—"}
+            />
+            <Meta
+              label="Completed"
+              value={run.completed_at ? new Date(run.completed_at).toLocaleString() : "—"}
+            />
           </div>
 
           {run.status === "pending_approval" && (
@@ -579,11 +590,7 @@ function RunDetailModal({
                   </>
                 )}
               </button>
-              <button
-                className={btnSecondaryCls}
-                onClick={() => refetch()}
-                disabled={isFetching}
-              >
+              <button className={btnSecondaryCls} onClick={() => refetch()} disabled={isFetching}>
                 <RefreshCcw size={13} className={cn("inline mr-1", isFetching && "animate-spin")} />
                 Refresh
               </button>
@@ -699,15 +706,7 @@ function RunDetailModal({
   );
 }
 
-function Meta({
-  label,
-  value,
-  mono,
-}: {
-  label: string;
-  value: React.ReactNode;
-  mono?: boolean;
-}) {
+function Meta({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
     <div>
       <div className="text-[10.5px] font-semibold uppercase text-faint">{label}</div>

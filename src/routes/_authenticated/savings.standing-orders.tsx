@@ -64,8 +64,13 @@ function StandingOrdersPage() {
       toast.success("Standing order saved");
       qc.invalidateQueries({ queryKey: ["standing-orders"] });
       setShowForm(false);
-      setFromId(""); setToId(""); setAmount(""); setNarration(""); setConsent("");
-      setEndDate(""); setMaxRuns("");
+      setFromId("");
+      setToId("");
+      setAmount("");
+      setNarration("");
+      setConsent("");
+      setEndDate("");
+      setMaxRuns("");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -126,7 +131,11 @@ function StandingOrdersPage() {
             <div className="mb-3 text-sm font-semibold">Create standing order</div>
             <FormGrid>
               <FormField label="From account" required span={6}>
-                <select value={fromId} onChange={(e) => setFromId(e.target.value)} className={selectCls}>
+                <select
+                  value={fromId}
+                  onChange={(e) => setFromId(e.target.value)}
+                  className={selectCls}
+                >
                   <option value="">Select…</option>
                   {(accounts ?? []).map((a: any) => (
                     <option key={a.id} value={a.id}>
@@ -136,13 +145,19 @@ function StandingOrdersPage() {
                 </select>
               </FormField>
               <FormField label="To account" required span={6}>
-                <select value={toId} onChange={(e) => setToId(e.target.value)} className={selectCls}>
+                <select
+                  value={toId}
+                  onChange={(e) => setToId(e.target.value)}
+                  className={selectCls}
+                >
                   <option value="">Select…</option>
-                  {(accounts ?? []).filter((a: any) => a.id !== fromId).map((a: any) => (
-                    <option key={a.id} value={a.id}>
-                      {a.account_no} — {a.client?.full_name}
-                    </option>
-                  ))}
+                  {(accounts ?? [])
+                    .filter((a: any) => a.id !== fromId)
+                    .map((a: any) => (
+                      <option key={a.id} value={a.id}>
+                        {a.account_no} — {a.client?.full_name}
+                      </option>
+                    ))}
                 </select>
               </FormField>
               <FormField label={`Amount (${getActiveCurrency()})`} required span={3}>
@@ -155,15 +170,33 @@ function StandingOrdersPage() {
                 />
               </FormField>
               <FormField label="Frequency" required span={3}>
-                <select value={frequency} onChange={(e) => setFrequency(e.target.value as Freq)} className={selectCls}>
-                  {FREQ.map((f) => <option key={f} value={f}>{f}</option>)}
+                <select
+                  value={frequency}
+                  onChange={(e) => setFrequency(e.target.value as Freq)}
+                  className={selectCls}
+                >
+                  {FREQ.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
                 </select>
               </FormField>
               <FormField label="Next run" required span={3}>
-                <input type="date" value={next} onChange={(e) => setNext(e.target.value)} className={inputCls} />
+                <input
+                  type="date"
+                  value={next}
+                  onChange={(e) => setNext(e.target.value)}
+                  className={inputCls}
+                />
               </FormField>
               <FormField label="End date" span={3}>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputCls} />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className={inputCls}
+                />
               </FormField>
               <FormField label="Max runs" span={3}>
                 <input
@@ -175,15 +208,27 @@ function StandingOrdersPage() {
                 />
               </FormField>
               <FormField label="Consent ref" span={3}>
-                <input value={consent} onChange={(e) => setConsent(e.target.value)} className={inputCls} maxLength={60} />
+                <input
+                  value={consent}
+                  onChange={(e) => setConsent(e.target.value)}
+                  className={inputCls}
+                  maxLength={60}
+                />
               </FormField>
               <FormField label="Narration" span={12}>
-                <input value={narration} onChange={(e) => setNarration(e.target.value)} className={inputCls} maxLength={200} />
+                <input
+                  value={narration}
+                  onChange={(e) => setNarration(e.target.value)}
+                  className={inputCls}
+                  maxLength={200}
+                />
               </FormField>
             </FormGrid>
           </Card>
           <FormActions>
-            <button type="button" className={btnSecondaryCls} onClick={() => setShowForm(false)}>Cancel</button>
+            <button type="button" className={btnSecondaryCls} onClick={() => setShowForm(false)}>
+              Cancel
+            </button>
             <button type="submit" disabled={!valid || create.isPending} className={btnPrimaryCls}>
               {create.isPending ? "Saving…" : "Save"}
             </button>
@@ -215,25 +260,41 @@ function StandingOrdersPage() {
                   <tr key={o.id} className="border-b border-border last:border-0">
                     <td className="py-2 pr-3 font-mono text-xs">
                       {o.from_account?.account_no}
-                      <div className="text-[10px] text-muted-foreground">{o.from_account?.client?.full_name}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {o.from_account?.client?.full_name}
+                      </div>
                     </td>
                     <td className="py-2 pr-3 font-mono text-xs">
                       {o.to_account?.account_no}
-                      <div className="text-[10px] text-muted-foreground">{o.to_account?.client?.full_name}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {o.to_account?.client?.full_name}
+                      </div>
                     </td>
                     <td className="py-2 pr-3 text-right font-mono">{money(Number(o.amount))}</td>
                     <td className="py-2 pr-3 capitalize text-xs">{o.frequency}</td>
                     <td className="py-2 pr-3 text-xs">{o.next_run_date}</td>
-                    <td className="py-2 pr-3 text-xs">{o.runs_completed}{o.max_runs ? ` / ${o.max_runs}` : ""}</td>
+                    <td className="py-2 pr-3 text-xs">
+                      {o.runs_completed}
+                      {o.max_runs ? ` / ${o.max_runs}` : ""}
+                    </td>
                     <td className="py-2 pr-3 capitalize text-xs">{o.status}</td>
                     <td className="py-2 pr-3 text-xs">
                       {o.last_run_status ? (
-                        <span className={o.last_run_status === "ok" ? "text-emerald-700" : "text-rose-700"}>
+                        <span
+                          className={
+                            o.last_run_status === "ok" ? "text-emerald-700" : "text-rose-700"
+                          }
+                        >
                           {o.last_run_status}
                         </span>
-                      ) : "—"}
+                      ) : (
+                        "—"
+                      )}
                       {o.last_run_error && (
-                        <div className="text-[10px] text-rose-600 truncate max-w-[180px]" title={o.last_run_error}>
+                        <div
+                          className="text-[10px] text-rose-600 truncate max-w-[180px]"
+                          title={o.last_run_error}
+                        >
                           {o.last_run_error}
                         </div>
                       )}
@@ -252,7 +313,9 @@ function StandingOrdersPage() {
                             </button>
                             <button
                               disabled={busy}
-                              onClick={() => setStatus.mutate({ data: { id: o.id, status: "paused" } })}
+                              onClick={() =>
+                                setStatus.mutate({ data: { id: o.id, status: "paused" } })
+                              }
                               className="inline-flex items-center gap-1 h-7 px-2 rounded text-[11px] border border-input hover:bg-muted disabled:opacity-40"
                             >
                               <Pause size={11} /> Pause
@@ -262,7 +325,9 @@ function StandingOrdersPage() {
                         {o.status === "paused" && (
                           <button
                             disabled={busy}
-                            onClick={() => setStatus.mutate({ data: { id: o.id, status: "active" } })}
+                            onClick={() =>
+                              setStatus.mutate({ data: { id: o.id, status: "active" } })
+                            }
                             className="inline-flex items-center gap-1 h-7 px-2 rounded text-[11px] border border-input hover:bg-muted disabled:opacity-40"
                           >
                             <Play size={11} /> Resume

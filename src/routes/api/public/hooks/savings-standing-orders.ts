@@ -13,7 +13,11 @@ export const Route = createFileRoute("/api/public/hooks/savings-standing-orders"
           return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
         }
         let body: { business_date?: string; company_id?: string } = {};
-        try { body = (await request.json()) as typeof body; } catch { body = {}; }
+        try {
+          body = (await request.json()) as typeof body;
+        } catch {
+          body = {};
+        }
 
         const bizDate =
           body.business_date && /^\d{4}-\d{2}-\d{2}$/.test(body.business_date)
@@ -30,7 +34,8 @@ export const Route = createFileRoute("/api/public/hooks/savings-standing-orders"
           companyIds = (cos ?? []).map((c) => c.id as string);
         }
 
-        const results: Array<{ company_id: string; ok: boolean; summary?: any; error?: string }> = [];
+        const results: Array<{ company_id: string; ok: boolean; summary?: any; error?: string }> =
+          [];
         for (const cid of companyIds) {
           const { data, error } = await supabaseAdmin.rpc("run_savings_standing_orders", {
             _company_id: cid,
@@ -39,7 +44,12 @@ export const Route = createFileRoute("/api/public/hooks/savings-standing-orders"
           if (error) results.push({ company_id: cid, ok: false, error: error.message });
           else results.push({ company_id: cid, ok: true, summary: data });
         }
-        return Response.json({ ok: true, business_date: bizDate, companies: results.length, results });
+        return Response.json({
+          ok: true,
+          business_date: bizDate,
+          companies: results.length,
+          results,
+        });
       },
     },
   },

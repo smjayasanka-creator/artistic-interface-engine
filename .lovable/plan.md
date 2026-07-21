@@ -1,4 +1,3 @@
-
 # Day-End Orchestration — Corrective Plan
 
 The project currently has two divergent day-end paths (manual JS orchestrator vs. legacy `eod_close` RPC hit by cron). This plan collapses them into one, closes the safety gaps in the numbered list, and adds regression coverage.

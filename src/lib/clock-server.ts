@@ -10,8 +10,7 @@ const readOverrideHeader = createIsomorphicFn()
   .client((): string | null => null)
   .server((): string | null => {
     try {
-      const mod =
-        require("./clock-header.server") as typeof import("./clock-header.server");
+      const mod = require("./clock-header.server") as typeof import("./clock-header.server");
 
       return mod.readDevNowHeader();
     } catch {

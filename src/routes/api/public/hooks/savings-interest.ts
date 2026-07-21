@@ -37,9 +37,7 @@ export const Route = createFileRoute("/api/public/hooks/savings-interest")({
             ? body.business_date
             : today;
         const periodEnd =
-          body.period_end && /^\d{4}-\d{2}-\d{2}$/.test(body.period_end)
-            ? body.period_end
-            : today;
+          body.period_end && /^\d{4}-\d{2}-\d{2}$/.test(body.period_end) ? body.period_end : today;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         let companyIds: string[] = [];

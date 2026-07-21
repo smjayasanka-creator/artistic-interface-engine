@@ -411,7 +411,6 @@ type Ctx = {
   actor_id: string;
 };
 
-
 async function stepLoanAccrual(ctx: Ctx) {
   const { supabaseAdmin, branch_id, business_date, company_id } = ctx;
   const { data: loans } = await supabaseAdmin
@@ -691,7 +690,6 @@ async function stepFdMaturity(ctx: Ctx) {
   };
 }
 
-
 async function stepSavingsInterest(ctx: Ctx) {
   const { supabaseAdmin, company_id, business_date } = ctx;
   // Daily accrual for every eligible account (idempotent per account+date).
@@ -717,10 +715,13 @@ async function stepSavingsInterest(ctx: Ctx) {
 
 async function stepSnapshots(ctx: Ctx) {
   const { supabaseAdmin, branch_id, business_date } = ctx;
-  const { data, error } = await supabaseAdmin.rpc("eod_write_snapshots" as any, {
-    _branch_id: branch_id,
-    _business_date: business_date,
-  } as any);
+  const { data, error } = await supabaseAdmin.rpc(
+    "eod_write_snapshots" as any,
+    {
+      _branch_id: branch_id,
+      _business_date: business_date,
+    } as any,
+  );
   if (error) throw new Error(`Snapshots: ${error.message}`);
   return data ?? {};
 }
@@ -933,13 +934,16 @@ export async function runOrchestratorStep(args: {
   step_key: StepKey;
 }): Promise<Record<string, any>> {
   const { supabaseAdmin, run_id, step_key } = args;
-  await supabaseAdmin.rpc("eod_record_step" as any, {
-    _run_id: run_id,
-    _step_key: step_key,
-    _status: "processing",
-    _metrics: {} as any,
-    _error: null,
-  } as any);
+  await supabaseAdmin.rpc(
+    "eod_record_step" as any,
+    {
+      _run_id: run_id,
+      _step_key: step_key,
+      _status: "processing",
+      _metrics: {} as any,
+      _error: null,
+    } as any,
+  );
   // Scheduled cron actor: use the run's initiator (fallback to a zero UUID
   // for system-initiated rows) so downstream ledger writes have a user id.
   const { data: runRow } = await supabaseAdmin
@@ -957,24 +961,49 @@ export async function runOrchestratorStep(args: {
   };
   let metrics: Record<string, any> = {};
   switch (step_key) {
-    case "loan_accrual": metrics = await stepLoanAccrual(ctx); break;
-    case "fd_accrual": metrics = await stepFdAccrual(ctx); break;
-    case "penalty_charges": metrics = await stepPenaltyCharges(ctx); break;
-    case "par_npa": metrics = await stepParNpa(ctx); break;
-    case "fd_maturity": metrics = await stepFdMaturity(ctx); break;
-    case "savings_interest": metrics = await stepSavingsInterest(ctx); break;
-    case "gl_post": metrics = await stepGlPost(ctx); break;
-    case "trial_balance": metrics = await stepTrialBalance(ctx); break;
-    case "snapshots": metrics = await stepSnapshots(ctx); break;
-    case "reports": metrics = await stepReports(ctx); break;
-    case "rollover": metrics = await stepRollover(ctx); break;
+    case "loan_accrual":
+      metrics = await stepLoanAccrual(ctx);
+      break;
+    case "fd_accrual":
+      metrics = await stepFdAccrual(ctx);
+      break;
+    case "penalty_charges":
+      metrics = await stepPenaltyCharges(ctx);
+      break;
+    case "par_npa":
+      metrics = await stepParNpa(ctx);
+      break;
+    case "fd_maturity":
+      metrics = await stepFdMaturity(ctx);
+      break;
+    case "savings_interest":
+      metrics = await stepSavingsInterest(ctx);
+      break;
+    case "gl_post":
+      metrics = await stepGlPost(ctx);
+      break;
+    case "trial_balance":
+      metrics = await stepTrialBalance(ctx);
+      break;
+    case "snapshots":
+      metrics = await stepSnapshots(ctx);
+      break;
+    case "reports":
+      metrics = await stepReports(ctx);
+      break;
+    case "rollover":
+      metrics = await stepRollover(ctx);
+      break;
   }
-  await supabaseAdmin.rpc("eod_record_step" as any, {
-    _run_id: run_id,
-    _step_key: step_key,
-    _status: "completed",
-    _metrics: metrics as any,
-    _error: null,
-  } as any);
+  await supabaseAdmin.rpc(
+    "eod_record_step" as any,
+    {
+      _run_id: run_id,
+      _step_key: step_key,
+      _status: "completed",
+      _metrics: metrics as any,
+      _error: null,
+    } as any,
+  );
   return metrics;
 }

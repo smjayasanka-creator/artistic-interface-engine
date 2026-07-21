@@ -184,10 +184,7 @@ function SavingsHoldsPage() {
                           Request release
                         </button>
                       ) : h.release_status === "pending" ? (
-                        <Link
-                          to="/approvals"
-                          className="text-[11px] text-primary hover:underline"
-                        >
+                        <Link to="/approvals" className="text-[11px] text-primary hover:underline">
                           Awaiting approval
                         </Link>
                       ) : (
@@ -215,9 +212,7 @@ function SavingsHoldsPage() {
         <ReleaseModal
           hold={releaseFor}
           onClose={() => setReleaseFor(null)}
-          onSubmit={(reason) =>
-            releaseM.mutate({ data: { hold_id: releaseFor.id, reason } })
-          }
+          onSubmit={(reason) => releaseM.mutate({ data: { hold_id: releaseFor.id, reason } })}
           pending={releaseM.isPending}
         />
       )}
@@ -345,8 +340,8 @@ function ReleaseModal({
       <div className="text-[12.5px] text-secondary-foreground mb-3">
         Releasing <span className="font-semibold">{hold.account?.account_no}</span> —{" "}
         {String(hold.hold_type).replace(/_/g, " ")}. This starts the{" "}
-        <span className="font-semibold">Savings hold release</span> workflow; the hold stays
-        active until an approver signs off.
+        <span className="font-semibold">Savings hold release</span> workflow; the hold stays active
+        until an approver signs off.
       </div>
       <FormField label="Reason for release" required>
         <textarea

@@ -20,7 +20,6 @@ import { money, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-
 export const Route = createFileRoute("/_authenticated/savings/$id")({
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData({
@@ -99,7 +98,10 @@ function SavingsDetail() {
   return (
     <div className="animate-fadein flex flex-col gap-5">
       <div className="flex items-center gap-2">
-        <Link to="/savings" className="text-[12px] text-faint hover:text-foreground inline-flex items-center gap-1">
+        <Link
+          to="/savings"
+          className="text-[12px] text-faint hover:text-foreground inline-flex items-center gap-1"
+        >
           <ArrowLeft size={12} /> Back
         </Link>
       </div>
@@ -118,23 +120,27 @@ function SavingsDetail() {
           <div className="flex items-center gap-3">
             <StatusBadge status={String(a.status)} />
             <div className="text-right">
-              <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">Balance</div>
+              <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
+                Balance
+              </div>
               <div className="text-lg font-semibold font-mono">{money(a.balance)}</div>
             </div>
             <div className="text-right">
-              <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">Available</div>
+              <div className="text-[11px] uppercase tracking-wider text-faint font-semibold">
+                Available
+              </div>
               <div className="text-lg font-semibold font-mono">{money(a.available_balance)}</div>
             </div>
           </div>
         </div>
         {activeHolds.length > 0 && (
           <div className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-[12px] text-amber-800 dark:text-amber-200">
-            {activeHolds.length} active hold{activeHolds.length > 1 ? "s" : ""} — {money(heldAmount)} restricted
+            {activeHolds.length} active hold{activeHolds.length > 1 ? "s" : ""} —{" "}
+            {money(heldAmount)} restricted
           </div>
         )}
         <LifecycleBanner account={a} accountId={id} />
       </Card>
-
 
       <div className="flex flex-wrap gap-1 border-b border-border">
         {TABS.map((t) => {
@@ -162,7 +168,13 @@ function SavingsDetail() {
       {tab === "holds" && <HoldsTab rows={data.holds} accountId={id} />}
       {tab === "mandates" && <MandatesTab rows={data.mandates} />}
       {tab === "interest" && <InterestTab accruals={data.accruals} postings={data.postings} />}
-      {tab === "holders" && <HoldersTab holders={data.holders} nominees={data.nominees} mandate={data.signing_mandate} />}
+      {tab === "holders" && (
+        <HoldersTab
+          holders={data.holders}
+          nominees={data.nominees}
+          mandate={data.signing_mandate}
+        />
+      )}
       {tab === "passbook" && <PassbookTab accountId={id} />}
       {tab === "audit" && <AuditTab accountId={id} />}
     </div>
@@ -200,7 +212,9 @@ function OverviewTab({ d }: { d: any }) {
         <KV k="Phone" v={a.client?.phone} />
         <KV k="Email" v={a.client?.email} />
         <div className="mt-2 text-[12px] text-primary">
-          <Link to="/clients/$id" params={{ id: a.client?.id ?? "" }}>Open customer profile →</Link>
+          <Link to="/clients/$id" params={{ id: a.client?.id ?? "" }}>
+            Open customer profile →
+          </Link>
         </div>
       </Card>
     </div>
@@ -234,7 +248,11 @@ function TxnsTab({ rows }: { rows: any[] }) {
               </tr>
             ))}
             {!rows.length && (
-              <tr><td colSpan={6} className="py-6 text-center text-muted-foreground text-sm">No transactions yet.</td></tr>
+              <tr>
+                <td colSpan={6} className="py-6 text-center text-muted-foreground text-sm">
+                  No transactions yet.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -248,7 +266,13 @@ function HoldsTab({ rows, accountId }: { rows: any[]; accountId: string }) {
     <Card>
       <div className="flex items-center justify-between mb-2">
         <div className="text-sm font-semibold">Holds & Blocks</div>
-        <Link to="/savings/holds" search={{ account_id: accountId } as any} className="text-[12px] text-primary">Manage →</Link>
+        <Link
+          to="/savings/holds"
+          search={{ account_id: accountId } as any}
+          className="text-[12px] text-primary"
+        >
+          Manage →
+        </Link>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -268,13 +292,19 @@ function HoldsTab({ rows, accountId }: { rows: any[]; accountId: string }) {
                 <td className="py-2 pr-3 capitalize text-xs">{h.hold_type}</td>
                 <td className="py-2 pr-3 text-right font-mono">{money(h.amount, true)}</td>
                 <td className="py-2 pr-3 text-xs">{h.reason}</td>
-                <td className="py-2 pr-3 text-xs">{h.expires_at ? shortDate(h.expires_at) : "—"}</td>
+                <td className="py-2 pr-3 text-xs">
+                  {h.expires_at ? shortDate(h.expires_at) : "—"}
+                </td>
                 <td className="py-2 pr-3 text-xs">{h.active ? "Active" : "Released"}</td>
                 <td className="py-2 pr-3 text-xs capitalize">{h.release_status}</td>
               </tr>
             ))}
             {!rows.length && (
-              <tr><td colSpan={6} className="py-6 text-center text-muted-foreground text-sm">No holds recorded.</td></tr>
+              <tr>
+                <td colSpan={6} className="py-6 text-center text-muted-foreground text-sm">
+                  No holds recorded.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -288,7 +318,9 @@ function MandatesTab({ rows }: { rows: any[] }) {
     <Card>
       <div className="flex items-center justify-between mb-2">
         <div className="text-sm font-semibold">Loan repayment mandates</div>
-        <Link to="/savings/mandates" className="text-[12px] text-primary">Manage →</Link>
+        <Link to="/savings/mandates" className="text-[12px] text-primary">
+          Manage →
+        </Link>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -307,16 +339,25 @@ function MandatesTab({ rows }: { rows: any[] }) {
               <tr key={m.id} className="border-b border-border last:border-0">
                 <td className="py-2 pr-3 font-mono text-xs">{m.loan?.loan_no}</td>
                 <td className="py-2 pr-3 capitalize text-xs">{m.mandate_type}</td>
-                <td className="py-2 pr-3 text-right font-mono">{m.max_amount_per_run ? money(m.max_amount_per_run, true) : "—"}</td>
-                <td className="py-2 pr-3 text-right font-mono">{money(m.min_protected_balance, true)}</td>
+                <td className="py-2 pr-3 text-right font-mono">
+                  {m.max_amount_per_run ? money(m.max_amount_per_run, true) : "—"}
+                </td>
+                <td className="py-2 pr-3 text-right font-mono">
+                  {money(m.min_protected_balance, true)}
+                </td>
                 <td className="py-2 pr-3 text-xs">
-                  {[m.morning_run && "AM", m.afternoon_run && "PM"].filter(Boolean).join(" · ") || "—"}
+                  {[m.morning_run && "AM", m.afternoon_run && "PM"].filter(Boolean).join(" · ") ||
+                    "—"}
                 </td>
                 <td className="py-2 pr-3 text-xs capitalize">{m.status}</td>
               </tr>
             ))}
             {!rows.length && (
-              <tr><td colSpan={6} className="py-6 text-center text-muted-foreground text-sm">No mandates configured.</td></tr>
+              <tr>
+                <td colSpan={6} className="py-6 text-center text-muted-foreground text-sm">
+                  No mandates configured.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -344,13 +385,23 @@ function InterestTab({ accruals, postings }: { accruals: any[]; postings: any[] 
               {accruals.map((r) => (
                 <tr key={r.id} className="border-b border-border last:border-0">
                   <td className="py-1.5 pr-3 text-xs">{shortDate(r.accrual_date)}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono text-xs">{money(r.eligible_balance, true)}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono text-xs">{Number(r.rate_pct).toFixed(4)}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono text-xs">{money(r.gross_interest, true)}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono text-xs">
+                    {money(r.eligible_balance, true)}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right font-mono text-xs">
+                    {Number(r.rate_pct).toFixed(4)}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right font-mono text-xs">
+                    {money(r.gross_interest, true)}
+                  </td>
                 </tr>
               ))}
               {!accruals.length && (
-                <tr><td colSpan={4} className="py-6 text-center text-muted-foreground text-sm">No accruals yet.</td></tr>
+                <tr>
+                  <td colSpan={4} className="py-6 text-center text-muted-foreground text-sm">
+                    No accruals yet.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -371,14 +422,26 @@ function InterestTab({ accruals, postings }: { accruals: any[]; postings: any[] 
             <tbody>
               {postings.map((r) => (
                 <tr key={r.id} className="border-b border-border last:border-0">
-                  <td className="py-1.5 pr-3 text-xs">{shortDate(r.period_start)} → {shortDate(r.period_end)}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono text-xs">{money(r.gross_interest, true)}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono text-xs">{money(r.wht_amount, true)}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono text-xs">{money(r.net_interest, true)}</td>
+                  <td className="py-1.5 pr-3 text-xs">
+                    {shortDate(r.period_start)} → {shortDate(r.period_end)}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right font-mono text-xs">
+                    {money(r.gross_interest, true)}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right font-mono text-xs">
+                    {money(r.wht_amount, true)}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right font-mono text-xs">
+                    {money(r.net_interest, true)}
+                  </td>
                 </tr>
               ))}
               {!postings.length && (
-                <tr><td colSpan={4} className="py-6 text-center text-muted-foreground text-sm">No capitalizations yet.</td></tr>
+                <tr>
+                  <td colSpan={4} className="py-6 text-center text-muted-foreground text-sm">
+                    No capitalizations yet.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -388,7 +451,15 @@ function InterestTab({ accruals, postings }: { accruals: any[]; postings: any[] 
   );
 }
 
-function HoldersTab({ holders, nominees, mandate }: { holders: any[]; nominees: any[]; mandate: any }) {
+function HoldersTab({
+  holders,
+  nominees,
+  mandate,
+}: {
+  holders: any[];
+  nominees: any[];
+  mandate: any;
+}) {
   return (
     <div className="grid gap-3 md:grid-cols-2">
       <Card>
@@ -407,16 +478,27 @@ function HoldersTab({ holders, nominees, mandate }: { holders: any[]; nominees: 
               <tr key={h.id} className="border-b border-border last:border-0">
                 <td className="py-1.5 pr-3 capitalize text-xs">{h.role}</td>
                 <td className="py-1.5 pr-3 text-xs">{h.client?.full_name ?? h.full_name}</td>
-                <td className="py-1.5 pr-3 text-right font-mono text-xs">{h.ownership_pct ?? "—"}</td>
+                <td className="py-1.5 pr-3 text-right font-mono text-xs">
+                  {h.ownership_pct ?? "—"}
+                </td>
                 <td className="py-1.5 pr-3 text-xs">{h.is_signatory ? "Yes" : "No"}</td>
               </tr>
             ))}
-            {!holders.length && <tr><td colSpan={4} className="py-4 text-center text-muted-foreground text-sm">No holders.</td></tr>}
+            {!holders.length && (
+              <tr>
+                <td colSpan={4} className="py-4 text-center text-muted-foreground text-sm">
+                  No holders.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
         {mandate && (
           <div className="mt-3 text-[12px] text-muted-foreground">
-            Signing rule: <span className="font-medium capitalize">{mandate.signing_rule.replace(/_/g, " ")}</span>
+            Signing rule:{" "}
+            <span className="font-medium capitalize">
+              {mandate.signing_rule.replace(/_/g, " ")}
+            </span>
             {mandate.min_signatories ? ` · ${mandate.min_signatories} min` : ""}
           </div>
         )}
@@ -439,7 +521,13 @@ function HoldersTab({ holders, nominees, mandate }: { holders: any[]; nominees: 
                 <td className="py-1.5 pr-3 text-right font-mono text-xs">{n.percentage}</td>
               </tr>
             ))}
-            {!nominees.length && <tr><td colSpan={3} className="py-4 text-center text-muted-foreground text-sm">No nominees.</td></tr>}
+            {!nominees.length && (
+              <tr>
+                <td colSpan={3} className="py-4 text-center text-muted-foreground text-sm">
+                  No nominees.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </Card>
@@ -453,7 +541,10 @@ function PassbookTab({ accountId: _accountId }: { accountId: string }) {
       <div className="text-sm font-semibold mb-2">Passbook</div>
       <p className="text-[12.5px] text-muted-foreground">
         Issue and manage passbooks from the{" "}
-        <Link to="/savings/passbook" className="text-primary">passbook stock workspace</Link>.
+        <Link to="/savings/passbook" className="text-primary">
+          passbook stock workspace
+        </Link>
+        .
       </p>
     </Card>
   );
@@ -465,7 +556,10 @@ function AuditTab({ accountId: _accountId }: { accountId: string }) {
       <div className="text-sm font-semibold mb-2">Audit trail</div>
       <p className="text-[12.5px] text-muted-foreground">
         Every state change on this account is captured in the global{" "}
-        <Link to="/audit-log" className="text-primary">audit log</Link>. Filter by reference to see entries for this account.
+        <Link to="/audit-log" className="text-primary">
+          audit log
+        </Link>
+        . Filter by reference to see entries for this account.
       </p>
     </Card>
   );
@@ -483,7 +577,8 @@ function LifecycleBanner({ account, accountId }: { account: any; accountId: stri
   if (status === "pending_approval") {
     return (
       <div className="mt-3 rounded-md border border-blue-500/40 bg-blue-500/5 px-3 py-2 text-[12px] text-blue-800 dark:text-blue-200">
-        Awaiting workflow approval. No money has been moved. Once approved the account will move to <b>pending funding</b>.
+        Awaiting workflow approval. No money has been moved. Once approved the account will move to{" "}
+        <b>pending funding</b>.
       </div>
     );
   }
@@ -518,7 +613,8 @@ function LifecycleBanner({ account, accountId }: { account: any; accountId: stri
   return (
     <div className="mt-3 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2.5 text-[12.5px] text-emerald-900 dark:text-emerald-100 space-y-2">
       <div>
-        Approved — awaiting <b>initial deposit</b> to activate. Ledger entries will use the product's configured GL accounts.
+        Approved — awaiting <b>initial deposit</b> to activate. Ledger entries will use the
+        product's configured GL accounts.
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <label className="text-[12px]">Initial deposit</label>
@@ -541,4 +637,3 @@ function LifecycleBanner({ account, accountId }: { account: any; accountId: stri
     </div>
   );
 }
-
