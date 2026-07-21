@@ -517,7 +517,7 @@ async function stepFdAccrual(ctx: Ctx) {
       skippedOutOfWindow++;
       continue;
     }
-    const dayCount = Number(d.day_count_basis ?? 365) || 365;
+    const dayCount = 365;
     // FIX (req 12): principal * (annualRatePct / 100) / dayCount
     const daily = Number(
       ((Number(d.principal) * (Number(d.rate_at_booking) / 100)) / dayCount).toFixed(2),
