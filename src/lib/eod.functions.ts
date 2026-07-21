@@ -796,7 +796,11 @@ async function stepReports(ctx: Ctx) {
     loan_portfolio: { active_loans: loanCount ?? 0 },
     fd_maturity: { active_deposits: fdCount ?? 0 },
   };
-  await supabaseAdmin.rpc("eod_save_reports", { _run_id: run_id, _reports: reports });
+  const { error: sErr } = await supabaseAdmin.rpc("eod_save_reports", {
+    _run_id: run_id,
+    _reports: reports,
+  });
+  if (sErr) throw new Error(`Save reports: ${sErr.message}`);
   return { report_keys: Object.keys(reports).length };
 }
 
@@ -810,29 +814,94 @@ export const runAllSteps = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { run_id: string }) => z.object({ run_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
+    // Load current run first.
+    const { data: initial, error: initErr } = await context.supabase
+      .from("eod_run")
+      .select("status")
+      .eq("id", data.run_id)
+      .maybeSingle();
+    if (initErr) throw new Error(initErr.message);
+    if (!initial) throw new Error("Run not found");
+    if (initial.status !== "in_progress") {
+      return {
+        ok: false,
+        executed: false,
+        run_status: initial.status,
+        results: [],
+        error: `Run status ${initial.status} — cannot execute steps. Approve or resume first.`,
+      };
+    }
+
     const results: Array<{ step: string; ok: boolean; error?: string | null; metrics?: any }> = [];
+    let failedStep: string | null = null;
+    let failedError: string | null = null;
+
     for (const step of STEPS) {
       const { data: run } = await context.supabase
         .from("eod_run")
         .select("steps, status")
         .eq("id", data.run_id)
         .maybeSingle();
-      if (!run) throw new Error("Run not found");
-      if (run.status !== "in_progress") break;
+      if (!run || run.status !== "in_progress") break;
       const stepState = ((run.steps as any[]) ?? []).find((s: any) => s.key === step);
       if (stepState?.status === "completed" || stepState?.status === "skipped") continue;
-      // Call runStep server-side (same module).
       const r = await runStepInternal(context, data.run_id, step);
       results.push({ step, ...r });
       if (!r.ok) {
-        await context.supabase.rpc(
+        failedStep = step;
+        failedError = r.error ?? "Unknown error";
+        const { error: fErr } = await context.supabase.rpc(
           "eod_finalize" as any,
           { _run_id: data.run_id, _status: "failed" } as any,
         );
+        if (fErr) failedError += ` (finalize failed: ${fErr.message})`;
         break;
       }
     }
-    return results;
+
+    const { data: post } = await context.supabase
+      .from("eod_run")
+      .select("status")
+      .eq("id", data.run_id)
+      .maybeSingle();
+
+    return {
+      ok: failedStep === null && results.every((r) => r.ok),
+      executed: results.length > 0,
+      run_status: post?.status ?? null,
+      failed_step: failedStep,
+      error: failedError,
+      results,
+    };
+  });
+
+// Manual maker-checker recovery for a failed run. Routes the run back
+// through pending_approval so a second officer must approve before steps
+// re-run. Preserves already-completed steps.
+export const resumeEod = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { run_id: string }) => z.object({ run_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: res, error } = await context.supabase.rpc(
+      "eod_resume_failed_run" as any,
+      { _run_id: data.run_id } as any,
+    );
+    if (error) throw new Error(error.message);
+    return res as { run_id: string; status: string; resumed?: boolean; noop?: boolean };
+  });
+
+// Timezone-aware default business date (previous local day) for the caller's
+// company. Used by the UI instead of browser toISOString().
+export const getEodDefaultBusinessDate = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const company_id = await resolveCompanyId(context);
+    const { data, error } = await context.supabase.rpc(
+      "eod_default_business_date" as any,
+      { _company_id: company_id } as any,
+    );
+    if (error) throw new Error(error.message);
+    return data as string;
   });
 
 async function runStepInternal(context: any, run_id: string, step: StepKey) {
