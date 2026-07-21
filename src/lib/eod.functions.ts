@@ -364,6 +364,9 @@ export const runStep = createServerFn({ method: "POST" })
         case "trial_balance":
           metrics = await stepTrialBalance(ctx);
           break;
+        case "snapshots":
+          metrics = await stepSnapshots(ctx);
+          break;
         case "reports":
           metrics = await stepReports(ctx);
           break;
