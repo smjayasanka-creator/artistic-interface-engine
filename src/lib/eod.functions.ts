@@ -155,6 +155,7 @@ const STEPS = [
   "savings_interest",
   "gl_post",
   "trial_balance",
+  "snapshots",
   "reports",
   "rollover",
 ] as const;
@@ -363,6 +364,9 @@ export const runStep = createServerFn({ method: "POST" })
         case "trial_balance":
           metrics = await stepTrialBalance(ctx);
           break;
+        case "snapshots":
+          metrics = await stepSnapshots(ctx);
+          break;
         case "reports":
           metrics = await stepReports(ctx);
           break;
@@ -476,11 +480,8 @@ async function stepLoanAccrual(ctx: Ctx) {
       _idempotency_key: `eod-loan-accr:${l.id}:${business_date}`,
       _loan_id: l.id,
     });
-    if (pe) {
-      skipped++;
-      continue;
-    }
-    await supabaseAdmin.from("loan_accrual").insert({
+    if (pe) throw new Error(`Loan accrual GL post for loan ${l.id}: ${pe.message}`);
+    const { error: ae } = await supabaseAdmin.from("loan_accrual").insert({
       loan_id: l.id,
       company_id,
       accrual_date: business_date,
@@ -489,6 +490,7 @@ async function stepLoanAccrual(ctx: Ctx) {
       cumulative_amount: cumulative,
       entry_id: entryId,
     });
+    if (ae) throw new Error(`Loan accrual insert for loan ${l.id}: ${ae.message}`);
     accrued++;
     total += daily;
   }
@@ -502,20 +504,32 @@ async function stepLoanAccrual(ctx: Ctx) {
 
 async function stepFdAccrual(ctx: Ctx) {
   const { supabaseAdmin, branch_id, business_date } = ctx;
-  const { data: deposits } = await supabaseAdmin
+  const { data: deposits, error: dErr } = await supabaseAdmin
     .from("fixed_deposit")
     .select("id, principal, rate_at_booking, value_date, maturity_date")
     .eq("branch_id", branch_id)
     .eq("status", "active");
+  if (dErr) throw new Error(`FD accrual query: ${dErr.message}`);
   let accrued = 0,
-    skipped = 0,
+    skippedOutOfWindow = 0,
     total = 0;
   for (const d of (deposits ?? []) as any[]) {
     if (business_date < d.value_date || business_date > d.maturity_date) {
-      skipped++;
+      skippedOutOfWindow++;
       continue;
     }
-    const daily = Number(((Number(d.principal) * Number(d.rate_at_booking)) / 365).toFixed(2));
+    const dayCount = 365;
+    // FIX (req 12): principal * (annualRatePct / 100) / dayCount
+    const daily = Number(
+      ((Number(d.principal) * (Number(d.rate_at_booking) / 100)) / dayCount).toFixed(2),
+    );
+    const { data: existing } = await supabaseAdmin
+      .from("fd_accrual")
+      .select("id")
+      .eq("deposit_id", d.id)
+      .eq("accrual_date", business_date)
+      .maybeSingle();
+    if (existing) continue;
     const { data: prev } = await supabaseAdmin
       .from("fd_accrual")
       .select("cumulative_amount")
@@ -530,17 +544,14 @@ async function stepFdAccrual(ctx: Ctx) {
       daily_amount: daily,
       cumulative_amount: cumulative,
     });
-    if (ie) {
-      skipped++;
-      continue;
-    }
+    if (ie) throw new Error(`FD accrual insert for deposit ${d.id}: ${ie.message}`);
     accrued++;
     total += daily;
   }
   return {
     deposits_scanned: deposits?.length ?? 0,
     accrued,
-    skipped,
+    skipped_out_of_window: skippedOutOfWindow,
     total_amount: Number(total.toFixed(2)),
   };
 }
@@ -615,22 +626,36 @@ async function stepFdMaturity(ctx: Ctx) {
 }
 
 async function stepSavingsInterest(ctx: Ctx) {
+  const { supabaseAdmin, business_date } = ctx;
+  // Daily accrual for every eligible account (idempotent per account+date).
+  const { data: accr, error: aErr } = await supabaseAdmin.rpc(
+    "run_savings_interest_accrual" as any,
+    { _business_date: business_date } as any,
+  );
+  if (aErr) throw new Error(`Savings accrual: ${aErr.message}`);
+  // Capitalisation runs only on period-end (last day of month).
+  const d = new Date(business_date);
+  const eom = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10);
+  let cap: any = null;
+  if (business_date === eom) {
+    const { data: capRes, error: cErr } = await supabaseAdmin.rpc(
+      "run_savings_interest_capitalization" as any,
+      { _period_end: business_date, _force: false } as any,
+    );
+    if (cErr) throw new Error(`Savings capitalisation: ${cErr.message}`);
+    cap = capRes;
+  }
+  return { accrual: accr, capitalisation: cap, period_end: business_date === eom };
+}
+
+async function stepSnapshots(ctx: Ctx) {
   const { supabaseAdmin, branch_id, business_date } = ctx;
-  const isMonthEnd =
-    business_date ===
-    new Date(new Date(business_date).getFullYear(), new Date(business_date).getMonth() + 1, 0)
-      .toISOString()
-      .slice(0, 10);
-  if (!isMonthEnd) return { skipped: true, reason: "not_month_end" };
-  const { data: accts } = await supabaseAdmin
-    .from("savings_account")
-    .select("id, balance")
-    .eq("branch_id", branch_id)
-    .eq("status", "active");
-  return {
-    accounts_scanned: accts?.length ?? 0,
-    note: "Interest posting requires product-level rate config; scanned only.",
-  };
+  const { data, error } = await supabaseAdmin.rpc("eod_write_snapshots" as any, {
+    _branch_id: branch_id,
+    _business_date: business_date,
+  } as any);
+  if (error) throw new Error(`Snapshots: ${error.message}`);
+  return data ?? {};
 }
 
 async function stepGlPost(ctx: Ctx) {
@@ -795,6 +820,9 @@ async function runStepInternal(context: any, run_id: string, step: StepKey) {
       case "trial_balance":
         metrics = await stepTrialBalance(ctx);
         break;
+      case "snapshots":
+        metrics = await stepSnapshots(ctx);
+        break;
       case "reports":
         metrics = await stepReports(ctx);
         break;
@@ -822,4 +850,55 @@ async function runStepInternal(context: any, run_id: string, step: StepKey) {
     );
   }
   return { ok: !error, error, metrics };
+}
+
+// ---------- System / scheduled orchestrator entrypoint ----------
+// Runs a single step against a service-role Supabase client. Used by the
+// scheduled cron worker so manual (dual-controlled) and scheduled paths
+// share identical financial logic.
+export async function runOrchestratorStep(args: {
+  supabaseAdmin: any;
+  run_id: string;
+  company_id: string;
+  branch_id: string;
+  business_date: string;
+  step_key: StepKey;
+}): Promise<Record<string, any>> {
+  const { supabaseAdmin, run_id, step_key } = args;
+  await supabaseAdmin.rpc("eod_record_step" as any, {
+    _run_id: run_id,
+    _step_key: step_key,
+    _status: "processing",
+    _metrics: {} as any,
+    _error: null,
+  } as any);
+  const ctx: Ctx = {
+    supabaseAdmin,
+    run_id,
+    company_id: args.company_id,
+    branch_id: args.branch_id,
+    business_date: args.business_date,
+  };
+  let metrics: Record<string, any> = {};
+  switch (step_key) {
+    case "loan_accrual": metrics = await stepLoanAccrual(ctx); break;
+    case "fd_accrual": metrics = await stepFdAccrual(ctx); break;
+    case "penalty_charges": metrics = await stepPenaltyCharges(ctx); break;
+    case "par_npa": metrics = await stepParNpa(ctx); break;
+    case "fd_maturity": metrics = await stepFdMaturity(ctx); break;
+    case "savings_interest": metrics = await stepSavingsInterest(ctx); break;
+    case "gl_post": metrics = await stepGlPost(ctx); break;
+    case "trial_balance": metrics = await stepTrialBalance(ctx); break;
+    case "snapshots": metrics = await stepSnapshots(ctx); break;
+    case "reports": metrics = await stepReports(ctx); break;
+    case "rollover": metrics = await stepRollover(ctx); break;
+  }
+  await supabaseAdmin.rpc("eod_record_step" as any, {
+    _run_id: run_id,
+    _step_key: step_key,
+    _status: "completed",
+    _metrics: metrics as any,
+    _error: null,
+  } as any);
+  return metrics;
 }
