@@ -969,6 +969,28 @@ export const processMaturity = createServerFn({ method: "POST" })
     if (!cid) throw new Error("No active company");
     const { data: isAdmin } = await supabase.rpc("is_company_admin", { _company_id: cid });
     if (!isAdmin) throw new Error("Only approvers can process maturity");
+    return processFdMaturityCore(supabase, { ...data, userId: userId! });
+  });
+
+/**
+ * Core FD maturity processing — extracted so both `processMaturity` (user
+ * flow) and the automated Day-End step can execute maturity with the same
+ * ledger + renewal semantics. Caller is responsible for authorization.
+ */
+export async function processFdMaturityCore(
+  supabase: any,
+  data: {
+    id: string;
+    on_date?: string;
+    payment_method?: (typeof PAYMENT_METHODS)[number];
+    bank_account_id?: string | null;
+    savings_account_id?: string | null;
+    reference?: string | null;
+    userId: string;
+  },
+): Promise<any> {
+  const userId = data.userId;
+  {
 
     const onDate = data.on_date ?? serverToday();
 
