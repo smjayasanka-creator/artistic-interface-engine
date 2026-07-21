@@ -83,8 +83,8 @@ describe("EOD — financial correctness", () => {
     expect(eod).toContain("eod_write_snapshots");
   });
   it("savings interest reuses existing accrual + capitalization RPCs (req 11, 14)", () => {
-    expect(eod).toContain("run_savings_interest_accrual");
-    expect(eod).toContain("run_savings_interest_capitalization");
+    expect(eod).toContain("accrue_savings_interest_daily");
+    expect(eod).toContain("capitalize_savings_interest");
   });
   it("step failures are recorded as failed, not skipped (req 15)", () => {
     // The catch block writes `_status: 'failed'` when an error is set.
