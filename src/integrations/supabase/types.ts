@@ -122,6 +122,53 @@ export type Database = {
           },
         ]
       }
+      api_idempotency: {
+        Row: {
+          company_id: string
+          created_at: string
+          endpoint: string
+          env: string
+          expires_at: string
+          id: string
+          idempotency_key: string
+          request_hash: string
+          response_body: Json | null
+          response_status: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          endpoint: string
+          env: string
+          expires_at?: string
+          id?: string
+          idempotency_key: string
+          request_hash: string
+          response_body?: Json | null
+          response_status: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          endpoint?: string
+          env?: string
+          expires_at?: string
+          id?: string
+          idempotency_key?: string
+          request_hash?: string
+          response_body?: Json | null
+          response_status?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_idempotency_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_key: {
         Row: {
           company_id: string
@@ -178,6 +225,62 @@ export type Database = {
           },
         ]
       }
+      api_mapping_template: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          env: string
+          field_mappings: Json
+          id: string
+          name: string
+          source_sample: Json | null
+          status: string
+          target_resource: string
+          transformations: Json
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          env: string
+          field_mappings?: Json
+          id?: string
+          name: string
+          source_sample?: Json | null
+          status?: string
+          target_resource: string
+          transformations?: Json
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          env?: string
+          field_mappings?: Json
+          id?: string
+          name?: string
+          source_sample?: Json | null
+          status?: string
+          target_resource?: string
+          transformations?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_mapping_template_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_transaction_log: {
         Row: {
           api_key_id: string | null
@@ -186,6 +289,7 @@ export type Database = {
           created_at: string
           direction: string
           endpoint: string
+          env: string
           error: string | null
           id: string
           method: string
@@ -201,6 +305,7 @@ export type Database = {
           created_at?: string
           direction: string
           endpoint: string
+          env?: string
           error?: string | null
           id?: string
           method: string
@@ -216,6 +321,7 @@ export type Database = {
           created_at?: string
           direction?: string
           endpoint?: string
+          env?: string
           error?: string | null
           id?: string
           method?: string
@@ -7856,6 +7962,137 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_delivery: {
+        Row: {
+          attempt: number
+          company_id: string
+          created_at: string
+          endpoint_id: string
+          env: string
+          event_id: string | null
+          event_type: string
+          id: string
+          next_retry_at: string | null
+          payload: Json | null
+          response_ms: number | null
+          response_snippet: string | null
+          status: string
+          status_code: number | null
+        }
+        Insert: {
+          attempt?: number
+          company_id: string
+          created_at?: string
+          endpoint_id: string
+          env: string
+          event_id?: string | null
+          event_type: string
+          id?: string
+          next_retry_at?: string | null
+          payload?: Json | null
+          response_ms?: number | null
+          response_snippet?: string | null
+          status?: string
+          status_code?: number | null
+        }
+        Update: {
+          attempt?: number
+          company_id?: string
+          created_at?: string
+          endpoint_id?: string
+          env?: string
+          event_id?: string | null
+          event_type?: string
+          id?: string
+          next_retry_at?: string | null
+          payload?: Json | null
+          response_ms?: number | null
+          response_snippet?: string | null
+          status?: string
+          status_code?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_delivery_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_delivery_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_endpoint"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_endpoint: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          custom_headers: Json
+          env: string
+          events: string[]
+          id: string
+          label: string
+          last_delivery_at: string | null
+          max_attempts: number
+          secret_hash: string
+          secret_prefix: string
+          status: string
+          timeout_ms: number
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          custom_headers?: Json
+          env: string
+          events?: string[]
+          id?: string
+          label: string
+          last_delivery_at?: string | null
+          max_attempts?: number
+          secret_hash: string
+          secret_prefix: string
+          status?: string
+          timeout_ms?: number
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          custom_headers?: Json
+          env?: string
+          events?: string[]
+          id?: string
+          label?: string
+          last_delivery_at?: string | null
+          max_attempts?: number
+          secret_hash?: string
+          secret_prefix?: string
+          status?: string
+          timeout_ms?: number
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_endpoint_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_action: {
         Row: {
           acted_at: string
@@ -8219,6 +8456,7 @@ export type Database = {
           name: string
         }[]
       }
+      current_api_env: { Args: never; Returns: string }
       current_business_date: { Args: never; Returns: string }
       current_company_id: { Args: never; Returns: string }
       current_staff_branch: { Args: never; Returns: string }
