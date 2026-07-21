@@ -8040,6 +8040,7 @@ export type Database = {
           label: string
           last_delivery_at: string | null
           max_attempts: number
+          secret: string
           secret_hash: string
           secret_prefix: string
           status: string
@@ -8058,6 +8059,7 @@ export type Database = {
           label: string
           last_delivery_at?: string | null
           max_attempts?: number
+          secret?: string
           secret_hash: string
           secret_prefix: string
           status?: string
@@ -8076,6 +8078,7 @@ export type Database = {
           label?: string
           last_delivery_at?: string | null
           max_attempts?: number
+          secret?: string
           secret_hash?: string
           secret_prefix?: string
           status?: string
