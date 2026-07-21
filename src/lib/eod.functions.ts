@@ -332,12 +332,13 @@ export const runStep = createServerFn({ method: "POST" })
 
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const ctx = {
+      const ctx: Ctx = {
         supabaseAdmin,
         run_id: run.id,
         company_id: run.company_id,
         branch_id: run.branch_id,
         business_date: run.business_date,
+        actor_id: context.userId!,
       };
       switch (data.step) {
         case "loan_accrual":
@@ -407,7 +408,9 @@ type Ctx = {
   company_id: string;
   branch_id: string;
   business_date: string;
+  actor_id: string;
 };
+
 
 async function stepLoanAccrual(ctx: Ctx) {
   const { supabaseAdmin, branch_id, business_date, company_id } = ctx;
@@ -609,21 +612,85 @@ async function stepParNpa(ctx: Ctx) {
 }
 
 async function stepFdMaturity(ctx: Ctx) {
-  const { supabaseAdmin, branch_id, business_date } = ctx;
+  const { supabaseAdmin, branch_id, business_date, actor_id } = ctx;
   const { data: matured } = await supabaseAdmin
     .from("fixed_deposit")
-    .select("id, certificate_no, maturity_instruction, status")
+    .select(
+      "id, certificate_no, maturity_instruction, status, payout_bank_account_id, interest_savings_account_id, settlement_account",
+    )
     .eq("branch_id", branch_id)
     .eq("status", "active")
     .eq("maturity_date", business_date);
+
+  const { processFdMaturityCore } = await import("@/lib/fd.functions");
+
+  let renewed = 0;
+  let paid_out = 0;
+  const failures: Array<{ certificate_no: string; error: string }> = [];
+  const manual_required: Array<{ certificate_no: string; reason: string }> = [];
+
+  for (const fd of matured ?? []) {
+    try {
+      if (fd.maturity_instruction === "payout") {
+        // Auto-post payout when a settlement account is pre-configured.
+        const bank_account_id = fd.payout_bank_account_id ?? null;
+        const savings_account_id = fd.settlement_account ?? fd.interest_savings_account_id ?? null;
+        const payment_method = bank_account_id
+          ? "fund_transfer"
+          : savings_account_id
+            ? "sdf_savings"
+            : null;
+        if (!payment_method) {
+          manual_required.push({
+            certificate_no: fd.certificate_no,
+            reason: "Payout has no settlement account configured; process from /fd/maturity",
+          });
+          continue;
+        }
+        await processFdMaturityCore(supabaseAdmin, {
+          id: fd.id,
+          on_date: business_date,
+          payment_method: payment_method as any,
+          bank_account_id,
+          savings_account_id,
+          reference: `EOD auto-maturity ${business_date}`,
+          userId: actor_id,
+        });
+        paid_out++;
+      } else {
+        // Renewals (auto_renewal, renew_principal, renew_principal_interest)
+        await processFdMaturityCore(supabaseAdmin, {
+          id: fd.id,
+          on_date: business_date,
+          userId: actor_id,
+        });
+        renewed++;
+      }
+    } catch (e: any) {
+      failures.push({ certificate_no: fd.certificate_no, error: e?.message ?? String(e) });
+    }
+  }
+
+  if (failures.length > 0 || manual_required.length > 0) {
+    const parts: string[] = [];
+    if (failures.length)
+      parts.push(
+        `${failures.length} failed: ${failures.map((f) => `${f.certificate_no} (${f.error})`).join("; ")}`,
+      );
+    if (manual_required.length)
+      parts.push(
+        `${manual_required.length} require manual payout: ${manual_required.map((m) => m.certificate_no).join(", ")}`,
+      );
+    throw new Error(`FD maturity: ${parts.join(" · ")}`);
+  }
+
   return {
     matured_today: matured?.length ?? 0,
-    auto_renewal: (matured ?? []).filter((d: any) => d.maturity_instruction === "auto_renewal")
-      .length,
-    payout_pending: (matured ?? []).filter((d: any) => d.maturity_instruction === "payout").length,
-    note: "Execution handled by /fd/maturity workspace; this step reports counts only.",
+    renewed,
+    paid_out,
   };
 }
+
 
 async function stepSavingsInterest(ctx: Ctx) {
   const { supabaseAdmin, company_id, business_date } = ctx;
@@ -794,6 +861,7 @@ async function runStepInternal(context: any, run_id: string, step: StepKey) {
       company_id: run.company_id,
       branch_id: run.branch_id,
       business_date: run.business_date,
+      actor_id: context.userId,
     };
     switch (step) {
       case "loan_accrual":
@@ -872,12 +940,20 @@ export async function runOrchestratorStep(args: {
     _metrics: {} as any,
     _error: null,
   } as any);
+  // Scheduled cron actor: use the run's initiator (fallback to a zero UUID
+  // for system-initiated rows) so downstream ledger writes have a user id.
+  const { data: runRow } = await supabaseAdmin
+    .from("eod_run")
+    .select("initiated_by")
+    .eq("id", run_id)
+    .maybeSingle();
   const ctx: Ctx = {
     supabaseAdmin,
     run_id,
     company_id: args.company_id,
     branch_id: args.branch_id,
     business_date: args.business_date,
+    actor_id: (runRow as any)?.initiated_by ?? "00000000-0000-0000-0000-000000000000",
   };
   let metrics: Record<string, any> = {};
   switch (step_key) {

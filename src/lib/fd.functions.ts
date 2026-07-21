@@ -969,6 +969,28 @@ export const processMaturity = createServerFn({ method: "POST" })
     if (!cid) throw new Error("No active company");
     const { data: isAdmin } = await supabase.rpc("is_company_admin", { _company_id: cid });
     if (!isAdmin) throw new Error("Only approvers can process maturity");
+    return processFdMaturityCore(supabase, { ...data, userId: userId! });
+  });
+
+/**
+ * Core FD maturity processing — extracted so both `processMaturity` (user
+ * flow) and the automated Day-End step can execute maturity with the same
+ * ledger + renewal semantics. Caller is responsible for authorization.
+ */
+export async function processFdMaturityCore(
+  supabase: any,
+  data: {
+    id: string;
+    on_date?: string;
+    payment_method?: (typeof PAYMENT_METHODS)[number];
+    bank_account_id?: string | null;
+    savings_account_id?: string | null;
+    reference?: string | null;
+    userId: string;
+  },
+): Promise<any> {
+  const userId = data.userId;
+  {
 
     const onDate = data.on_date ?? serverToday();
 
@@ -986,14 +1008,14 @@ export const processMaturity = createServerFn({ method: "POST" })
       .select("id,net_interest,paid")
       .eq("deposit_id", data.id)
       .eq("paid", false);
-    const owedNet = (sched ?? []).reduce((s, r) => s + Number(r.net_interest), 0);
+    const owedNet = (sched ?? []).reduce((s: number, r: any) => s + Number(r.net_interest), 0);
     if ((sched ?? []).length) {
       await supabase
         .from("fd_interest_schedule")
         .update({ paid: true, paid_date: onDate })
         .in(
           "id",
-          (sched ?? []).map((r) => r.id),
+          (sched ?? []).map((r: any) => r.id),
         );
     }
 
@@ -1025,7 +1047,7 @@ export const processMaturity = createServerFn({ method: "POST" })
         .select(FD_PRODUCT_ACCOUNT_COLUMNS)
         .eq("id", fd.product_id)
         .maybeSingle();
-      const glm = await resolveFdAccounts(supabase, fdProdM, cid);
+      const glm = await resolveFdAccounts(supabase, fdProdM, fd.company_id);
       if (glm.cash && glm.liab && glm.intr && glm.accrued && settlement > 0) {
         const { data: accRows } = await supabase
           .from("fd_accrual")
@@ -1157,7 +1179,9 @@ export const processMaturity = createServerFn({ method: "POST" })
     });
 
     return { ok: true, action: "renewed", new_id: newFd.id, new_certificate: certNo };
-  });
+  }
+}
+
 
 // ──────────────────────────────────────────────────────────────────────────
 // DAILY MAINTENANCE (manually triggered from UI; wire cron later)
