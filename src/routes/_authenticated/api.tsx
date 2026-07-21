@@ -28,11 +28,10 @@ import {
   API_CONTRACTS,
   contractsByResource,
   type ApiContract,
-  type ApiEnv,
   type ApiResource,
 } from "@/lib/api-contract";
 
-// The registry ships an `ApiEnv` type but for the UI it's plain string union.
+// The registry ships resource/direction types; env is a UI-only union.
 type Env = "sandbox" | "production";
 
 export const Route = createFileRoute("/_authenticated/api")({
