@@ -1182,6 +1182,182 @@ function BranchesTab() {
   );
 }
 
+/* ---------------- Regions ---------------- */
+
+function RegionsTab() {
+  const [mode, setMode] = useState<Mode>("list");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const fn = useServerFn(getAdmin);
+  const { data } = useQuery({ queryKey: ["admin"], queryFn: () => fn() });
+  const qc = useQueryClient();
+  const createFn = useServerFn(createRegion);
+  const updateFn = useServerFn(updateRegion);
+
+  const emptyForm = { code: "", name: "", active: true };
+  const [form, setForm] = useState(emptyForm);
+
+  const reset = () => {
+    setForm(emptyForm);
+    setEditingId(null);
+    setMode("list");
+  };
+
+  const create = useMutation({
+    mutationFn: createFn,
+    onSuccess: () => {
+      toast.success("Region created");
+      qc.invalidateQueries({ queryKey: ["admin"] });
+      reset();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const update = useMutation({
+    mutationFn: updateFn,
+    onSuccess: () => {
+      toast.success("Region updated");
+      qc.invalidateQueries({ queryKey: ["admin"] });
+      reset();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (!data) return <div className="text-sm text-muted-foreground">Loading…</div>;
+
+  const regions: any[] = data.regions ?? [];
+  const branches: any[] = data.branches ?? [];
+  const branchCountByRegion = new Map<string, number>();
+  for (const b of branches) {
+    if (b.region_id) branchCountByRegion.set(b.region_id, (branchCountByRegion.get(b.region_id) ?? 0) + 1);
+  }
+
+  function startEdit(r: any) {
+    setForm({ code: r.code ?? "", name: r.name ?? "", active: !!r.active });
+    setEditingId(r.id);
+    setMode("edit");
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.code.trim() || !form.name.trim()) {
+      toast.error("Code and name required");
+      return;
+    }
+    if (mode === "edit" && editingId) {
+      update.mutate({ data: { id: editingId, ...form } });
+    } else {
+      create.mutate({ data: form });
+    }
+  }
+
+  if (mode === "create" || mode === "edit") {
+    const isEdit = mode === "edit";
+    return (
+      <Card>
+        <FormHeader title={isEdit ? "Edit region" : "New region"} onBack={reset} />
+        <form onSubmit={submit} className="flex flex-col gap-3 mt-4">
+          <FormGrid>
+            <FormField label="Code" required span={3}>
+              <input
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                placeholder="NORTH"
+                className={inputCls + " font-mono"}
+                required
+              />
+            </FormField>
+            <FormField label="Name" required span={7}>
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Northern Region"
+                className={inputCls}
+                required
+              />
+            </FormField>
+            <FormField label="Active" span={2}>
+              <select
+                value={form.active ? "1" : "0"}
+                onChange={(e) => setForm({ ...form, active: e.target.value === "1" })}
+                className={selectCls}
+              >
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
+              </select>
+            </FormField>
+          </FormGrid>
+          <FormActions>
+            <button type="button" onClick={reset} className={btnSecondaryCls}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={create.isPending || update.isPending}
+              className={btnPrimaryCls}
+            >
+              {isEdit
+                ? update.isPending ? "Saving…" : "Save changes"
+                : create.isPending ? "Creating…" : "Create region"}
+            </button>
+          </FormActions>
+        </form>
+      </Card>
+    );
+  }
+
+  const GRID = "0.6fr 2fr 0.6fr 0.6fr 0.4fr";
+  return (
+    <div className="flex flex-col gap-5">
+      <Card padded={false}>
+        <ListHeader
+          title="Regions"
+          count={regions.length}
+          onNew={() => setMode("create")}
+          newLabel="New region"
+        />
+        <div
+          className="grid text-[10px] uppercase tracking-wider text-faint font-semibold py-2 px-5 border-y border-border bg-secondary/40"
+          style={{ gridTemplateColumns: GRID }}
+        >
+          <div>Code</div>
+          <div>Name</div>
+          <div>Branches</div>
+          <div>Status</div>
+          <div className="text-right">Edit</div>
+        </div>
+        {regions.map((r) => (
+          <div
+            key={r.id}
+            className="grid items-center text-[12px] py-1.5 px-5 border-b border-row-divider last:border-b-0"
+            style={{ gridTemplateColumns: GRID }}
+          >
+            <div className="font-mono font-medium text-[11.5px]">{r.code}</div>
+            <div className="truncate font-medium" title={r.name}>{r.name}</div>
+            <div className="font-mono text-[11px]">{branchCountByRegion.get(r.id) ?? 0}</div>
+            <div className="text-[11px]">
+              {r.active ? (
+                <span className="text-emerald-700">Active</span>
+              ) : (
+                <span className="text-muted-foreground">Inactive</span>
+              )}
+            </div>
+            <div className="text-right">
+              <button
+                onClick={() => startEdit(r)}
+                className="text-[10.5px] px-2 py-0.5 rounded border border-border hover:border-primary hover:text-primary transition-colors"
+              >
+                Edit
+              </button>
+            </div>
+          </div>
+        ))}
+        {regions.length === 0 && (
+          <div className="text-center text-faint text-sm py-8">No regions yet.</div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
 /* ---------------- Staff ---------------- */
 
 function StaffTab() {
