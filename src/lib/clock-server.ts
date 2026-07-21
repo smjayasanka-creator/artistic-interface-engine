@@ -10,6 +10,7 @@ const readOverrideHeader = createIsomorphicFn()
   .client((): string | null => null)
   .server((): string | null => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const mod = require("./clock-header.server") as typeof import("./clock-header.server");
 
       return mod.readDevNowHeader();
