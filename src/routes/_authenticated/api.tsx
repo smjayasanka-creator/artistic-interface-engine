@@ -40,16 +40,18 @@ export const Route = createFileRoute("/_authenticated/api")({
   component: ApiHub,
 });
 
-type Tab = "quickstart" | "explorer" | "catalogue" | "mapping" | "keys" | "logs";
+type Tab = "quickstart" | "explorer" | "catalogue" | "mapping" | "webhooks" | "keys" | "logs";
 
 const TABS: [Tab, string, string][] = [
   ["quickstart", "Quick start", "9-step onboarding, base URL, auth, standards"],
   ["explorer", "API explorer", "Every endpoint · request/response · errors"],
   ["catalogue", "Data catalogue", "Every field, resource and PII flag"],
   ["mapping", "Field mapping", "Deterministic matcher + AI fallback"],
+  ["webhooks", "Webhooks", "HMAC-signed outbound events + retry queue"],
   ["keys", "API keys", "Env-scoped credentials"],
   ["logs", "Request log", "Filter by env, channel, direction, status"],
 ];
+
 
 function ApiHub() {
   const [tab, setTab] = useState<Tab>("quickstart");
