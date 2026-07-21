@@ -1,150 +1,88 @@
-# Day-End Orchestration — Corrective Plan
+# API & Integration Hub — Phased Plan
 
-The project currently has two divergent day-end paths (manual JS orchestrator vs. legacy `eod_close` RPC hit by cron). This plan collapses them into one, closes the safety gaps in the numbered list, and adds regression coverage.
+The current `/api` page is ~955 lines with 4 tabs (Overview, Endpoints, Keys, Logs) and 8 live public endpoints. Your request is a **complete developer portal** — realistically 15–25 files, one migration, contract registry, OpenAPI generator, mapping studio, webhook config, test suite. Too large for a single change without risking regressions.
 
-## 1. Canonical orchestrator
+I want to confirm scope + order before I start. Below is the phased plan I recommend.
 
-Create one server module `src/lib/eod-orchestrator.server.ts` that owns the full day-end lifecycle for a `(branch_id, business_date)`:
+## Immediate hotfix (do first, always)
 
-```text
-pre-check → (pending_approval) → approve → in_progress
-        → run steps sequentially (resumable)
-        → validate trial balance
-        → write snapshots
-        → advance eod_locked_through
-        → completed | failed
+- Fix `endpointSpec()` fall-through: add explicit `clients.create` case sourced from the real Zod schema in `src/routes/api/public/v1/clients.create.ts` (not a duplicate literal). Currently it silently shows the Health endpoint's spec.
+- Add a Vitest regression: every entry in `ENDPOINTS` must have a matching `endpointSpec()` case.
+
+## Phase 1 — Contract Registry (foundation, everything else depends on it)
+
+New file: `src/lib/api-contract.ts` — single source of truth per endpoint:
 ```
-
-Both entry points call it:
-
-- Manual: `runBranchEod({ branchId, businessDate, actor: 'user', userId })` from the existing `runCompanyEod` server function.
-- Scheduled: `/api/public/hooks/eod-close` calls the same orchestrator with `actor: 'system'` and a signed cron token.
-
-The legacy `eod_close` Postgres function becomes a thin compatibility wrapper that raises `deprecated` if called outside the new hook, so no other caller can silently use the old path.
-
-## 2. eod_run lifecycle
-
-One row per `(branch_id, business_date)` (existing unique index). Valid transitions enforced by a Postgres trigger `eod_run_transition_guard`:
-
-```text
-NULL              → pending_approval | in_progress
-pending_approval  → in_progress | failed
-in_progress       → completed | failed
-failed            → in_progress   (resume/retry)
-completed         → (terminal)
+{ id, method, path, scope, direction, status: 'live'|'planned',
+  request: ZodSchema, response: ZodSchema, requestExample, responseExample,
+  fields: [{ path, label, type, required, sensitive, inbound, outbound, notes }],
+  errors, idempotency, pagination, webhookEvents }
 ```
+- Registry re-exports the existing Zod schemas from `api-schemas.server.ts` (no duplication).
+- Route handlers (`src/routes/api/public/v1/*`) import their contract entry for validation.
+- UI reads from registry — no more parallel `ENDPOINTS` array + `endpointSpec()` switch.
+- Test: every file under `src/routes/api/public/v1/*` (except health) must appear in registry with matching path.
 
-Resume/retry re-enters `in_progress` on the same row; steps already `completed` are skipped, `failed`/`pending` steps re-run. No more "reject if run exists".
+## Phase 2 — Page shell + Quick Start + API Explorer
 
-## 3. Steps + authorization
+- Rename to "API & Integration Hub" with subtitle + "API-first platform" badge.
+- Summary cards: Live endpoints, Resources, Inbound, Outbound, Active keys, 24h success rate (query `api_transaction_log`).
+- Tabs: Quick start · API explorer · Data catalogue · Field mapping · Webhooks · Integration guides · API keys · Request logs.
+- **Quick start**: 9-step flow, base URL, auth, idempotency, pagination, rate limits, standard error format. Copyable code samples in cURL / JS / Python / C# / PHP (generated from contract).
+- **API explorer**: search + filter (resource, method, direction, scope, env, status), expandable per-endpoint view driven by registry, field table with all requested columns.
+- Preserve existing API keys tab and Request logs tab; enhance logs with filters (endpoint, direction, key, env, status, idempotency key, correlation id) and a masked detail drawer.
 
-Steps executed in order, each recorded in `eod_step_log` with `status`, `error`, `duration_ms`, `attempts`:
+## Phase 3 — Data catalogue + Field mapping studio
 
-1. `precheck` (blocking checks — see §4)
-2. `loan_accrual` — call existing `record_loan_accrual` RPC per active loan
-3. `loan_penalty_par` — penalty posting + PAR/NPA bucket update
-4. `fd_accrual` — `principal × (annualRatePct / 100) ÷ dayCount` (fix requirement 12)
-5. `fd_maturity` — call existing FD maturity RPC
-6. `savings_interest_accrual` — call `run_savings_interest_accrual`
-7. `savings_capitalization` — call `run_savings_interest_capitalization` (period-end only)
-8. `gl_post` — flush any pending journals from the day
-9. `trial_balance_check` — sum debits/credits, fail if `|Δ| > tolerance`
-10. `snapshots` — write `savings_eod_balance`, `fd_eod_balance`, `loan_eod_balance`, `gl_eod_balance`
-11. `lock_branch` — advance `branch.eod_locked_through` (never backwards, sequential dates only)
+- **Data catalogue**: cards per resource (Clients, Loans, Loan applications, Repayments, Savings, FDs, Payments, Workflow, Events…) — description, IDs, read/write ops, related resources, published events, field dictionary from registry.
+- **Field mapping studio**: side-by-side external ↔ platform, paste sample JSON → auto-flatten → suggested matches (string similarity, no AI initially), transformations (rename, concat/split name, date fmt, phone normalize, enum map, defaults), preview, required-field validation, save/duplicate/export templates. New table `api_mapping_template` (company-scoped, RLS). No AI-assisted mapping in this phase.
 
-`eod_record_step`, `eod_finalize`, `eod_save_reports` become `SECURITY DEFINER` and reject non-orchestrator callers via a session GUC (`app.eod_orchestrator = 'on'`) set only inside the orchestrator transaction. Ordinary users lose direct EXECUTE.
+## Phase 4 — Webhooks
 
-## 4. Blocking pre-checks (all hard fails)
+- Migration: `webhook_endpoint` (url, env, events[], secret_hash, status, retry policy, timeout, headers), `webhook_delivery` (event_id, endpoint_id, attempt, status_code, response_ms, next_retry_at, dead_letter). RLS by company.
+- Wire into existing `dispatch-domain-events.ts` cron hook so registered endpoints receive matching events with HMAC-SHA256 signature (`X-Signature-256`, timestamp header for replay protection).
+- UI: create/edit/disable, event picker, "Send test webhook", delivery history with status codes and retry timeline. Secret shown **once** on creation, then only `whsec_...abcd` last-4.
+- Event catalogue: `client.created/updated`, `loan_application.submitted/approved/rejected`, `loan.disbursed`, `repayment.received`, `savings.transaction.posted`, `fixed_deposit.opened/matured`, `payment.completed/failed`, `eod.completed`.
 
-- Any teller/till still open for the branch on that date
-- Unresolved teller cash variance
-- Pending workflow instances tied to that branch (loan/savings approvals, hold releases)
-- Unposted journals or incomplete disbursements
-- Prior business date not yet closed (sequential)
-- Business date is not in the future (company timezone)
+## Phase 5 — Read endpoints (new GET APIs)
 
-Warnings become errors — no more `skipped` on real failures.
+Currently only POST write endpoints exist publicly. Add paginated, cursor-based, company-scoped GET DTOs (RPC-backed, no raw table exposure):
+- `GET /api/public/v1/clients`, `/clients/{id}`
+- `GET /api/public/v1/loan-applications`, `/{id}`
+- `GET /api/public/v1/loans`, `/{id}`, `/{id}/schedule`, `/{id}/repayments`
+- `GET /api/public/v1/savings-accounts`, `/{id}`, `/{id}/transactions`
+- `GET /api/public/v1/fixed-deposits`, `/{id}`
+- `GET /api/public/v1/branches`, `/products/loan`, `/products/savings`
+- `GET /api/public/v1/workflow/{id}`
+- `GET /api/public/v1/events` (event stream tail)
 
-## 5. Teller / cashier closing
+New scopes: `clients.read`, `loans.read`, `loan_applications.read`, `repayments.read`, `savings.read`, `fixed_deposits.read`, `payments.read`, `workflow.read`, `events.read`, `reference.read`. Existing scopes preserved.
 
-New table `teller_close`:
+## Phase 6 — Integration guides + Developer assets
 
-```text
-teller_close(
-  id, company_id, branch_id, business_date, teller_id,
-  expected_cash, counted_cash, variance,
-  denominations jsonb,     -- [{denom: 5000, count: 12}, ...]
-  remarks, status (open|submitted|approved|rejected),
-  submitted_by, submitted_at, approved_by, approved_at
-)
-```
+- Static guide content for the 10 integration archetypes (core banking, mobile, IB, LOS, payment gateway, ERP, CEFT switch, CRIB, DWH, webhook-only).
+- OpenAPI 3.1 generator from registry via `zod-to-json-schema` (already Zod-based). Serve at `/api/public/v1/openapi.json`. "Download OpenAPI" + "Download Postman collection" (generated from OpenAPI).
+- Standard error catalogue, webhook event catalogue, versioning & deprecation section.
 
-RPCs `open_teller_till`, `submit_teller_close`, `approve_teller_close`. EOD refuses to run unless every teller for the branch has an `approved` close for the business date.
+## Phase 7 — Tests + hardening
 
-## 6. Automatic scheduling
+Vitest cases for all 12 acceptance criteria you listed.
 
-Rewrite the pg_cron dispatcher to run every 15 min and, for each company:
+## Files & migrations (aggregate)
 
-- Skip if `company.auto_eod_enabled = false`.
-- Compute the company-local time using `company.timezone` (not UTC).
-- If local time ≥ `company.auto_eod_time` and today's local previous-business-date run hasn't completed:
-  - For each branch with `branch.auto_eod = true`, invoke the hook once (idempotent).
+- New: `src/lib/api-contract.ts`, `src/lib/openapi.ts`, `src/lib/webhooks.functions.ts`, `src/lib/mappings.functions.ts`, `src/routes/_authenticated/api.tsx` (rewrite), plus tab components under `src/components/api/*`, plus new GET route files, plus `src/routes/api/public/v1/openapi.json.ts`.
+- Migrations: `webhook_endpoint`, `webhook_delivery`, `api_mapping_template` (all with GRANTs + RLS + `service_role`). New scopes added to existing scope enum/allowlist without breaking legacy.
 
-Business date = previous calendar day in `company.timezone`.
+## Non-goals (unless you say otherwise)
 
-## 7. Snapshot correctness
+- AI-assisted mapping (mentioned as optional).
+- Sandbox environment isolation beyond an `env` flag on keys/webhooks (true separate-DB sandbox is a much bigger change).
+- Rewriting or replacing existing write endpoints — reused as-is.
 
-Loan snapshot uses `allocated_principal` from `repayment` (not gross paid). On disbursement date, opening principal is 0; disbursed amount is added once via the disbursement journal, not counted twice.
+## Confirm before I start
 
-## 8. UI
+**Q1.** Ship in phases (I recommend hotfix + Phase 1 + Phase 2 this turn, then Phases 3–7 in follow-ups) or attempt everything in one enormous change?
+**Q2.** For sandbox: is an `env: 'sandbox'|'production'` flag on API keys & webhooks enough, or do you want separate data?
+**Q3.** Field-mapping AI suggestions — skip for now (string similarity only), or use Lovable AI Gateway for the "suggest matches" button?
 
-Rebuild the Admin → Day End tab (and remove the `/eod` redirect stub):
-
-- Branch list with current status, locked-through, last run.
-- Pre-check panel (each check pass/fail with reason).
-- Pending approval banner + Approve/Reject (maker-checker preserved).
-- Per-step progress list with duration and full error text.
-- **Retry failed step** and **Resume run** buttons.
-- Company-wide "Run day-end" (unchanged UX, new backend).
-- Audit history (initiator, approver, timestamps, transitions).
-
-## 9. Tests
-
-New `src/lib/__tests__/eod-orchestrator.test.ts` covering:
-
-manual run · scheduled run parity · maker-checker enforced · open till blocks · unbalanced TB blocks · failed-step resume · idempotent re-run · snapshot rows exist for all four tables · GL balance within tolerance · timezone resolution (non-UTC company) · sequential date enforcement · `eod_locked_through` never goes backwards · FD accrual formula · loan snapshot uses `allocated_principal`.
-
-Plus a `regression-eod-defects.test.ts` with one guard per numbered requirement above.
-
-## Technical notes
-
-### Migrations (in order)
-
-1. `eod_run_transition_guard` trigger + drop stale statuses.
-2. `teller_close` table + RLS + RPCs.
-3. `eod_close` compatibility wrapper; revoke direct EXECUTE on `eod_record_step`/`eod_finalize`/`eod_save_reports` from `authenticated`; add `SECURITY DEFINER` variants gated by GUC.
-4. Fix `fd_accrual` legacy column reference (`amount` → `principal`) or drop if unused.
-5. Snapshot upsert functions using `allocated_principal`.
-
-### Code
-
-- `src/lib/eod-orchestrator.server.ts` — new; owns the state machine.
-- `src/lib/eod.functions.ts` — thin RPC/HTTP-facing wrappers; delegate to orchestrator.
-- `src/routes/api/public/hooks/eod-close.ts` — call orchestrator with system actor; verify cron signature.
-- `src/routes/api/public/hooks/eod-dispatch.ts` — new 15-min cron dispatcher, timezone-aware.
-- `src/components/mzizi/EodTab.tsx` — expanded UI per §8.
-- Delete `src/routes/_authenticated/eod.tsx` redirect stub, replace with real page or keep redirect to Admin tab (choose redirect to keep single source of truth).
-
-### Out of scope
-
-- No changes to loan/savings/FD business math beyond the FD-accrual fix and snapshot-source fix.
-- No changes to existing workflow engine internals (only new EOD workflow definitions if maker-checker needs one).
-
-## Rollout
-
-1. Migrations + orchestrator + tests (green build gate).
-2. Switch cron hook to orchestrator.
-3. Ship new UI.
-4. Remove/compat-wrap legacy `eod_close`.
-
-This is a large multi-file change. Approve the plan and I'll execute in that order.
+Once you answer, I'll start with the hotfix + Phase 1 immediately.
