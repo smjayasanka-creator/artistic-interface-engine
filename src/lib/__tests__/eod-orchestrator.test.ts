@@ -144,8 +144,7 @@ describe("EOD — precheck workflow blocker is branch-scoped", () => {
   // branch via the referenced entity (savings_account, savings_hold,
   // fixed_deposit) so a pending workflow in Branch A does not block
   // Branch B's day-end.
-  const migrations = require("node:fs")
-    .readdirSync(resolve(process.cwd(), "supabase/migrations"))
+  const migrations = readdirSync(resolve(process.cwd(), "supabase/migrations"))
     .filter((f: string) => f.endsWith(".sql"))
     .sort();
   const latestWithPrecheck = [...migrations]
@@ -163,8 +162,7 @@ describe("EOD — precheck workflow blocker is branch-scoped", () => {
 });
 
 describe("EOD — snapshot RPC matches hardened schema", () => {
-  const migrations = require("node:fs")
-    .readdirSync(resolve(process.cwd(), "supabase/migrations"))
+  const migrations = readdirSync(resolve(process.cwd(), "supabase/migrations"))
     .filter((f: string) => f.endsWith(".sql"))
     .sort();
   const latestWithSnapshots = [...migrations]
