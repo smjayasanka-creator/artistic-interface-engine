@@ -1156,7 +1156,12 @@ function BranchesTab() {
             <div className="truncate font-medium" title={b.name}>
               {b.name}
             </div>
-            <div className="text-muted-foreground truncate">{b.region ?? "—"}</div>
+            <div className="text-muted-foreground truncate">
+              {(() => {
+                const r = (data.regions ?? []).find((x: any) => x.id === b.region_id);
+                return r ? `${r.code} — ${r.name}` : (b.region ?? "—");
+              })()}
+            </div>
             <div className="font-mono text-[11px]">{b.currency}</div>
             <div className="text-muted-foreground text-[11px]">{shortDate(b.opened_on)}</div>
             <div className="text-right">
