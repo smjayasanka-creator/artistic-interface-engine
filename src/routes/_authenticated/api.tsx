@@ -124,6 +124,7 @@ function ApiHub() {
       {tab === "explorer" && <ExplorerTab env={env} />}
       {tab === "catalogue" && <ApiDataCatalogue />}
       {tab === "mapping" && <ApiMappingStudio env={env} />}
+      {tab === "webhooks" && <ApiWebhooksTab env={env} />}
       {tab === "keys" && <KeysTab env={env} />}
       {tab === "logs" && <LogsTab env={env} />}
     </div>
