@@ -162,3 +162,33 @@ describe("EOD — precheck workflow blocker is branch-scoped", () => {
   });
 });
 
+describe("EOD — snapshot RPC matches hardened schema", () => {
+  const migrations = require("node:fs")
+    .readdirSync(resolve(process.cwd(), "supabase/migrations"))
+    .filter((f: string) => f.endsWith(".sql"))
+    .sort();
+  const latestWithSnapshots = [...migrations]
+    .reverse()
+    .find((f: string) =>
+      read(`supabase/migrations/${f}`).includes("CREATE OR REPLACE FUNCTION public.eod_write_snapshots"),
+    );
+
+  it("uses current accrual, repayment, EOD balance, and journal column names", () => {
+    expect(latestWithSnapshots).toBeTruthy();
+    const sql = read(`supabase/migrations/${latestWithSnapshots}`);
+
+    expect(sql).toContain("fa.daily_amount");
+    expect(sql).toContain("la.daily_amount");
+    expect(sql).toContain("r.received_at::date");
+    expect(sql).toContain("r.allocated_principal");
+    expect(sql).toContain("opening_principal");
+    expect(sql).toContain("closing_principal");
+    expect(sql).toContain("debit_total");
+    expect(sql).toContain("credit_total");
+    expect(sql).toContain("je.entry_date");
+    expect(sql).not.toContain("la.amount");
+    expect(sql).not.toContain("r.repayment_date");
+    expect(sql).not.toContain("principal_outstanding");
+  });
+});
+
