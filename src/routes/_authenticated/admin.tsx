@@ -1033,12 +1033,20 @@ function BranchesTab() {
                 className={inputCls + " font-mono"}
               />
             </FormField>
-            <FormField label="Region" span={12} hint="Optional">
-              <input
-                value={form.region}
-                onChange={(e) => setForm({ ...form, region: e.target.value })}
-                className={inputCls}
-              />
+            <FormField label="Region" span={12} hint="Manage list in Regions tab">
+              <select
+                value={form.region_id}
+                onChange={(e) => setForm({ ...form, region_id: e.target.value })}
+                className={selectCls}
+              >
+                <option value="">— None —</option>
+                {(data.regions ?? []).map((r: any) => (
+                  <option key={r.id} value={r.id} disabled={!r.active}>
+                    {r.code} — {r.name}
+                    {!r.active ? " (inactive)" : ""}
+                  </option>
+                ))}
+              </select>
             </FormField>
             <FormField label="Branch prefix" span={3} hint="Used in transaction numbers">
               <input
