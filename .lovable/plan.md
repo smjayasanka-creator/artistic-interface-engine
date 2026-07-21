@@ -1,124 +1,151 @@
-# Savings Domain Overhaul — Phased Plan
 
-This is large. I'll ship in sequenced phases, each independently buildable, tested, and reviewable. Every financial write becomes an atomic `SECURITY DEFINER` RPC. No existing modules touched outside Savings + shared helpers.
+# Day-End Orchestration — Corrective Plan
 
-## Guiding rules (apply to every phase)
+The project currently has two divergent day-end paths (manual JS orchestrator vs. legacy `eod_close` RPC hit by cron). This plan collapses them into one, closes the safety gaps in the numbered list, and adds regression coverage.
 
-- Reuse: `savings.functions.ts`, `lifecycle.functions.ts`, `eod.functions.ts`, `api-ledger.server.ts`, `PaymentMethodPicker`, `clock-server`, audit helpers, existing RLS + `has_permission(_user_id,_permission,_company_id)`.
-- Every financial RPC: `SECURITY DEFINER`, `SET search_path=public`, `SELECT ... FOR UPDATE`, numeric math, permission + company/branch check, idempotency key, subledger insert + balance update + balanced GL + audit — all in one transaction; structured JSON receipt.
-- RLS: revoke direct INSERT/UPDATE from `authenticated` on `savings_transaction`, `savings_account.balance/available_balance/status`, new hold/block/accrual/WHT tables. Only RPCs write.
-- Forward-only migrations. Preserve current design system (Card, FormGrid, PaymentMethodPicker, tokens). No visual rewrite.
+## 1. Canonical orchestrator
 
----
+Create one server module `src/lib/eod-orchestrator.server.ts` that owns the full day-end lifecycle for a `(branch_id, business_date)`:
 
-## Phase 1 — Foundations (schema + permissions + RPC skeleton)
+```text
+pre-check → (pending_approval) → approve → in_progress
+        → run steps sequentially (resumable)
+        → validate trial balance
+        → write snapshots
+        → advance eod_locked_through
+        → completed | failed
+```
 
-**Migrations**
-- Extend `savings_account`: `available_balance numeric`, `uncleared_balance numeric`, `status` enum add `pending_funding`, `debit_blocked`, `credit_blocked`, `fully_blocked`; product/rate/fee/mandate snapshot columns; `opened_by`, `approved_by`.
-- New tables (all with GRANTs + RLS scoped to `company_id` via `has_permission`):
-  - `savings_account_holder` (role: primary/joint/guardian/minor, ownership_pct, signing_rule_ref)
-  - `savings_account_mandate` (signing rule: sole/any_one/all/any_two/custom, rule_json)
-  - `savings_account_nominee` (name, relation, pct — CHECK sum=100 via trigger)
-  - `savings_hold` (type: hold/lien/debit_block/credit_block/full/legal/aml/deceased/customer/loan_lien/admin/temp, amount, expires_at, active, reason_code, doc_ref, created/approved/released_by, released_reason)
-  - `savings_interest_accrual` (account_id, accrual_date, eligible_balance, rate, day_count, gross_interest, unique(account_id,accrual_date))
-  - `savings_interest_posting` (period_start, period_end, gross, wht, net, rule_id, gl_entry_id)
-  - `savings_wht_rule` (jurisdiction, tax_type, resident, entity_type, product_id nullable, effective_from/to, rate, threshold, exemption_type, exemption_ref, exemption_expiry, wht_gl_account_id)
-  - `savings_loan_mandate` (see phase 5)
-  - `savings_auto_collection_run` (company_id, business_date, window: morning/afternoon, started_at, completed_at, status, counts jsonb, unique(company_id,business_date,window))
-  - `savings_auto_collection_result` (run_id, mandate_id, status, collected numeric, reason, loan_repayment_id, savings_txn_id)
-- Permissions inserted into `permission` table: `savings.accounts.open|view`, `savings.deposit.post`, `savings.withdraw.post`, `savings.transfer.post`, `savings.block.create|approve|release`, `savings.mandate.manage`, `savings.automation.run`, `savings.interest.process`, `savings.wht.manage`, `savings.transaction.reverse|approve`, `savings.close`, `savings.admin`.
-- RLS lockdown: revoke `INSERT,UPDATE` on `savings_transaction` from `authenticated`; column-level revoke on `savings_account.balance/available_balance/status`; only `service_role` + RPCs write.
+Both entry points call it:
 
-**RPC skeletons** (bodies filled per later phase but signatures ship now):
-`open_savings_account`, `post_savings_deposit`, `post_savings_withdrawal`, `post_savings_transfer`, `create_savings_hold`, `release_savings_hold`, `reverse_savings_transaction`, `accrue_savings_interest_daily`, `capitalize_savings_interest`, `execute_savings_loan_mandate`.
+- Manual: `runBranchEod({ branchId, businessDate, actor: 'user', userId })` from the existing `runCompanyEod` server function.
+- Scheduled: `/api/public/hooks/eod-close` calls the same orchestrator with `actor: 'system'` and a signed cron token.
 
----
+The legacy `eod_close` Postgres function becomes a thin compatibility wrapper that raises `deprecated` if called outside the new hook, so no other caller can silently use the old path.
 
-## Phase 2 — Guided account opening (4-step wizard)
+## 2. eod_run lifecycle
 
-- Route redesign: `/savings/new` becomes stepper (Customer → Product/Branch → Ownership/Nominee/Mandate → Review). Reuse `ClientSearchBar`; block when KYC/CDD/screening incomplete (query `client_risk_assessment`, `screening_config`). Deep-link to `/clients/$id`.
-- Product step reads effective ALCO/product rate; override needs `savings.admin` + approval flag.
-- Ownership step writes normalized `savings_account_holder`, `savings_account_nominee`, `savings_account_mandate`.
-- Review calls `open_savings_account` RPC (atomic account# gen + snapshots + audit). If min deposit required → status `pending_funding`; funding via canonical deposit route activates account.
+One row per `(branch_id, business_date)` (existing unique index). Valid transitions enforced by a Postgres trigger `eod_run_transition_guard`:
 
----
+```text
+NULL              → pending_approval | in_progress
+pending_approval  → in_progress | failed
+in_progress       → completed | failed
+failed            → in_progress   (resume/retry)
+completed         → (terminal)
+```
 
-## Phase 3 — Deposit & Withdrawal transactions
+Resume/retry re-enters `in_progress` on the same row; steps already `completed` are skipped, `failed`/`pending` steps re-run. No more "reject if run exists".
 
-- New route `/transactions/savings-deposit` (rename FD tiles to "Fixed Deposit Receipt" for clarity).
-- Deposit UI: account picker, business date from server, amount + confirm, `PaymentMethodPicker`, depositor name, source-of-funds when > threshold, uncleared-cheque toggle, idempotency key, confirm modal, receipt.
-- Rework `/transactions/savings-withdrawal` with confirm-amount, identity/mandate check, teller/branch, charges preview, limits + maker-checker threshold, receipt.
-- Available balance formula in `post_savings_withdrawal` RPC: `ledger − active holds − uncleared − min_required`.
-- All posting through RPCs; UI never writes `savings_transaction` directly.
+## 3. Steps + authorization
 
----
+Steps executed in order, each recorded in `eod_step_log` with `status`, `error`, `duration_ms`, `attempts`:
 
-## Phase 4 — Account Controls (holds & blocks)
+1. `precheck` (blocking checks — see §4)
+2. `loan_accrual` — call existing `record_loan_accrual` RPC per active loan
+3. `loan_penalty_par` — penalty posting + PAR/NPA bucket update
+4. `fd_accrual` — `principal × (annualRatePct / 100) ÷ dayCount` (fix requirement 12)
+5. `fd_maturity` — call existing FD maturity RPC
+6. `savings_interest_accrual` — call `run_savings_interest_accrual`
+7. `savings_capitalization` — call `run_savings_interest_capitalization` (period-end only)
+8. `gl_post` — flush any pending journals from the day
+9. `trial_balance_check` — sum debits/credits, fail if `|Δ| > tolerance`
+10. `snapshots` — write `savings_eod_balance`, `fd_eod_balance`, `loan_eod_balance`, `gl_eod_balance`
+11. `lock_branch` — advance `branch.eod_locked_through` (never backwards, sequential dates only)
 
-- New route `/savings/controls` + `/savings/$id` "Holds and Blocks" tab.
-- Maker creates via `create_savings_hold`; approver via `approve_savings_hold`; release via `release_savings_hold` (never delete). Prominent banner on account detail + transaction screens.
+`eod_record_step`, `eod_finalize`, `eod_save_reports` become `SECURITY DEFINER` and reject non-orchestrator callers via a session GUC (`app.eod_orchestrator = 'on'`) set only inside the orchestrator transaction. Ordinary users lose direct EXECUTE.
 
----
+## 4. Blocking pre-checks (all hard fails)
 
-## Phase 5 — Loan Repayment Mandates + twice-daily automation
+- Any teller/till still open for the branch on that date
+- Unresolved teller cash variance
+- Pending workflow instances tied to that branch (loan/savings approvals, hold releases)
+- Unposted journals or incomplete disbursements
+- Prior business date not yet closed (sequential)
+- Business date is not in the future (company timezone)
 
-- Route `/savings/mandates` + tab on `/loans/$id`. `savings_loan_mandate` with priority, cap per run, min protected balance, consent ref, morning/afternoon times, timezone.
-- Scheduler: pg_cron jobs per company (from `company.timezone`) call new TSS route `POST /api/public/hooks/savings-auto-collection` with anon apikey. Route derives current business date + window, inserts `savings_auto_collection_run` (unique key = exactly-once), loops eligible mandates calling `execute_savings_loan_mandate` RPC. RPC locks account+loan+installments, computes arrears via existing repayment allocator, deducts `min(arrears, cap, available)`, calls canonical `record_repayment` internally, links savings debit ↔ loan repayment ↔ GL, records result.
-- Admin dashboard tile: runs, successes, partials, insufficient, blocked, totals, manual retry button (`savings.automation.run`).
+Warnings become errors — no more `skipped` on real failures.
 
----
+## 5. Teller / cashier closing
 
-## Phase 6 — Interest accrual, capitalization, WHT/AIT
+New table `teller_close`:
 
-- Product admin gains: basis, day-count, min-earn balance, accrual freq, cap freq, rounding, dormant treatment, expense GL, liability GL.
-- Admin route `/admin/savings/wht` for effective-dated `savings_wht_rule` (maker-checker).
-- EOD step calls `accrue_savings_interest_daily` per account (idempotent). Capitalization job (per product freq) calls `capitalize_savings_interest`: gross → resolve rule → WHT → net; posts DR interest expense / CR WHT payable / CR deposit liability; writes `savings_interest_posting`, generates customer tax certificate rows.
-- Reports: accrual, capitalization, WHT deduction with IRD export template (configurable).
+```text
+teller_close(
+  id, company_id, branch_id, business_date, teller_id,
+  expected_cash, counted_cash, variance,
+  denominations jsonb,     -- [{denom: 5000, count: 12}, ...]
+  remarks, status (open|submitted|approved|rejected),
+  submitted_by, submitted_at, approved_by, approved_at
+)
+```
 
----
+RPCs `open_teller_till`, `submit_teller_close`, `approve_teller_close`. EOD refuses to run unless every teller for the branch has an `approved` close for the business date.
 
-## Phase 7 — Reversals, transfers, adjustments, standing orders
+## 6. Automatic scheduling
 
-- `post_savings_transfer` RPC (same-customer/cross-customer configurable).
-- `reverse_savings_transaction` RPC (linked reversal txn + reversed GL, never edit/delete; dedupe check).
-- Simple adjustments (credit/debit) with approval.
-- Standing orders table + daily job hook (reuse scheduler).
-- Approval queue route for pending large txns/reversals/blocks.
+Rewrite the pg_cron dispatcher to run every 15 min and, for each company:
 
----
+- Skip if `company.auto_eod_enabled = false`.
+- Compute the company-local time using `company.timezone` (not UTC).
+- If local time ≥ `company.auto_eod_time` and today's local previous-business-date run hasn't completed:
+  - For each branch with `branch.auto_eod = true`, invoke the hook once (idempotent).
 
-## Phase 8 — Account detail UI + navigation + reports
+Business date = previous calendar day in `company.timezone`.
 
-- `/savings/$id` with tabs: Overview, Transactions, Holds/Blocks, Loan Mandates, Interest/WHT, Holders/Nominees, Passbook/Documents, Audit.
-- Sidebar restructure per spec (Savings / Transactions / Admin groupings).
-- Reports added under Custom Reports registry: register, daily deposits/withdrawals, teller, savings TB reconciliation, accrual, WHT, dormant/unclaimed, blocked accounts, auto-deduction results, failed automations, reversed txns, large txns, passbook stock.
+## 7. Snapshot correctness
 
----
+Loan snapshot uses `allocated_principal` from `repayment` (not gross paid). On disbursement date, opening principal is 0; disbursed amount is added once via the disbursement journal, not counted twice.
 
-## Phase 9 — Tests + CI
+## 8. UI
 
-- Vitest DB integration tests per section 13 of the spec (opening, KYC, joint validation, activation, deposit variants, available-balance, holds, concurrent withdrawals, idempotency, GL rollback, mandate validation, exactly-once scheduler, partial deduction, insufficient, interest math, effective WHT, reversal, cross-company reject, maker-checker, subledger-to-GL recon).
-- Regression prompt file appended.
-- CI must pass lint + typecheck + tests + build.
+Rebuild the Admin → Day End tab (and remove the `/eod` redirect stub):
 
----
+- Branch list with current status, locked-through, last run.
+- Pre-check panel (each check pass/fail with reason).
+- Pending approval banner + Approve/Reject (maker-checker preserved).
+- Per-step progress list with duration and full error text.
+- **Retry failed step** and **Resume run** buttons.
+- Company-wide "Run day-end" (unchanged UX, new backend).
+- Audit history (initiator, approver, timestamps, transitions).
 
-## Delivery cadence
+## 9. Tests
 
-I'll implement **Phase 1 first** (single migration + permission seeds + RPC signatures + RLS lockdown), verify build and no regressions, then proceed phase-by-phase, checking in after each. This keeps each change reviewable and lets you re-prioritize between phases (e.g. push interest/WHT ahead of transfers).
+New `src/lib/__tests__/eod-orchestrator.test.ts` covering:
 
-## Technical notes (may skip if non-technical)
+manual run · scheduled run parity · maker-checker enforced · open till blocks · unbalanced TB blocks · failed-step resume · idempotent re-run · snapshot rows exist for all four tables · GL balance within tolerance · timezone resolution (non-UTC company) · sequential date enforcement · `eod_locked_through` never goes backwards · FD accrual formula · loan snapshot uses `allocated_principal`.
 
-- Uncleared cheque handling: `savings_transaction.clearing_status` + `uncleared_balance` column; withdrawal RPC excludes uncleared.
-- Idempotency: `savings_transaction.idempotency_key` UNIQUE per company; RPCs return existing receipt on retry.
-- Timezone-correct scheduling: pg_cron in UTC, route resolves `company.timezone` → local window; `savings_auto_collection_run` unique(company,date,window) is the exactly-once gate.
-- Numeric everywhere (`numeric(20,4)` money, `numeric(9,6)` rates); no JS float in RPCs.
-- Snapshots stored on `savings_account` at open time so retroactive product/rate edits don't rewrite history.
+Plus a `regression-eod-defects.test.ts` with one guard per numbered requirement above.
 
-## Confirm before I start
+## Technical notes
 
-1. **Phase 1 begins with a migration that revokes direct INSERT/UPDATE on `savings_transaction`.** Existing UI paths that still insert directly will start failing until Phase 3 lands. OK to sequence that way, or should I keep old paths working via a transitional grant and revoke at Phase 3?
-2. Any regulatory constants you want me to seed as defaults (e.g. current LK WHT rate as effective-dated row) so reports aren't empty, or leave the table empty for you to configure?
-3. Morning/afternoon default collection times — 10:00 and 15:00 company-local unless you say otherwise.
+### Migrations (in order)
 
-Reply "go" (or with changes) and I'll ship Phase 1.
+1. `eod_run_transition_guard` trigger + drop stale statuses.
+2. `teller_close` table + RLS + RPCs.
+3. `eod_close` compatibility wrapper; revoke direct EXECUTE on `eod_record_step`/`eod_finalize`/`eod_save_reports` from `authenticated`; add `SECURITY DEFINER` variants gated by GUC.
+4. Fix `fd_accrual` legacy column reference (`amount` → `principal`) or drop if unused.
+5. Snapshot upsert functions using `allocated_principal`.
+
+### Code
+
+- `src/lib/eod-orchestrator.server.ts` — new; owns the state machine.
+- `src/lib/eod.functions.ts` — thin RPC/HTTP-facing wrappers; delegate to orchestrator.
+- `src/routes/api/public/hooks/eod-close.ts` — call orchestrator with system actor; verify cron signature.
+- `src/routes/api/public/hooks/eod-dispatch.ts` — new 15-min cron dispatcher, timezone-aware.
+- `src/components/mzizi/EodTab.tsx` — expanded UI per §8.
+- Delete `src/routes/_authenticated/eod.tsx` redirect stub, replace with real page or keep redirect to Admin tab (choose redirect to keep single source of truth).
+
+### Out of scope
+
+- No changes to loan/savings/FD business math beyond the FD-accrual fix and snapshot-source fix.
+- No changes to existing workflow engine internals (only new EOD workflow definitions if maker-checker needs one).
+
+## Rollout
+
+1. Migrations + orchestrator + tests (green build gate).
+2. Switch cron hook to orchestrator.
+3. Ship new UI.
+4. Remove/compat-wrap legacy `eod_close`.
+
+This is a large multi-file change. Approve the plan and I'll execute in that order.
