@@ -7,11 +7,12 @@
 import { createIsomorphicFn } from "@tanstack/react-start";
 
 const readOverrideHeader = createIsomorphicFn()
-  .client(() => null as string | null)
-  .server(() => {
-    // Dynamic require so the server-only module never enters the client graph.
+  .client((): string | null => null)
+  .server((): string | null => {
     try {
-      const mod = require("./clock-header.server") as typeof import("./clock-header.server");
+      const mod =
+        require("./clock-header.server") as typeof import("./clock-header.server");
+
       return mod.readDevNowHeader();
     } catch {
       return null;
@@ -20,10 +21,15 @@ const readOverrideHeader = createIsomorphicFn()
 
 export function serverNow(): Date {
   const override = readOverrideHeader();
+
   if (override) {
-    const d = new Date(override);
-    if (!isNaN(d.getTime())) return d;
+    const date = new Date(override);
+
+    if (!Number.isNaN(date.getTime())) {
+      return date;
+    }
   }
+
   return new Date();
 }
 
