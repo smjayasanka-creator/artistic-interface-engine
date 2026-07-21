@@ -924,6 +924,7 @@ function BranchesTab() {
     code: "",
     name: "",
     region: "",
+    region_id: "",
     currency: "KES",
     opened_on: "",
     branch_prefix: "",
