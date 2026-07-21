@@ -168,6 +168,14 @@ const SECTIONS: Section[] = [
     group: "general",
   },
   {
+    id: "regions",
+    label: "Regions",
+    desc: "Group branches into regions for reporting",
+    icon: Landmark,
+    accent: "from-teal-500/15 to-teal-500/0 text-teal-600",
+    group: "general",
+  },
+  {
     id: "staff",
     label: "Staff",
     desc: "Employees, roles & invitations",
