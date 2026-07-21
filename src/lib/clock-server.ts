@@ -3,18 +3,30 @@
 //
 // Only READ-side "today" checks should use this. Audit timestamps
 // (approved_at, closed_at, created_at) should stay on real wall-clock time.
+//
+// Uses createIsomorphicFn so this module is safe to import from
+// `.functions.ts` files whose top-level imports ship to the client bundle.
 
-import { getRequestHeader } from "@tanstack/react-start/server";
+import { createIsomorphicFn } from "@tanstack/react-start";
+
+const readOverrideHeader = createIsomorphicFn()
+  .client(() => null as string | null)
+  .server(() => {
+    try {
+      // Dynamic require keeps the server-only module out of the client graph.
+      const { getRequestHeader } =
+        require("@tanstack/react-start/server") as typeof import("@tanstack/react-start/server");
+      return getRequestHeader("x-dev-now") ?? null;
+    } catch {
+      return null;
+    }
+  });
 
 export function serverNow(): Date {
-  try {
-    const override = getRequestHeader("x-dev-now");
-    if (override) {
-      const d = new Date(override);
-      if (!isNaN(d.getTime())) return d;
-    }
-  } catch {
-    // outside request context — fall through
+  const override = readOverrideHeader();
+  if (override) {
+    const d = new Date(override);
+    if (!isNaN(d.getTime())) return d;
   }
   return new Date();
 }
