@@ -516,6 +516,7 @@ function RunDetailModal({
   approveFn,
   runAllFn,
   runStepFn,
+  resumeFn,
   branches,
 }: {
   runId: string;
@@ -524,6 +525,7 @@ function RunDetailModal({
   approveFn: ReturnType<typeof useServerFn<typeof approveEod>>;
   runAllFn: ReturnType<typeof useServerFn<typeof runAllSteps>>;
   runStepFn: ReturnType<typeof useServerFn<typeof runStep>>;
+  resumeFn: ReturnType<typeof useServerFn<typeof resumeEod>>;
   branches: Array<{ id: string; name: string; eod_locked_through: string | null }>;
 }) {
   const qc = useQueryClient();
@@ -557,11 +559,24 @@ function RunDetailModal({
 
   const runAllM = useMutation({
     mutationFn: () => runAllFn({ data: { run_id: runId } }),
-    onSuccess: () => {
-      toast.success("Steps executed");
+    onSuccess: (r: any) => {
+      if (r && r.ok === false && r.error) toast.error(r.error);
+      else if (r?.failed_step) toast.error(`${r.failed_step}: ${r.error ?? "failed"}`);
+      else if (r?.executed === false) toast.info("No pending steps to run.");
+      else toast.success("Steps executed");
       refetch();
       qc.invalidateQueries({ queryKey: ["eod-runs-all"] });
       qc.invalidateQueries({ queryKey: ["eod-branches"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const resumeM = useMutation({
+    mutationFn: () => resumeFn({ data: { run_id: runId } }),
+    onSuccess: () => {
+      toast.success("Resume requested — awaiting second-officer approval");
+      refetch();
+      qc.invalidateQueries({ queryKey: ["eod-runs-all"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
