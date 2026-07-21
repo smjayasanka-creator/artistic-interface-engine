@@ -890,13 +890,86 @@ export const getAdmin = createServerFn({ method: "GET" })
       .from("v_loan_outstanding")
       .select("outstanding_principal");
     const portfolio = (outs ?? []).reduce((s, r) => s + Number(r.outstanding_principal ?? 0), 0);
+    const { data: regions } = await supabase
+      .from("region")
+      .select("id, code, name, active, created_at")
+      .order("code");
     return {
       branch,
       branches: branches ?? [],
       staff: staff ?? [],
       activeClients: activeClients ?? 0,
       portfolio,
+      regions: regions ?? [],
     };
+  });
+
+/* ---------------- Regions ---------------- */
+
+export const listRegions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("region")
+      .select("id, code, name, active, created_at")
+      .order("code");
+    if (error) throw error;
+    return data ?? [];
+  });
+
+export const createRegion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { code: string; name: string; active?: boolean }) =>
+    z
+      .object({
+        code: z.string().trim().min(1).max(40),
+        name: z.string().trim().min(2).max(80),
+        active: z.boolean().optional(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can create regions");
+    const { data: cid } = await supabase.rpc("current_company_id");
+    if (!cid) throw new Error("No active company");
+    const { data: created, error } = await supabase
+      .from("region")
+      .insert({
+        company_id: cid,
+        code: data.code.toUpperCase(),
+        name: data.name,
+        active: data.active ?? true,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  });
+
+export const updateRegion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; code: string; name: string; active: boolean }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        code: z.string().trim().min(1).max(40),
+        name: z.string().trim().min(2).max(80),
+        active: z.boolean(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admins can edit regions");
+    const { error } = await supabase
+      .from("region")
+      .update({ code: data.code.toUpperCase(), name: data.name, active: data.active })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
   });
 
 export const createBranch = createServerFn({ method: "POST" })
