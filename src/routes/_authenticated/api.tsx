@@ -970,7 +970,6 @@ function CopyBtn({ value }: { value: string }) {
   );
 }
 
-// Re-export for the pre-existing endpoint-spec regression test so it keeps
-// pinning the registry as endpoints come and go.
+// Re-exported for tests: keeps the contract registry pinned as endpoints
+// come and go.
 export { API_CONTRACTS as ENDPOINTS };
-export type { ApiEnv };
