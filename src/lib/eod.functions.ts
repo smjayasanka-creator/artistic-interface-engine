@@ -407,7 +407,9 @@ type Ctx = {
   company_id: string;
   branch_id: string;
   business_date: string;
+  actor_id: string;
 };
+
 
 async function stepLoanAccrual(ctx: Ctx) {
   const { supabaseAdmin, branch_id, business_date, company_id } = ctx;
