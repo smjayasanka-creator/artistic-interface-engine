@@ -32,6 +32,7 @@ import {
 } from "@/lib/api-contract";
 import { ApiDataCatalogue } from "@/components/mzizi/ApiDataCatalogue";
 import { ApiMappingStudio } from "@/components/mzizi/ApiMappingStudio";
+import { ApiWebhooksTab } from "@/components/mzizi/ApiWebhooksTab";
 
 // The registry ships resource/direction types; env is a UI-only union.
 type Env = "sandbox" | "production";
