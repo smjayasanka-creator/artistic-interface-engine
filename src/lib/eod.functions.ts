@@ -851,3 +851,54 @@ async function runStepInternal(context: any, run_id: string, step: StepKey) {
   }
   return { ok: !error, error, metrics };
 }
+
+// ---------- System / scheduled orchestrator entrypoint ----------
+// Runs a single step against a service-role Supabase client. Used by the
+// scheduled cron worker so manual (dual-controlled) and scheduled paths
+// share identical financial logic.
+export async function runOrchestratorStep(args: {
+  supabaseAdmin: any;
+  run_id: string;
+  company_id: string;
+  branch_id: string;
+  business_date: string;
+  step_key: StepKey;
+}): Promise<Record<string, any>> {
+  const { supabaseAdmin, run_id, step_key } = args;
+  await supabaseAdmin.rpc("eod_record_step" as any, {
+    _run_id: run_id,
+    _step_key: step_key,
+    _status: "processing",
+    _metrics: {} as any,
+    _error: null,
+  } as any);
+  const ctx: Ctx = {
+    supabaseAdmin,
+    run_id,
+    company_id: args.company_id,
+    branch_id: args.branch_id,
+    business_date: args.business_date,
+  };
+  let metrics: Record<string, any> = {};
+  switch (step_key) {
+    case "loan_accrual": metrics = await stepLoanAccrual(ctx); break;
+    case "fd_accrual": metrics = await stepFdAccrual(ctx); break;
+    case "penalty_charges": metrics = await stepPenaltyCharges(ctx); break;
+    case "par_npa": metrics = await stepParNpa(ctx); break;
+    case "fd_maturity": metrics = await stepFdMaturity(ctx); break;
+    case "savings_interest": metrics = await stepSavingsInterest(ctx); break;
+    case "gl_post": metrics = await stepGlPost(ctx); break;
+    case "trial_balance": metrics = await stepTrialBalance(ctx); break;
+    case "snapshots": metrics = await stepSnapshots(ctx); break;
+    case "reports": metrics = await stepReports(ctx); break;
+    case "rollover": metrics = await stepRollover(ctx); break;
+  }
+  await supabaseAdmin.rpc("eod_record_step" as any, {
+    _run_id: run_id,
+    _step_key: step_key,
+    _status: "completed",
+    _metrics: metrics as any,
+    _error: null,
+  } as any);
+  return metrics;
+}
