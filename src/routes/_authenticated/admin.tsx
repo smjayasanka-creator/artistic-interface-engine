@@ -87,6 +87,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 type Tab =
   | "settings"
   | "branches"
+  | "regions"
   | "staff"
   | "user_roles"
   | "products"
