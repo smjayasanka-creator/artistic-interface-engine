@@ -630,6 +630,67 @@ function endpointSpec(scope: string, method: string): EndpointSpec {
           },
         ],
       };
+    case "clients.create":
+      return {
+        headers: [
+          bearer,
+          contentType,
+          accept,
+          { ...idem, required: false, value: "client-onboard-2026-07-12-001" },
+        ],
+        idempotency:
+          "Optional but recommended. When supplied, repeated calls with the same key within 24h return the original client_id — the same customer is never onboarded twice, even if the origination channel retries.",
+        requestExample: {
+          first_name: "Nimal",
+          last_name: "Perera",
+          phone_country_code: "+94",
+          phone: "771234567",
+          national_id: "199012345678",
+          date_of_birth: "1990-05-14",
+          gender: "male",
+          address: "24 Galle Road, Colombo 03",
+          gn_division: "Kollupitiya",
+          divisional_secretariat: "Thimbirigasyaya",
+          district: "Colombo",
+          province: "Western",
+          email: "nimal.perera@example.com",
+          branch_id: "8d2f8017-1111-2222-3333-444455556666",
+          bank_accounts: [
+            {
+              bank_name: "Bank of Ceylon",
+              branch_name: "Colombo Fort",
+              account_no: "0011223344",
+              account_name: "Nimal Perera",
+              is_primary: true,
+            },
+          ],
+        },
+        responseStatus: "201 Created",
+        responseExample: {
+          status: "created",
+          client_id: "b1a2c3d4-e5f6-4789-a012-3456789abcde",
+          full_name: "Nimal Perera",
+          phone: "+94771234567",
+          national_id: "199012345678",
+          branch_id: "8d2f8017-1111-2222-3333-444455556666",
+          status_code: "active",
+          created_at: nowIso,
+        },
+        errors: [
+          ...COMMON_ERRORS,
+          {
+            code: 409,
+            error: "duplicate_client",
+            meaning:
+              "A client with the same `national_id` already exists in this company. Retrieve the existing client instead of retrying create.",
+          },
+          {
+            code: 422,
+            error: "branch_not_found",
+            meaning: "`branch_id` does not belong to this company or has been deactivated.",
+          },
+        ],
+      };
     default:
       // health
       return {
