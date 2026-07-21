@@ -505,7 +505,7 @@ async function stepFdAccrual(ctx: Ctx) {
   const { supabaseAdmin, branch_id, business_date } = ctx;
   const { data: deposits, error: dErr } = await supabaseAdmin
     .from("fixed_deposit")
-    .select("id, principal, rate_at_booking, value_date, maturity_date, day_count_basis")
+    .select("id, principal, rate_at_booking, value_date, maturity_date")
     .eq("branch_id", branch_id)
     .eq("status", "active");
   if (dErr) throw new Error(`FD accrual query: ${dErr.message}`);
