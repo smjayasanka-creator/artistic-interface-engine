@@ -86,9 +86,9 @@ export function SavingsAutoCollectionTab() {
     <Card>
       <CardTitle>Loan repayment auto-collection windows</CardTitle>
       <p className="text-[12px] text-muted-foreground -mt-1 mb-3">
-        The scheduler runs twice per business day and sweeps savings accounts to settle loan
-        arrears through active mandates. Times are interpreted in the company timezone unless
-        overridden below.
+        The scheduler runs twice per business day and sweeps savings accounts to settle loan arrears
+        through active mandates. Times are interpreted in the company timezone unless overridden
+        below.
       </p>
       <form
         onSubmit={(e) => {

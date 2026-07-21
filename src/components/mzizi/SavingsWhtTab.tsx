@@ -52,7 +52,6 @@ const EMPTY: Rule = {
   active: true,
 };
 
-
 export function SavingsWhtTab() {
   const qc = useQueryClient();
   const listFn = useServerFn(listWhtRules);
@@ -131,7 +130,9 @@ export function SavingsWhtTab() {
                   <td className="py-2 pr-2">{r.residency}</td>
                   <td className="py-2 pr-2">{r.entity_type}</td>
                   <td className="py-2 pr-2">{r.product?.name ?? "All"}</td>
-                  <td className="py-2 pr-2 text-right font-mono">{Number(r.rate_pct).toFixed(2)}%</td>
+                  <td className="py-2 pr-2 text-right font-mono">
+                    {Number(r.rate_pct).toFixed(2)}%
+                  </td>
                   <td className="py-2 pr-2 text-right font-mono">
                     {Number(r.threshold ?? 0).toLocaleString()}
                   </td>
@@ -263,14 +264,11 @@ export function SavingsWhtTab() {
                 </select>
               </FormField>
 
-
               <FormField label="Product" span={6} hint="Leave blank to apply to all products">
                 <select
                   className={selectCls}
                   value={editing.product_id ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, product_id: e.target.value || null })
-                  }
+                  onChange={(e) => setEditing({ ...editing, product_id: e.target.value || null })}
                 >
                   <option value="">All products</option>
                   {(products ?? []).map((p: any) => (
@@ -330,9 +328,7 @@ export function SavingsWhtTab() {
                   type="date"
                   className={inputCls}
                   value={editing.effective_to ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, effective_to: e.target.value || null })
-                  }
+                  onChange={(e) => setEditing({ ...editing, effective_to: e.target.value || null })}
                 />
               </FormField>
 
@@ -379,11 +375,7 @@ export function SavingsWhtTab() {
             </FormGrid>
 
             <FormActions>
-              <button
-                type="button"
-                className={btnSecondaryCls}
-                onClick={() => setEditing(null)}
-              >
+              <button type="button" className={btnSecondaryCls} onClick={() => setEditing(null)}>
                 Cancel
               </button>
               <button type="submit" className={btnPrimaryCls} disabled={save.isPending}>

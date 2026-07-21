@@ -991,7 +991,6 @@ export async function processFdMaturityCore(
 ): Promise<any> {
   const userId = data.userId;
   {
-
     const onDate = data.on_date ?? serverToday();
 
     const { data: fd } = await supabase
@@ -1181,7 +1180,6 @@ export async function processFdMaturityCore(
     return { ok: true, action: "renewed", new_id: newFd.id, new_certificate: certNo };
   }
 }
-
 
 // ──────────────────────────────────────────────────────────────────────────
 // DAILY MAINTENANCE (manually triggered from UI; wire cron later)

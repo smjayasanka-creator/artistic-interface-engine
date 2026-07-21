@@ -136,8 +136,7 @@ function NewSavings() {
   const [nominees, setNominees] = useState<Nominee[]>([]);
 
   // Step 3
-  const [signingRule, setSigningRule] =
-    useState<(typeof SIGNING_RULES)[number]["v"]>("single");
+  const [signingRule, setSigningRule] = useState<(typeof SIGNING_RULES)[number]["v"]>("single");
   const [minSignatories, setMinSignatories] = useState<number | "">("");
   const [statementPref, setStatementPref] = useState("monthly");
   const [commPref, setCommPref] = useState("email");
@@ -660,9 +659,7 @@ function NewSavings() {
               <div className="grid grid-cols-2 gap-y-1 gap-x-4 max-w-2xl">
                 <div>Customer</div>
                 <div className="text-foreground">
-                  {selectedClient
-                    ? selectedClient.full_name
-                    : "—"}
+                  {selectedClient ? selectedClient.full_name : "—"}
                 </div>
                 <div>Product</div>
                 <div className="text-foreground">

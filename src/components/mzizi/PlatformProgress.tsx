@@ -14,10 +14,7 @@ import {
 import { Card, CardTitle } from "@/components/mzizi/Card";
 import { cn } from "@/lib/utils";
 import { shortDate } from "@/lib/format";
-import {
-  getPlatformProgress,
-  type ProgressTab,
-} from "@/lib/platform-progress.functions";
+import { getPlatformProgress, type ProgressTab } from "@/lib/platform-progress.functions";
 
 type Props = { tab: ProgressTab };
 
@@ -101,10 +98,7 @@ export function PlatformProgress({ tab }: Props) {
             </div>
             <div className="text-[18px] font-semibold">{hardPct}%</div>
             <div className="h-1.5 rounded-full bg-muted mt-1.5 overflow-hidden">
-              <div
-                className="h-full bg-emerald-500"
-                style={{ width: `${hardPct}%` }}
-              />
+              <div className="h-full bg-emerald-500" style={{ width: `${hardPct}%` }} />
             </div>
             <div className="text-[11px] text-muted-foreground mt-1">
               {hard.done} of {hard.total} items complete in scoped tiers

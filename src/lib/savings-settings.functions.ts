@@ -47,7 +47,6 @@ const whtSchema = z
     path: ["effective_to"],
   });
 
-
 export const upsertWhtRule = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => whtSchema.parse(d))

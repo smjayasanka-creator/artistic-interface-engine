@@ -314,22 +314,25 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: acct, error } = await supabase.rpc("open_savings_account" as any, {
-      _client_id: data.client_id,
-      _branch_id: data.branch_id,
-      _product_id: data.product_id,
-      _opening_deposit: Number(data.opening_deposit),
-      _channel: data.channel ?? "branch",
-      _external_ref: data.external_ref ?? null,
-      _narration: data.narration ?? null,
-      _statement_preference: data.statement_preference ?? null,
-      _communication_preference: data.communication_preference ?? null,
-      _special_instructions: data.special_instructions ?? null,
-      _holders: (data.holders ?? []) as any,
-      _nominees: (data.nominees ?? []) as any,
-      _mandate: (data.mandate ?? null) as any,
-      _idempotency_key: data.external_ref ?? null,
-    } as any);
+    const { data: acct, error } = await supabase.rpc(
+      "open_savings_account" as any,
+      {
+        _client_id: data.client_id,
+        _branch_id: data.branch_id,
+        _product_id: data.product_id,
+        _opening_deposit: Number(data.opening_deposit),
+        _channel: data.channel ?? "branch",
+        _external_ref: data.external_ref ?? null,
+        _narration: data.narration ?? null,
+        _statement_preference: data.statement_preference ?? null,
+        _communication_preference: data.communication_preference ?? null,
+        _special_instructions: data.special_instructions ?? null,
+        _holders: (data.holders ?? []) as any,
+        _nominees: (data.nominees ?? []) as any,
+        _mandate: (data.mandate ?? null) as any,
+        _idempotency_key: data.external_ref ?? null,
+      } as any,
+    );
     if (error) throw new Error(error.message);
     return acct;
   });
@@ -452,20 +455,21 @@ export const activateSavingsAccount = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: result, error } = await supabase.rpc("activate_savings_account" as any, {
-      _account_id: data.account_id,
-      _opening_deposit: data.opening_deposit ?? null,
-      _payment_method: data.payment_method ?? null,
-      _payment_details: (data.payment_details ?? null) as any,
-      _channel: data.channel ?? "branch",
-      _external_ref: data.external_ref ?? null,
-      _idempotency_key: data.idempotency_key ?? null,
-    } as any);
+    const { data: result, error } = await supabase.rpc(
+      "activate_savings_account" as any,
+      {
+        _account_id: data.account_id,
+        _opening_deposit: data.opening_deposit ?? null,
+        _payment_method: data.payment_method ?? null,
+        _payment_details: (data.payment_details ?? null) as any,
+        _channel: data.channel ?? "branch",
+        _external_ref: data.external_ref ?? null,
+        _idempotency_key: data.idempotency_key ?? null,
+      } as any,
+    );
     if (error) throw new Error(error.message);
     return result;
   });
-
-
 
 export const postSavingsTransaction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -549,7 +553,6 @@ export const reverseSavingsTransaction = createServerFn({ method: "POST" })
     return { reversal_txn_id: newId };
   });
 
-
 export const closeSavingsAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -570,13 +573,16 @@ export const closeSavingsAccount = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: closed, error } = await supabase.rpc("close_savings_account" as any, {
-      _account_id: data.account_id,
-      _reason: data.reason,
-      _payout_channel: data.payout_channel ?? "branch",
-      _external_ref: data.external_ref ?? null,
-      _idempotency_key: null,
-    } as any);
+    const { data: closed, error } = await supabase.rpc(
+      "close_savings_account" as any,
+      {
+        _account_id: data.account_id,
+        _reason: data.reason,
+        _payout_channel: data.payout_channel ?? "branch",
+        _external_ref: data.external_ref ?? null,
+        _idempotency_key: null,
+      } as any,
+    );
     if (error) throw new Error(error.message);
     return closed;
   });
@@ -901,11 +907,14 @@ export const requestSavingsHoldRelease = createServerFn({ method: "POST" })
       .single();
     if (iErr) throw iErr;
 
-    const { error: rErr } = await supabase.rpc("request_savings_hold_release" as any, {
-      _hold_id: data.hold_id,
-      _instance_id: (inst as any).id,
-      _reason: data.reason,
-    } as any);
+    const { error: rErr } = await supabase.rpc(
+      "request_savings_hold_release" as any,
+      {
+        _hold_id: data.hold_id,
+        _instance_id: (inst as any).id,
+        _reason: data.reason,
+      } as any,
+    );
     if (rErr) throw new Error(rErr.message);
     return { ok: true, instance_id: (inst as any).id };
   });
@@ -1065,7 +1074,10 @@ export const setSavingsLoanMandateStatus = createServerFn({ method: "POST" })
 export const listSavingsAutoCollectionRuns = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ limit: z.number().int().min(1).max(200).optional() }).partial().parse(d ?? {}),
+    z
+      .object({ limit: z.number().int().min(1).max(200).optional() })
+      .partial()
+      .parse(d ?? {}),
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
@@ -1112,14 +1124,20 @@ export const triggerSavingsAutoCollection = createServerFn({ method: "POST" })
     if (cErr) throw cErr;
     if (!cid) throw new Error("No active company");
     // Only company admin or automation.run permission may manually trigger.
-    const { data: allowed } = await supabase.rpc("has_permission" as any, {
-      _user_id: (context as any).userId,
-      _code: "savings.automation.run",
-      _company_id: cid,
-    } as any);
-    const { data: isAdmin } = await supabase.rpc("is_company_admin" as any, {
-      _company_id: cid,
-    } as any);
+    const { data: allowed } = await supabase.rpc(
+      "has_permission" as any,
+      {
+        _user_id: (context as any).userId,
+        _code: "savings.automation.run",
+        _company_id: cid,
+      } as any,
+    );
+    const { data: isAdmin } = await supabase.rpc(
+      "is_company_admin" as any,
+      {
+        _company_id: cid,
+      } as any,
+    );
     if (!allowed && !isAdmin) throw new Error("Not authorized to run auto-collection");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: result, error } = await supabaseAdmin.rpc("run_savings_auto_collection", {
@@ -1136,17 +1154,21 @@ export const triggerSavingsAutoCollection = createServerFn({ method: "POST" })
 export const listSavingsAccruals = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { account_id?: string; from?: string; to?: string; limit?: number } = {}) =>
-    z.object({
-      account_id: z.string().uuid().optional(),
-      from: z.string().optional(),
-      to: z.string().optional(),
-      limit: z.number().int().min(1).max(500).default(200),
-    }).parse(d),
+    z
+      .object({
+        account_id: z.string().uuid().optional(),
+        from: z.string().optional(),
+        to: z.string().optional(),
+        limit: z.number().int().min(1).max(500).default(200),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
     let q = context.supabase
       .from("savings_interest_accrual")
-      .select("id, account_id, accrual_date, eligible_balance, rate_pct, day_count, gross_interest, created_at")
+      .select(
+        "id, account_id, accrual_date, eligible_balance, rate_pct, day_count, gross_interest, created_at",
+      )
       .order("accrual_date", { ascending: false })
       .limit(data.limit);
     if (data.account_id) q = q.eq("account_id", data.account_id);
@@ -1160,15 +1182,19 @@ export const listSavingsAccruals = createServerFn({ method: "GET" })
 export const listSavingsPostings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { account_id?: string; limit?: number } = {}) =>
-    z.object({
-      account_id: z.string().uuid().optional(),
-      limit: z.number().int().min(1).max(500).default(200),
-    }).parse(d),
+    z
+      .object({
+        account_id: z.string().uuid().optional(),
+        limit: z.number().int().min(1).max(500).default(200),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
     let q = context.supabase
       .from("savings_interest_posting")
-      .select("id, account_id, period_start, period_end, gross_interest, wht_amount, net_interest, wht_rule_id, gl_entry_id, created_at")
+      .select(
+        "id, account_id, period_start, period_end, gross_interest, wht_amount, net_interest, wht_rule_id, gl_entry_id, created_at",
+      )
       .order("period_end", { ascending: false })
       .limit(data.limit);
     if (data.account_id) q = q.eq("account_id", data.account_id);
@@ -1185,20 +1211,29 @@ export const runSavingsInterestAccrual = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { data: cid } = await context.supabase.rpc("current_company_id" as any);
     if (!cid) throw new Error("No active company");
-    const { data: allowed } = await context.supabase.rpc("has_permission" as any, {
-      _user_id: (context as any).userId,
-      _code: "savings.automation.run",
-      _company_id: cid,
-    } as any);
-    const { data: isAdmin } = await context.supabase.rpc("is_company_admin" as any, {
-      _company_id: cid,
-    } as any);
+    const { data: allowed } = await context.supabase.rpc(
+      "has_permission" as any,
+      {
+        _user_id: (context as any).userId,
+        _code: "savings.automation.run",
+        _company_id: cid,
+      } as any,
+    );
+    const { data: isAdmin } = await context.supabase.rpc(
+      "is_company_admin" as any,
+      {
+        _company_id: cid,
+      } as any,
+    );
     if (!allowed && !isAdmin) throw new Error("Not authorized");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: result, error } = await supabaseAdmin.rpc("accrue_savings_interest_daily" as any, {
-      _company_id: cid,
-      _business_date: data.business_date ?? new Date().toISOString().slice(0, 10),
-    } as any);
+    const { data: result, error } = await supabaseAdmin.rpc(
+      "accrue_savings_interest_daily" as any,
+      {
+        _company_id: cid,
+        _business_date: data.business_date ?? new Date().toISOString().slice(0, 10),
+      } as any,
+    );
     if (error) throw new Error(error.message);
     return result;
   });
@@ -1206,29 +1241,40 @@ export const runSavingsInterestAccrual = createServerFn({ method: "POST" })
 export const runSavingsInterestCapitalization = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { period_end?: string; force?: boolean } = {}) =>
-    z.object({
-      period_end: z.string().optional(),
-      force: z.boolean().default(false),
-    }).parse(d),
+    z
+      .object({
+        period_end: z.string().optional(),
+        force: z.boolean().default(false),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
     const { data: cid } = await context.supabase.rpc("current_company_id" as any);
     if (!cid) throw new Error("No active company");
-    const { data: allowed } = await context.supabase.rpc("has_permission" as any, {
-      _user_id: (context as any).userId,
-      _code: "savings.automation.run",
-      _company_id: cid,
-    } as any);
-    const { data: isAdmin } = await context.supabase.rpc("is_company_admin" as any, {
-      _company_id: cid,
-    } as any);
+    const { data: allowed } = await context.supabase.rpc(
+      "has_permission" as any,
+      {
+        _user_id: (context as any).userId,
+        _code: "savings.automation.run",
+        _company_id: cid,
+      } as any,
+    );
+    const { data: isAdmin } = await context.supabase.rpc(
+      "is_company_admin" as any,
+      {
+        _company_id: cid,
+      } as any,
+    );
     if (!allowed && !isAdmin) throw new Error("Not authorized");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: result, error } = await supabaseAdmin.rpc("capitalize_savings_interest" as any, {
-      _company_id: cid,
-      _period_end: data.period_end ?? new Date().toISOString().slice(0, 10),
-      _force: data.force,
-    } as any);
+    const { data: result, error } = await supabaseAdmin.rpc(
+      "capitalize_savings_interest" as any,
+      {
+        _company_id: cid,
+        _period_end: data.period_end ?? new Date().toISOString().slice(0, 10),
+        _force: data.force,
+      } as any,
+    );
     if (error) throw new Error(error.message);
     return result;
   });
@@ -1247,31 +1293,40 @@ export const listSavingsWhtRules = createServerFn({ method: "GET" })
 export const upsertSavingsWhtRule = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: any) =>
-    z.object({
-      id: z.string().uuid().optional(),
-      jurisdiction: z.string().default("LK"),
-      tax_type: z.string().default("wht"),
-      residency: z.enum(["any", "resident", "non_resident"]).default("any"),
-      entity_type: z.enum(["any", "individual", "entity"]).default("any"),
-      product_id: z.string().uuid().nullable().optional(),
-      effective_from: z.string(),
-      effective_to: z.string().nullable().optional(),
-      rate_pct: z.number().min(0).max(100),
-      threshold: z.number().min(0).default(0),
-      wht_gl_account_id: z.string().uuid(),
-      active: z.boolean().default(true),
-    }).parse(d),
+    z
+      .object({
+        id: z.string().uuid().optional(),
+        jurisdiction: z.string().default("LK"),
+        tax_type: z.string().default("wht"),
+        residency: z.enum(["any", "resident", "non_resident"]).default("any"),
+        entity_type: z.enum(["any", "individual", "entity"]).default("any"),
+        product_id: z.string().uuid().nullable().optional(),
+        effective_from: z.string(),
+        effective_to: z.string().nullable().optional(),
+        rate_pct: z.number().min(0).max(100),
+        threshold: z.number().min(0).default(0),
+        wht_gl_account_id: z.string().uuid(),
+        active: z.boolean().default(true),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
     const { data: cid } = await context.supabase.rpc("current_company_id" as any);
     if (!cid) throw new Error("No active company");
     const payload = { ...data, company_id: cid, created_by: (context as any).userId };
     if (data.id) {
-      const { error } = await context.supabase.from("savings_wht_rule").update(payload).eq("id", data.id);
+      const { error } = await context.supabase
+        .from("savings_wht_rule")
+        .update(payload)
+        .eq("id", data.id);
       if (error) throw error;
       return { id: data.id };
     }
-    const { data: row, error } = await context.supabase.from("savings_wht_rule").insert(payload).select("id").single();
+    const { data: row, error } = await context.supabase
+      .from("savings_wht_rule")
+      .insert(payload)
+      .select("id")
+      .single();
     if (error) throw error;
     return row;
   });
@@ -1282,7 +1337,10 @@ export const toggleSavingsWhtRule = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase.from("savings_wht_rule").update({ active: data.active }).eq("id", data.id);
+    const { error } = await context.supabase
+      .from("savings_wht_rule")
+      .update({ active: data.active })
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
@@ -1291,24 +1349,27 @@ export const toggleSavingsWhtRule = createServerFn({ method: "POST" })
 
 export const postSavingsTransfer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: {
-    from_account_id: string;
-    to_account_id: string;
-    amount: number;
-    channel?: string;
-    reference?: string | null;
-    narration?: string | null;
-    idempotency_key?: string | null;
-  }) =>
-    z.object({
-      from_account_id: z.string().uuid(),
-      to_account_id: z.string().uuid(),
-      amount: z.number().positive(),
-      channel: z.string().optional(),
-      reference: z.string().nullable().optional(),
-      narration: z.string().nullable().optional(),
-      idempotency_key: z.string().nullable().optional(),
-    }).parse(i),
+  .inputValidator(
+    (i: {
+      from_account_id: string;
+      to_account_id: string;
+      amount: number;
+      channel?: string;
+      reference?: string | null;
+      narration?: string | null;
+      idempotency_key?: string | null;
+    }) =>
+      z
+        .object({
+          from_account_id: z.string().uuid(),
+          to_account_id: z.string().uuid(),
+          amount: z.number().positive(),
+          channel: z.string().optional(),
+          reference: z.string().nullable().optional(),
+          narration: z.string().nullable().optional(),
+          idempotency_key: z.string().nullable().optional(),
+        })
+        .parse(i),
   )
   .handler(async ({ context, data }) => {
     if (data.from_account_id === data.to_account_id)
@@ -1328,22 +1389,25 @@ export const postSavingsTransfer = createServerFn({ method: "POST" })
 
 export const postSavingsAdjustment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: {
-    account_id: string;
-    direction: "credit" | "debit";
-    amount: number;
-    reason: string;
-    reference?: string | null;
-    idempotency_key?: string | null;
-  }) =>
-    z.object({
-      account_id: z.string().uuid(),
-      direction: z.enum(["credit", "debit"]),
-      amount: z.number().positive(),
-      reason: z.string().min(3),
-      reference: z.string().nullable().optional(),
-      idempotency_key: z.string().nullable().optional(),
-    }).parse(i),
+  .inputValidator(
+    (i: {
+      account_id: string;
+      direction: "credit" | "debit";
+      amount: number;
+      reason: string;
+      reference?: string | null;
+      idempotency_key?: string | null;
+    }) =>
+      z
+        .object({
+          account_id: z.string().uuid(),
+          direction: z.enum(["credit", "debit"]),
+          amount: z.number().positive(),
+          reason: z.string().min(3),
+          reference: z.string().nullable().optional(),
+          idempotency_key: z.string().nullable().optional(),
+        })
+        .parse(i),
   )
   .handler(async ({ context, data }) => {
     // Adjustments are posted as signed 'adjustment' savings transactions via RPC.
@@ -1383,32 +1447,39 @@ export const listStandingOrders = createServerFn({ method: "GET" })
 
 export const upsertStandingOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: {
-    id?: string;
-    from_account_id: string;
-    to_account_id: string;
-    amount: number;
-    frequency: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
-    next_run_date: string;
-    end_date?: string | null;
-    max_runs?: number | null;
-    narration?: string | null;
-    reference_prefix?: string | null;
-    consent_ref?: string | null;
-  }) =>
-    z.object({
-      id: z.string().uuid().optional(),
-      from_account_id: z.string().uuid(),
-      to_account_id: z.string().uuid(),
-      amount: z.number().positive(),
-      frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "yearly"]),
-      next_run_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
-      max_runs: z.number().int().positive().nullable().optional(),
-      narration: z.string().nullable().optional(),
-      reference_prefix: z.string().nullable().optional(),
-      consent_ref: z.string().nullable().optional(),
-    }).parse(i),
+  .inputValidator(
+    (i: {
+      id?: string;
+      from_account_id: string;
+      to_account_id: string;
+      amount: number;
+      frequency: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+      next_run_date: string;
+      end_date?: string | null;
+      max_runs?: number | null;
+      narration?: string | null;
+      reference_prefix?: string | null;
+      consent_ref?: string | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid().optional(),
+          from_account_id: z.string().uuid(),
+          to_account_id: z.string().uuid(),
+          amount: z.number().positive(),
+          frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "yearly"]),
+          next_run_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          end_date: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .nullable()
+            .optional(),
+          max_runs: z.number().int().positive().nullable().optional(),
+          narration: z.string().nullable().optional(),
+          reference_prefix: z.string().nullable().optional(),
+          consent_ref: z.string().nullable().optional(),
+        })
+        .parse(i),
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
@@ -1449,12 +1520,15 @@ export const upsertStandingOrder = createServerFn({ method: "POST" })
 
 export const setStandingOrderStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { id: string; status: "active" | "paused" | "cancelled"; reason?: string | null }) =>
-    z.object({
-      id: z.string().uuid(),
-      status: z.enum(["active", "paused", "cancelled"]),
-      reason: z.string().nullable().optional(),
-    }).parse(i),
+  .inputValidator(
+    (i: { id: string; status: "active" | "paused" | "cancelled"; reason?: string | null }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          status: z.enum(["active", "paused", "cancelled"]),
+          reason: z.string().nullable().optional(),
+        })
+        .parse(i),
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
@@ -1475,10 +1549,15 @@ export const setStandingOrderStatus = createServerFn({ method: "POST" })
 export const runStandingOrderNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { id: string; business_date?: string }) =>
-    z.object({
-      id: z.string().uuid(),
-      business_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    }).parse(i),
+    z
+      .object({
+        id: z.string().uuid(),
+        business_date: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+      })
+      .parse(i),
   )
   .handler(async ({ context, data }) => {
     const biz = data.business_date ?? new Date().toISOString().slice(0, 10);
@@ -1514,9 +1593,7 @@ export const listRecentSavingsTransactions = createServerFn({ method: "GET" })
 // ─────────── Phase 8: Account detail aggregate ───────────
 export const getSavingsAccountDetail = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { id: string }) =>
-    z.object({ id: z.string().uuid() }).parse(i),
-  )
+  .inputValidator((i: { id: string }) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { data: acct, error } = await (supabase as any)
@@ -1529,55 +1606,60 @@ export const getSavingsAccountDetail = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     if (!acct) throw new Error("Account not found");
 
-    const [txns, holds, mandates, accruals, postings, holders, nominees, mandate] = await Promise.all([
-      (supabase as any)
-        .from("savings_transaction")
-        .select(
-          "id, txn_type, amount, running_balance, reference, external_ref, narration, created_at, reversed_by_txn_id, reverses_txn_id",
-        )
-        .eq("account_id", data.id)
-        .order("created_at", { ascending: false })
-        .limit(100),
-      (supabase as any)
-        .from("savings_hold")
-        .select(
-          "id, hold_type, amount, reason, reason_code, doc_ref, effective_from, expires_at, active, approval_state, release_status, created_at",
-        )
-        .eq("account_id", data.id)
-        .order("created_at", { ascending: false }),
-      (supabase as any)
-        .from("savings_loan_mandate")
-        .select(
-          "id, mandate_type, status, priority, fixed_amount, max_amount_per_run, min_protected_balance, morning_run, afternoon_run, loan:loan_id(id, loan_no, outstanding_principal)",
-        )
-        .eq("savings_account_id", data.id)
-        .order("created_at", { ascending: false }),
-      (supabase as any)
-        .from("savings_interest_accrual")
-        .select("id, accrual_date, eligible_balance, rate_pct, gross_interest")
-        .eq("account_id", data.id)
-        .order("accrual_date", { ascending: false })
-        .limit(60),
-      (supabase as any)
-        .from("savings_interest_posting")
-        .select("id, period_start, period_end, gross_interest, wht_amount, net_interest, created_at")
-        .eq("account_id", data.id)
-        .order("period_end", { ascending: false })
-        .limit(30),
-      (supabase as any)
-        .from("savings_account_holder")
-        .select("id, role, ownership_pct, full_name, nic, relation, is_signatory, signing_order, client:client_id(id, full_name)")
-        .eq("account_id", data.id),
-      (supabase as any)
-        .from("savings_account_nominee")
-        .select("id, full_name, nic, relation, percentage, contact")
-        .eq("account_id", data.id),
-      (supabase as any)
-        .from("savings_account_mandate")
-        .select("id, signing_rule, min_signatories, rule_details")
-        .eq("account_id", data.id)
-        .maybeSingle(),
-    ]);
+    const [txns, holds, mandates, accruals, postings, holders, nominees, mandate] =
+      await Promise.all([
+        (supabase as any)
+          .from("savings_transaction")
+          .select(
+            "id, txn_type, amount, running_balance, reference, external_ref, narration, created_at, reversed_by_txn_id, reverses_txn_id",
+          )
+          .eq("account_id", data.id)
+          .order("created_at", { ascending: false })
+          .limit(100),
+        (supabase as any)
+          .from("savings_hold")
+          .select(
+            "id, hold_type, amount, reason, reason_code, doc_ref, effective_from, expires_at, active, approval_state, release_status, created_at",
+          )
+          .eq("account_id", data.id)
+          .order("created_at", { ascending: false }),
+        (supabase as any)
+          .from("savings_loan_mandate")
+          .select(
+            "id, mandate_type, status, priority, fixed_amount, max_amount_per_run, min_protected_balance, morning_run, afternoon_run, loan:loan_id(id, loan_no, outstanding_principal)",
+          )
+          .eq("savings_account_id", data.id)
+          .order("created_at", { ascending: false }),
+        (supabase as any)
+          .from("savings_interest_accrual")
+          .select("id, accrual_date, eligible_balance, rate_pct, gross_interest")
+          .eq("account_id", data.id)
+          .order("accrual_date", { ascending: false })
+          .limit(60),
+        (supabase as any)
+          .from("savings_interest_posting")
+          .select(
+            "id, period_start, period_end, gross_interest, wht_amount, net_interest, created_at",
+          )
+          .eq("account_id", data.id)
+          .order("period_end", { ascending: false })
+          .limit(30),
+        (supabase as any)
+          .from("savings_account_holder")
+          .select(
+            "id, role, ownership_pct, full_name, nic, relation, is_signatory, signing_order, client:client_id(id, full_name)",
+          )
+          .eq("account_id", data.id),
+        (supabase as any)
+          .from("savings_account_nominee")
+          .select("id, full_name, nic, relation, percentage, contact")
+          .eq("account_id", data.id),
+        (supabase as any)
+          .from("savings_account_mandate")
+          .select("id, signing_rule, min_signatories, rule_details")
+          .eq("account_id", data.id)
+          .maybeSingle(),
+      ]);
 
     return {
       account: acct,

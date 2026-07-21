@@ -6,7 +6,7 @@
  * spinning up a live database.
  */
 import { describe, expect, it } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const read = (rel: string) => readFileSync(resolve(process.cwd(), rel), "utf8");
@@ -42,7 +42,7 @@ describe("EOD — canonical orchestrator surface", () => {
   });
 
   it("scheduled hook shares the orchestrator step function (req 1, 11)", () => {
-    expect(hook).toContain('@/lib/eod.functions');
+    expect(hook).toContain("@/lib/eod.functions");
     expect(hook).toContain("runOrchestratorStep");
   });
 });
@@ -144,8 +144,7 @@ describe("EOD — precheck workflow blocker is branch-scoped", () => {
   // branch via the referenced entity (savings_account, savings_hold,
   // fixed_deposit) so a pending workflow in Branch A does not block
   // Branch B's day-end.
-  const migrations = require("node:fs")
-    .readdirSync(resolve(process.cwd(), "supabase/migrations"))
+  const migrations = readdirSync(resolve(process.cwd(), "supabase/migrations"))
     .filter((f: string) => f.endsWith(".sql"))
     .sort();
   const latestWithPrecheck = [...migrations]
@@ -163,14 +162,15 @@ describe("EOD — precheck workflow blocker is branch-scoped", () => {
 });
 
 describe("EOD — snapshot RPC matches hardened schema", () => {
-  const migrations = require("node:fs")
-    .readdirSync(resolve(process.cwd(), "supabase/migrations"))
+  const migrations = readdirSync(resolve(process.cwd(), "supabase/migrations"))
     .filter((f: string) => f.endsWith(".sql"))
     .sort();
   const latestWithSnapshots = [...migrations]
     .reverse()
     .find((f: string) =>
-      read(`supabase/migrations/${f}`).includes("CREATE OR REPLACE FUNCTION public.eod_write_snapshots"),
+      read(`supabase/migrations/${f}`).includes(
+        "CREATE OR REPLACE FUNCTION public.eod_write_snapshots",
+      ),
     );
 
   it("uses current accrual, repayment, EOD balance, and journal column names", () => {
@@ -191,4 +191,3 @@ describe("EOD — snapshot RPC matches hardened schema", () => {
     expect(sql).not.toContain("principal_outstanding");
   });
 });
-

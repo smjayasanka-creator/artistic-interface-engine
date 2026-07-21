@@ -229,7 +229,10 @@ export const getPlatformProgress = createServerFn({ method: "GET" })
     // pg_proc lookup runs as platform admin via a lightweight helper RPC
     // when available; fall back to naming heuristics otherwise. We keep
     // this best-effort — a missing RPC in the list is the actionable signal.
-    type RpcInvoker = (name: string, args?: Record<string, unknown>) => Promise<{
+    type RpcInvoker = (
+      name: string,
+      args?: Record<string, unknown>,
+    ) => Promise<{
       data: unknown;
       error: { message?: string; code?: string } | null;
     }>;
