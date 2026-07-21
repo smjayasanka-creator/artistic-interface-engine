@@ -979,6 +979,7 @@ export const createBranch = createServerFn({ method: "POST" })
       code: string;
       name: string;
       region?: string;
+      region_id?: string | null;
       currency?: string;
       opened_on?: string;
       branch_prefix?: string;
@@ -991,6 +992,7 @@ export const createBranch = createServerFn({ method: "POST" })
           code: z.string().trim().min(1).max(20),
           name: z.string().trim().min(2).max(80),
           region: z.string().trim().max(80).optional().or(z.literal("")),
+          region_id: z.string().uuid().nullable().optional().or(z.literal("")),
           currency: z.string().trim().length(3).optional(),
           opened_on: z.string().optional().or(z.literal("")),
           branch_prefix: z.string().trim().max(6).optional().or(z.literal("")),
@@ -1013,6 +1015,7 @@ export const createBranch = createServerFn({ method: "POST" })
         code: data.code,
         name: data.name,
         region: data.region || null,
+        region_id: data.region_id || null,
         currency: (data.currency || "KES").toUpperCase(),
         opened_on: data.opened_on || null,
         branch_prefix: data.branch_prefix?.toUpperCase() || null,
