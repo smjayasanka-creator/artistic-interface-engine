@@ -389,7 +389,6 @@ export type Database = {
           name: string
           opened_on: string | null
           region: string | null
-          region_id: string | null
           savings_prefix: string | null
         }
         Insert: {
@@ -406,7 +405,6 @@ export type Database = {
           name: string
           opened_on?: string | null
           region?: string | null
-          region_id?: string | null
           savings_prefix?: string | null
         }
         Update: {
@@ -423,7 +421,6 @@ export type Database = {
           name?: string
           opened_on?: string | null
           region?: string | null
-          region_id?: string | null
           savings_prefix?: string | null
         }
         Relationships: [
@@ -432,13 +429,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "company"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "branch_region_id_fkey"
-            columns: ["region_id"]
-            isOneToOne: false
-            referencedRelation: "region"
             referencedColumns: ["id"]
           },
         ]
@@ -5312,44 +5302,6 @@ export type Database = {
             columns: ["entry_id"]
             isOneToOne: false
             referencedRelation: "journal_entry"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      region: {
-        Row: {
-          active: boolean
-          code: string
-          company_id: string
-          created_at: string
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          code: string
-          company_id: string
-          created_at?: string
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          code?: string
-          company_id?: string
-          created_at?: string
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "region_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "company"
             referencedColumns: ["id"]
           },
         ]
