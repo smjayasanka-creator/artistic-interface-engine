@@ -8264,6 +8264,10 @@ export type Database = {
         Args: { _reports: Json; _run_id: string }
         Returns: undefined
       }
+      eod_system_initiate: {
+        Args: { _branch_id: string; _business_date: string }
+        Returns: string
+      }
       eod_write_snapshots: {
         Args: { _branch_id: string; _business_date: string }
         Returns: Json
