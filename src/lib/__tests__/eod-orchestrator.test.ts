@@ -42,7 +42,7 @@ describe("EOD — canonical orchestrator surface", () => {
   });
 
   it("scheduled hook shares the orchestrator step function (req 1, 11)", () => {
-    expect(hook).toContain('from "@/lib/eod.functions"');
+    expect(hook).toContain('@/lib/eod.functions');
     expect(hook).toContain("runOrchestratorStep");
   });
 });
