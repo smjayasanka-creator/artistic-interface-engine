@@ -626,11 +626,11 @@ async function stepFdMaturity(ctx: Ctx) {
 }
 
 async function stepSavingsInterest(ctx: Ctx) {
-  const { supabaseAdmin, business_date } = ctx;
+  const { supabaseAdmin, company_id, business_date } = ctx;
   // Daily accrual for every eligible account (idempotent per account+date).
   const { data: accr, error: aErr } = await supabaseAdmin.rpc(
-    "run_savings_interest_accrual" as any,
-    { _business_date: business_date } as any,
+    "accrue_savings_interest_daily" as any,
+    { _company_id: company_id, _business_date: business_date } as any,
   );
   if (aErr) throw new Error(`Savings accrual: ${aErr.message}`);
   // Capitalisation runs only on period-end (last day of month).
@@ -639,8 +639,8 @@ async function stepSavingsInterest(ctx: Ctx) {
   let cap: any = null;
   if (business_date === eom) {
     const { data: capRes, error: cErr } = await supabaseAdmin.rpc(
-      "run_savings_interest_capitalization" as any,
-      { _period_end: business_date, _force: false } as any,
+      "capitalize_savings_interest" as any,
+      { _company_id: company_id, _period_end: business_date, _force: false } as any,
     );
     if (cErr) throw new Error(`Savings capitalisation: ${cErr.message}`);
     cap = capRes;
