@@ -125,3 +125,40 @@ describe("EOD — UI surfaces (req 22)", () => {
     expect(read(p)).toMatch(/redirect\(\{\s*to:\s*"\/admin"/);
   });
 });
+
+describe("EOD — fd_maturity actually executes", () => {
+  it("stepFdMaturity delegates to processFdMaturityCore for renewals + payouts", () => {
+    expect(eod).toContain("processFdMaturityCore");
+    // Must throw when any matured deposit fails, so the run cannot be
+    // silently marked completed with unprocessed maturities.
+    expect(eod).toMatch(/FD maturity:/);
+  });
+  it("fd.functions exports the shared core so cron + UI share semantics", () => {
+    const fd = read("src/lib/fd.functions.ts");
+    expect(fd).toContain("export async function processFdMaturityCore");
+  });
+});
+
+describe("EOD — precheck workflow blocker is branch-scoped", () => {
+  // The latest eod_precheck migration must resolve workflow_instance to a
+  // branch via the referenced entity (savings_account, savings_hold,
+  // fixed_deposit) so a pending workflow in Branch A does not block
+  // Branch B's day-end.
+  const migrations = require("node:fs")
+    .readdirSync(resolve(process.cwd(), "supabase/migrations"))
+    .filter((f: string) => f.endsWith(".sql"))
+    .sort();
+  const latestWithPrecheck = [...migrations]
+    .reverse()
+    .find((f: string) =>
+      read(`supabase/migrations/${f}`).includes("CREATE OR REPLACE FUNCTION public.eod_precheck"),
+    );
+  it("has a migration whose eod_precheck joins to savings_account.branch_id", () => {
+    expect(latestWithPrecheck).toBeTruthy();
+    const sql = read(`supabase/migrations/${latestWithPrecheck}`);
+    expect(sql).toMatch(/savings_account[\s\S]{0,200}branch_id\s*=\s*_branch_id/);
+    expect(sql).toMatch(/fixed_deposit[\s\S]{0,200}branch_id\s*=\s*_branch_id/);
+    expect(sql).toMatch(/savings_hold[\s\S]{0,400}branch_id\s*=\s*_branch_id/);
+  });
+});
+
