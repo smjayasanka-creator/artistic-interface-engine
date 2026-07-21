@@ -8246,6 +8246,10 @@ export type Database = {
         Args: { _branch_id: string; _business_date: string }
         Returns: Json
       }
+      eod_precheck_system_diagnostic: {
+        Args: { _branch_id: string; _business_date: string }
+        Returns: Json
+      }
       eod_record_step: {
         Args: {
           _error: string
