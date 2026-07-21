@@ -155,6 +155,7 @@ const STEPS = [
   "savings_interest",
   "gl_post",
   "trial_balance",
+  "snapshots",
   "reports",
   "rollover",
 ] as const;
