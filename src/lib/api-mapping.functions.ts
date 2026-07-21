@@ -162,16 +162,16 @@ export const saveMappingTemplate = createServerFn({ method: "POST" })
       .maybeSingle();
     const company_id = (staff?.branch as { company_id?: string } | null)?.company_id;
     if (!company_id) throw new Error("No company context");
-    const payload = {
+    const payload: Record<string, unknown> = {
       company_id,
       env: data.env,
       name: data.name,
       description: data.description ?? null,
       target_resource: data.target_resource,
       status: data.status,
-      field_mappings: data.field_mappings as unknown as Record<string, unknown>[],
-      source_sample: (data.source_sample ?? null) as unknown as Record<string, unknown>,
-      transformations: [] as unknown as Record<string, unknown>[],
+      field_mappings: data.field_mappings,
+      source_sample: data.source_sample ?? null,
+      transformations: [],
       created_by: staff?.user_id ?? context.userId,
       updated_at: new Date().toISOString(),
     };
