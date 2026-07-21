@@ -820,6 +820,9 @@ async function runStepInternal(context: any, run_id: string, step: StepKey) {
       case "trial_balance":
         metrics = await stepTrialBalance(ctx);
         break;
+      case "snapshots":
+        metrics = await stepSnapshots(ctx);
+        break;
       case "reports":
         metrics = await stepReports(ctx);
         break;
