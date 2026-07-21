@@ -157,20 +157,22 @@ export const saveMappingTemplate = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { data: staff } = await supabase
       .from("staff")
-      .select("company_id, user_id")
+      .select("user_id, branch:branch_id(company_id)")
+      .eq("user_id", context.userId)
       .maybeSingle();
-    if (!staff?.company_id) throw new Error("No active company");
+    const company_id = (staff?.branch as { company_id?: string } | null)?.company_id;
+    if (!company_id) throw new Error("No company context");
     const payload = {
-      company_id: staff.company_id,
+      company_id,
       env: data.env,
       name: data.name,
       description: data.description ?? null,
       target_resource: data.target_resource,
       status: data.status,
-      field_mappings: data.field_mappings,
-      source_sample: data.source_sample ?? null,
-      transformations: [],
-      created_by: staff.user_id,
+      field_mappings: data.field_mappings as unknown as Record<string, unknown>[],
+      source_sample: (data.source_sample ?? null) as unknown as Record<string, unknown>,
+      transformations: [] as unknown as Record<string, unknown>[],
+      created_by: staff?.user_id ?? context.userId,
       updated_at: new Date().toISOString(),
     };
     if (data.id) {
