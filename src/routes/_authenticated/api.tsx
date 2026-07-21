@@ -47,7 +47,7 @@ const SCOPES: { id: string; label: string; hint: string }[] = [
   },
 ];
 
-const ENDPOINTS = [
+export const ENDPOINTS = [
   {
     channel: "Clients · Create",
     method: "POST",
