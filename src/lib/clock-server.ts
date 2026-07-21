@@ -1,22 +1,18 @@
-// Server-side clock helper. Reads the x-dev-now header attached by
-// clock-middleware on the client. Falls back to real time.
+// Isomorphic clock helper. On the server, reads the x-dev-now header attached
+// by clock-middleware (dev-only). On the client, falls back to real time.
 //
 // Only READ-side "today" checks should use this. Audit timestamps
 // (approved_at, closed_at, created_at) should stay on real wall-clock time.
-//
-// Uses createIsomorphicFn so this module is safe to import from
-// `.functions.ts` files whose top-level imports ship to the client bundle.
 
 import { createIsomorphicFn } from "@tanstack/react-start";
 
 const readOverrideHeader = createIsomorphicFn()
   .client(() => null as string | null)
   .server(() => {
+    // Dynamic require so the server-only module never enters the client graph.
     try {
-      // Dynamic require keeps the server-only module out of the client graph.
-      const { getRequestHeader } =
-        require("@tanstack/react-start/server") as typeof import("@tanstack/react-start/server");
-      return getRequestHeader("x-dev-now") ?? null;
+      const mod = require("./clock-header.server") as typeof import("./clock-header.server");
+      return mod.readDevNowHeader();
     } catch {
       return null;
     }
