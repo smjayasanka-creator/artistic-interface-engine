@@ -403,7 +403,7 @@ const COMMON_ERRORS = [
   },
 ];
 
-function endpointSpec(scope: string, method: string): EndpointSpec {
+export function endpointSpec(scope: string, method: string): EndpointSpec {
   const bearer: HeaderSpec = {
     name: "Authorization",
     value: "Bearer sk_live_a1b2c3…",
