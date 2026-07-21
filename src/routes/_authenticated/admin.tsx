@@ -420,6 +420,7 @@ function Admin() {
       </div>
       {tab === "settings" && <SettingsTab />}
       {tab === "branches" && <BranchesTab />}
+      {tab === "regions" && <RegionsTab />}
       {tab === "staff" && <StaffTab />}
       {tab === "user_roles" && <UserRolesTab />}
       {tab === "products" && <ProductsTab />}
