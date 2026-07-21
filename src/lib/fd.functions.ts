@@ -1179,7 +1179,9 @@ export async function processFdMaturityCore(
     });
 
     return { ok: true, action: "renewed", new_id: newFd.id, new_certificate: certNo };
-  });
+  }
+}
+
 
 // ──────────────────────────────────────────────────────────────────────────
 // DAILY MAINTENANCE (manually triggered from UI; wire cron later)
