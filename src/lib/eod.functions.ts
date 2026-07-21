@@ -940,12 +940,20 @@ export async function runOrchestratorStep(args: {
     _metrics: {} as any,
     _error: null,
   } as any);
+  // Scheduled cron actor: use the run's initiator (fallback to a zero UUID
+  // for system-initiated rows) so downstream ledger writes have a user id.
+  const { data: runRow } = await supabaseAdmin
+    .from("eod_run")
+    .select("initiated_by")
+    .eq("id", run_id)
+    .maybeSingle();
   const ctx: Ctx = {
     supabaseAdmin,
     run_id,
     company_id: args.company_id,
     branch_id: args.branch_id,
     business_date: args.business_date,
+    actor_id: (runRow as any)?.initiated_by ?? "00000000-0000-0000-0000-000000000000",
   };
   let metrics: Record<string, any> = {};
   switch (step_key) {
