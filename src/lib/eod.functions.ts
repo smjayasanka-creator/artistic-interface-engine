@@ -503,20 +503,32 @@ async function stepLoanAccrual(ctx: Ctx) {
 
 async function stepFdAccrual(ctx: Ctx) {
   const { supabaseAdmin, branch_id, business_date } = ctx;
-  const { data: deposits } = await supabaseAdmin
+  const { data: deposits, error: dErr } = await supabaseAdmin
     .from("fixed_deposit")
-    .select("id, principal, rate_at_booking, value_date, maturity_date")
+    .select("id, principal, rate_at_booking, value_date, maturity_date, day_count_basis")
     .eq("branch_id", branch_id)
     .eq("status", "active");
+  if (dErr) throw new Error(`FD accrual query: ${dErr.message}`);
   let accrued = 0,
-    skipped = 0,
+    skippedOutOfWindow = 0,
     total = 0;
   for (const d of (deposits ?? []) as any[]) {
     if (business_date < d.value_date || business_date > d.maturity_date) {
-      skipped++;
+      skippedOutOfWindow++;
       continue;
     }
-    const daily = Number(((Number(d.principal) * Number(d.rate_at_booking)) / 365).toFixed(2));
+    const dayCount = Number(d.day_count_basis ?? 365) || 365;
+    // FIX (req 12): principal * (annualRatePct / 100) / dayCount
+    const daily = Number(
+      ((Number(d.principal) * (Number(d.rate_at_booking) / 100)) / dayCount).toFixed(2),
+    );
+    const { data: existing } = await supabaseAdmin
+      .from("fd_accrual")
+      .select("id")
+      .eq("deposit_id", d.id)
+      .eq("accrual_date", business_date)
+      .maybeSingle();
+    if (existing) continue;
     const { data: prev } = await supabaseAdmin
       .from("fd_accrual")
       .select("cumulative_amount")
@@ -531,17 +543,14 @@ async function stepFdAccrual(ctx: Ctx) {
       daily_amount: daily,
       cumulative_amount: cumulative,
     });
-    if (ie) {
-      skipped++;
-      continue;
-    }
+    if (ie) throw new Error(`FD accrual insert for deposit ${d.id}: ${ie.message}`);
     accrued++;
     total += daily;
   }
   return {
     deposits_scanned: deposits?.length ?? 0,
     accrued,
-    skipped,
+    skipped_out_of_window: skippedOutOfWindow,
     total_amount: Number(total.toFixed(2)),
   };
 }
