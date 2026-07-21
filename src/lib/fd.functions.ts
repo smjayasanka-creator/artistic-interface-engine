@@ -1008,14 +1008,14 @@ export async function processFdMaturityCore(
       .select("id,net_interest,paid")
       .eq("deposit_id", data.id)
       .eq("paid", false);
-    const owedNet = (sched ?? []).reduce((s, r) => s + Number(r.net_interest), 0);
+    const owedNet = (sched ?? []).reduce((s: number, r: any) => s + Number(r.net_interest), 0);
     if ((sched ?? []).length) {
       await supabase
         .from("fd_interest_schedule")
         .update({ paid: true, paid_date: onDate })
         .in(
           "id",
-          (sched ?? []).map((r) => r.id),
+          (sched ?? []).map((r: any) => r.id),
         );
     }
 
