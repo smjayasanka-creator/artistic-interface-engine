@@ -652,23 +652,43 @@ function RunDetailModal({
           )}
 
           {(run.status === "in_progress" || run.status === "failed") && (
-            <div className="flex items-center gap-2">
-              <button
-                className={btnPrimaryCls}
-                onClick={() => runAllM.mutate()}
-                disabled={runAllM.isPending}
-              >
-                {runAllM.isPending ? (
-                  <>
-                    <Loader2 size={13} className="animate-spin inline mr-1" /> Running…
-                  </>
-                ) : (
-                  <>
-                    <PlayCircle size={13} className="inline mr-1" />
-                    {run.status === "failed" ? "Resume run" : "Run all remaining steps"}
-                  </>
-                )}
-              </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {run.status === "in_progress" && (
+                <button
+                  className={btnPrimaryCls}
+                  onClick={() => runAllM.mutate()}
+                  disabled={runAllM.isPending}
+                >
+                  {runAllM.isPending ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin inline mr-1" /> Running…
+                    </>
+                  ) : (
+                    <>
+                      <PlayCircle size={13} className="inline mr-1" /> Run all remaining steps
+                    </>
+                  )}
+                </button>
+              )}
+              {run.status === "failed" && (
+                <button
+                  className={btnPrimaryCls}
+                  onClick={() => resumeM.mutate()}
+                  disabled={resumeM.isPending}
+                  title="Re-runs pre-checks, keeps completed steps, and routes back through second-officer approval."
+                >
+                  {resumeM.isPending ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin inline mr-1" /> Requesting…
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck size={13} className="inline mr-1" /> Resume run (send for
+                      approval)
+                    </>
+                  )}
+                </button>
+              )}
               <button className={btnSecondaryCls} onClick={() => refetch()} disabled={isFetching}>
                 <RefreshCcw size={13} className={cn("inline mr-1", isFetching && "animate-spin")} />
                 Refresh
