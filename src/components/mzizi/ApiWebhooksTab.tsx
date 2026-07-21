@@ -334,7 +334,7 @@ function AddEndpointModal({
   const [max_attempts, setMaxAttempts] = useState(5);
 
   return (
-    <Modal open onClose={onClose} title={`New webhook · ${env}`} widthClass="max-w-lg">
+    <Modal open onClose={onClose} title={`New webhook · ${env}`} width={560}>
       <FormGrid>
         <FormField label="Label" span={2}>
           <input className={inputCls} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ops notifier" />
@@ -415,7 +415,7 @@ function SecretRevealModal({
   onClose: () => void;
 }) {
   return (
-    <Modal open onClose={onClose} title={`Signing secret · ${label}`} widthClass="max-w-lg">
+    <Modal open onClose={onClose} title={`Signing secret · ${label}`} width={560}>
       <div className="text-[12.5px] text-foreground/85">
         Copy this secret now — for security we won't show it again. Verify each request by
         computing <code className="font-mono">HMAC-SHA256(secret, `${"${timestamp}"}.${"${body}"}`)</code>{" "}
