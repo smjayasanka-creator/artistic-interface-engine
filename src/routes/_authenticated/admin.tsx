@@ -35,6 +35,8 @@ import {
   updateLoanProduct,
   createBranch,
   updateBranch,
+  createRegion,
+  updateRegion,
   createStaff,
   toggleStaff,
   updateStaff,
