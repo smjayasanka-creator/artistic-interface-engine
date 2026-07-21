@@ -8234,6 +8234,10 @@ export type Database = {
         Args: { _branch_id: string; _business_date: string }
         Returns: string
       }
+      eod_default_business_date: {
+        Args: { _company_id: string }
+        Returns: string
+      }
       eod_finalize: {
         Args: { _run_id: string; _status: string }
         Returns: undefined
@@ -8260,6 +8264,7 @@ export type Database = {
         Args: { _branch_id: string; _business_date: string; _reason: string }
         Returns: undefined
       }
+      eod_resume_failed_run: { Args: { _run_id: string }; Returns: Json }
       eod_save_reports: {
         Args: { _reports: Json; _run_id: string }
         Returns: undefined
