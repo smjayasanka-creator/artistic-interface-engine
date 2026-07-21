@@ -861,6 +861,7 @@ async function runStepInternal(context: any, run_id: string, step: StepKey) {
       company_id: run.company_id,
       branch_id: run.branch_id,
       business_date: run.business_date,
+      actor_id: context.userId,
     };
     switch (step) {
       case "loan_accrual":
