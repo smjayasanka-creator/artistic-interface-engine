@@ -6,7 +6,7 @@
  * spinning up a live database.
  */
 import { describe, expect, it } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const read = (rel: string) => readFileSync(resolve(process.cwd(), rel), "utf8");
