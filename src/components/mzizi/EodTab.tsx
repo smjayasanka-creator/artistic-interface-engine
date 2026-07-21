@@ -517,7 +517,7 @@ function RunDetailModal({
   });
 
   return (
-    <Modal open onClose={onClose} title="Day-end run details" size="lg">
+    <Modal open onClose={onClose} title="Day-end run details" width={900}>
       {!run ? (
         <div className="py-8 text-center text-muted-foreground text-[13px]">
           <Loader2 size={14} className="animate-spin inline mr-1" /> Loading…
