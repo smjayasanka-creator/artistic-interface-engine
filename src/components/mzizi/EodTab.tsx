@@ -412,6 +412,7 @@ export function EodTab() {
           approveFn={approveFn}
           runAllFn={runAllFn}
           runStepFn={runStepFn}
+          resumeFn={resumeFn}
           branches={branches ?? []}
         />
       )}
