@@ -262,14 +262,15 @@ export const emitWebhookEvent = createServerFn({ method: "POST" })
     if (matches.length === 0) return { queued: 0 };
     const rows = matches.map((e: any) => ({
       company_id,
-      env: e.env,
-      endpoint_id: e.id,
+      env: e.env as string,
+      endpoint_id: e.id as string,
       event_id: data.event_id ?? null,
       event_type: data.event_type,
       status: "pending" as const,
-      payload: data.payload,
+      payload: data.payload as any,
     }));
-    const { error: insErr } = await supabase.from("webhook_delivery").insert(rows);
+    const { error: insErr } = await supabase.from("webhook_delivery").insert(rows as any);
+
     if (insErr) throw new Error(insErr.message);
     return { queued: rows.length };
   });
