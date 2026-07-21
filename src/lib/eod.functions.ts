@@ -623,22 +623,36 @@ async function stepFdMaturity(ctx: Ctx) {
 }
 
 async function stepSavingsInterest(ctx: Ctx) {
+  const { supabaseAdmin, business_date } = ctx;
+  // Daily accrual for every eligible account (idempotent per account+date).
+  const { data: accr, error: aErr } = await supabaseAdmin.rpc(
+    "run_savings_interest_accrual" as any,
+    { _business_date: business_date } as any,
+  );
+  if (aErr) throw new Error(`Savings accrual: ${aErr.message}`);
+  // Capitalisation runs only on period-end (last day of month).
+  const d = new Date(business_date);
+  const eom = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10);
+  let cap: any = null;
+  if (business_date === eom) {
+    const { data: capRes, error: cErr } = await supabaseAdmin.rpc(
+      "run_savings_interest_capitalization" as any,
+      { _period_end: business_date, _force: false } as any,
+    );
+    if (cErr) throw new Error(`Savings capitalisation: ${cErr.message}`);
+    cap = capRes;
+  }
+  return { accrual: accr, capitalisation: cap, period_end: business_date === eom };
+}
+
+async function stepSnapshots(ctx: Ctx) {
   const { supabaseAdmin, branch_id, business_date } = ctx;
-  const isMonthEnd =
-    business_date ===
-    new Date(new Date(business_date).getFullYear(), new Date(business_date).getMonth() + 1, 0)
-      .toISOString()
-      .slice(0, 10);
-  if (!isMonthEnd) return { skipped: true, reason: "not_month_end" };
-  const { data: accts } = await supabaseAdmin
-    .from("savings_account")
-    .select("id, balance")
-    .eq("branch_id", branch_id)
-    .eq("status", "active");
-  return {
-    accounts_scanned: accts?.length ?? 0,
-    note: "Interest posting requires product-level rate config; scanned only.",
-  };
+  const { data, error } = await supabaseAdmin.rpc("eod_write_snapshots" as any, {
+    _branch_id: branch_id,
+    _business_date: business_date,
+  } as any);
+  if (error) throw new Error(`Snapshots: ${error.message}`);
+  return data ?? {};
 }
 
 async function stepGlPost(ctx: Ctx) {
