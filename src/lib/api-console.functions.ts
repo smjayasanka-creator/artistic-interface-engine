@@ -30,16 +30,23 @@ function randomToken(bytes = 32): string {
 
 export const listApiKeys = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) =>
+    z
+      .object({ env: z.enum(["sandbox", "production"]).optional() })
+      .parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { data, error } = await supabase
+    let q = supabase
       .from("api_key")
       .select(
         "id, label, key_prefix, scopes, environment, status, last_used_at, created_at, revoked_at",
       )
       .order("created_at", { ascending: false });
+    if (data.env) q = q.eq("environment", data.env);
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return { keys: data ?? [] };
+    return { keys: rows ?? [] };
   });
 
 export const createApiKey = createServerFn({ method: "POST" })
