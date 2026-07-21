@@ -967,6 +967,7 @@ function BranchesTab() {
       code: b.code ?? "",
       name: b.name ?? "",
       region: b.region ?? "",
+      region_id: b.region_id ?? "",
       currency: b.currency ?? "KES",
       opened_on: b.opened_on ?? "",
       branch_prefix: b.branch_prefix ?? "",
