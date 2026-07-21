@@ -7676,6 +7676,81 @@ export type Database = {
         }
         Relationships: []
       }
+      teller_close: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string
+          business_date: string
+          company_id: string
+          counted_cash: number
+          created_at: string
+          denominations: Json
+          expected_cash: number
+          id: string
+          remarks: string | null
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          teller_id: string
+          updated_at: string
+          variance: number | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id: string
+          business_date: string
+          company_id: string
+          counted_cash?: number
+          created_at?: string
+          denominations?: Json
+          expected_cash?: number
+          id?: string
+          remarks?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          teller_id: string
+          updated_at?: string
+          variance?: number | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string
+          business_date?: string
+          company_id?: string
+          counted_cash?: number
+          created_at?: string
+          denominations?: Json
+          expected_cash?: number
+          id?: string
+          remarks?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          teller_id?: string
+          updated_at?: string
+          variance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teller_close_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teller_close_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_custom_role: {
         Row: {
           assigned_at: string
@@ -8023,6 +8098,10 @@ export type Database = {
         }
         Returns: Json
       }
+      approve_teller_close: {
+        Args: { _approve: boolean; _id: string }
+        Returns: undefined
+      }
       assert_savings_txn_permission: {
         Args: { _company_id: string; _txn_type: string }
         Returns: undefined
@@ -8184,6 +8263,10 @@ export type Database = {
       eod_save_reports: {
         Args: { _reports: Json; _run_id: string }
         Returns: undefined
+      }
+      eod_write_snapshots: {
+        Args: { _branch_id: string; _business_date: string }
+        Returns: Json
       }
       execute_savings_loan_mandate: {
         Args: { _mandate_id: string; _run_id: string }
@@ -8520,6 +8603,17 @@ export type Database = {
           _statement_preference?: string
         }
         Returns: Json
+      }
+      submit_teller_close: {
+        Args: {
+          _branch_id: string
+          _business_date: string
+          _counted: number
+          _denominations: Json
+          _expected: number
+          _remarks?: string
+        }
+        Returns: string
       }
       transfer_savings_to_unclaimed: {
         Args: { _account_id: string; _idempotency_key?: string }
