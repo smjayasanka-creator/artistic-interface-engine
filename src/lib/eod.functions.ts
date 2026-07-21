@@ -332,12 +332,13 @@ export const runStep = createServerFn({ method: "POST" })
 
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const ctx = {
+      const ctx: Ctx = {
         supabaseAdmin,
         run_id: run.id,
         company_id: run.company_id,
         branch_id: run.branch_id,
         business_date: run.business_date,
+        actor_id: context.userId!,
       };
       switch (data.step) {
         case "loan_accrual":
