@@ -1,18 +1,48 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
+  approveEod,
   getAutoEodSettings,
-  updateAutoEodSettings,
+  getEodRun,
+  initiateEod,
   listBranches,
   listEodRuns,
+  runAllSteps,
   runCompanyEod,
+  runPreCheck,
+  runStep,
+  updateAutoEodSettings,
 } from "@/lib/eod.functions";
 import { Card } from "@/components/mzizi/Card";
 import { btnPrimaryCls, btnSecondaryCls, inputCls } from "@/components/mzizi/FormGrid";
+import { Modal } from "@/components/mzizi/Modal";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, XCircle, Loader2, Clock, PlayCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Loader2,
+  PlayCircle,
+  RefreshCcw,
+  ShieldCheck,
+  XCircle,
+} from "lucide-react";
+
+const STEP_ORDER = [
+  "loan_accrual",
+  "fd_accrual",
+  "penalty_charges",
+  "par_npa",
+  "fd_maturity",
+  "savings_interest",
+  "gl_post",
+  "trial_balance",
+  "snapshots",
+  "reports",
+  "rollover",
+] as const;
 
 const STATUS_STYLE: Record<string, string> = {
   pending: "text-muted-foreground",
@@ -24,6 +54,14 @@ const STATUS_STYLE: Record<string, string> = {
   in_progress: "text-blue-600",
 };
 
+function StepIcon({ status }: { status: string }) {
+  if (status === "completed") return <CheckCircle2 size={13} className="text-emerald-600" />;
+  if (status === "failed") return <XCircle size={13} className="text-destructive" />;
+  if (status === "processing")
+    return <Loader2 size={13} className="animate-spin text-blue-600" />;
+  return <Clock size={13} className="text-muted-foreground" />;
+}
+
 export function EodTab() {
   const qc = useQueryClient();
   const settingsFn = useServerFn(getAutoEodSettings);
@@ -31,6 +69,12 @@ export function EodTab() {
   const branchesFn = useServerFn(listBranches);
   const runsFn = useServerFn(listEodRuns);
   const runCompanyFn = useServerFn(runCompanyEod);
+  const preCheckFn = useServerFn(runPreCheck);
+  const initiateFn = useServerFn(initiateEod);
+  const approveFn = useServerFn(approveEod);
+  const runAllFn = useServerFn(runAllSteps);
+  const runStepFn = useServerFn(runStep);
+  const getRunFn = useServerFn(getEodRun);
 
   const { data: settings } = useQuery({ queryKey: ["eod-settings"], queryFn: () => settingsFn() });
   const { data: branches } = useQuery({ queryKey: ["eod-branches"], queryFn: () => branchesFn() });
@@ -46,9 +90,10 @@ export function EodTab() {
   });
   const [autoEnabled, setAutoEnabled] = useState<boolean>(false);
   const [autoTime, setAutoTime] = useState<string>("00:30");
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [preCheckBranch, setPreCheckBranch] = useState<string | null>(null);
 
-  // Sync from server
-  useMemo(() => {
+  useEffect(() => {
     if (settings) {
       setAutoEnabled(!!settings.auto_eod_enabled);
       setAutoTime((settings.auto_eod_time ?? "00:30:00").toString().slice(0, 5));
@@ -76,7 +121,23 @@ export function EodTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  // Group latest run per branch for this business_date
+  const preCheckM = useMutation({
+    mutationFn: (branchId: string) =>
+      preCheckFn({ data: { branch_id: branchId, business_date: businessDate } }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const initiateM = useMutation({
+    mutationFn: (branchId: string) =>
+      initiateFn({ data: { branch_id: branchId, business_date: businessDate } }),
+    onSuccess: (runId) => {
+      toast.success("Run initiated — awaiting approval");
+      setSelectedRunId(runId);
+      qc.invalidateQueries({ queryKey: ["eod-runs-all"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const branchStatus = useMemo(() => {
     const map = new Map<string, any>();
     for (const r of runs ?? []) {
@@ -137,7 +198,7 @@ export function EodTab() {
           <div>
             <div className="font-semibold text-[14px]">Manual day-end</div>
             <div className="text-[12px] text-muted-foreground">
-              Runs the full day-end sequence for every branch at once.
+              Runs the full day-end sequence for every branch. Per-branch controls below.
             </div>
           </div>
           <div className="flex items-end gap-3">
@@ -179,6 +240,7 @@ export function EodTab() {
               <th className="py-2 pr-3">Started</th>
               <th className="py-2 pr-3">Completed</th>
               <th className="py-2 pr-3 text-right">Duration</th>
+              <th className="py-2 pr-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -189,15 +251,7 @@ export function EodTab() {
                 <td className={cn("py-2 pr-3 capitalize", STATUS_STYLE[run?.status ?? "pending"])}>
                   {run ? (
                     <span className="flex items-center gap-1.5">
-                      {run.status === "completed" && (
-                        <CheckCircle2 size={13} className="text-emerald-600" />
-                      )}
-                      {run.status === "failed" && (
-                        <XCircle size={13} className="text-destructive" />
-                      )}
-                      {run.status === "in_progress" && (
-                        <Loader2 size={13} className="animate-spin text-blue-600" />
-                      )}
+                      <StepIcon status={run.status} />
                       {run.status.replace(/_/g, " ")}
                     </span>
                   ) : (
@@ -213,17 +267,71 @@ export function EodTab() {
                 <td className="py-2 pr-3 text-right font-mono">
                   {run?.duration_ms ? `${(run.duration_ms / 1000).toFixed(1)}s` : "—"}
                 </td>
+                <td className="py-2 pr-3 text-right">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      className={cn(btnSecondaryCls, "!py-1 !px-2 text-[11px]")}
+                      onClick={() => {
+                        setPreCheckBranch(branch.id);
+                        preCheckM.mutate(branch.id);
+                      }}
+                      title="Run pre-checks"
+                    >
+                      <ShieldCheck size={12} className="inline mr-1" />
+                      Pre-check
+                    </button>
+                    {run ? (
+                      <button
+                        className={cn(btnSecondaryCls, "!py-1 !px-2 text-[11px]")}
+                        onClick={() => setSelectedRunId(run.id)}
+                      >
+                        Details
+                      </button>
+                    ) : (
+                      <button
+                        className={cn(btnPrimaryCls, "!py-1 !px-2 text-[11px]")}
+                        onClick={() => initiateM.mutate(branch.id)}
+                        disabled={initiateM.isPending}
+                      >
+                        Initiate
+                      </button>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
             {branchStatus.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="py-8 text-center text-muted-foreground">
                   No branches configured.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+
+        {/* Pre-check panel */}
+        {preCheckBranch && preCheckM.data && (
+          <div className="mt-4 rounded-lg border border-border bg-muted/30 p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <ShieldCheck size={14} className="text-primary" />
+              <div className="font-semibold text-[13px]">
+                Pre-check —{" "}
+                {branches?.find((b) => b.id === preCheckBranch)?.name ?? preCheckBranch}
+              </div>
+              <button
+                className="ml-auto text-[11px] text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setPreCheckBranch(null);
+                  preCheckM.reset();
+                }}
+              >
+                Close
+              </button>
+            </div>
+            <PreCheckResults data={preCheckM.data} />
+          </div>
+        )}
       </Card>
 
       {/* Recent runs */}
@@ -238,6 +346,7 @@ export function EodTab() {
               <th className="py-2 pr-3">Initiated</th>
               <th className="py-2 pr-3">Completed</th>
               <th className="py-2 pr-3 text-right">Duration</th>
+              <th className="py-2 pr-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -248,7 +357,10 @@ export function EodTab() {
                   <td className="py-2 pr-3 font-mono">{r.business_date}</td>
                   <td className="py-2 pr-3">{branch?.name ?? "—"}</td>
                   <td className={cn("py-2 pr-3 capitalize", STATUS_STYLE[r.status])}>
-                    {r.status.replace(/_/g, " ")}
+                    <span className="flex items-center gap-1.5">
+                      <StepIcon status={r.status} />
+                      {r.status.replace(/_/g, " ")}
+                    </span>
                   </td>
                   <td className="py-2 pr-3">
                     {r.initiated_at ? new Date(r.initiated_at).toLocaleString() : "—"}
@@ -259,12 +371,20 @@ export function EodTab() {
                   <td className="py-2 pr-3 text-right font-mono">
                     {r.duration_ms ? `${(r.duration_ms / 1000).toFixed(1)}s` : "—"}
                   </td>
+                  <td className="py-2 pr-3 text-right">
+                    <button
+                      className={cn(btnSecondaryCls, "!py-1 !px-2 text-[11px]")}
+                      onClick={() => setSelectedRunId(r.id)}
+                    >
+                      Details
+                    </button>
+                  </td>
                 </tr>
               );
             })}
             {(runs ?? []).length === 0 && (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="py-8 text-center text-muted-foreground">
                   No day-end runs yet.
                 </td>
               </tr>
@@ -272,6 +392,326 @@ export function EodTab() {
           </tbody>
         </table>
       </Card>
+
+      {/* Run detail modal */}
+      {selectedRunId && (
+        <RunDetailModal
+          runId={selectedRunId}
+          onClose={() => setSelectedRunId(null)}
+          getRunFn={getRunFn}
+          approveFn={approveFn}
+          runAllFn={runAllFn}
+          runStepFn={runStepFn}
+          branches={branches ?? []}
+        />
+      )}
+    </div>
+  );
+}
+
+function PreCheckResults({ data }: { data: any }) {
+  const checks = (data?.checks ?? data ?? []) as Array<{
+    key: string;
+    ok: boolean;
+    blocking?: boolean;
+    message?: string;
+  }>;
+  const list = Array.isArray(checks)
+    ? checks
+    : Object.entries(checks).map(([k, v]) => ({ key: k, ok: !!(v as any)?.ok, ...(v as any) }));
+
+  const blockers = list.filter((c) => !c.ok && c.blocking !== false);
+  return (
+    <div>
+      {blockers.length > 0 && (
+        <div className="mb-2 flex items-center gap-2 text-[12px] text-destructive">
+          <AlertTriangle size={13} />
+          {blockers.length} blocker(s) — day-end cannot proceed.
+        </div>
+      )}
+      <ul className="text-[12px] space-y-1">
+        {list.map((c) => (
+          <li key={c.key} className="flex items-start gap-2">
+            {c.ok ? (
+              <CheckCircle2 size={13} className="text-emerald-600 mt-0.5 shrink-0" />
+            ) : (
+              <XCircle size={13} className="text-destructive mt-0.5 shrink-0" />
+            )}
+            <span className="font-mono text-[11px] text-muted-foreground">{c.key}</span>
+            {c.message && <span className="text-muted-foreground">— {c.message}</span>}
+          </li>
+        ))}
+        {list.length === 0 && (
+          <li className="text-muted-foreground">No checks reported.</li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
+function RunDetailModal({
+  runId,
+  onClose,
+  getRunFn,
+  approveFn,
+  runAllFn,
+  runStepFn,
+  branches,
+}: {
+  runId: string;
+  onClose: () => void;
+  getRunFn: ReturnType<typeof useServerFn<typeof getEodRun>>;
+  approveFn: ReturnType<typeof useServerFn<typeof approveEod>>;
+  runAllFn: ReturnType<typeof useServerFn<typeof runAllSteps>>;
+  runStepFn: ReturnType<typeof useServerFn<typeof runStep>>;
+  branches: Array<{ id: string; name: string; eod_locked_through: string | null }>;
+}) {
+  const qc = useQueryClient();
+  const { data, refetch, isFetching } = useQuery({
+    queryKey: ["eod-run", runId],
+    queryFn: () => getRunFn({ data: { id: runId } }),
+    refetchInterval: 3000,
+  });
+
+  const run = data?.run;
+  const logs = data?.logs ?? [];
+  const branch = branches.find((b) => b.id === run?.branch_id);
+  const steps = ((run?.steps as any[]) ?? []) as Array<{
+    key: string;
+    status: string;
+    error?: string | null;
+    duration_ms?: number;
+    metrics?: any;
+  }>;
+  const stepByKey = new Map(steps.map((s) => [s.key, s]));
+
+  const approveM = useMutation({
+    mutationFn: () => approveFn({ data: { run_id: runId } }),
+    onSuccess: () => {
+      toast.success("Approved — run started");
+      refetch();
+      qc.invalidateQueries({ queryKey: ["eod-runs-all"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const runAllM = useMutation({
+    mutationFn: () => runAllFn({ data: { run_id: runId } }),
+    onSuccess: () => {
+      toast.success("Steps executed");
+      refetch();
+      qc.invalidateQueries({ queryKey: ["eod-runs-all"] });
+      qc.invalidateQueries({ queryKey: ["eod-branches"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const retryM = useMutation({
+    mutationFn: (step: string) => runStepFn({ data: { run_id: runId, step: step as any } }),
+    onSuccess: (r: any) => {
+      if (r?.ok) toast.success("Step completed");
+      else toast.error(r?.error ?? "Step failed");
+      refetch();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Modal open onClose={onClose} title="Day-end run details" size="lg">
+      {!run ? (
+        <div className="py-8 text-center text-muted-foreground text-[13px]">
+          <Loader2 size={14} className="animate-spin inline mr-1" /> Loading…
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[12px]">
+            <Meta label="Branch" value={branch?.name ?? run.branch_id} />
+            <Meta label="Business date" value={run.business_date} mono />
+            <Meta
+              label="Status"
+              value={
+                <span className={cn("capitalize", STATUS_STYLE[run.status])}>
+                  {run.status.replace(/_/g, " ")}
+                </span>
+              }
+            />
+            <Meta label="Duration" value={run.duration_ms ? `${(run.duration_ms / 1000).toFixed(1)}s` : "—"} />
+            <Meta label="Initiated" value={run.initiated_at ? new Date(run.initiated_at).toLocaleString() : "—"} />
+            <Meta label="Approved" value={run.approved_at ? new Date(run.approved_at).toLocaleString() : "—"} />
+            <Meta label="Started" value={run.started_at ? new Date(run.started_at).toLocaleString() : "—"} />
+            <Meta label="Completed" value={run.completed_at ? new Date(run.completed_at).toLocaleString() : "—"} />
+          </div>
+
+          {run.status === "pending_approval" && (
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 flex items-center justify-between">
+              <div className="text-[13px]">
+                <div className="font-semibold text-amber-700">Awaiting approval</div>
+                <div className="text-muted-foreground text-[12px]">
+                  Maker-checker requires a second officer to approve before steps run.
+                </div>
+              </div>
+              <button
+                className={btnPrimaryCls}
+                onClick={() => approveM.mutate()}
+                disabled={approveM.isPending}
+              >
+                <ShieldCheck size={13} className="inline mr-1" />
+                Approve & start
+              </button>
+            </div>
+          )}
+
+          {(run.status === "in_progress" || run.status === "failed") && (
+            <div className="flex items-center gap-2">
+              <button
+                className={btnPrimaryCls}
+                onClick={() => runAllM.mutate()}
+                disabled={runAllM.isPending}
+              >
+                {runAllM.isPending ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin inline mr-1" /> Running…
+                  </>
+                ) : (
+                  <>
+                    <PlayCircle size={13} className="inline mr-1" />
+                    {run.status === "failed" ? "Resume run" : "Run all remaining steps"}
+                  </>
+                )}
+              </button>
+              <button
+                className={btnSecondaryCls}
+                onClick={() => refetch()}
+                disabled={isFetching}
+              >
+                <RefreshCcw size={13} className={cn("inline mr-1", isFetching && "animate-spin")} />
+                Refresh
+              </button>
+            </div>
+          )}
+
+          {run.pre_check && (
+            <div className="rounded-lg border border-border p-3">
+              <div className="font-semibold text-[13px] mb-2">Pre-check results</div>
+              <PreCheckResults data={run.pre_check} />
+            </div>
+          )}
+
+          <div>
+            <div className="font-semibold text-[13px] mb-2">Steps</div>
+            <table className="w-full text-[12px]">
+              <thead>
+                <tr className="text-left text-faint font-semibold border-b border-border">
+                  <th className="py-1.5 pr-2">#</th>
+                  <th className="py-1.5 pr-2">Step</th>
+                  <th className="py-1.5 pr-2">Status</th>
+                  <th className="py-1.5 pr-2">Duration</th>
+                  <th className="py-1.5 pr-2">Error / Metrics</th>
+                  <th className="py-1.5 pr-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {STEP_ORDER.map((key, i) => {
+                  const s = stepByKey.get(key);
+                  const status = s?.status ?? "pending";
+                  return (
+                    <tr key={key} className="border-b border-border/40 align-top">
+                      <td className="py-1.5 pr-2 text-muted-foreground">{i + 1}</td>
+                      <td className="py-1.5 pr-2 font-mono">{key}</td>
+                      <td className={cn("py-1.5 pr-2 capitalize", STATUS_STYLE[status])}>
+                        <span className="flex items-center gap-1.5">
+                          <StepIcon status={status} />
+                          {status.replace(/_/g, " ")}
+                        </span>
+                      </td>
+                      <td className="py-1.5 pr-2 font-mono">
+                        {s?.duration_ms ? `${(s.duration_ms / 1000).toFixed(2)}s` : "—"}
+                      </td>
+                      <td className="py-1.5 pr-2">
+                        {s?.error ? (
+                          <span className="text-destructive text-[11.5px] whitespace-pre-wrap">
+                            {s.error}
+                          </span>
+                        ) : s?.metrics && Object.keys(s.metrics).length > 0 ? (
+                          <span className="text-muted-foreground text-[11px] font-mono">
+                            {Object.entries(s.metrics)
+                              .slice(0, 4)
+                              .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
+                              .join(" · ")}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="py-1.5 pr-2 text-right">
+                        {run.status === "in_progress" &&
+                          (status === "failed" || status === "pending") && (
+                            <button
+                              className={cn(btnSecondaryCls, "!py-0.5 !px-2 text-[11px]")}
+                              onClick={() => retryM.mutate(key)}
+                              disabled={retryM.isPending}
+                            >
+                              {status === "failed" ? "Retry" : "Run"}
+                            </button>
+                          )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {logs.length > 0 && (
+            <div>
+              <div className="font-semibold text-[13px] mb-2">Audit history</div>
+              <div className="max-h-56 overflow-auto rounded border border-border">
+                <table className="w-full text-[11.5px]">
+                  <thead>
+                    <tr className="text-left text-faint font-semibold border-b border-border bg-muted/40 sticky top-0">
+                      <th className="py-1.5 px-2">When</th>
+                      <th className="py-1.5 px-2">Step</th>
+                      <th className="py-1.5 px-2">Status</th>
+                      <th className="py-1.5 px-2">Error</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.map((l: any) => (
+                      <tr key={l.id} className="border-b border-border/40">
+                        <td className="py-1 px-2 font-mono">
+                          {l.started_at ? new Date(l.started_at).toLocaleString() : "—"}
+                        </td>
+                        <td className="py-1 px-2 font-mono">{l.step_key}</td>
+                        <td className={cn("py-1 px-2 capitalize", STATUS_STYLE[l.status])}>
+                          {l.status?.replace(/_/g, " ")}
+                        </td>
+                        <td className="py-1 px-2 text-destructive">{l.error ?? ""}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+function Meta({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div>
+      <div className="text-[10.5px] font-semibold uppercase text-faint">{label}</div>
+      <div className={cn("text-[12.5px]", mono && "font-mono")}>{value}</div>
     </div>
   );
 }
