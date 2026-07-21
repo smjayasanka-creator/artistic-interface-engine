@@ -178,7 +178,7 @@ export const saveMappingTemplate = createServerFn({ method: "POST" })
     if (data.id) {
       const { error } = await supabase
         .from("api_mapping_template")
-        .update(payload)
+        .update(payload as never)
         .eq("id", data.id)
         .eq("env", data.env);
       if (error) throw new Error(error.message);
@@ -186,7 +186,7 @@ export const saveMappingTemplate = createServerFn({ method: "POST" })
     }
     const { data: row, error } = await supabase
       .from("api_mapping_template")
-      .insert(payload)
+      .insert(payload as never)
       .select("id")
       .single();
     if (error) throw new Error(error.message);
