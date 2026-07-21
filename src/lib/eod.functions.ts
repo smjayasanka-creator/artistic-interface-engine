@@ -477,11 +477,8 @@ async function stepLoanAccrual(ctx: Ctx) {
       _idempotency_key: `eod-loan-accr:${l.id}:${business_date}`,
       _loan_id: l.id,
     });
-    if (pe) {
-      skipped++;
-      continue;
-    }
-    await supabaseAdmin.from("loan_accrual").insert({
+    if (pe) throw new Error(`Loan accrual GL post for loan ${l.id}: ${pe.message}`);
+    const { error: ae } = await supabaseAdmin.from("loan_accrual").insert({
       loan_id: l.id,
       company_id,
       accrual_date: business_date,
@@ -490,6 +487,7 @@ async function stepLoanAccrual(ctx: Ctx) {
       cumulative_amount: cumulative,
       entry_id: entryId,
     });
+    if (ae) throw new Error(`Loan accrual insert for loan ${l.id}: ${ae.message}`);
     accrued++;
     total += daily;
   }
