@@ -47,7 +47,7 @@ const SCOPES: { id: string; label: string; hint: string }[] = [
   },
 ];
 
-const ENDPOINTS = [
+export const ENDPOINTS = [
   {
     channel: "Clients · Create",
     method: "POST",
@@ -114,10 +114,15 @@ function ApiConsole() {
         <div className="text-[11.5px] uppercase tracking-wider text-muted-foreground font-semibold">
           Integration
         </div>
-        <div className="text-[18px] font-semibold mt-0.5">API console</div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <div className="text-[18px] font-semibold">API &amp; Integration Hub</div>
+          <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30 uppercase tracking-wider">
+            API-first platform
+          </span>
+        </div>
         <p className="text-[12.5px] text-muted-foreground mt-1 max-w-2xl">
-          REST endpoints for connecting third-party accounts, CEFT clearing, ATM switch, internet
-          banking, and CRIB. Bearer-token authenticated over HTTPS.
+          Connect any system to the platform through secure REST APIs, outbound webhooks and
+          field-level data mapping.
         </p>
       </div>
 
@@ -403,7 +408,7 @@ const COMMON_ERRORS = [
   },
 ];
 
-function endpointSpec(scope: string, method: string): EndpointSpec {
+export function endpointSpec(scope: string, method: string): EndpointSpec {
   const bearer: HeaderSpec = {
     name: "Authorization",
     value: "Bearer sk_live_a1b2c3…",
@@ -627,6 +632,67 @@ function endpointSpec(scope: string, method: string): EndpointSpec {
             code: 451,
             error: "consent_invalid",
             meaning: "`consent_reference` expired, revoked, or does not match the subject.",
+          },
+        ],
+      };
+    case "clients.create":
+      return {
+        headers: [
+          bearer,
+          contentType,
+          accept,
+          { ...idem, required: false, value: "client-onboard-2026-07-12-001" },
+        ],
+        idempotency:
+          "Optional but recommended. When supplied, repeated calls with the same key within 24h return the original client_id — the same customer is never onboarded twice, even if the origination channel retries.",
+        requestExample: {
+          first_name: "Nimal",
+          last_name: "Perera",
+          phone_country_code: "+94",
+          phone: "771234567",
+          national_id: "199012345678",
+          date_of_birth: "1990-05-14",
+          gender: "male",
+          address: "24 Galle Road, Colombo 03",
+          gn_division: "Kollupitiya",
+          divisional_secretariat: "Thimbirigasyaya",
+          district: "Colombo",
+          province: "Western",
+          email: "nimal.perera@example.com",
+          branch_id: "8d2f8017-1111-2222-3333-444455556666",
+          bank_accounts: [
+            {
+              bank_name: "Bank of Ceylon",
+              branch_name: "Colombo Fort",
+              account_no: "0011223344",
+              account_name: "Nimal Perera",
+              is_primary: true,
+            },
+          ],
+        },
+        responseStatus: "201 Created",
+        responseExample: {
+          status: "created",
+          client_id: "b1a2c3d4-e5f6-4789-a012-3456789abcde",
+          full_name: "Nimal Perera",
+          phone: "+94771234567",
+          national_id: "199012345678",
+          branch_id: "8d2f8017-1111-2222-3333-444455556666",
+          status_code: "active",
+          created_at: nowIso,
+        },
+        errors: [
+          ...COMMON_ERRORS,
+          {
+            code: 409,
+            error: "duplicate_client",
+            meaning:
+              "A client with the same `national_id` already exists in this company. Retrieve the existing client instead of retrying create.",
+          },
+          {
+            code: 422,
+            error: "branch_not_found",
+            meaning: "`branch_id` does not belong to this company or has been deactivated.",
           },
         ],
       };
