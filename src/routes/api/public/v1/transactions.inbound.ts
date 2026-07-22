@@ -12,6 +12,8 @@ import {
   ERRORS,
 } from "@/lib/api-schemas.server";
 import { postApiChannelEntry } from "@/lib/api-ledger.server";
+import { enqueueWebhookForCompany } from "@/lib/webhooks.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ENDPOINT = "/api/public/v1/transactions/inbound";
 const CHANNEL = "transactions";
@@ -93,6 +95,17 @@ export const Route = createFileRoute("/api/public/v1/transactions/inbound")({
           request: withIdempotencyEnvelope(parsed.data, idem),
           response,
         });
+        try {
+          await enqueueWebhookForCompany(supabaseAdmin as any, {
+            company_id: auth.key.company_id,
+            env: auth.key.environment,
+            event_type: "payment.completed",
+            event_id: reference,
+            payload: { direction: "inbound", ...response },
+          });
+        } catch (e) {
+          console.warn("[webhook] payment.completed(inbound) enqueue failed", e);
+        }
         return validateAndSend(TransactionsInboundResponse, response, 202);
       },
     },

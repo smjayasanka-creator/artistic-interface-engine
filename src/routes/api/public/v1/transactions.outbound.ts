@@ -13,6 +13,8 @@ import {
   requireHeader,
 } from "@/lib/api-schemas.server";
 import { postApiChannelEntry } from "@/lib/api-ledger.server";
+import { enqueueWebhookForCompany } from "@/lib/webhooks.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ENDPOINT = "/api/public/v1/transactions/outbound";
 const CHANNEL = "transactions";
@@ -88,6 +90,17 @@ export const Route = createFileRoute("/api/public/v1/transactions/outbound")({
           request: withIdempotencyEnvelope(parsed.data, idemHeader.value),
           response,
         });
+        try {
+          await enqueueWebhookForCompany(supabaseAdmin as any, {
+            company_id: auth.key.company_id,
+            env: auth.key.environment,
+            event_type: "payment.completed",
+            event_id: reference,
+            payload: { direction: "outbound", ...response },
+          });
+        } catch (e) {
+          console.warn("[webhook] payment.completed(outbound) enqueue failed", e);
+        }
         return validateAndSend(TransactionsOutboundResponse, response, 202);
       },
     },
