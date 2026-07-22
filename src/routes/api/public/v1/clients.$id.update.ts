@@ -2,7 +2,7 @@
 // Partial-update mutable client fields. Company-scoped: returns 404 for
 // clients that belong to another company (no cross-tenant leak).
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateApiKey, logApiCall, json } from "@/lib/api-auth.server";
+import { authenticateApiKey, logApiCall } from "@/lib/api-auth.server";
 import {
   ClientUpdateRequest,
   ClientUpdateResponse,
