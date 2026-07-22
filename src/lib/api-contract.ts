@@ -996,7 +996,6 @@ export const API_CONTRACTS: ApiContract[] = [
     direction: "outbound",
     status: "live",
     requiresIdempotency: false,
-    request: null,
     response: WebhookDeliveryListResponse,
     responseExample: {
       data: [
@@ -1042,7 +1041,6 @@ export const API_CONTRACTS: ApiContract[] = [
     direction: "outbound",
     status: "live",
     requiresIdempotency: false,
-    request: null,
     response: WebhookDeliveryDetail,
     responseExample: {
       id: "0d7f…",
@@ -1081,7 +1079,6 @@ export const API_CONTRACTS: ApiContract[] = [
     direction: "outbound",
     status: "live",
     requiresIdempotency: false,
-    request: null,
     response: WebhookReplayResponse,
     responseExample: {
       status: "requeued",
