@@ -102,6 +102,7 @@ import { Route as ApiPublicV1SavingsIndexRouteImport } from './routes/api/public
 import { Route as ApiPublicV1LoansIndexRouteImport } from './routes/api/public/v1/loans.index'
 import { Route as ApiPublicV1LoanApplicationsIndexRouteImport } from './routes/api/public/v1/loan-applications.index'
 import { Route as ApiPublicV1FixedDepositsIndexRouteImport } from './routes/api/public/v1/fixed-deposits.index'
+import { Route as ApiPublicV1EventsIndexRouteImport } from './routes/api/public/v1/events.index'
 import { Route as ApiPublicV1ClientsIndexRouteImport } from './routes/api/public/v1/clients.index'
 import { Route as ApiPublicV1WebhookDeliveriesIdRouteImport } from './routes/api/public/v1/webhook-deliveries.$id'
 import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/api/public/v1/transactions.outbound'
@@ -658,6 +659,11 @@ const ApiPublicV1FixedDepositsIndexRoute =
     path: '/api/public/v1/fixed-deposits/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1EventsIndexRoute = ApiPublicV1EventsIndexRouteImport.update({
+  id: '/api/public/v1/events/',
+  path: '/api/public/v1/events/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1ClientsIndexRoute = ApiPublicV1ClientsIndexRouteImport.update({
   id: '/api/public/v1/clients/',
   path: '/api/public/v1/clients/',
@@ -939,6 +945,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/webhook-deliveries/$id': typeof ApiPublicV1WebhookDeliveriesIdRouteWithChildren
   '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
+  '/api/public/v1/events/': typeof ApiPublicV1EventsIndexRoute
   '/api/public/v1/fixed-deposits/': typeof ApiPublicV1FixedDepositsIndexRoute
   '/api/public/v1/loan-applications/': typeof ApiPublicV1LoanApplicationsIndexRoute
   '/api/public/v1/loans/': typeof ApiPublicV1LoansIndexRoute
@@ -1060,6 +1067,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/webhook-deliveries/$id': typeof ApiPublicV1WebhookDeliveriesIdRouteWithChildren
   '/api/public/v1/clients': typeof ApiPublicV1ClientsIndexRoute
+  '/api/public/v1/events': typeof ApiPublicV1EventsIndexRoute
   '/api/public/v1/fixed-deposits': typeof ApiPublicV1FixedDepositsIndexRoute
   '/api/public/v1/loan-applications': typeof ApiPublicV1LoanApplicationsIndexRoute
   '/api/public/v1/loans': typeof ApiPublicV1LoansIndexRoute
@@ -1187,6 +1195,7 @@ export interface FileRoutesById {
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/webhook-deliveries/$id': typeof ApiPublicV1WebhookDeliveriesIdRouteWithChildren
   '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
+  '/api/public/v1/events/': typeof ApiPublicV1EventsIndexRoute
   '/api/public/v1/fixed-deposits/': typeof ApiPublicV1FixedDepositsIndexRoute
   '/api/public/v1/loan-applications/': typeof ApiPublicV1LoanApplicationsIndexRoute
   '/api/public/v1/loans/': typeof ApiPublicV1LoansIndexRoute
@@ -1314,6 +1323,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/webhook-deliveries/$id'
     | '/api/public/v1/clients/'
+    | '/api/public/v1/events/'
     | '/api/public/v1/fixed-deposits/'
     | '/api/public/v1/loan-applications/'
     | '/api/public/v1/loans/'
@@ -1435,6 +1445,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/webhook-deliveries/$id'
     | '/api/public/v1/clients'
+    | '/api/public/v1/events'
     | '/api/public/v1/fixed-deposits'
     | '/api/public/v1/loan-applications'
     | '/api/public/v1/loans'
@@ -1561,6 +1572,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/webhook-deliveries/$id'
     | '/api/public/v1/clients/'
+    | '/api/public/v1/events/'
     | '/api/public/v1/fixed-deposits/'
     | '/api/public/v1/loan-applications/'
     | '/api/public/v1/loans/'
@@ -1617,6 +1629,7 @@ export interface RootRouteChildren {
   ApiPublicV1TransactionsOutboundRoute: typeof ApiPublicV1TransactionsOutboundRoute
   ApiPublicV1WebhookDeliveriesIdRoute: typeof ApiPublicV1WebhookDeliveriesIdRouteWithChildren
   ApiPublicV1ClientsIndexRoute: typeof ApiPublicV1ClientsIndexRoute
+  ApiPublicV1EventsIndexRoute: typeof ApiPublicV1EventsIndexRoute
   ApiPublicV1FixedDepositsIndexRoute: typeof ApiPublicV1FixedDepositsIndexRoute
   ApiPublicV1LoanApplicationsIndexRoute: typeof ApiPublicV1LoanApplicationsIndexRoute
   ApiPublicV1LoansIndexRoute: typeof ApiPublicV1LoansIndexRoute
@@ -2290,6 +2303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1FixedDepositsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/events/': {
+      id: '/api/public/v1/events/'
+      path: '/api/public/v1/events'
+      fullPath: '/api/public/v1/events/'
+      preLoaderRoute: typeof ApiPublicV1EventsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/clients/': {
       id: '/api/public/v1/clients/'
       path: '/api/public/v1/clients'
@@ -2841,6 +2861,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1WebhookDeliveriesIdRoute:
     ApiPublicV1WebhookDeliveriesIdRouteWithChildren,
   ApiPublicV1ClientsIndexRoute: ApiPublicV1ClientsIndexRoute,
+  ApiPublicV1EventsIndexRoute: ApiPublicV1EventsIndexRoute,
   ApiPublicV1FixedDepositsIndexRoute: ApiPublicV1FixedDepositsIndexRoute,
   ApiPublicV1LoanApplicationsIndexRoute: ApiPublicV1LoanApplicationsIndexRoute,
   ApiPublicV1LoansIndexRoute: ApiPublicV1LoansIndexRoute,
