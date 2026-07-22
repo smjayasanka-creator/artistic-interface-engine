@@ -749,6 +749,26 @@ export const FdInterestScheduleListResponse = z.object({
   data: z.array(FdInterestScheduleRow),
 });
 
+// ---------- Loan · installment schedule (read) ----------
+export const LoanScheduleRow = z.object({
+  id: z.string().uuid(),
+  loan_id: z.string().uuid(),
+  seq: z.number().int().nonnegative(),
+  due_date: z.string(),
+  principal_due: z.number(),
+  principal_paid: z.number(),
+  interest_due: z.number(),
+  interest_paid: z.number(),
+  fee_due: z.number(),
+  fee_paid: z.number(),
+  state: z.string(),
+  is_manual: z.boolean(),
+});
+export const LoanScheduleListResponse = z.object({
+  data: z.array(LoanScheduleRow),
+});
+
+
 // ---------- Convenience: full auth-fail logging wrapper ----------
 export async function logAndReturnAuthError(args: {
   status: number;

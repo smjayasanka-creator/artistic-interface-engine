@@ -71,6 +71,7 @@ import {
   SavingsHoldListResponse,
   FdAccrualListResponse,
   FdInterestScheduleListResponse,
+  LoanScheduleListResponse,
 } from "@/lib/api-schemas.server";
 
 export type ApiScope =
@@ -1689,6 +1690,30 @@ export const API_CONTRACTS: ApiContract[] = [
     errors: [
       ...COMMON_ERRORS,
       { code: 404, error: "not_found", meaning: "Fixed deposit not found in caller's company." },
+    ],
+  },
+  {
+    id: "loans.schedule.list",
+    method: "GET",
+    path: "/api/public/v1/loans/{id}/schedule",
+    resource: "loans",
+    title: "List loan installment schedule",
+    summary:
+      "Amortisation schedule for a loan, ordered by seq ASC. Pass state to filter by installment_state (scheduled | due | paid | overdue | written_off).",
+    scope: "loans.read",
+    direction: "outbound",
+    status: "live",
+    requiresIdempotency: false,
+    response: LoanScheduleListResponse,
+    responseExample: { data: [] },
+    fields: [
+      { path: "id", label: "Loan id", type: "uuid", required: true, inbound: true, notes: "Path parameter." },
+      { path: "state", label: "Filter by state", type: "enum", inbound: true, notes: "Query param. Installment state." },
+      { path: "data", label: "Schedule rows", type: "array", outbound: true },
+    ],
+    errors: [
+      ...COMMON_ERRORS,
+      { code: 404, error: "not_found", meaning: "Loan not found in caller's company." },
     ],
   },
 ];
