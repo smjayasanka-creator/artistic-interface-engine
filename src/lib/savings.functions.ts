@@ -334,6 +334,38 @@ export const createSavingsAccount = createServerFn({ method: "POST" })
       } as any,
     );
     if (error) throw new Error(error.message);
+
+    // Fan out savings.opened webhook — best effort.
+    try {
+      const acctId = (acct as any)?.account_id ?? (acct as any)?.id ?? null;
+      if (acctId) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { enqueueWebhookForCompany } = await import("@/lib/webhooks.server");
+        const { data: row } = await supabaseAdmin
+          .from("savings_account")
+          .select(
+            "id, account_no, client_id, branch_id, product_id, currency, balance, available_balance, status, opened_on, company_id",
+          )
+          .eq("id", acctId)
+          .maybeSingle();
+        const companyId = (row as any)?.company_id as string | undefined;
+        if (companyId && row) {
+          const { company_id: _c, ...payload } = row as any;
+          for (const env of ["sandbox", "production"] as const) {
+            await enqueueWebhookForCompany(supabaseAdmin as any, {
+              company_id: companyId,
+              env,
+              event_type: "savings.opened",
+              event_id: acctId as string,
+              payload: { event: "savings.opened", savings_account: payload },
+            });
+          }
+        }
+      }
+    } catch {
+      // dispatcher will retry any queued rows; opening stands
+    }
+
     return acct;
   });
 
