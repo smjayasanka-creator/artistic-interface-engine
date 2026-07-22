@@ -33,6 +33,7 @@ import {
 import { ApiDataCatalogue } from "@/components/mzizi/ApiDataCatalogue";
 import { ApiMappingStudio } from "@/components/mzizi/ApiMappingStudio";
 import { ApiWebhooksTab } from "@/components/mzizi/ApiWebhooksTab";
+import { ApiGuidesTab } from "@/components/mzizi/ApiGuidesTab";
 
 // The registry ships resource/direction types; env is a UI-only union.
 type Env = "sandbox" | "production";
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/api")({
   component: ApiHub,
 });
 
-type Tab = "quickstart" | "explorer" | "catalogue" | "mapping" | "webhooks" | "keys" | "logs";
+type Tab = "quickstart" | "explorer" | "catalogue" | "mapping" | "webhooks" | "guides" | "keys" | "logs";
 
 const TABS: [Tab, string, string][] = [
   ["quickstart", "Quick start", "9-step onboarding, base URL, auth, standards"],
@@ -49,6 +50,7 @@ const TABS: [Tab, string, string][] = [
   ["catalogue", "Data catalogue", "Every field, resource and PII flag"],
   ["mapping", "Field mapping", "Deterministic matcher + AI fallback"],
   ["webhooks", "Webhooks", "HMAC-signed outbound events + retry queue"],
+  ["guides", "Guides & SDKs", "How-tos + OpenAPI / Postman downloads"],
   ["keys", "API keys", "Env-scoped credentials"],
   ["logs", "Request log", "Filter by env, channel, direction, status"],
 ];
@@ -125,6 +127,7 @@ function ApiHub() {
       {tab === "catalogue" && <ApiDataCatalogue />}
       {tab === "mapping" && <ApiMappingStudio env={env} />}
       {tab === "webhooks" && <ApiWebhooksTab env={env} />}
+      {tab === "guides" && <ApiGuidesTab env={env} />}
       {tab === "keys" && <KeysTab env={env} />}
       {tab === "logs" && <LogsTab env={env} />}
     </div>
