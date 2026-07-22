@@ -640,6 +640,39 @@ export const LoanApplicationDocumentDeleteResponse = z.object({
   application_id: z.string().uuid(),
 });
 
+// ---------- Client · attachments ----------
+export const ClientAttachmentUploadRequest = z.object({
+  document_type: z.string().trim().min(1).max(80),
+  file_name: z.string().trim().min(1).max(240),
+  mime_type: z.string().trim().max(120).optional(),
+  content_base64: z.string().min(4).max(11_500_000),
+});
+export const ClientAttachmentRow = z.object({
+  id: z.string().uuid(),
+  client_id: z.string().uuid(),
+  document_type: z.string(),
+  file_name: z.string(),
+  mime_type: z.string().nullable(),
+  size_bytes: z.number().int().nonnegative().nullable(),
+  version: z.number().int().nonnegative(),
+  uploaded_at: IsoDateTime,
+});
+export const ClientAttachmentUploadResponse = ClientAttachmentRow.extend({
+  status: z.literal("created"),
+});
+export const ClientAttachmentListResponse = z.object({
+  data: z.array(ClientAttachmentRow),
+});
+export const ClientAttachmentDetailResponse = ClientAttachmentRow.extend({
+  download_url: z.string().url(),
+  download_url_expires_at: IsoDateTime,
+});
+export const ClientAttachmentDeleteResponse = z.object({
+  status: z.literal("deleted"),
+  id: z.string().uuid(),
+  client_id: z.string().uuid(),
+});
+
 // ---------- Convenience: full auth-fail logging wrapper ----------
 export async function logAndReturnAuthError(args: {
   status: number;
