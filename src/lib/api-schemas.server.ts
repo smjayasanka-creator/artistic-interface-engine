@@ -498,6 +498,36 @@ export const HealthResponse = z.object({
   version: z.literal("v1"),
 });
 
+// ---------- Webhook deliveries ----------
+export const WebhookDeliveryRow = z.object({
+  id: z.string().uuid(),
+  endpoint_id: z.string().uuid(),
+  env: z.enum(["sandbox", "production"]),
+  event_id: z.string().uuid().nullable(),
+  event_type: z.string(),
+  attempt: z.number().int(),
+  status: z.enum(["pending", "delivered", "failed", "dead"]),
+  status_code: z.number().int().nullable(),
+  response_ms: z.number().int().nullable(),
+  response_snippet: z.string().nullable(),
+  next_retry_at: IsoDateTime.nullable(),
+  created_at: IsoDateTime,
+});
+export const WebhookDeliveryListResponse = z.object({
+  data: z.array(WebhookDeliveryRow),
+  next_cursor: z.string().nullable(),
+});
+export const WebhookDeliveryDetail = WebhookDeliveryRow.extend({
+  payload: z.record(z.string(), z.unknown()).nullable(),
+});
+export const WebhookReplayResponse = z.object({
+  status: z.literal("requeued"),
+  original_id: z.string().uuid(),
+  new_delivery_id: z.string().uuid(),
+  event_type: z.string(),
+  endpoint_id: z.string().uuid(),
+});
+
 // ---------- Convenience: full auth-fail logging wrapper ----------
 export async function logAndReturnAuthError(args: {
   status: number;
