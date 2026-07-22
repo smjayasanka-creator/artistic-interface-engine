@@ -294,6 +294,31 @@ export const ClientCreateResponse = z.object({
   created_at: IsoDateTime,
 });
 
+// Loans · repayments · create
+export const RepaymentCreateRequest = z.object({
+  amount: z.number().positive().max(1e12),
+  channel: z.enum(["cash", "bank_transfer", "cheque", "sdf", "wallet", "other"]),
+  reference: z.string().trim().max(80).optional(),
+  received_at: IsoDateTime.optional(),
+  notes: z.string().trim().max(300).optional(),
+});
+export const RepaymentCreateResponse = z.object({
+  status: z.literal("recorded"),
+  repayment_id: z.string().uuid().nullable(),
+  loan_id: z.string().uuid(),
+  reference: z.string().nullable(),
+  received_at: IsoDateTime,
+  business_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  amount: z.number(),
+  channel: z.string(),
+  allocated_fees: z.number(),
+  allocated_interest: z.number(),
+  allocated_principal: z.number(),
+  unallocated_amount: z.number(),
+  loan_closed: z.boolean(),
+  idempotent_replay: z.boolean(),
+});
+
 // Health
 export const HealthResponse = z.object({
   status: z.literal("ok"),
