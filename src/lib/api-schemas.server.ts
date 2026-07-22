@@ -294,6 +294,61 @@ export const ClientCreateResponse = z.object({
   created_at: IsoDateTime,
 });
 
+// Clients · update (PATCH)
+export const ClientUpdateRequest = z
+  .object({
+    first_name: z.string().trim().min(1).max(60).optional(),
+    last_name: z.string().trim().min(1).max(60).optional(),
+    phone_country_code: z.string().trim().min(1).max(6).optional(),
+    phone: z.string().trim().min(6).max(20).optional(),
+    email: z.string().trim().email().max(255).nullable().optional(),
+    address: z.string().trim().min(3).max(200).optional(),
+    gn_division: z.string().trim().min(1).max(80).optional(),
+    divisional_secretariat: z.string().trim().min(1).max(80).optional(),
+    district: z.string().trim().min(1).max(80).optional(),
+    province: z.string().trim().min(1).max(80).optional(),
+    photo_url: z.string().trim().url().max(500).nullable().optional(),
+    geo_lat: z.number().min(-90).max(90).nullable().optional(),
+    geo_lng: z.number().min(-180).max(180).nullable().optional(),
+    status: z.enum(["active", "inactive", "blacklisted"]).optional(),
+    is_introducer: z.boolean().optional(),
+    default_commission_pct: z.number().min(0).max(100).nullable().optional(),
+    default_commission_amount: z.number().min(0).nullable().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "At least one field required" });
+export const ClientUpdateResponse = z.object({
+  status: z.literal("updated"),
+  client_id: z.string().uuid(),
+  full_name: z.string(),
+  phone: z.string().nullable(),
+  updated_fields: z.array(z.string()),
+  updated_at: IsoDateTime,
+});
+
+// Clients · bank accounts
+export const ClientBankAccountCreateRequest = z.object({
+  bank_name: z.string().trim().min(1).max(120),
+  branch_name: z.string().trim().max(120).optional(),
+  account_no: z.string().trim().min(1).max(60),
+  account_name: z.string().trim().min(1).max(120),
+  swift_code: z.string().trim().max(30).optional(),
+  is_primary: z.boolean().optional(),
+});
+export const ClientBankAccountResponse = z.object({
+  status: z.literal("created"),
+  bank_account_id: z.string().uuid(),
+  client_id: z.string().uuid(),
+  bank_name: z.string(),
+  account_no: z.string(),
+  is_primary: z.boolean(),
+  created_at: IsoDateTime,
+});
+export const ClientBankAccountDeleteResponse = z.object({
+  status: z.literal("deleted"),
+  bank_account_id: z.string().uuid(),
+  client_id: z.string().uuid(),
+});
+
 // Loans · repayments · create
 export const RepaymentCreateRequest = z.object({
   amount: z.number().positive().max(1e12),
