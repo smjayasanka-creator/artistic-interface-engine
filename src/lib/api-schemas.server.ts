@@ -603,6 +603,43 @@ export const DomainEventListResponse = z.object({
   next_cursor: z.string().nullable(),
 });
 
+// ---------- Loan application · documents ----------
+// content_base64 is the raw file bytes, base64-encoded (no data: URI prefix).
+// Capped at ~11 MB base64 → ~8 MB decoded. Larger files should be uploaded
+// via signed URLs (future endpoint).
+export const LoanApplicationDocumentUploadRequest = z.object({
+  document_type: z.string().trim().min(1).max(80),
+  file_name: z.string().trim().min(1).max(240),
+  mime_type: z.string().trim().max(120).optional(),
+  content_base64: z.string().min(4).max(11_500_000),
+});
+export const LoanApplicationDocumentRow = z.object({
+  id: z.string().uuid(),
+  application_id: z.string().uuid(),
+  application_no: z.string(),
+  document_type: z.string(),
+  file_name: z.string(),
+  mime_type: z.string().nullable(),
+  size_bytes: z.number().int().nonnegative().nullable(),
+  version: z.number().int().nonnegative(),
+  uploaded_at: IsoDateTime,
+});
+export const LoanApplicationDocumentUploadResponse = LoanApplicationDocumentRow.extend({
+  status: z.literal("created"),
+});
+export const LoanApplicationDocumentListResponse = z.object({
+  data: z.array(LoanApplicationDocumentRow),
+});
+export const LoanApplicationDocumentDetailResponse = LoanApplicationDocumentRow.extend({
+  download_url: z.string().url(),
+  download_url_expires_at: IsoDateTime,
+});
+export const LoanApplicationDocumentDeleteResponse = z.object({
+  status: z.literal("deleted"),
+  id: z.string().uuid(),
+  application_id: z.string().uuid(),
+});
+
 // ---------- Convenience: full auth-fail logging wrapper ----------
 export async function logAndReturnAuthError(args: {
   status: number;
