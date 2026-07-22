@@ -35,7 +35,10 @@ export type ApiScope =
   | "internet_banking"
   | "crib"
   | "clients.create"
-  | "clients.read";
+  | "clients.read"
+  | "loans.read"
+  | "savings.read"
+  | "fixed_deposits.read";
 
 export type ApiDirection = "inbound" | "outbound" | "bi";
 export type ApiStatus = "live" | "planned";
