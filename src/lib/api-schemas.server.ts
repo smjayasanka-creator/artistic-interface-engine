@@ -583,6 +583,26 @@ export const WebhookReplayResponse = z.object({
   endpoint_id: z.string().uuid(),
 });
 
+// ---------- Domain events (read-only feed for integrators) ----------
+export const DomainEventRow = z.object({
+  id: z.string().uuid(),
+  event_type: z.string(),
+  domain: z.string().nullable(),
+  aggregate_type: z.string().nullable(),
+  aggregate_id: z.string().uuid().nullable(),
+  occurred_at: IsoDateTime,
+  created_at: IsoDateTime,
+  idempotency_key: z.string().nullable(),
+});
+export const DomainEventDetail = DomainEventRow.extend({
+  payload: z.record(z.string(), z.unknown()).nullable(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+});
+export const DomainEventListResponse = z.object({
+  data: z.array(DomainEventRow),
+  next_cursor: z.string().nullable(),
+});
+
 // ---------- Convenience: full auth-fail logging wrapper ----------
 export async function logAndReturnAuthError(args: {
   status: number;
