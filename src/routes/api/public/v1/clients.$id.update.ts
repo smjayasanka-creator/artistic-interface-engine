@@ -107,7 +107,7 @@ export const Route = createFileRoute("/api/public/v1/clients/$id/update")({
           full_name: updated.full_name,
           phone: (updated as any).phone ?? null,
           updated_fields: Object.keys(parsed.data),
-          updated_at: new Date(updated.updated_at as any).toISOString(),
+          updated_at: new Date().toISOString(),
         };
 
         try {
