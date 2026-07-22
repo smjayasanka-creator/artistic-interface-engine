@@ -350,6 +350,86 @@ export const LoanApplicationCreateResponse = z.object({
   created_at: IsoDateTime,
 });
 
+// Loan application · child rows
+export const LoanApplicationApplicantRequest = z.object({
+  role: z.enum(["primary", "co_applicant", "spouse", "other"]).default("primary"),
+  client_id: z.string().uuid().optional(),
+  full_name: z.string().trim().min(1).max(160),
+  national_id: z.string().trim().max(30).optional(),
+  phone: z.string().trim().max(30).optional(),
+  email: z.string().trim().email().max(255).optional(),
+  address: z.string().trim().max(300).optional(),
+  snapshot: z.record(z.string(), z.any()).optional(),
+});
+export const LoanApplicationBusinessRequest = z.object({
+  business_name: z.string().trim().max(160).optional(),
+  sector: z.string().trim().max(80).optional(),
+  years_in_operation: z.number().nonnegative().optional(),
+  monthly_turnover: z.number().nonnegative().optional(),
+  ownership_type: z.string().trim().max(60).optional(),
+  registration_no: z.string().trim().max(60).optional(),
+  business_address: z.string().trim().max(300).optional(),
+  extra: z.record(z.string(), z.any()).optional(),
+});
+export const LoanApplicationEmploymentRequest = z.object({
+  employer_name: z.string().trim().max(160).optional(),
+  position: z.string().trim().max(120).optional(),
+  employment_type: z.string().trim().max(60).optional(),
+  monthly_income: z.number().nonnegative().optional(),
+  years_of_service: z.number().nonnegative().optional(),
+  employer_address: z.string().trim().max(300).optional(),
+  employer_phone: z.string().trim().max(30).optional(),
+  extra: z.record(z.string(), z.any()).optional(),
+});
+export const LoanApplicationCollateralRequest = z.object({
+  security_type_id: z.string().uuid().optional(),
+  values: z.record(z.string(), z.any()).default({}),
+  documents: z.array(z.record(z.string(), z.any())).default([]),
+  notes: z.string().trim().max(500).optional(),
+});
+export const LoanApplicationGuarantorRequest = z.object({
+  guarantor_client_id: z.string().uuid().optional(),
+  full_name: z.string().trim().min(1).max(160),
+  national_id: z.string().trim().max(30).optional(),
+  phone: z.string().trim().max(30).optional(),
+  relationship: z.string().trim().max(80).optional(),
+  coverage_amount: z.number().nonnegative().optional(),
+  extra: z.record(z.string(), z.any()).optional(),
+});
+export const LoanApplicationExistingFacilityRequest = z.object({
+  lender_name: z.string().trim().min(1).max(160),
+  facility_type: z.string().trim().max(80).optional(),
+  original_amount: z.number().nonnegative().optional(),
+  outstanding_balance: z.number().nonnegative().optional(),
+  monthly_instalment: z.number().nonnegative().optional(),
+  maturity_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  status: z.string().trim().max(40).optional(),
+  extra: z.record(z.string(), z.any()).optional(),
+});
+export const LoanApplicationNoteRequest = z.object({
+  note: z.string().trim().min(1).max(2000),
+});
+export const LoanApplicationChildResponse = z.object({
+  status: z.literal("created"),
+  id: z.string().uuid(),
+  application_id: z.string().uuid(),
+  application_no: z.string(),
+  created_at: IsoDateTime,
+});
+
+// Loan application · submit
+export const LoanApplicationSubmitRequest = z.object({
+  workflow_definition_key: z.string().trim().max(80).optional(),
+  transition_key: z.string().trim().max(80).optional(),
+});
+export const LoanApplicationSubmitResponse = z.object({
+  status: z.literal("submitted"),
+  application_id: z.string().uuid(),
+  application_no: z.string(),
+  status_code: z.string(),
+  submitted_at: IsoDateTime,
+});
+
 // Health
 export const HealthResponse = z.object({
   status: z.literal("ok"),
