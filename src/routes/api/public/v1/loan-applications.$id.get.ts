@@ -14,7 +14,7 @@ const CHANNEL = "loan_applications";
 const APP_SELECT =
   "id, application_no, company_id, branch_id, client_id, product_id, officer_id, requested_principal, requested_tenor_months, requested_rate_pct, frequency, currency, purpose, channel, status, submitted_at, decided_at, disbursed_at, loan_id, metadata, created_at, updated_at";
 
-export const Route = createFileRoute("/api/public/v1/loan-applications/$id/")({
+export const Route = createFileRoute("/api/public/v1/loan-applications/$id/get")({
   server: {
     handlers: {
       GET: async ({ request, params }) => {
@@ -78,7 +78,7 @@ export const Route = createFileRoute("/api/public/v1/loan-applications/$id/")({
         });
 
         return Response.json({
-          ...app,
+          ...(app as any),
           applicants,
           business,
           employment,

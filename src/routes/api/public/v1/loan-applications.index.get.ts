@@ -19,7 +19,7 @@ const DEFAULT_LIMIT = 50;
 const SELECT =
   "id, application_no, company_id, branch_id, client_id, product_id, officer_id, requested_principal, requested_tenor_months, requested_rate_pct, frequency, currency, purpose, channel, status, submitted_at, decided_at, disbursed_at, loan_id, created_at";
 
-export const Route = createFileRoute("/api/public/v1/loan-applications/")({
+export const Route = createFileRoute("/api/public/v1/loan-applications/index/get")({
   server: {
     handlers: {
       GET: async ({ request }) => {
