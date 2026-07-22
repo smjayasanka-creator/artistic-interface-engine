@@ -25,7 +25,7 @@ import { enqueueWebhookForCompany } from "@/lib/webhooks.server";
 const ENDPOINT = "/api/public/v1/loan-applications";
 const CHANNEL = "loan_applications";
 
-export const Route = createFileRoute("/api/public/v1/loan-applications")({
+export const Route = createFileRoute("/api/public/v1/loan-applications/create")({
   server: {
     handlers: {
       POST: async ({ request }) => {
