@@ -21,6 +21,10 @@ import {
   HealthResponse,
   IbRequest,
   IbResponse,
+  LoanApplicationCreateRequest,
+  LoanApplicationCreateResponse,
+  RepaymentCreateRequest,
+  RepaymentCreateResponse,
   TransactionsInboundRequest,
   TransactionsInboundResponse,
   TransactionsOutboundRequest,
@@ -38,6 +42,7 @@ export type ApiScope =
   | "clients.read"
   | "loans.read"
   | "loans.repayments.write"
+  | "loan_applications.write"
   | "savings.read"
   | "fixed_deposits.read";
 
@@ -502,6 +507,8 @@ export const API_CONTRACTS: ApiContract[] = [
     direction: "inbound",
     status: "live",
     requiresIdempotency: true,
+    request: RepaymentCreateRequest,
+    response: RepaymentCreateResponse,
     requestExample: {
       amount: 25000,
       channel: "bank_transfer",
@@ -547,6 +554,70 @@ export const API_CONTRACTS: ApiContract[] = [
       { code: 409, error: "idempotency_conflict", meaning: "Idempotency-Key was reused with a different body." },
     ],
     webhookEvents: ["repayment.recorded", "loan.closed"],
+  },
+  {
+    id: "loan_applications.create",
+    method: "POST",
+    path: "/api/public/v1/loan-applications",
+    resource: "loan_applications",
+    title: "Create loan application",
+    summary:
+      "Create a loan application (master row) in draft status. Child data (applicant, business, employment, collateral, guarantors, documents) can be attached via subsequent updates or in-app. The application_no is generated server-side (AP000001…). Idempotent by Idempotency-Key.",
+    scope: "loan_applications.write",
+    direction: "inbound",
+    status: "live",
+    requiresIdempotency: true,
+    request: LoanApplicationCreateRequest,
+    response: LoanApplicationCreateResponse,
+    requestExample: {
+      branch_id: "0d7f…",
+      client_id: "a1b2…",
+      product_id: "c3d4…",
+      requested_principal: 500000,
+      requested_tenor_months: 24,
+      requested_rate_pct: 18.5,
+      frequency: "monthly",
+      currency: "KES",
+      purpose: "Working capital",
+      channel: "mobile_app",
+    },
+    responseExample: {
+      status: "created",
+      application_id: "9f0e…",
+      application_no: "AP000123",
+      branch_id: "0d7f…",
+      client_id: "a1b2…",
+      product_id: "c3d4…",
+      requested_principal: 500000,
+      requested_tenor_months: 24,
+      currency: "KES",
+      status_code: "draft",
+      created_at: "2026-07-22T09:30:00.000Z",
+    },
+    fields: [
+      { path: "branch_id", label: "Branch", type: "uuid", required: true, inbound: true },
+      { path: "client_id", label: "Client", type: "uuid", inbound: true },
+      { path: "product_id", label: "Loan product", type: "uuid", inbound: true },
+      { path: "officer_id", label: "Loan officer (staff)", type: "uuid", inbound: true },
+      { path: "requested_principal", label: "Requested principal", type: "number", required: true, inbound: true },
+      { path: "requested_tenor_months", label: "Requested tenor (months)", type: "int", required: true, inbound: true },
+      { path: "requested_rate_pct", label: "Requested rate (%)", type: "number", inbound: true },
+      { path: "frequency", label: "Repayment frequency", type: "enum", inbound: true, notes: "daily | weekly | biweekly | monthly | quarterly | semi_annual | annual | bullet" },
+      { path: "currency", label: "Currency (ISO-4217)", type: "string", inbound: true, notes: "Defaults to KES." },
+      { path: "purpose", label: "Purpose", type: "string", inbound: true },
+      { path: "channel", label: "Origination channel", type: "string", inbound: true },
+      { path: "metadata", label: "Metadata", type: "object", inbound: true, notes: "Free-form JSON attached to the application." },
+      { path: "application_id", label: "Application id", type: "uuid", outbound: true },
+      { path: "application_no", label: "Application no.", type: "string", outbound: true },
+      { path: "status_code", label: "Application status", type: "string", outbound: true },
+    ],
+    errors: [
+      ...COMMON_ERRORS,
+      { code: 404, error: "branch_not_found", meaning: "branch_id does not belong to the caller's company." },
+      { code: 404, error: "client_not_found", meaning: "client_id does not belong to the caller's company." },
+      { code: 409, error: "idempotency_conflict", meaning: "Idempotency-Key was reused with a different body." },
+    ],
+    webhookEvents: ["loan_application.created"],
   },
 ];
 
