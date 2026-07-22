@@ -67,6 +67,8 @@ import {
   ClientAttachmentListResponse,
   ClientAttachmentDetailResponse,
   ClientAttachmentDeleteResponse,
+  SavingsTransactionListResponse,
+  SavingsHoldListResponse,
 } from "@/lib/api-schemas.server";
 
 export type ApiScope =
