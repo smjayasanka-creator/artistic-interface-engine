@@ -47,6 +47,9 @@ import {
   TransactionsInboundResponse,
   TransactionsOutboundRequest,
   TransactionsOutboundResponse,
+  WebhookDeliveryDetail,
+  WebhookDeliveryListResponse,
+  WebhookReplayResponse,
 } from "@/lib/api-schemas.server";
 
 export type ApiScope =
