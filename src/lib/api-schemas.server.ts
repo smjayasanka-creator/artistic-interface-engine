@@ -719,6 +719,36 @@ export const SavingsHoldListResponse = z.object({
   data: z.array(SavingsHoldRow),
 });
 
+// ---------- Fixed deposit · accruals (read) ----------
+export const FdAccrualRow = z.object({
+  id: z.string().uuid(),
+  deposit_id: z.string().uuid(),
+  accrual_date: z.string(),
+  daily_amount: z.number(),
+  cumulative_amount: z.number(),
+  released_at: IsoDateTime.nullable(),
+  released_ref: z.string().nullable(),
+});
+export const FdAccrualListResponse = z.object({
+  data: z.array(FdAccrualRow),
+});
+
+// ---------- Fixed deposit · interest schedule (read) ----------
+export const FdInterestScheduleRow = z.object({
+  id: z.string().uuid(),
+  deposit_id: z.string().uuid(),
+  seq: z.number().int().nonnegative(),
+  due_date: z.string(),
+  gross_interest: z.number(),
+  wht_amount: z.number(),
+  net_interest: z.number(),
+  paid: z.boolean(),
+  paid_date: z.string().nullable(),
+});
+export const FdInterestScheduleListResponse = z.object({
+  data: z.array(FdInterestScheduleRow),
+});
+
 // ---------- Convenience: full auth-fail logging wrapper ----------
 export async function logAndReturnAuthError(args: {
   status: number;
