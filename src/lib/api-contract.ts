@@ -387,7 +387,165 @@ export const API_CONTRACTS: ApiContract[] = [
       { code: 404, error: "not_found", meaning: "No client with this id in the caller's company." },
     ],
   },
+  ...makeReadPair({
+    resource: "loans",
+    scope: "loans.read",
+    id: "loans",
+    label: "loan",
+    listPath: "/api/public/v1/loans",
+    getPath: "/api/public/v1/loans/{id}",
+    example: {
+      id: "0d7f…",
+      contract_no: "LN00000123",
+      application_no: "AP000045",
+      client_id: "…",
+      branch_id: "…",
+      product_id: "…",
+      principal: 500000,
+      term_months: 24,
+      annual_rate_pct: 18.5,
+      frequency: "monthly",
+      status: "active",
+      disbursed_at: "2026-07-21T10:00:00.000Z",
+      created_at: "2026-07-20T09:00:00.000Z",
+    },
+    outboundFields: [
+      { path: "contract_no", label: "Contract no.", type: "string" },
+      { path: "application_no", label: "Application no.", type: "string" },
+      { path: "client_id", label: "Client", type: "uuid" },
+      { path: "branch_id", label: "Branch", type: "uuid" },
+      { path: "product_id", label: "Product", type: "uuid" },
+      { path: "principal", label: "Principal", type: "number" },
+      { path: "term_months", label: "Term (months)", type: "int" },
+      { path: "annual_rate_pct", label: "Interest rate (%)", type: "number" },
+      { path: "frequency", label: "Repayment frequency", type: "enum" },
+      { path: "status", label: "Loan status", type: "string" },
+      { path: "disbursed_at", label: "Disbursed at", type: "datetime" },
+    ],
+  }),
+  ...makeReadPair({
+    resource: "savings",
+    scope: "savings.read",
+    id: "savings",
+    label: "savings account",
+    listPath: "/api/public/v1/savings",
+    getPath: "/api/public/v1/savings/{id}",
+    example: {
+      id: "0d7f…",
+      account_no: "SA0000123",
+      client_id: "…",
+      branch_id: "…",
+      product_id: "…",
+      currency: "KES",
+      balance: 12500,
+      available_balance: 12500,
+      status: "active",
+      opened_on: "2026-07-21",
+      created_at: "2026-07-21T10:00:00.000Z",
+    },
+    outboundFields: [
+      { path: "account_no", label: "Account no.", type: "string" },
+      { path: "client_id", label: "Client", type: "uuid" },
+      { path: "branch_id", label: "Branch", type: "uuid" },
+      { path: "product_id", label: "Product", type: "uuid" },
+      { path: "currency", label: "Currency", type: "string" },
+      { path: "balance", label: "Ledger balance", type: "number" },
+      { path: "available_balance", label: "Available balance", type: "number" },
+      { path: "status", label: "Account status", type: "string" },
+      { path: "opened_on", label: "Opened on", type: "date" },
+    ],
+  }),
+  ...makeReadPair({
+    resource: "fixed_deposits",
+    scope: "fixed_deposits.read",
+    id: "fixed_deposits",
+    label: "fixed deposit",
+    listPath: "/api/public/v1/fixed-deposits",
+    getPath: "/api/public/v1/fixed-deposits/{id}",
+    example: {
+      id: "0d7f…",
+      certificate_no: "FD0000123",
+      client_id: "…",
+      branch_id: "…",
+      product_id: "…",
+      principal: 250000,
+      tenure_months: 12,
+      rate_at_booking: 12.5,
+      value_date: "2026-07-21",
+      maturity_date: "2027-07-21",
+      status: "active",
+      created_at: "2026-07-21T10:00:00.000Z",
+    },
+    outboundFields: [
+      { path: "certificate_no", label: "Certificate no.", type: "string" },
+      { path: "client_id", label: "Client", type: "uuid" },
+      { path: "branch_id", label: "Branch", type: "uuid" },
+      { path: "product_id", label: "Product", type: "uuid" },
+      { path: "principal", label: "Principal", type: "number" },
+      { path: "tenure_months", label: "Tenure (months)", type: "int" },
+      { path: "rate_at_booking", label: "Rate at booking (%)", type: "number" },
+      { path: "value_date", label: "Value date", type: "date" },
+      { path: "maturity_date", label: "Maturity date", type: "date" },
+      { path: "status", label: "FD status", type: "string" },
+    ],
+  }),
 ];
+
+function makeReadPair(args: {
+  resource: ApiResource;
+  scope: ApiScope;
+  id: string;
+  label: string;
+  listPath: string;
+  getPath: string;
+  example: Record<string, unknown>;
+  outboundFields: Array<Omit<ApiFieldDoc, "outbound" | "inbound">>;
+}): ApiContract[] {
+  const outbound = args.outboundFields.map((f) => ({ ...f, outbound: true }));
+  return [
+    {
+      id: `${args.id}.list`,
+      method: "GET",
+      path: args.listPath,
+      resource: args.resource,
+      title: `List ${args.label}s`,
+      summary: `Cursor-paginated list of ${args.label}s belonging to the API key's company. Ordered by newest first.`,
+      scope: args.scope,
+      direction: "outbound",
+      status: "live",
+      requiresIdempotency: false,
+      responseExample: { data: [args.example], next_cursor: null },
+      fields: [
+        { path: "cursor", label: "Cursor", type: "string", inbound: true, notes: "Pass next_cursor from a previous page." },
+        { path: "limit", label: "Limit", type: "int", inbound: true, notes: "Default 50, max 200." },
+        { path: "data", label: `${args.label}s`, type: "array", outbound: true },
+        { path: "next_cursor", label: "Next cursor", type: "string", outbound: true },
+      ],
+      errors: COMMON_ERRORS,
+    },
+    {
+      id: `${args.id}.get`,
+      method: "GET",
+      path: args.getPath,
+      resource: args.resource,
+      title: `Get ${args.label}`,
+      summary: `Fetch a single ${args.label} by id. Returns 404 for ids belonging to another company (no cross-tenant enumeration).`,
+      scope: args.scope,
+      direction: "outbound",
+      status: "live",
+      requiresIdempotency: false,
+      responseExample: args.example,
+      fields: [
+        { path: "id", label: `${args.label} id`, type: "uuid", required: true, inbound: true },
+        ...outbound,
+      ],
+      errors: [
+        ...COMMON_ERRORS,
+        { code: 404, error: "not_found", meaning: `No ${args.label} with this id in the caller's company.` },
+      ],
+    },
+  ];
+}
 
 export function getContractById(id: string): ApiContract | undefined {
   return API_CONTRACTS.find((c) => c.id === id);
