@@ -79,7 +79,7 @@ export const Route = createFileRoute("/api/public/v1/clients/$id/update")({
           .from("client")
           .update(patch as any)
           .eq("id", params.id)
-          .select("id, full_name, phone, updated_at")
+          .select("id, full_name, phone")
           .single();
         if (error || !updated) {
           await logApiCall({
