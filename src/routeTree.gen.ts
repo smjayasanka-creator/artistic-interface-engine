@@ -112,6 +112,7 @@ import { Route as ApiPublicV1ClientsCreateRouteImport } from './routes/api/publi
 import { Route as ApiPublicV1ClientsIdRouteImport } from './routes/api/public/v1/clients.$id'
 import { Route as ApiPublicV1CeftTransferRouteImport } from './routes/api/public/v1/ceft.transfer'
 import { Route as ApiPublicV1AtmAuthorizeRouteImport } from './routes/api/public/v1/atm.authorize'
+import { Route as ApiPublicV1LoansIdRepaymentsRouteImport } from './routes/api/public/v1/loans.$id.repayments'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -690,6 +691,12 @@ const ApiPublicV1AtmAuthorizeRoute = ApiPublicV1AtmAuthorizeRouteImport.update({
   path: '/api/public/v1/atm/authorize',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1LoansIdRepaymentsRoute =
+  ApiPublicV1LoansIdRepaymentsRouteImport.update({
+    id: '/repayments',
+    path: '/repayments',
+    getParentRoute: () => ApiPublicV1LoansIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -786,7 +793,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/fixed-deposits/$id': typeof ApiPublicV1FixedDepositsIdRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
-  '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRoute
+  '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRouteWithChildren
   '/api/public/v1/savings/$id': typeof ApiPublicV1SavingsIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
@@ -794,6 +801,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/fixed-deposits/': typeof ApiPublicV1FixedDepositsIndexRoute
   '/api/public/v1/loans/': typeof ApiPublicV1LoansIndexRoute
   '/api/public/v1/savings/': typeof ApiPublicV1SavingsIndexRoute
+  '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -886,7 +894,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/fixed-deposits/$id': typeof ApiPublicV1FixedDepositsIdRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
-  '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRoute
+  '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRouteWithChildren
   '/api/public/v1/savings/$id': typeof ApiPublicV1SavingsIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
@@ -894,6 +902,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/fixed-deposits': typeof ApiPublicV1FixedDepositsIndexRoute
   '/api/public/v1/loans': typeof ApiPublicV1LoansIndexRoute
   '/api/public/v1/savings': typeof ApiPublicV1SavingsIndexRoute
+  '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -992,7 +1001,7 @@ export interface FileRoutesById {
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/fixed-deposits/$id': typeof ApiPublicV1FixedDepositsIdRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
-  '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRoute
+  '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRouteWithChildren
   '/api/public/v1/savings/$id': typeof ApiPublicV1SavingsIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
@@ -1000,6 +1009,7 @@ export interface FileRoutesById {
   '/api/public/v1/fixed-deposits/': typeof ApiPublicV1FixedDepositsIndexRoute
   '/api/public/v1/loans/': typeof ApiPublicV1LoansIndexRoute
   '/api/public/v1/savings/': typeof ApiPublicV1SavingsIndexRoute
+  '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1106,6 +1116,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/fixed-deposits/'
     | '/api/public/v1/loans/'
     | '/api/public/v1/savings/'
+    | '/api/public/v1/loans/$id/repayments'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1206,6 +1217,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/fixed-deposits'
     | '/api/public/v1/loans'
     | '/api/public/v1/savings'
+    | '/api/public/v1/loans/$id/repayments'
   id:
     | '__root__'
     | '/'
@@ -1311,6 +1323,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/fixed-deposits/'
     | '/api/public/v1/loans/'
     | '/api/public/v1/savings/'
+    | '/api/public/v1/loans/$id/repayments'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1338,7 +1351,7 @@ export interface RootRouteChildren {
   ApiPublicV1CribReportRoute: typeof ApiPublicV1CribReportRoute
   ApiPublicV1FixedDepositsIdRoute: typeof ApiPublicV1FixedDepositsIdRoute
   ApiPublicV1IbTransactionRoute: typeof ApiPublicV1IbTransactionRoute
-  ApiPublicV1LoansIdRoute: typeof ApiPublicV1LoansIdRoute
+  ApiPublicV1LoansIdRoute: typeof ApiPublicV1LoansIdRouteWithChildren
   ApiPublicV1SavingsIdRoute: typeof ApiPublicV1SavingsIdRoute
   ApiPublicV1TransactionsInboundRoute: typeof ApiPublicV1TransactionsInboundRoute
   ApiPublicV1TransactionsOutboundRoute: typeof ApiPublicV1TransactionsOutboundRoute
@@ -2071,6 +2084,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1AtmAuthorizeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/loans/$id/repayments': {
+      id: '/api/public/v1/loans/$id/repayments'
+      path: '/repayments'
+      fullPath: '/api/public/v1/loans/$id/repayments'
+      preLoaderRoute: typeof ApiPublicV1LoansIdRepaymentsRouteImport
+      parentRoute: typeof ApiPublicV1LoansIdRoute
+    }
   }
 }
 
@@ -2315,6 +2335,17 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiPublicV1LoansIdRouteChildren {
+  ApiPublicV1LoansIdRepaymentsRoute: typeof ApiPublicV1LoansIdRepaymentsRoute
+}
+
+const ApiPublicV1LoansIdRouteChildren: ApiPublicV1LoansIdRouteChildren = {
+  ApiPublicV1LoansIdRepaymentsRoute: ApiPublicV1LoansIdRepaymentsRoute,
+}
+
+const ApiPublicV1LoansIdRouteWithChildren =
+  ApiPublicV1LoansIdRoute._addFileChildren(ApiPublicV1LoansIdRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -2343,7 +2374,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1CribReportRoute: ApiPublicV1CribReportRoute,
   ApiPublicV1FixedDepositsIdRoute: ApiPublicV1FixedDepositsIdRoute,
   ApiPublicV1IbTransactionRoute: ApiPublicV1IbTransactionRoute,
-  ApiPublicV1LoansIdRoute: ApiPublicV1LoansIdRoute,
+  ApiPublicV1LoansIdRoute: ApiPublicV1LoansIdRouteWithChildren,
   ApiPublicV1SavingsIdRoute: ApiPublicV1SavingsIdRoute,
   ApiPublicV1TransactionsInboundRoute: ApiPublicV1TransactionsInboundRoute,
   ApiPublicV1TransactionsOutboundRoute: ApiPublicV1TransactionsOutboundRoute,

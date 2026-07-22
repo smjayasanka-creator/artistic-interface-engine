@@ -37,6 +37,7 @@ export type ApiScope =
   | "clients.create"
   | "clients.read"
   | "loans.read"
+  | "loans.repayments.write"
   | "savings.read"
   | "fixed_deposits.read";
 
@@ -489,6 +490,64 @@ export const API_CONTRACTS: ApiContract[] = [
       { path: "status", label: "FD status", type: "string" },
     ],
   }),
+  {
+    id: "loans.repayments.create",
+    method: "POST",
+    path: "/api/public/v1/loans/{id}/repayments",
+    resource: "repayments",
+    title: "Record a loan repayment",
+    summary:
+      "Post a repayment against a loan. Amount is allocated in the 3-pass order Fees → Interest → Principal. Idempotent when the caller supplies the Idempotency-Key header.",
+    scope: "loans.repayments.write",
+    direction: "inbound",
+    status: "live",
+    requiresIdempotency: true,
+    requestExample: {
+      amount: 25000,
+      channel: "bank_transfer",
+      reference: "TXN-2026-0001",
+      received_at: "2026-07-22T09:30:00.000Z",
+      notes: "July instalment",
+    },
+    responseExample: {
+      status: "recorded",
+      repayment_id: "6f2a…",
+      loan_id: "0d7f…",
+      reference: "TXN-2026-0001",
+      received_at: "2026-07-22T09:30:00.000Z",
+      business_date: "2026-07-22",
+      amount: 25000,
+      channel: "bank_transfer",
+      allocated_fees: 500,
+      allocated_interest: 4500,
+      allocated_principal: 20000,
+      unallocated_amount: 0,
+      loan_closed: false,
+      idempotent_replay: false,
+    },
+    fields: [
+      { path: "id", label: "Loan id", type: "uuid", required: true, inbound: true, notes: "Path parameter." },
+      { path: "amount", label: "Amount", type: "number", required: true, inbound: true },
+      { path: "channel", label: "Payment channel", type: "enum", required: true, inbound: true, notes: "cash | bank_transfer | cheque | sdf | wallet | other" },
+      { path: "reference", label: "External reference", type: "string", inbound: true },
+      { path: "received_at", label: "Received at", type: "datetime", inbound: true, notes: "Defaults to now if omitted." },
+      { path: "notes", label: "Notes", type: "string", inbound: true },
+      { path: "repayment_id", label: "Repayment id", type: "uuid", outbound: true },
+      { path: "allocated_fees", label: "Allocated to fees", type: "number", outbound: true },
+      { path: "allocated_interest", label: "Allocated to interest", type: "number", outbound: true },
+      { path: "allocated_principal", label: "Allocated to principal", type: "number", outbound: true },
+      { path: "unallocated_amount", label: "Unallocated", type: "number", outbound: true, notes: "Overpayment held on the loan." },
+      { path: "loan_closed", label: "Loan closed", type: "boolean", outbound: true },
+      { path: "idempotent_replay", label: "Replay of prior request", type: "boolean", outbound: true },
+    ],
+    errors: [
+      ...COMMON_ERRORS,
+      { code: 404, error: "not_found", meaning: "No loan with this id in the caller's company." },
+      { code: 409, error: "loan_not_active", meaning: "Loan is not in a state that accepts repayments." },
+      { code: 409, error: "idempotency_conflict", meaning: "Idempotency-Key was reused with a different body." },
+    ],
+    webhookEvents: ["repayment.recorded", "loan.closed"],
+  },
 ];
 
 function makeReadPair(args: {
