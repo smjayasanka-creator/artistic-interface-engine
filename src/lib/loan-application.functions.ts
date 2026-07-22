@@ -494,5 +494,36 @@ export const disburseApplication = createServerFn({ method: "POST" })
       } as any,
     );
     if (error) throw new Error(error.message);
-    return { loan_id: loanId as unknown as string };
+    const loan_id = loanId as unknown as string;
+
+    // Fan out loan.disbursed webhook to subscribed endpoints. Best-effort:
+    // never let a webhook failure roll back a successful disbursement.
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { enqueueWebhookForCompany } = await import("@/lib/webhooks.server");
+      const { data: loanRow } = await supabaseAdmin
+        .from("loan")
+        .select(
+          "id, contract_no, application_no, client_id, product_id, branch_id, principal, term_months, annual_rate_pct, frequency, status, disbursed_at, disbursement_channel, disbursement_reference, net_disbursed, branch:branch_id(company_id)",
+        )
+        .eq("id", loan_id)
+        .maybeSingle();
+      const companyId = (loanRow as any)?.branch?.company_id as string | undefined;
+      if (companyId && loanRow) {
+        const { branch: _b, ...payload } = loanRow as any;
+        for (const env of ["sandbox", "production"] as const) {
+          await enqueueWebhookForCompany(supabaseAdmin as any, {
+            company_id: companyId,
+            env,
+            event_type: "loan.disbursed",
+            event_id: loan_id,
+            payload: { event: "loan.disbursed", loan: payload },
+          });
+        }
+      }
+    } catch {
+      // swallow — dispatcher will pick up any queued row; disbursement stands
+    }
+
+    return { loan_id };
   });
