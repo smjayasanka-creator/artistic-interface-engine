@@ -69,6 +69,8 @@ import {
   ClientAttachmentDeleteResponse,
   SavingsTransactionListResponse,
   SavingsHoldListResponse,
+  FdAccrualListResponse,
+  FdInterestScheduleListResponse,
 } from "@/lib/api-schemas.server";
 
 export type ApiScope =
@@ -1637,6 +1639,56 @@ export const API_CONTRACTS: ApiContract[] = [
     errors: [
       ...COMMON_ERRORS,
       { code: 404, error: "not_found", meaning: "Savings account not found in caller's company." },
+    ],
+  },
+  {
+    id: "fixed_deposits.accruals.list",
+    method: "GET",
+    path: "/api/public/v1/fixed-deposits/{id}/accruals",
+    resource: "fixed_deposits",
+    title: "List fixed-deposit accruals",
+    summary:
+      "Daily interest accruals for a fixed deposit, newest first. Filter with since / until (accrual_date bounds, inclusive).",
+    scope: "fixed_deposits.read",
+    direction: "outbound",
+    status: "live",
+    requiresIdempotency: false,
+    response: FdAccrualListResponse,
+    responseExample: { data: [] },
+    fields: [
+      { path: "id", label: "Fixed deposit id", type: "uuid", required: true, inbound: true, notes: "Path parameter." },
+      { path: "limit", label: "Page size", type: "int", inbound: true, notes: "Query param. Default 100, max 400." },
+      { path: "since", label: "Only from this date", type: "date", inbound: true, notes: "Inclusive lower bound on accrual_date." },
+      { path: "until", label: "Only up to this date", type: "date", inbound: true, notes: "Inclusive upper bound on accrual_date." },
+      { path: "data", label: "Accruals", type: "array", outbound: true },
+    ],
+    errors: [
+      ...COMMON_ERRORS,
+      { code: 404, error: "not_found", meaning: "Fixed deposit not found in caller's company." },
+    ],
+  },
+  {
+    id: "fixed_deposits.schedule.list",
+    method: "GET",
+    path: "/api/public/v1/fixed-deposits/{id}/schedule",
+    resource: "fixed_deposits",
+    title: "List fixed-deposit interest schedule",
+    summary:
+      "Interest payout schedule for a fixed deposit, ordered by seq ASC. Pass paid=true|false to filter by settlement state.",
+    scope: "fixed_deposits.read",
+    direction: "outbound",
+    status: "live",
+    requiresIdempotency: false,
+    response: FdInterestScheduleListResponse,
+    responseExample: { data: [] },
+    fields: [
+      { path: "id", label: "Fixed deposit id", type: "uuid", required: true, inbound: true, notes: "Path parameter." },
+      { path: "paid", label: "Filter by paid flag", type: "boolean", inbound: true, notes: "Query param. true|false." },
+      { path: "data", label: "Schedule rows", type: "array", outbound: true },
+    ],
+    errors: [
+      ...COMMON_ERRORS,
+      { code: 404, error: "not_found", meaning: "Fixed deposit not found in caller's company." },
     ],
   },
 ];
