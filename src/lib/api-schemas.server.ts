@@ -319,6 +319,37 @@ export const RepaymentCreateResponse = z.object({
   idempotent_replay: z.boolean(),
 });
 
+// Loan applications · create
+export const LoanApplicationCreateRequest = z.object({
+  branch_id: z.string().uuid(),
+  client_id: z.string().uuid().optional(),
+  product_id: z.string().uuid().optional(),
+  officer_id: z.string().uuid().optional(),
+  requested_principal: z.number().nonnegative(),
+  requested_tenor_months: z.number().int().positive().max(600),
+  requested_rate_pct: z.number().min(0).max(200).optional(),
+  frequency: z
+    .enum(["daily", "weekly", "biweekly", "monthly", "quarterly", "semi_annual", "annual", "bullet"])
+    .optional(),
+  currency: z.string().length(3).optional(),
+  purpose: z.string().trim().max(500).optional(),
+  channel: z.string().trim().max(60).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
+});
+export const LoanApplicationCreateResponse = z.object({
+  status: z.literal("created"),
+  application_id: z.string().uuid(),
+  application_no: z.string(),
+  branch_id: z.string().uuid(),
+  client_id: z.string().uuid().nullable(),
+  product_id: z.string().uuid().nullable(),
+  requested_principal: z.number(),
+  requested_tenor_months: z.number().int(),
+  currency: z.string().length(3),
+  status_code: z.string(),
+  created_at: IsoDateTime,
+});
+
 // Health
 export const HealthResponse = z.object({
   status: z.literal("ok"),

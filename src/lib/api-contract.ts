@@ -38,6 +38,7 @@ export type ApiScope =
   | "clients.read"
   | "loans.read"
   | "loans.repayments.write"
+  | "loan_applications.write"
   | "savings.read"
   | "fixed_deposits.read";
 
