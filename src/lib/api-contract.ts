@@ -14,8 +14,13 @@ import {
   AtmResponse,
   CeftRequest,
   CeftResponse,
+  ClientBankAccountCreateRequest,
+  ClientBankAccountDeleteResponse,
+  ClientBankAccountResponse,
   ClientCreateRequest,
   ClientCreateResponse,
+  ClientUpdateRequest,
+  ClientUpdateResponse,
   CribRequest,
   CribResponse,
   HealthResponse,
@@ -61,6 +66,7 @@ export type ApiScope =
   | "crib"
   | "clients.create"
   | "clients.read"
+  | "clients.write"
   | "loans.read"
   | "loans.repayments.write"
   | "loan_applications.write"
