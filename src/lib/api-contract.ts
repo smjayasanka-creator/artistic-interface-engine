@@ -21,8 +21,18 @@ import {
   HealthResponse,
   IbRequest,
   IbResponse,
+  LoanApplicationApplicantRequest,
+  LoanApplicationBusinessRequest,
+  LoanApplicationChildResponse,
+  LoanApplicationCollateralRequest,
   LoanApplicationCreateRequest,
   LoanApplicationCreateResponse,
+  LoanApplicationEmploymentRequest,
+  LoanApplicationExistingFacilityRequest,
+  LoanApplicationGuarantorRequest,
+  LoanApplicationNoteRequest,
+  LoanApplicationSubmitRequest,
+  LoanApplicationSubmitResponse,
   RepaymentCreateRequest,
   RepaymentCreateResponse,
   TransactionsInboundRequest,
@@ -619,7 +629,204 @@ export const API_CONTRACTS: ApiContract[] = [
     ],
     webhookEvents: ["loan_application.created"],
   },
+  ...makeApplicationChild({
+    id: "loan_applications.applicants.add",
+    slug: "applicants",
+    title: "Attach applicant to loan application",
+    request: LoanApplicationApplicantRequest,
+    idempotent: true,
+    example: { role: "primary", full_name: "Nimal Perera", national_id: "199012345V", phone: "+94771234567" },
+    fields: [
+      { path: "role", label: "Role", type: "enum", inbound: true, notes: "primary | co_applicant | spouse | other" },
+      { path: "client_id", label: "Client (optional link)", type: "uuid", inbound: true },
+      { path: "full_name", label: "Full name", type: "string", required: true, inbound: true },
+      { path: "national_id", label: "National ID", type: "string", sensitive: true, inbound: true },
+      { path: "phone", label: "Phone", type: "string", sensitive: true, inbound: true },
+    ],
+  }),
+  ...makeApplicationChild({
+    id: "loan_applications.business.add",
+    slug: "business",
+    title: "Attach business profile to loan application",
+    request: LoanApplicationBusinessRequest,
+    idempotent: true,
+    example: { business_name: "ABC Traders", sector: "retail", monthly_turnover: 800000, years_in_operation: 4 },
+    fields: [
+      { path: "business_name", label: "Business name", type: "string", inbound: true },
+      { path: "sector", label: "Sector", type: "string", inbound: true },
+      { path: "monthly_turnover", label: "Monthly turnover", type: "number", inbound: true },
+      { path: "years_in_operation", label: "Years in operation", type: "number", inbound: true },
+      { path: "ownership_type", label: "Ownership type", type: "string", inbound: true },
+      { path: "registration_no", label: "Registration no.", type: "string", inbound: true },
+    ],
+  }),
+  ...makeApplicationChild({
+    id: "loan_applications.employment.add",
+    slug: "employment",
+    title: "Attach employment record to loan application",
+    request: LoanApplicationEmploymentRequest,
+    idempotent: true,
+    example: { employer_name: "Acme Ltd", position: "Manager", monthly_income: 150000, years_of_service: 6 },
+    fields: [
+      { path: "employer_name", label: "Employer name", type: "string", inbound: true },
+      { path: "position", label: "Position", type: "string", inbound: true },
+      { path: "employment_type", label: "Employment type", type: "string", inbound: true },
+      { path: "monthly_income", label: "Monthly income", type: "number", inbound: true },
+      { path: "years_of_service", label: "Years of service", type: "number", inbound: true },
+    ],
+  }),
+  ...makeApplicationChild({
+    id: "loan_applications.collateral.add",
+    slug: "collateral",
+    title: "Attach collateral / security to loan application",
+    request: LoanApplicationCollateralRequest,
+    idempotent: true,
+    example: {
+      security_type_id: "c3d4…",
+      values: { make: "Toyota", model: "Hilux", chassis_no: "AHTFR22G80…" },
+      documents: [{ document_type: "vehicle_cr", file_name: "cr.pdf", storage_path: "…" }],
+    },
+    fields: [
+      { path: "security_type_id", label: "Security type", type: "uuid", inbound: true, notes: "From configured security_type catalogue." },
+      { path: "values", label: "Field values", type: "object", inbound: true, notes: "Keys match the security type's field definitions." },
+      { path: "documents", label: "Documents", type: "array", inbound: true },
+      { path: "notes", label: "Notes", type: "string", inbound: true },
+    ],
+    extraErrors: [
+      { code: 404, error: "security_type_not_found", meaning: "security_type_id does not belong to the caller's company." },
+    ],
+  }),
+  ...makeApplicationChild({
+    id: "loan_applications.guarantors.add",
+    slug: "guarantors",
+    title: "Attach guarantor to loan application",
+    request: LoanApplicationGuarantorRequest,
+    idempotent: true,
+    example: { full_name: "Sunil Silva", national_id: "197512345V", relationship: "brother", coverage_amount: 250000 },
+    fields: [
+      { path: "guarantor_client_id", label: "Guarantor client (optional link)", type: "uuid", inbound: true },
+      { path: "full_name", label: "Full name", type: "string", required: true, inbound: true },
+      { path: "national_id", label: "National ID", type: "string", sensitive: true, inbound: true },
+      { path: "phone", label: "Phone", type: "string", sensitive: true, inbound: true },
+      { path: "relationship", label: "Relationship", type: "string", inbound: true },
+      { path: "coverage_amount", label: "Coverage amount", type: "number", inbound: true },
+    ],
+  }),
+  ...makeApplicationChild({
+    id: "loan_applications.existing_facilities.add",
+    slug: "existing-facilities",
+    title: "Attach existing facility to loan application",
+    request: LoanApplicationExistingFacilityRequest,
+    idempotent: true,
+    example: { lender_name: "XYZ Bank", facility_type: "personal_loan", outstanding_balance: 120000, monthly_instalment: 8500 },
+    fields: [
+      { path: "lender_name", label: "Lender", type: "string", required: true, inbound: true },
+      { path: "facility_type", label: "Facility type", type: "string", inbound: true },
+      { path: "original_amount", label: "Original amount", type: "number", inbound: true },
+      { path: "outstanding_balance", label: "Outstanding balance", type: "number", inbound: true },
+      { path: "monthly_instalment", label: "Monthly instalment", type: "number", inbound: true },
+      { path: "maturity_date", label: "Maturity date", type: "date", inbound: true },
+    ],
+  }),
+  ...makeApplicationChild({
+    id: "loan_applications.notes.add",
+    slug: "notes",
+    title: "Attach note to loan application",
+    request: LoanApplicationNoteRequest,
+    idempotent: false,
+    example: { note: "Called applicant to confirm business address." },
+    fields: [
+      { path: "note", label: "Note", type: "string", required: true, inbound: true },
+    ],
+  }),
+  {
+    id: "loan_applications.submit",
+    method: "POST",
+    path: "/api/public/v1/loan-applications/{id}/submit",
+    resource: "loan_applications",
+    title: "Submit loan application",
+    summary:
+      "Transition a draft loan application to submitted via the atomic submit_loan_application RPC. Fires loan_application.submitted webhook.",
+    scope: "loan_applications.write",
+    direction: "inbound",
+    status: "live",
+    requiresIdempotency: false,
+    request: LoanApplicationSubmitRequest,
+    response: LoanApplicationSubmitResponse,
+    requestExample: { transition_key: "submit" },
+    responseExample: {
+      status: "submitted",
+      application_id: "9f0e…",
+      application_no: "AP000123",
+      status_code: "submitted",
+      submitted_at: "2026-07-22T09:35:00.000Z",
+    },
+    fields: [
+      { path: "id", label: "Application id", type: "uuid", required: true, inbound: true, notes: "Path parameter." },
+      { path: "transition_key", label: "Workflow transition key", type: "string", inbound: true },
+      { path: "workflow_definition_key", label: "Workflow definition key", type: "string", inbound: true },
+      { path: "status_code", label: "New status", type: "string", outbound: true },
+      { path: "submitted_at", label: "Submitted at", type: "datetime", outbound: true },
+    ],
+    errors: [
+      ...COMMON_ERRORS,
+      { code: 404, error: "not_found", meaning: "Application not found in caller's company." },
+      { code: 409, error: "submit_failed", meaning: "Application could not be submitted (wrong state, missing required data, or workflow guard)." },
+    ],
+    webhookEvents: ["loan_application.submitted"],
+  },
 ];
+
+function makeApplicationChild(args: {
+  id: string;
+  slug: string;
+  title: string;
+  request: ZodTypeAny;
+  idempotent: boolean;
+  example: Record<string, unknown>;
+  fields: ApiFieldDoc[];
+  extraErrors?: ApiErrorDoc[];
+}): ApiContract[] {
+  return [
+    {
+      id: args.id,
+      method: "POST",
+      path: `/api/public/v1/loan-applications/{id}/${args.slug}`,
+      resource: "loan_applications",
+      title: args.title,
+      summary: `${args.title}. The parent application must belong to the API key's company.`,
+      scope: "loan_applications.write",
+      direction: "inbound",
+      status: "live",
+      requiresIdempotency: args.idempotent,
+      request: args.request,
+      response: LoanApplicationChildResponse,
+      requestExample: args.example,
+      responseExample: {
+        status: "created",
+        id: "…",
+        application_id: "9f0e…",
+        application_no: "AP000123",
+        created_at: "2026-07-22T09:31:00.000Z",
+      },
+      fields: [
+        { path: "id", label: "Application id", type: "uuid", required: true, inbound: true, notes: "Path parameter." },
+        ...args.fields,
+        { path: "id", label: "Child row id", type: "uuid", outbound: true },
+        { path: "application_id", label: "Application id", type: "uuid", outbound: true },
+        { path: "application_no", label: "Application no.", type: "string", outbound: true },
+      ],
+      errors: [
+        ...COMMON_ERRORS,
+        { code: 404, error: "not_found", meaning: "Loan application not found in caller's company." },
+        ...(args.idempotent
+          ? [{ code: 409, error: "idempotency_conflict", meaning: "Idempotency-Key was reused with a different body." }]
+          : []),
+        ...(args.extraErrors ?? []),
+      ],
+    },
+  ];
+}
 
 function makeReadPair(args: {
   resource: ApiResource;
