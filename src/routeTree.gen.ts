@@ -101,6 +101,7 @@ import { Route as ApiPublicV1LoansIndexRouteImport } from './routes/api/public/v
 import { Route as ApiPublicV1ClientsIndexRouteImport } from './routes/api/public/v1/clients.index'
 import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/api/public/v1/transactions.outbound'
 import { Route as ApiPublicV1TransactionsInboundRouteImport } from './routes/api/public/v1/transactions.inbound'
+import { Route as ApiPublicV1LoansIdRouteImport } from './routes/api/public/v1/loans.$id'
 import { Route as ApiPublicV1IbTransactionRouteImport } from './routes/api/public/v1/ib.transaction'
 import { Route as ApiPublicV1CribReportRouteImport } from './routes/api/public/v1/crib.report'
 import { Route as ApiPublicV1ClientsCreateRouteImport } from './routes/api/public/v1/clients.create'
@@ -626,6 +627,11 @@ const ApiPublicV1TransactionsInboundRoute =
     path: '/api/public/v1/transactions/inbound',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1LoansIdRoute = ApiPublicV1LoansIdRouteImport.update({
+  id: '/api/public/v1/loans/$id',
+  path: '/api/public/v1/loans/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1IbTransactionRoute =
   ApiPublicV1IbTransactionRouteImport.update({
     id: '/api/public/v1/ib/transaction',
@@ -753,6 +759,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/clients/create': typeof ApiPublicV1ClientsCreateRoute
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
+  '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
@@ -848,6 +855,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/clients/create': typeof ApiPublicV1ClientsCreateRoute
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
+  '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/clients': typeof ApiPublicV1ClientsIndexRoute
@@ -949,6 +957,7 @@ export interface FileRoutesById {
   '/api/public/v1/clients/create': typeof ApiPublicV1ClientsCreateRoute
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
+  '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
@@ -1050,6 +1059,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/clients/create'
     | '/api/public/v1/crib/report'
     | '/api/public/v1/ib/transaction'
+    | '/api/public/v1/loans/$id'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/clients/'
@@ -1145,6 +1155,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/clients/create'
     | '/api/public/v1/crib/report'
     | '/api/public/v1/ib/transaction'
+    | '/api/public/v1/loans/$id'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/clients'
@@ -1245,6 +1256,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/clients/create'
     | '/api/public/v1/crib/report'
     | '/api/public/v1/ib/transaction'
+    | '/api/public/v1/loans/$id'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/clients/'
@@ -1275,6 +1287,7 @@ export interface RootRouteChildren {
   ApiPublicV1ClientsCreateRoute: typeof ApiPublicV1ClientsCreateRoute
   ApiPublicV1CribReportRoute: typeof ApiPublicV1CribReportRoute
   ApiPublicV1IbTransactionRoute: typeof ApiPublicV1IbTransactionRoute
+  ApiPublicV1LoansIdRoute: typeof ApiPublicV1LoansIdRoute
   ApiPublicV1TransactionsInboundRoute: typeof ApiPublicV1TransactionsInboundRoute
   ApiPublicV1TransactionsOutboundRoute: typeof ApiPublicV1TransactionsOutboundRoute
   ApiPublicV1ClientsIndexRoute: typeof ApiPublicV1ClientsIndexRoute
@@ -1927,6 +1940,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1TransactionsInboundRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/loans/$id': {
+      id: '/api/public/v1/loans/$id'
+      path: '/api/public/v1/loans/$id'
+      fullPath: '/api/public/v1/loans/$id'
+      preLoaderRoute: typeof ApiPublicV1LoansIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/ib/transaction': {
       id: '/api/public/v1/ib/transaction'
       path: '/api/public/v1/ib/transaction'
@@ -2240,6 +2260,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ClientsCreateRoute: ApiPublicV1ClientsCreateRoute,
   ApiPublicV1CribReportRoute: ApiPublicV1CribReportRoute,
   ApiPublicV1IbTransactionRoute: ApiPublicV1IbTransactionRoute,
+  ApiPublicV1LoansIdRoute: ApiPublicV1LoansIdRoute,
   ApiPublicV1TransactionsInboundRoute: ApiPublicV1TransactionsInboundRoute,
   ApiPublicV1TransactionsOutboundRoute: ApiPublicV1TransactionsOutboundRoute,
   ApiPublicV1ClientsIndexRoute: ApiPublicV1ClientsIndexRoute,
