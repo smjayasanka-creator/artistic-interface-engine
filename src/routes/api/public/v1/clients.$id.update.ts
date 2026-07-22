@@ -139,6 +139,3 @@ export const Route = createFileRoute("/api/public/v1/clients/$id/update")({
     },
   },
 });
-
-// Silence unused warning for json helper (kept for parity with other routes).
-void json;
