@@ -97,11 +97,13 @@ import { Route as AuthenticatedClientsIdEditRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminSavingsWhtRouteImport } from './routes/_authenticated/admin.savings.wht'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
+import { Route as ApiPublicV1WebhookDeliveriesIndexRouteImport } from './routes/api/public/v1/webhook-deliveries.index'
 import { Route as ApiPublicV1SavingsIndexRouteImport } from './routes/api/public/v1/savings.index'
 import { Route as ApiPublicV1LoansIndexRouteImport } from './routes/api/public/v1/loans.index'
 import { Route as ApiPublicV1LoanApplicationsIndexRouteImport } from './routes/api/public/v1/loan-applications.index'
 import { Route as ApiPublicV1FixedDepositsIndexRouteImport } from './routes/api/public/v1/fixed-deposits.index'
 import { Route as ApiPublicV1ClientsIndexRouteImport } from './routes/api/public/v1/clients.index'
+import { Route as ApiPublicV1WebhookDeliveriesIdRouteImport } from './routes/api/public/v1/webhook-deliveries.$id'
 import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/api/public/v1/transactions.outbound'
 import { Route as ApiPublicV1TransactionsInboundRouteImport } from './routes/api/public/v1/transactions.inbound'
 import { Route as ApiPublicV1SavingsIdRouteImport } from './routes/api/public/v1/savings.$id'
@@ -113,6 +115,7 @@ import { Route as ApiPublicV1ClientsCreateRouteImport } from './routes/api/publi
 import { Route as ApiPublicV1ClientsIdRouteImport } from './routes/api/public/v1/clients.$id'
 import { Route as ApiPublicV1CeftTransferRouteImport } from './routes/api/public/v1/ceft.transfer'
 import { Route as ApiPublicV1AtmAuthorizeRouteImport } from './routes/api/public/v1/atm.authorize'
+import { Route as ApiPublicV1WebhookDeliveriesIdReplayRouteImport } from './routes/api/public/v1/webhook-deliveries.$id.replay'
 import { Route as ApiPublicV1LoansIdRepaymentsRouteImport } from './routes/api/public/v1/loans.$id.repayments'
 import { Route as ApiPublicV1LoanApplicationsIdSubmitRouteImport } from './routes/api/public/v1/loan-applications.$id.submit'
 import { Route as ApiPublicV1LoanApplicationsIdReturnRouteImport } from './routes/api/public/v1/loan-applications.$id.return'
@@ -624,6 +627,12 @@ const AuthenticatedAccountsJournalNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedAccountsJournalRoute,
   } as any)
+const ApiPublicV1WebhookDeliveriesIndexRoute =
+  ApiPublicV1WebhookDeliveriesIndexRouteImport.update({
+    id: '/api/public/v1/webhook-deliveries/',
+    path: '/api/public/v1/webhook-deliveries/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1SavingsIndexRoute = ApiPublicV1SavingsIndexRouteImport.update({
   id: '/api/public/v1/savings/',
   path: '/api/public/v1/savings/',
@@ -651,6 +660,12 @@ const ApiPublicV1ClientsIndexRoute = ApiPublicV1ClientsIndexRouteImport.update({
   path: '/api/public/v1/clients/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1WebhookDeliveriesIdRoute =
+  ApiPublicV1WebhookDeliveriesIdRouteImport.update({
+    id: '/api/public/v1/webhook-deliveries/$id',
+    path: '/api/public/v1/webhook-deliveries/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1TransactionsOutboundRoute =
   ApiPublicV1TransactionsOutboundRouteImport.update({
     id: '/api/public/v1/transactions/outbound',
@@ -711,6 +726,12 @@ const ApiPublicV1AtmAuthorizeRoute = ApiPublicV1AtmAuthorizeRouteImport.update({
   path: '/api/public/v1/atm/authorize',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1WebhookDeliveriesIdReplayRoute =
+  ApiPublicV1WebhookDeliveriesIdReplayRouteImport.update({
+    id: '/replay',
+    path: '/replay',
+    getParentRoute: () => ApiPublicV1WebhookDeliveriesIdRoute,
+  } as any)
 const ApiPublicV1LoansIdRepaymentsRoute =
   ApiPublicV1LoansIdRepaymentsRouteImport.update({
     id: '/repayments',
@@ -895,11 +916,13 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/savings/$id': typeof ApiPublicV1SavingsIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
+  '/api/public/v1/webhook-deliveries/$id': typeof ApiPublicV1WebhookDeliveriesIdRouteWithChildren
   '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
   '/api/public/v1/fixed-deposits/': typeof ApiPublicV1FixedDepositsIndexRoute
   '/api/public/v1/loan-applications/': typeof ApiPublicV1LoanApplicationsIndexRoute
   '/api/public/v1/loans/': typeof ApiPublicV1LoansIndexRoute
   '/api/public/v1/savings/': typeof ApiPublicV1SavingsIndexRoute
+  '/api/public/v1/webhook-deliveries/': typeof ApiPublicV1WebhookDeliveriesIndexRoute
   '/api/public/v1/loan-applications/$id/applicants': typeof ApiPublicV1LoanApplicationsIdApplicantsRoute
   '/api/public/v1/loan-applications/$id/business': typeof ApiPublicV1LoanApplicationsIdBusinessRoute
   '/api/public/v1/loan-applications/$id/cancel': typeof ApiPublicV1LoanApplicationsIdCancelRoute
@@ -914,6 +937,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/loan-applications/$id/return': typeof ApiPublicV1LoanApplicationsIdReturnRoute
   '/api/public/v1/loan-applications/$id/submit': typeof ApiPublicV1LoanApplicationsIdSubmitRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
+  '/api/public/v1/webhook-deliveries/$id/replay': typeof ApiPublicV1WebhookDeliveriesIdReplayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1010,11 +1034,13 @@ export interface FileRoutesByTo {
   '/api/public/v1/savings/$id': typeof ApiPublicV1SavingsIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
+  '/api/public/v1/webhook-deliveries/$id': typeof ApiPublicV1WebhookDeliveriesIdRouteWithChildren
   '/api/public/v1/clients': typeof ApiPublicV1ClientsIndexRoute
   '/api/public/v1/fixed-deposits': typeof ApiPublicV1FixedDepositsIndexRoute
   '/api/public/v1/loan-applications': typeof ApiPublicV1LoanApplicationsIndexRoute
   '/api/public/v1/loans': typeof ApiPublicV1LoansIndexRoute
   '/api/public/v1/savings': typeof ApiPublicV1SavingsIndexRoute
+  '/api/public/v1/webhook-deliveries': typeof ApiPublicV1WebhookDeliveriesIndexRoute
   '/api/public/v1/loan-applications/$id/applicants': typeof ApiPublicV1LoanApplicationsIdApplicantsRoute
   '/api/public/v1/loan-applications/$id/business': typeof ApiPublicV1LoanApplicationsIdBusinessRoute
   '/api/public/v1/loan-applications/$id/cancel': typeof ApiPublicV1LoanApplicationsIdCancelRoute
@@ -1029,6 +1055,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/loan-applications/$id/return': typeof ApiPublicV1LoanApplicationsIdReturnRoute
   '/api/public/v1/loan-applications/$id/submit': typeof ApiPublicV1LoanApplicationsIdSubmitRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
+  '/api/public/v1/webhook-deliveries/$id/replay': typeof ApiPublicV1WebhookDeliveriesIdReplayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1131,11 +1158,13 @@ export interface FileRoutesById {
   '/api/public/v1/savings/$id': typeof ApiPublicV1SavingsIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
+  '/api/public/v1/webhook-deliveries/$id': typeof ApiPublicV1WebhookDeliveriesIdRouteWithChildren
   '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
   '/api/public/v1/fixed-deposits/': typeof ApiPublicV1FixedDepositsIndexRoute
   '/api/public/v1/loan-applications/': typeof ApiPublicV1LoanApplicationsIndexRoute
   '/api/public/v1/loans/': typeof ApiPublicV1LoansIndexRoute
   '/api/public/v1/savings/': typeof ApiPublicV1SavingsIndexRoute
+  '/api/public/v1/webhook-deliveries/': typeof ApiPublicV1WebhookDeliveriesIndexRoute
   '/api/public/v1/loan-applications/$id/applicants': typeof ApiPublicV1LoanApplicationsIdApplicantsRoute
   '/api/public/v1/loan-applications/$id/business': typeof ApiPublicV1LoanApplicationsIdBusinessRoute
   '/api/public/v1/loan-applications/$id/cancel': typeof ApiPublicV1LoanApplicationsIdCancelRoute
@@ -1150,6 +1179,7 @@ export interface FileRoutesById {
   '/api/public/v1/loan-applications/$id/return': typeof ApiPublicV1LoanApplicationsIdReturnRoute
   '/api/public/v1/loan-applications/$id/submit': typeof ApiPublicV1LoanApplicationsIdSubmitRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
+  '/api/public/v1/webhook-deliveries/$id/replay': typeof ApiPublicV1WebhookDeliveriesIdReplayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1252,11 +1282,13 @@ export interface FileRouteTypes {
     | '/api/public/v1/savings/$id'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
+    | '/api/public/v1/webhook-deliveries/$id'
     | '/api/public/v1/clients/'
     | '/api/public/v1/fixed-deposits/'
     | '/api/public/v1/loan-applications/'
     | '/api/public/v1/loans/'
     | '/api/public/v1/savings/'
+    | '/api/public/v1/webhook-deliveries/'
     | '/api/public/v1/loan-applications/$id/applicants'
     | '/api/public/v1/loan-applications/$id/business'
     | '/api/public/v1/loan-applications/$id/cancel'
@@ -1271,6 +1303,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/loan-applications/$id/return'
     | '/api/public/v1/loan-applications/$id/submit'
     | '/api/public/v1/loans/$id/repayments'
+    | '/api/public/v1/webhook-deliveries/$id/replay'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1367,11 +1400,13 @@ export interface FileRouteTypes {
     | '/api/public/v1/savings/$id'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
+    | '/api/public/v1/webhook-deliveries/$id'
     | '/api/public/v1/clients'
     | '/api/public/v1/fixed-deposits'
     | '/api/public/v1/loan-applications'
     | '/api/public/v1/loans'
     | '/api/public/v1/savings'
+    | '/api/public/v1/webhook-deliveries'
     | '/api/public/v1/loan-applications/$id/applicants'
     | '/api/public/v1/loan-applications/$id/business'
     | '/api/public/v1/loan-applications/$id/cancel'
@@ -1386,6 +1421,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/loan-applications/$id/return'
     | '/api/public/v1/loan-applications/$id/submit'
     | '/api/public/v1/loans/$id/repayments'
+    | '/api/public/v1/webhook-deliveries/$id/replay'
   id:
     | '__root__'
     | '/'
@@ -1487,11 +1523,13 @@ export interface FileRouteTypes {
     | '/api/public/v1/savings/$id'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
+    | '/api/public/v1/webhook-deliveries/$id'
     | '/api/public/v1/clients/'
     | '/api/public/v1/fixed-deposits/'
     | '/api/public/v1/loan-applications/'
     | '/api/public/v1/loans/'
     | '/api/public/v1/savings/'
+    | '/api/public/v1/webhook-deliveries/'
     | '/api/public/v1/loan-applications/$id/applicants'
     | '/api/public/v1/loan-applications/$id/business'
     | '/api/public/v1/loan-applications/$id/cancel'
@@ -1506,6 +1544,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/loan-applications/$id/return'
     | '/api/public/v1/loan-applications/$id/submit'
     | '/api/public/v1/loans/$id/repayments'
+    | '/api/public/v1/webhook-deliveries/$id/replay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1537,11 +1576,13 @@ export interface RootRouteChildren {
   ApiPublicV1SavingsIdRoute: typeof ApiPublicV1SavingsIdRoute
   ApiPublicV1TransactionsInboundRoute: typeof ApiPublicV1TransactionsInboundRoute
   ApiPublicV1TransactionsOutboundRoute: typeof ApiPublicV1TransactionsOutboundRoute
+  ApiPublicV1WebhookDeliveriesIdRoute: typeof ApiPublicV1WebhookDeliveriesIdRouteWithChildren
   ApiPublicV1ClientsIndexRoute: typeof ApiPublicV1ClientsIndexRoute
   ApiPublicV1FixedDepositsIndexRoute: typeof ApiPublicV1FixedDepositsIndexRoute
   ApiPublicV1LoanApplicationsIndexRoute: typeof ApiPublicV1LoanApplicationsIndexRoute
   ApiPublicV1LoansIndexRoute: typeof ApiPublicV1LoansIndexRoute
   ApiPublicV1SavingsIndexRoute: typeof ApiPublicV1SavingsIndexRoute
+  ApiPublicV1WebhookDeliveriesIndexRoute: typeof ApiPublicV1WebhookDeliveriesIndexRoute
   ApiPublicV1LoanApplicationsIdApplicantsRoute: typeof ApiPublicV1LoanApplicationsIdApplicantsRoute
   ApiPublicV1LoanApplicationsIdBusinessRoute: typeof ApiPublicV1LoanApplicationsIdBusinessRoute
   ApiPublicV1LoanApplicationsIdCancelRoute: typeof ApiPublicV1LoanApplicationsIdCancelRoute
@@ -2175,6 +2216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsJournalNewRouteImport
       parentRoute: typeof AuthenticatedAccountsJournalRoute
     }
+    '/api/public/v1/webhook-deliveries/': {
+      id: '/api/public/v1/webhook-deliveries/'
+      path: '/api/public/v1/webhook-deliveries'
+      fullPath: '/api/public/v1/webhook-deliveries/'
+      preLoaderRoute: typeof ApiPublicV1WebhookDeliveriesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/savings/': {
       id: '/api/public/v1/savings/'
       path: '/api/public/v1/savings'
@@ -2208,6 +2256,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/clients'
       fullPath: '/api/public/v1/clients/'
       preLoaderRoute: typeof ApiPublicV1ClientsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/webhook-deliveries/$id': {
+      id: '/api/public/v1/webhook-deliveries/$id'
+      path: '/api/public/v1/webhook-deliveries/$id'
+      fullPath: '/api/public/v1/webhook-deliveries/$id'
+      preLoaderRoute: typeof ApiPublicV1WebhookDeliveriesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/transactions/outbound': {
@@ -2286,6 +2341,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/v1/atm/authorize'
       preLoaderRoute: typeof ApiPublicV1AtmAuthorizeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/webhook-deliveries/$id/replay': {
+      id: '/api/public/v1/webhook-deliveries/$id/replay'
+      path: '/replay'
+      fullPath: '/api/public/v1/webhook-deliveries/$id/replay'
+      preLoaderRoute: typeof ApiPublicV1WebhookDeliveriesIdReplayRouteImport
+      parentRoute: typeof ApiPublicV1WebhookDeliveriesIdRoute
     }
     '/api/public/v1/loans/$id/repayments': {
       id: '/api/public/v1/loans/$id/repayments'
@@ -2640,6 +2702,21 @@ const ApiPublicV1LoansIdRouteChildren: ApiPublicV1LoansIdRouteChildren = {
 const ApiPublicV1LoansIdRouteWithChildren =
   ApiPublicV1LoansIdRoute._addFileChildren(ApiPublicV1LoansIdRouteChildren)
 
+interface ApiPublicV1WebhookDeliveriesIdRouteChildren {
+  ApiPublicV1WebhookDeliveriesIdReplayRoute: typeof ApiPublicV1WebhookDeliveriesIdReplayRoute
+}
+
+const ApiPublicV1WebhookDeliveriesIdRouteChildren: ApiPublicV1WebhookDeliveriesIdRouteChildren =
+  {
+    ApiPublicV1WebhookDeliveriesIdReplayRoute:
+      ApiPublicV1WebhookDeliveriesIdReplayRoute,
+  }
+
+const ApiPublicV1WebhookDeliveriesIdRouteWithChildren =
+  ApiPublicV1WebhookDeliveriesIdRoute._addFileChildren(
+    ApiPublicV1WebhookDeliveriesIdRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -2672,11 +2749,15 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1SavingsIdRoute: ApiPublicV1SavingsIdRoute,
   ApiPublicV1TransactionsInboundRoute: ApiPublicV1TransactionsInboundRoute,
   ApiPublicV1TransactionsOutboundRoute: ApiPublicV1TransactionsOutboundRoute,
+  ApiPublicV1WebhookDeliveriesIdRoute:
+    ApiPublicV1WebhookDeliveriesIdRouteWithChildren,
   ApiPublicV1ClientsIndexRoute: ApiPublicV1ClientsIndexRoute,
   ApiPublicV1FixedDepositsIndexRoute: ApiPublicV1FixedDepositsIndexRoute,
   ApiPublicV1LoanApplicationsIndexRoute: ApiPublicV1LoanApplicationsIndexRoute,
   ApiPublicV1LoansIndexRoute: ApiPublicV1LoansIndexRoute,
   ApiPublicV1SavingsIndexRoute: ApiPublicV1SavingsIndexRoute,
+  ApiPublicV1WebhookDeliveriesIndexRoute:
+    ApiPublicV1WebhookDeliveriesIndexRoute,
   ApiPublicV1LoanApplicationsIdApplicantsRoute:
     ApiPublicV1LoanApplicationsIdApplicantsRoute,
   ApiPublicV1LoanApplicationsIdBusinessRoute:
