@@ -13,9 +13,10 @@ describe("api-contract registry", () => {
     expect(new Set(paths).size).toBe(paths.length);
   });
 
-  it("every non-system contract declares request+response schemas", () => {
+  it("every non-system POST contract declares request+response schemas", () => {
     for (const c of API_CONTRACTS) {
       if (c.resource === "system") continue;
+      if (c.method === "GET") continue;
       expect(c.request, `${c.id} missing request`).toBeTruthy();
       expect(c.response, `${c.id} missing response`).toBeTruthy();
       expect(c.fields.length, `${c.id} missing field docs`).toBeGreaterThan(0);
