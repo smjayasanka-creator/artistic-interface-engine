@@ -63,7 +63,9 @@ export type ApiScope =
   | "loan_applications.write"
   | "loan_applications.read"
   | "savings.read"
-  | "fixed_deposits.read";
+  | "fixed_deposits.read"
+  | "webhooks.read"
+  | "webhooks.replay";
 
 export type ApiDirection = "inbound" | "outbound" | "bi";
 export type ApiStatus = "live" | "planned";
@@ -77,6 +79,7 @@ export type ApiResource =
   | "payments"
   | "workflow"
   | "events"
+  | "webhooks"
   | "reference"
   | "system";
 
