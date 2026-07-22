@@ -673,6 +673,52 @@ export const ClientAttachmentDeleteResponse = z.object({
   client_id: z.string().uuid(),
 });
 
+// ---------- Savings · transactions (read) ----------
+export const SavingsTransactionRow = z.object({
+  id: z.string().uuid(),
+  account_id: z.string().uuid(),
+  txn_type: z.string(),
+  amount: z.number(),
+  channel: z.string(),
+  running_balance: z.number(),
+  reference: z.string().nullable(),
+  external_ref: z.string().nullable(),
+  narration: z.string().nullable(),
+  payment_method: z.string().nullable(),
+  clearing_status: z.string(),
+  cleared_on: z.string().nullable(),
+  txn_date: z.string(),
+  created_at: IsoDateTime,
+  reverses_txn_id: z.string().uuid().nullable(),
+  reversed_by_txn_id: z.string().uuid().nullable(),
+});
+export const SavingsTransactionListResponse = z.object({
+  data: z.array(SavingsTransactionRow),
+  next_cursor: z.string().nullable(),
+});
+
+// ---------- Savings · holds (read) ----------
+export const SavingsHoldRow = z.object({
+  id: z.string().uuid(),
+  account_id: z.string().uuid(),
+  hold_type: z.string(),
+  amount: z.number(),
+  active: z.boolean(),
+  approval_state: z.string(),
+  release_status: z.string(),
+  reason: z.string(),
+  reason_code: z.string().nullable(),
+  doc_ref: z.string().nullable(),
+  effective_from: z.string(),
+  expires_at: z.string().nullable(),
+  linked_loan_id: z.string().uuid().nullable(),
+  released_at: IsoDateTime.nullable(),
+  created_at: IsoDateTime,
+});
+export const SavingsHoldListResponse = z.object({
+  data: z.array(SavingsHoldRow),
+});
+
 // ---------- Convenience: full auth-fail logging wrapper ----------
 export async function logAndReturnAuthError(args: {
   status: number;
