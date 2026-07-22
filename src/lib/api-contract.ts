@@ -55,6 +55,8 @@ import {
   WebhookDeliveryDetail,
   WebhookDeliveryListResponse,
   WebhookReplayResponse,
+  DomainEventDetail,
+  DomainEventListResponse,
 } from "@/lib/api-schemas.server";
 
 export type ApiScope =
@@ -73,6 +75,7 @@ export type ApiScope =
   | "loan_applications.read"
   | "savings.read"
   | "fixed_deposits.read"
+  | "events.read"
   | "webhooks.read"
   | "webhooks.replay";
 
@@ -1215,6 +1218,85 @@ export const API_CONTRACTS: ApiContract[] = [
       ...COMMON_ERRORS,
       { code: 404, error: "not_found", meaning: "Delivery not found in caller's company + env." },
       { code: 409, error: "endpoint_inactive", meaning: "Original endpoint is disabled; re-activate before replaying." },
+    ],
+  },
+  {
+    id: "events.list",
+    method: "GET",
+    path: "/api/public/v1/events",
+    resource: "events",
+    title: "List domain events",
+    summary:
+      "Cursor-paginated feed of business events (client.created, loan.disbursed, savings.deposit.posted, etc.) scoped to the caller's company. Use this to reconcile state without polling each resource. Order: occurred_at DESC. Filters: event_type, aggregate_type, aggregate_id, since.",
+    scope: "events.read",
+    direction: "outbound",
+    status: "live",
+    requiresIdempotency: false,
+    response: DomainEventListResponse,
+    responseExample: {
+      data: [
+        {
+          id: "0d7f…",
+          event_type: "loan.disbursed",
+          domain: "loans",
+          aggregate_type: "loan",
+          aggregate_id: "9a11…",
+          occurred_at: "2026-07-22T10:15:00.000Z",
+          created_at: "2026-07-22T10:15:00.000Z",
+          idempotency_key: null,
+        },
+      ],
+      next_cursor: "2026-07-22T10:15:00.000Z",
+    },
+    fields: [
+      { path: "cursor", label: "Cursor", type: "string", inbound: true, notes: "Pass next_cursor from a previous page." },
+      { path: "limit", label: "Limit", type: "int", inbound: true, notes: "Default 50, max 200." },
+      { path: "event_type", label: "Event type filter", type: "string", inbound: true },
+      { path: "aggregate_type", label: "Aggregate type filter", type: "string", inbound: true },
+      { path: "aggregate_id", label: "Aggregate id filter", type: "uuid", inbound: true },
+      { path: "since", label: "Lower bound occurred_at (inclusive ISO datetime)", type: "datetime", inbound: true },
+      { path: "data", label: "Events", type: "array", outbound: true },
+      { path: "next_cursor", label: "Next cursor", type: "string", outbound: true },
+    ],
+    errors: COMMON_ERRORS,
+  },
+  {
+    id: "events.get",
+    method: "GET",
+    path: "/api/public/v1/events/{id}",
+    resource: "events",
+    title: "Get domain event",
+    summary:
+      "Fetch a single event with its full payload and metadata. Returns 404 for events belonging to another company.",
+    scope: "events.read",
+    direction: "outbound",
+    status: "live",
+    requiresIdempotency: false,
+    response: DomainEventDetail,
+    responseExample: {
+      id: "0d7f…",
+      event_type: "loan.disbursed",
+      domain: "loans",
+      aggregate_type: "loan",
+      aggregate_id: "9a11…",
+      occurred_at: "2026-07-22T10:15:00.000Z",
+      created_at: "2026-07-22T10:15:00.000Z",
+      idempotency_key: null,
+      payload: { loan_id: "9a11…", amount: 150000, currency: "LKR" },
+      metadata: { actor: "system" },
+    },
+    fields: [
+      { path: "id", label: "Event id", type: "uuid", required: true, inbound: true, notes: "Path parameter." },
+      { path: "event_type", label: "Event type", type: "string", outbound: true },
+      { path: "aggregate_type", label: "Aggregate type", type: "string", outbound: true },
+      { path: "aggregate_id", label: "Aggregate id", type: "uuid", outbound: true },
+      { path: "occurred_at", label: "Occurred at", type: "datetime", outbound: true },
+      { path: "payload", label: "Event payload", type: "object", outbound: true },
+      { path: "metadata", label: "Metadata", type: "object", outbound: true },
+    ],
+    errors: [
+      ...COMMON_ERRORS,
+      { code: 404, error: "not_found", meaning: "Event not found in caller's company." },
     ],
   },
 ];
