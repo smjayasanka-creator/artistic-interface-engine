@@ -12,6 +12,7 @@ import {
   ERRORS,
 } from "@/lib/api-schemas.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { enqueueWebhookForCompany } from "@/lib/webhooks.server";
 
 const ENDPOINT = "/api/public/v1/clients/create";
 const CHANNEL = "clients";
@@ -292,6 +293,21 @@ export const Route = createFileRoute("/api/public/v1/clients/create")({
           request: withIdempotencyEnvelope(parsed.data, idem),
           response,
         });
+
+        // Fan out to any webhook endpoint subscribed to client.created for
+        // this company + env. Never fail the API call if enqueue fails —
+        // deliveries are best-effort and observable in the Webhooks tab.
+        try {
+          await enqueueWebhookForCompany(supabaseAdmin as any, {
+            company_id: auth.key.company_id,
+            env: auth.key.environment,
+            event_type: "client.created",
+            event_id: created.id,
+            payload: response,
+          });
+        } catch (e) {
+          console.warn("[webhook] client.created enqueue failed", e);
+        }
 
         return validateAndSend(ClientCreateResponse, response, 201);
       },
