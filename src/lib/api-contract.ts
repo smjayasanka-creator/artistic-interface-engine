@@ -57,6 +57,11 @@ import {
   WebhookReplayResponse,
   DomainEventDetail,
   DomainEventListResponse,
+  LoanApplicationDocumentUploadRequest,
+  LoanApplicationDocumentUploadResponse,
+  LoanApplicationDocumentListResponse,
+  LoanApplicationDocumentDetailResponse,
+  LoanApplicationDocumentDeleteResponse,
 } from "@/lib/api-schemas.server";
 
 export type ApiScope =
