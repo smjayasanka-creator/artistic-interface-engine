@@ -97,6 +97,7 @@ import { Route as AuthenticatedClientsIdEditRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminSavingsWhtRouteImport } from './routes/_authenticated/admin.savings.wht'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
+import { Route as ApiPublicV1LoansIndexRouteImport } from './routes/api/public/v1/loans.index'
 import { Route as ApiPublicV1ClientsIndexRouteImport } from './routes/api/public/v1/clients.index'
 import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/api/public/v1/transactions.outbound'
 import { Route as ApiPublicV1TransactionsInboundRouteImport } from './routes/api/public/v1/transactions.inbound'
@@ -603,6 +604,11 @@ const AuthenticatedAccountsJournalNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedAccountsJournalRoute,
   } as any)
+const ApiPublicV1LoansIndexRoute = ApiPublicV1LoansIndexRouteImport.update({
+  id: '/api/public/v1/loans/',
+  path: '/api/public/v1/loans/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1ClientsIndexRoute = ApiPublicV1ClientsIndexRouteImport.update({
   id: '/api/public/v1/clients/',
   path: '/api/public/v1/clients/',
@@ -750,6 +756,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
+  '/api/public/v1/loans/': typeof ApiPublicV1LoansIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -844,6 +851,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/clients': typeof ApiPublicV1ClientsIndexRoute
+  '/api/public/v1/loans': typeof ApiPublicV1LoansIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -944,6 +952,7 @@ export interface FileRoutesById {
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
+  '/api/public/v1/loans/': typeof ApiPublicV1LoansIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1044,6 +1053,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/clients/'
+    | '/api/public/v1/loans/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1138,6 +1148,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/clients'
+    | '/api/public/v1/loans'
   id:
     | '__root__'
     | '/'
@@ -1237,6 +1248,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/clients/'
+    | '/api/public/v1/loans/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1266,6 +1278,7 @@ export interface RootRouteChildren {
   ApiPublicV1TransactionsInboundRoute: typeof ApiPublicV1TransactionsInboundRoute
   ApiPublicV1TransactionsOutboundRoute: typeof ApiPublicV1TransactionsOutboundRoute
   ApiPublicV1ClientsIndexRoute: typeof ApiPublicV1ClientsIndexRoute
+  ApiPublicV1LoansIndexRoute: typeof ApiPublicV1LoansIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1886,6 +1899,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsJournalNewRouteImport
       parentRoute: typeof AuthenticatedAccountsJournalRoute
     }
+    '/api/public/v1/loans/': {
+      id: '/api/public/v1/loans/'
+      path: '/api/public/v1/loans'
+      fullPath: '/api/public/v1/loans/'
+      preLoaderRoute: typeof ApiPublicV1LoansIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/clients/': {
       id: '/api/public/v1/clients/'
       path: '/api/public/v1/clients'
@@ -2223,6 +2243,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1TransactionsInboundRoute: ApiPublicV1TransactionsInboundRoute,
   ApiPublicV1TransactionsOutboundRoute: ApiPublicV1TransactionsOutboundRoute,
   ApiPublicV1ClientsIndexRoute: ApiPublicV1ClientsIndexRoute,
+  ApiPublicV1LoansIndexRoute: ApiPublicV1LoansIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
