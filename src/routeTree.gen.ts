@@ -99,13 +99,13 @@ import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
 import { Route as ApiPublicV1SavingsIndexRouteImport } from './routes/api/public/v1/savings.index'
 import { Route as ApiPublicV1LoansIndexRouteImport } from './routes/api/public/v1/loans.index'
+import { Route as ApiPublicV1LoanApplicationsIndexRouteImport } from './routes/api/public/v1/loan-applications.index'
 import { Route as ApiPublicV1FixedDepositsIndexRouteImport } from './routes/api/public/v1/fixed-deposits.index'
 import { Route as ApiPublicV1ClientsIndexRouteImport } from './routes/api/public/v1/clients.index'
 import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/api/public/v1/transactions.outbound'
 import { Route as ApiPublicV1TransactionsInboundRouteImport } from './routes/api/public/v1/transactions.inbound'
 import { Route as ApiPublicV1SavingsIdRouteImport } from './routes/api/public/v1/savings.$id'
 import { Route as ApiPublicV1LoansIdRouteImport } from './routes/api/public/v1/loans.$id'
-import { Route as ApiPublicV1LoanApplicationsCreateRouteImport } from './routes/api/public/v1/loan-applications.create'
 import { Route as ApiPublicV1IbTransactionRouteImport } from './routes/api/public/v1/ib.transaction'
 import { Route as ApiPublicV1FixedDepositsIdRouteImport } from './routes/api/public/v1/fixed-deposits.$id'
 import { Route as ApiPublicV1CribReportRouteImport } from './routes/api/public/v1/crib.report'
@@ -621,6 +621,12 @@ const ApiPublicV1LoansIndexRoute = ApiPublicV1LoansIndexRouteImport.update({
   path: '/api/public/v1/loans/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1LoanApplicationsIndexRoute =
+  ApiPublicV1LoanApplicationsIndexRouteImport.update({
+    id: '/api/public/v1/loan-applications/',
+    path: '/api/public/v1/loan-applications/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1FixedDepositsIndexRoute =
   ApiPublicV1FixedDepositsIndexRouteImport.update({
     id: '/api/public/v1/fixed-deposits/',
@@ -654,12 +660,6 @@ const ApiPublicV1LoansIdRoute = ApiPublicV1LoansIdRouteImport.update({
   path: '/api/public/v1/loans/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicV1LoanApplicationsCreateRoute =
-  ApiPublicV1LoanApplicationsCreateRouteImport.update({
-    id: '/api/public/v1/loan-applications/create',
-    path: '/api/public/v1/loan-applications/create',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicV1IbTransactionRoute =
   ApiPublicV1IbTransactionRouteImport.update({
     id: '/api/public/v1/ib/transaction',
@@ -800,13 +800,13 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/fixed-deposits/$id': typeof ApiPublicV1FixedDepositsIdRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
-  '/api/public/v1/loan-applications/create': typeof ApiPublicV1LoanApplicationsCreateRoute
   '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRouteWithChildren
   '/api/public/v1/savings/$id': typeof ApiPublicV1SavingsIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
   '/api/public/v1/fixed-deposits/': typeof ApiPublicV1FixedDepositsIndexRoute
+  '/api/public/v1/loan-applications/': typeof ApiPublicV1LoanApplicationsIndexRoute
   '/api/public/v1/loans/': typeof ApiPublicV1LoansIndexRoute
   '/api/public/v1/savings/': typeof ApiPublicV1SavingsIndexRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
@@ -902,13 +902,13 @@ export interface FileRoutesByTo {
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/fixed-deposits/$id': typeof ApiPublicV1FixedDepositsIdRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
-  '/api/public/v1/loan-applications/create': typeof ApiPublicV1LoanApplicationsCreateRoute
   '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRouteWithChildren
   '/api/public/v1/savings/$id': typeof ApiPublicV1SavingsIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/clients': typeof ApiPublicV1ClientsIndexRoute
   '/api/public/v1/fixed-deposits': typeof ApiPublicV1FixedDepositsIndexRoute
+  '/api/public/v1/loan-applications': typeof ApiPublicV1LoanApplicationsIndexRoute
   '/api/public/v1/loans': typeof ApiPublicV1LoansIndexRoute
   '/api/public/v1/savings': typeof ApiPublicV1SavingsIndexRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
@@ -1010,13 +1010,13 @@ export interface FileRoutesById {
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/fixed-deposits/$id': typeof ApiPublicV1FixedDepositsIdRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
-  '/api/public/v1/loan-applications/create': typeof ApiPublicV1LoanApplicationsCreateRoute
   '/api/public/v1/loans/$id': typeof ApiPublicV1LoansIdRouteWithChildren
   '/api/public/v1/savings/$id': typeof ApiPublicV1SavingsIdRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
   '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
   '/api/public/v1/fixed-deposits/': typeof ApiPublicV1FixedDepositsIndexRoute
+  '/api/public/v1/loan-applications/': typeof ApiPublicV1LoanApplicationsIndexRoute
   '/api/public/v1/loans/': typeof ApiPublicV1LoansIndexRoute
   '/api/public/v1/savings/': typeof ApiPublicV1SavingsIndexRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
@@ -1118,13 +1118,13 @@ export interface FileRouteTypes {
     | '/api/public/v1/crib/report'
     | '/api/public/v1/fixed-deposits/$id'
     | '/api/public/v1/ib/transaction'
-    | '/api/public/v1/loan-applications/create'
     | '/api/public/v1/loans/$id'
     | '/api/public/v1/savings/$id'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/clients/'
     | '/api/public/v1/fixed-deposits/'
+    | '/api/public/v1/loan-applications/'
     | '/api/public/v1/loans/'
     | '/api/public/v1/savings/'
     | '/api/public/v1/loans/$id/repayments'
@@ -1220,13 +1220,13 @@ export interface FileRouteTypes {
     | '/api/public/v1/crib/report'
     | '/api/public/v1/fixed-deposits/$id'
     | '/api/public/v1/ib/transaction'
-    | '/api/public/v1/loan-applications/create'
     | '/api/public/v1/loans/$id'
     | '/api/public/v1/savings/$id'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/clients'
     | '/api/public/v1/fixed-deposits'
+    | '/api/public/v1/loan-applications'
     | '/api/public/v1/loans'
     | '/api/public/v1/savings'
     | '/api/public/v1/loans/$id/repayments'
@@ -1327,13 +1327,13 @@ export interface FileRouteTypes {
     | '/api/public/v1/crib/report'
     | '/api/public/v1/fixed-deposits/$id'
     | '/api/public/v1/ib/transaction'
-    | '/api/public/v1/loan-applications/create'
     | '/api/public/v1/loans/$id'
     | '/api/public/v1/savings/$id'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
     | '/api/public/v1/clients/'
     | '/api/public/v1/fixed-deposits/'
+    | '/api/public/v1/loan-applications/'
     | '/api/public/v1/loans/'
     | '/api/public/v1/savings/'
     | '/api/public/v1/loans/$id/repayments'
@@ -1364,13 +1364,13 @@ export interface RootRouteChildren {
   ApiPublicV1CribReportRoute: typeof ApiPublicV1CribReportRoute
   ApiPublicV1FixedDepositsIdRoute: typeof ApiPublicV1FixedDepositsIdRoute
   ApiPublicV1IbTransactionRoute: typeof ApiPublicV1IbTransactionRoute
-  ApiPublicV1LoanApplicationsCreateRoute: typeof ApiPublicV1LoanApplicationsCreateRoute
   ApiPublicV1LoansIdRoute: typeof ApiPublicV1LoansIdRouteWithChildren
   ApiPublicV1SavingsIdRoute: typeof ApiPublicV1SavingsIdRoute
   ApiPublicV1TransactionsInboundRoute: typeof ApiPublicV1TransactionsInboundRoute
   ApiPublicV1TransactionsOutboundRoute: typeof ApiPublicV1TransactionsOutboundRoute
   ApiPublicV1ClientsIndexRoute: typeof ApiPublicV1ClientsIndexRoute
   ApiPublicV1FixedDepositsIndexRoute: typeof ApiPublicV1FixedDepositsIndexRoute
+  ApiPublicV1LoanApplicationsIndexRoute: typeof ApiPublicV1LoanApplicationsIndexRoute
   ApiPublicV1LoansIndexRoute: typeof ApiPublicV1LoansIndexRoute
   ApiPublicV1SavingsIndexRoute: typeof ApiPublicV1SavingsIndexRoute
 }
@@ -2007,6 +2007,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1LoansIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/loan-applications/': {
+      id: '/api/public/v1/loan-applications/'
+      path: '/api/public/v1/loan-applications'
+      fullPath: '/api/public/v1/loan-applications/'
+      preLoaderRoute: typeof ApiPublicV1LoanApplicationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/fixed-deposits/': {
       id: '/api/public/v1/fixed-deposits/'
       path: '/api/public/v1/fixed-deposits'
@@ -2047,13 +2054,6 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/loans/$id'
       fullPath: '/api/public/v1/loans/$id'
       preLoaderRoute: typeof ApiPublicV1LoansIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/loan-applications/create': {
-      id: '/api/public/v1/loan-applications/create'
-      path: '/api/public/v1/loan-applications/create'
-      fullPath: '/api/public/v1/loan-applications/create'
-      preLoaderRoute: typeof ApiPublicV1LoanApplicationsCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/ib/transaction': {
@@ -2395,14 +2395,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1CribReportRoute: ApiPublicV1CribReportRoute,
   ApiPublicV1FixedDepositsIdRoute: ApiPublicV1FixedDepositsIdRoute,
   ApiPublicV1IbTransactionRoute: ApiPublicV1IbTransactionRoute,
-  ApiPublicV1LoanApplicationsCreateRoute:
-    ApiPublicV1LoanApplicationsCreateRoute,
   ApiPublicV1LoansIdRoute: ApiPublicV1LoansIdRouteWithChildren,
   ApiPublicV1SavingsIdRoute: ApiPublicV1SavingsIdRoute,
   ApiPublicV1TransactionsInboundRoute: ApiPublicV1TransactionsInboundRoute,
   ApiPublicV1TransactionsOutboundRoute: ApiPublicV1TransactionsOutboundRoute,
   ApiPublicV1ClientsIndexRoute: ApiPublicV1ClientsIndexRoute,
   ApiPublicV1FixedDepositsIndexRoute: ApiPublicV1FixedDepositsIndexRoute,
+  ApiPublicV1LoanApplicationsIndexRoute: ApiPublicV1LoanApplicationsIndexRoute,
   ApiPublicV1LoansIndexRoute: ApiPublicV1LoansIndexRoute,
   ApiPublicV1SavingsIndexRoute: ApiPublicV1SavingsIndexRoute,
 }
