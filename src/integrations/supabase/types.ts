@@ -691,6 +691,56 @@ export type Database = {
           },
         ]
       }
+      client_attachment: {
+        Row: {
+          client_id: string
+          document_type: string
+          file_name: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          storage_bucket: string
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string | null
+          version: number
+        }
+        Insert: {
+          client_id: string
+          document_type: string
+          file_name: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          storage_bucket?: string
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          version?: number
+        }
+        Update: {
+          client_id?: string
+          document_type?: string
+          file_name?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          storage_bucket?: string
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_attachment_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_bank_account: {
         Row: {
           account_name: string
