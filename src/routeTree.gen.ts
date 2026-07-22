@@ -126,6 +126,7 @@ import { Route as ApiPublicV1LoanApplicationsIdGuarantorsRouteImport } from './r
 import { Route as ApiPublicV1LoanApplicationsIdGetRouteImport } from './routes/api/public/v1/loan-applications.$id.get'
 import { Route as ApiPublicV1LoanApplicationsIdExistingFacilitiesRouteImport } from './routes/api/public/v1/loan-applications.$id.existing-facilities'
 import { Route as ApiPublicV1LoanApplicationsIdEmploymentRouteImport } from './routes/api/public/v1/loan-applications.$id.employment'
+import { Route as ApiPublicV1LoanApplicationsIdDocumentsRouteImport } from './routes/api/public/v1/loan-applications.$id.documents'
 import { Route as ApiPublicV1LoanApplicationsIdDisburseRouteImport } from './routes/api/public/v1/loan-applications.$id.disburse'
 import { Route as ApiPublicV1LoanApplicationsIdDecideRouteImport } from './routes/api/public/v1/loan-applications.$id.decide'
 import { Route as ApiPublicV1LoanApplicationsIdCollateralRouteImport } from './routes/api/public/v1/loan-applications.$id.collateral'
@@ -795,6 +796,12 @@ const ApiPublicV1LoanApplicationsIdEmploymentRoute =
     path: '/api/public/v1/loan-applications/$id/employment',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1LoanApplicationsIdDocumentsRoute =
+  ApiPublicV1LoanApplicationsIdDocumentsRouteImport.update({
+    id: '/api/public/v1/loan-applications/$id/documents',
+    path: '/api/public/v1/loan-applications/$id/documents',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1LoanApplicationsIdDisburseRoute =
   ApiPublicV1LoanApplicationsIdDisburseRouteImport.update({
     id: '/api/public/v1/loan-applications/$id/disburse',
@@ -966,6 +973,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/loan-applications/$id/collateral': typeof ApiPublicV1LoanApplicationsIdCollateralRoute
   '/api/public/v1/loan-applications/$id/decide': typeof ApiPublicV1LoanApplicationsIdDecideRoute
   '/api/public/v1/loan-applications/$id/disburse': typeof ApiPublicV1LoanApplicationsIdDisburseRoute
+  '/api/public/v1/loan-applications/$id/documents': typeof ApiPublicV1LoanApplicationsIdDocumentsRoute
   '/api/public/v1/loan-applications/$id/employment': typeof ApiPublicV1LoanApplicationsIdEmploymentRoute
   '/api/public/v1/loan-applications/$id/existing-facilities': typeof ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute
   '/api/public/v1/loan-applications/$id/get': typeof ApiPublicV1LoanApplicationsIdGetRoute
@@ -1089,6 +1097,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/loan-applications/$id/collateral': typeof ApiPublicV1LoanApplicationsIdCollateralRoute
   '/api/public/v1/loan-applications/$id/decide': typeof ApiPublicV1LoanApplicationsIdDecideRoute
   '/api/public/v1/loan-applications/$id/disburse': typeof ApiPublicV1LoanApplicationsIdDisburseRoute
+  '/api/public/v1/loan-applications/$id/documents': typeof ApiPublicV1LoanApplicationsIdDocumentsRoute
   '/api/public/v1/loan-applications/$id/employment': typeof ApiPublicV1LoanApplicationsIdEmploymentRoute
   '/api/public/v1/loan-applications/$id/existing-facilities': typeof ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute
   '/api/public/v1/loan-applications/$id/get': typeof ApiPublicV1LoanApplicationsIdGetRoute
@@ -1218,6 +1227,7 @@ export interface FileRoutesById {
   '/api/public/v1/loan-applications/$id/collateral': typeof ApiPublicV1LoanApplicationsIdCollateralRoute
   '/api/public/v1/loan-applications/$id/decide': typeof ApiPublicV1LoanApplicationsIdDecideRoute
   '/api/public/v1/loan-applications/$id/disburse': typeof ApiPublicV1LoanApplicationsIdDisburseRoute
+  '/api/public/v1/loan-applications/$id/documents': typeof ApiPublicV1LoanApplicationsIdDocumentsRoute
   '/api/public/v1/loan-applications/$id/employment': typeof ApiPublicV1LoanApplicationsIdEmploymentRoute
   '/api/public/v1/loan-applications/$id/existing-facilities': typeof ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute
   '/api/public/v1/loan-applications/$id/get': typeof ApiPublicV1LoanApplicationsIdGetRoute
@@ -1347,6 +1357,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/loan-applications/$id/collateral'
     | '/api/public/v1/loan-applications/$id/decide'
     | '/api/public/v1/loan-applications/$id/disburse'
+    | '/api/public/v1/loan-applications/$id/documents'
     | '/api/public/v1/loan-applications/$id/employment'
     | '/api/public/v1/loan-applications/$id/existing-facilities'
     | '/api/public/v1/loan-applications/$id/get'
@@ -1470,6 +1481,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/loan-applications/$id/collateral'
     | '/api/public/v1/loan-applications/$id/decide'
     | '/api/public/v1/loan-applications/$id/disburse'
+    | '/api/public/v1/loan-applications/$id/documents'
     | '/api/public/v1/loan-applications/$id/employment'
     | '/api/public/v1/loan-applications/$id/existing-facilities'
     | '/api/public/v1/loan-applications/$id/get'
@@ -1598,6 +1610,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/loan-applications/$id/collateral'
     | '/api/public/v1/loan-applications/$id/decide'
     | '/api/public/v1/loan-applications/$id/disburse'
+    | '/api/public/v1/loan-applications/$id/documents'
     | '/api/public/v1/loan-applications/$id/employment'
     | '/api/public/v1/loan-applications/$id/existing-facilities'
     | '/api/public/v1/loan-applications/$id/get'
@@ -1654,6 +1667,7 @@ export interface RootRouteChildren {
   ApiPublicV1LoanApplicationsIdCollateralRoute: typeof ApiPublicV1LoanApplicationsIdCollateralRoute
   ApiPublicV1LoanApplicationsIdDecideRoute: typeof ApiPublicV1LoanApplicationsIdDecideRoute
   ApiPublicV1LoanApplicationsIdDisburseRoute: typeof ApiPublicV1LoanApplicationsIdDisburseRoute
+  ApiPublicV1LoanApplicationsIdDocumentsRoute: typeof ApiPublicV1LoanApplicationsIdDocumentsRoute
   ApiPublicV1LoanApplicationsIdEmploymentRoute: typeof ApiPublicV1LoanApplicationsIdEmploymentRoute
   ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute: typeof ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute
   ApiPublicV1LoanApplicationsIdGetRoute: typeof ApiPublicV1LoanApplicationsIdGetRoute
@@ -2484,6 +2498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1LoanApplicationsIdEmploymentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/loan-applications/$id/documents': {
+      id: '/api/public/v1/loan-applications/$id/documents'
+      path: '/api/public/v1/loan-applications/$id/documents'
+      fullPath: '/api/public/v1/loan-applications/$id/documents'
+      preLoaderRoute: typeof ApiPublicV1LoanApplicationsIdDocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/loan-applications/$id/disburse': {
       id: '/api/public/v1/loan-applications/$id/disburse'
       path: '/api/public/v1/loan-applications/$id/disburse'
@@ -2901,6 +2922,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1LoanApplicationsIdDecideRoute,
   ApiPublicV1LoanApplicationsIdDisburseRoute:
     ApiPublicV1LoanApplicationsIdDisburseRoute,
+  ApiPublicV1LoanApplicationsIdDocumentsRoute:
+    ApiPublicV1LoanApplicationsIdDocumentsRoute,
   ApiPublicV1LoanApplicationsIdEmploymentRoute:
     ApiPublicV1LoanApplicationsIdEmploymentRoute,
   ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute:
