@@ -430,6 +430,67 @@ export const LoanApplicationSubmitResponse = z.object({
   submitted_at: IsoDateTime,
 });
 
+// Loan application · decide (approve / reject)
+export const LoanApplicationDecideRequest = z.object({
+  decision: z.enum(["approve", "reject"]),
+  comment: z.string().trim().max(1000).optional(),
+  step_key: z.string().trim().max(80).optional(),
+  workflow_instance_id: z.string().uuid().optional(),
+  transition_key: z.string().trim().max(80).optional(),
+});
+export const LoanApplicationDecideResponse = z.object({
+  status: z.literal("decided"),
+  application_id: z.string().uuid(),
+  application_no: z.string(),
+  decision: z.enum(["approve", "reject"]),
+  status_code: z.string(),
+  decided_at: IsoDateTime,
+});
+
+// Loan application · return-for-changes
+export const LoanApplicationReturnRequest = z.object({
+  reason: z.string().trim().min(1).max(1000),
+  transition_key: z.string().trim().max(80).optional(),
+});
+export const LoanApplicationReturnResponse = z.object({
+  status: z.literal("returned"),
+  application_id: z.string().uuid(),
+  application_no: z.string(),
+  status_code: z.string(),
+  returned_at: IsoDateTime,
+});
+
+// Loan application · cancel
+export const LoanApplicationCancelRequest = z.object({
+  reason: z.string().trim().min(1).max(1000),
+  transition_key: z.string().trim().max(80).optional(),
+});
+export const LoanApplicationCancelResponse = z.object({
+  status: z.literal("cancelled"),
+  application_id: z.string().uuid(),
+  application_no: z.string(),
+  status_code: z.string(),
+  cancelled_at: IsoDateTime,
+});
+
+// Loan application · disburse
+export const LoanApplicationDisburseRequest = z.object({
+  payment_channel: z
+    .enum(["cash", "bank_transfer", "cheque", "sdf", "wallet", "fund_transfer", "other"])
+    .optional(),
+  payment_reference: z.string().trim().max(120).optional(),
+});
+export const LoanApplicationDisburseResponse = z.object({
+  status: z.literal("disbursed"),
+  application_id: z.string().uuid(),
+  application_no: z.string(),
+  loan_id: z.string().uuid(),
+  contract_no: z.string().nullable(),
+  status_code: z.string(),
+  disbursed_at: IsoDateTime,
+  idempotent_replay: z.boolean(),
+});
+
 // Health
 export const HealthResponse = z.object({
   status: z.literal("ok"),

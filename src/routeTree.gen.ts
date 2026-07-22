@@ -115,12 +115,16 @@ import { Route as ApiPublicV1CeftTransferRouteImport } from './routes/api/public
 import { Route as ApiPublicV1AtmAuthorizeRouteImport } from './routes/api/public/v1/atm.authorize'
 import { Route as ApiPublicV1LoansIdRepaymentsRouteImport } from './routes/api/public/v1/loans.$id.repayments'
 import { Route as ApiPublicV1LoanApplicationsIdSubmitRouteImport } from './routes/api/public/v1/loan-applications.$id.submit'
+import { Route as ApiPublicV1LoanApplicationsIdReturnRouteImport } from './routes/api/public/v1/loan-applications.$id.return'
 import { Route as ApiPublicV1LoanApplicationsIdNotesRouteImport } from './routes/api/public/v1/loan-applications.$id.notes'
 import { Route as ApiPublicV1LoanApplicationsIdGuarantorsRouteImport } from './routes/api/public/v1/loan-applications.$id.guarantors'
 import { Route as ApiPublicV1LoanApplicationsIdGetRouteImport } from './routes/api/public/v1/loan-applications.$id.get'
 import { Route as ApiPublicV1LoanApplicationsIdExistingFacilitiesRouteImport } from './routes/api/public/v1/loan-applications.$id.existing-facilities'
 import { Route as ApiPublicV1LoanApplicationsIdEmploymentRouteImport } from './routes/api/public/v1/loan-applications.$id.employment'
+import { Route as ApiPublicV1LoanApplicationsIdDisburseRouteImport } from './routes/api/public/v1/loan-applications.$id.disburse'
+import { Route as ApiPublicV1LoanApplicationsIdDecideRouteImport } from './routes/api/public/v1/loan-applications.$id.decide'
 import { Route as ApiPublicV1LoanApplicationsIdCollateralRouteImport } from './routes/api/public/v1/loan-applications.$id.collateral'
+import { Route as ApiPublicV1LoanApplicationsIdCancelRouteImport } from './routes/api/public/v1/loan-applications.$id.cancel'
 import { Route as ApiPublicV1LoanApplicationsIdBusinessRouteImport } from './routes/api/public/v1/loan-applications.$id.business'
 import { Route as ApiPublicV1LoanApplicationsIdApplicantsRouteImport } from './routes/api/public/v1/loan-applications.$id.applicants'
 
@@ -719,6 +723,12 @@ const ApiPublicV1LoanApplicationsIdSubmitRoute =
     path: '/api/public/v1/loan-applications/$id/submit',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1LoanApplicationsIdReturnRoute =
+  ApiPublicV1LoanApplicationsIdReturnRouteImport.update({
+    id: '/api/public/v1/loan-applications/$id/return',
+    path: '/api/public/v1/loan-applications/$id/return',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1LoanApplicationsIdNotesRoute =
   ApiPublicV1LoanApplicationsIdNotesRouteImport.update({
     id: '/api/public/v1/loan-applications/$id/notes',
@@ -749,10 +759,28 @@ const ApiPublicV1LoanApplicationsIdEmploymentRoute =
     path: '/api/public/v1/loan-applications/$id/employment',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1LoanApplicationsIdDisburseRoute =
+  ApiPublicV1LoanApplicationsIdDisburseRouteImport.update({
+    id: '/api/public/v1/loan-applications/$id/disburse',
+    path: '/api/public/v1/loan-applications/$id/disburse',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1LoanApplicationsIdDecideRoute =
+  ApiPublicV1LoanApplicationsIdDecideRouteImport.update({
+    id: '/api/public/v1/loan-applications/$id/decide',
+    path: '/api/public/v1/loan-applications/$id/decide',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1LoanApplicationsIdCollateralRoute =
   ApiPublicV1LoanApplicationsIdCollateralRouteImport.update({
     id: '/api/public/v1/loan-applications/$id/collateral',
     path: '/api/public/v1/loan-applications/$id/collateral',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1LoanApplicationsIdCancelRoute =
+  ApiPublicV1LoanApplicationsIdCancelRouteImport.update({
+    id: '/api/public/v1/loan-applications/$id/cancel',
+    path: '/api/public/v1/loan-applications/$id/cancel',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1LoanApplicationsIdBusinessRoute =
@@ -874,12 +902,16 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/savings/': typeof ApiPublicV1SavingsIndexRoute
   '/api/public/v1/loan-applications/$id/applicants': typeof ApiPublicV1LoanApplicationsIdApplicantsRoute
   '/api/public/v1/loan-applications/$id/business': typeof ApiPublicV1LoanApplicationsIdBusinessRoute
+  '/api/public/v1/loan-applications/$id/cancel': typeof ApiPublicV1LoanApplicationsIdCancelRoute
   '/api/public/v1/loan-applications/$id/collateral': typeof ApiPublicV1LoanApplicationsIdCollateralRoute
+  '/api/public/v1/loan-applications/$id/decide': typeof ApiPublicV1LoanApplicationsIdDecideRoute
+  '/api/public/v1/loan-applications/$id/disburse': typeof ApiPublicV1LoanApplicationsIdDisburseRoute
   '/api/public/v1/loan-applications/$id/employment': typeof ApiPublicV1LoanApplicationsIdEmploymentRoute
   '/api/public/v1/loan-applications/$id/existing-facilities': typeof ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute
   '/api/public/v1/loan-applications/$id/get': typeof ApiPublicV1LoanApplicationsIdGetRoute
   '/api/public/v1/loan-applications/$id/guarantors': typeof ApiPublicV1LoanApplicationsIdGuarantorsRoute
   '/api/public/v1/loan-applications/$id/notes': typeof ApiPublicV1LoanApplicationsIdNotesRoute
+  '/api/public/v1/loan-applications/$id/return': typeof ApiPublicV1LoanApplicationsIdReturnRoute
   '/api/public/v1/loan-applications/$id/submit': typeof ApiPublicV1LoanApplicationsIdSubmitRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
 }
@@ -985,12 +1017,16 @@ export interface FileRoutesByTo {
   '/api/public/v1/savings': typeof ApiPublicV1SavingsIndexRoute
   '/api/public/v1/loan-applications/$id/applicants': typeof ApiPublicV1LoanApplicationsIdApplicantsRoute
   '/api/public/v1/loan-applications/$id/business': typeof ApiPublicV1LoanApplicationsIdBusinessRoute
+  '/api/public/v1/loan-applications/$id/cancel': typeof ApiPublicV1LoanApplicationsIdCancelRoute
   '/api/public/v1/loan-applications/$id/collateral': typeof ApiPublicV1LoanApplicationsIdCollateralRoute
+  '/api/public/v1/loan-applications/$id/decide': typeof ApiPublicV1LoanApplicationsIdDecideRoute
+  '/api/public/v1/loan-applications/$id/disburse': typeof ApiPublicV1LoanApplicationsIdDisburseRoute
   '/api/public/v1/loan-applications/$id/employment': typeof ApiPublicV1LoanApplicationsIdEmploymentRoute
   '/api/public/v1/loan-applications/$id/existing-facilities': typeof ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute
   '/api/public/v1/loan-applications/$id/get': typeof ApiPublicV1LoanApplicationsIdGetRoute
   '/api/public/v1/loan-applications/$id/guarantors': typeof ApiPublicV1LoanApplicationsIdGuarantorsRoute
   '/api/public/v1/loan-applications/$id/notes': typeof ApiPublicV1LoanApplicationsIdNotesRoute
+  '/api/public/v1/loan-applications/$id/return': typeof ApiPublicV1LoanApplicationsIdReturnRoute
   '/api/public/v1/loan-applications/$id/submit': typeof ApiPublicV1LoanApplicationsIdSubmitRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
 }
@@ -1102,12 +1138,16 @@ export interface FileRoutesById {
   '/api/public/v1/savings/': typeof ApiPublicV1SavingsIndexRoute
   '/api/public/v1/loan-applications/$id/applicants': typeof ApiPublicV1LoanApplicationsIdApplicantsRoute
   '/api/public/v1/loan-applications/$id/business': typeof ApiPublicV1LoanApplicationsIdBusinessRoute
+  '/api/public/v1/loan-applications/$id/cancel': typeof ApiPublicV1LoanApplicationsIdCancelRoute
   '/api/public/v1/loan-applications/$id/collateral': typeof ApiPublicV1LoanApplicationsIdCollateralRoute
+  '/api/public/v1/loan-applications/$id/decide': typeof ApiPublicV1LoanApplicationsIdDecideRoute
+  '/api/public/v1/loan-applications/$id/disburse': typeof ApiPublicV1LoanApplicationsIdDisburseRoute
   '/api/public/v1/loan-applications/$id/employment': typeof ApiPublicV1LoanApplicationsIdEmploymentRoute
   '/api/public/v1/loan-applications/$id/existing-facilities': typeof ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute
   '/api/public/v1/loan-applications/$id/get': typeof ApiPublicV1LoanApplicationsIdGetRoute
   '/api/public/v1/loan-applications/$id/guarantors': typeof ApiPublicV1LoanApplicationsIdGuarantorsRoute
   '/api/public/v1/loan-applications/$id/notes': typeof ApiPublicV1LoanApplicationsIdNotesRoute
+  '/api/public/v1/loan-applications/$id/return': typeof ApiPublicV1LoanApplicationsIdReturnRoute
   '/api/public/v1/loan-applications/$id/submit': typeof ApiPublicV1LoanApplicationsIdSubmitRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
 }
@@ -1219,12 +1259,16 @@ export interface FileRouteTypes {
     | '/api/public/v1/savings/'
     | '/api/public/v1/loan-applications/$id/applicants'
     | '/api/public/v1/loan-applications/$id/business'
+    | '/api/public/v1/loan-applications/$id/cancel'
     | '/api/public/v1/loan-applications/$id/collateral'
+    | '/api/public/v1/loan-applications/$id/decide'
+    | '/api/public/v1/loan-applications/$id/disburse'
     | '/api/public/v1/loan-applications/$id/employment'
     | '/api/public/v1/loan-applications/$id/existing-facilities'
     | '/api/public/v1/loan-applications/$id/get'
     | '/api/public/v1/loan-applications/$id/guarantors'
     | '/api/public/v1/loan-applications/$id/notes'
+    | '/api/public/v1/loan-applications/$id/return'
     | '/api/public/v1/loan-applications/$id/submit'
     | '/api/public/v1/loans/$id/repayments'
   fileRoutesByTo: FileRoutesByTo
@@ -1330,12 +1374,16 @@ export interface FileRouteTypes {
     | '/api/public/v1/savings'
     | '/api/public/v1/loan-applications/$id/applicants'
     | '/api/public/v1/loan-applications/$id/business'
+    | '/api/public/v1/loan-applications/$id/cancel'
     | '/api/public/v1/loan-applications/$id/collateral'
+    | '/api/public/v1/loan-applications/$id/decide'
+    | '/api/public/v1/loan-applications/$id/disburse'
     | '/api/public/v1/loan-applications/$id/employment'
     | '/api/public/v1/loan-applications/$id/existing-facilities'
     | '/api/public/v1/loan-applications/$id/get'
     | '/api/public/v1/loan-applications/$id/guarantors'
     | '/api/public/v1/loan-applications/$id/notes'
+    | '/api/public/v1/loan-applications/$id/return'
     | '/api/public/v1/loan-applications/$id/submit'
     | '/api/public/v1/loans/$id/repayments'
   id:
@@ -1446,12 +1494,16 @@ export interface FileRouteTypes {
     | '/api/public/v1/savings/'
     | '/api/public/v1/loan-applications/$id/applicants'
     | '/api/public/v1/loan-applications/$id/business'
+    | '/api/public/v1/loan-applications/$id/cancel'
     | '/api/public/v1/loan-applications/$id/collateral'
+    | '/api/public/v1/loan-applications/$id/decide'
+    | '/api/public/v1/loan-applications/$id/disburse'
     | '/api/public/v1/loan-applications/$id/employment'
     | '/api/public/v1/loan-applications/$id/existing-facilities'
     | '/api/public/v1/loan-applications/$id/get'
     | '/api/public/v1/loan-applications/$id/guarantors'
     | '/api/public/v1/loan-applications/$id/notes'
+    | '/api/public/v1/loan-applications/$id/return'
     | '/api/public/v1/loan-applications/$id/submit'
     | '/api/public/v1/loans/$id/repayments'
   fileRoutesById: FileRoutesById
@@ -1492,12 +1544,16 @@ export interface RootRouteChildren {
   ApiPublicV1SavingsIndexRoute: typeof ApiPublicV1SavingsIndexRoute
   ApiPublicV1LoanApplicationsIdApplicantsRoute: typeof ApiPublicV1LoanApplicationsIdApplicantsRoute
   ApiPublicV1LoanApplicationsIdBusinessRoute: typeof ApiPublicV1LoanApplicationsIdBusinessRoute
+  ApiPublicV1LoanApplicationsIdCancelRoute: typeof ApiPublicV1LoanApplicationsIdCancelRoute
   ApiPublicV1LoanApplicationsIdCollateralRoute: typeof ApiPublicV1LoanApplicationsIdCollateralRoute
+  ApiPublicV1LoanApplicationsIdDecideRoute: typeof ApiPublicV1LoanApplicationsIdDecideRoute
+  ApiPublicV1LoanApplicationsIdDisburseRoute: typeof ApiPublicV1LoanApplicationsIdDisburseRoute
   ApiPublicV1LoanApplicationsIdEmploymentRoute: typeof ApiPublicV1LoanApplicationsIdEmploymentRoute
   ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute: typeof ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute
   ApiPublicV1LoanApplicationsIdGetRoute: typeof ApiPublicV1LoanApplicationsIdGetRoute
   ApiPublicV1LoanApplicationsIdGuarantorsRoute: typeof ApiPublicV1LoanApplicationsIdGuarantorsRoute
   ApiPublicV1LoanApplicationsIdNotesRoute: typeof ApiPublicV1LoanApplicationsIdNotesRoute
+  ApiPublicV1LoanApplicationsIdReturnRoute: typeof ApiPublicV1LoanApplicationsIdReturnRoute
   ApiPublicV1LoanApplicationsIdSubmitRoute: typeof ApiPublicV1LoanApplicationsIdSubmitRoute
 }
 
@@ -2245,6 +2301,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1LoanApplicationsIdSubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/loan-applications/$id/return': {
+      id: '/api/public/v1/loan-applications/$id/return'
+      path: '/api/public/v1/loan-applications/$id/return'
+      fullPath: '/api/public/v1/loan-applications/$id/return'
+      preLoaderRoute: typeof ApiPublicV1LoanApplicationsIdReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/loan-applications/$id/notes': {
       id: '/api/public/v1/loan-applications/$id/notes'
       path: '/api/public/v1/loan-applications/$id/notes'
@@ -2280,11 +2343,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1LoanApplicationsIdEmploymentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/loan-applications/$id/disburse': {
+      id: '/api/public/v1/loan-applications/$id/disburse'
+      path: '/api/public/v1/loan-applications/$id/disburse'
+      fullPath: '/api/public/v1/loan-applications/$id/disburse'
+      preLoaderRoute: typeof ApiPublicV1LoanApplicationsIdDisburseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/loan-applications/$id/decide': {
+      id: '/api/public/v1/loan-applications/$id/decide'
+      path: '/api/public/v1/loan-applications/$id/decide'
+      fullPath: '/api/public/v1/loan-applications/$id/decide'
+      preLoaderRoute: typeof ApiPublicV1LoanApplicationsIdDecideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/loan-applications/$id/collateral': {
       id: '/api/public/v1/loan-applications/$id/collateral'
       path: '/api/public/v1/loan-applications/$id/collateral'
       fullPath: '/api/public/v1/loan-applications/$id/collateral'
       preLoaderRoute: typeof ApiPublicV1LoanApplicationsIdCollateralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/loan-applications/$id/cancel': {
+      id: '/api/public/v1/loan-applications/$id/cancel'
+      path: '/api/public/v1/loan-applications/$id/cancel'
+      fullPath: '/api/public/v1/loan-applications/$id/cancel'
+      preLoaderRoute: typeof ApiPublicV1LoanApplicationsIdCancelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/loan-applications/$id/business': {
@@ -2597,8 +2681,14 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1LoanApplicationsIdApplicantsRoute,
   ApiPublicV1LoanApplicationsIdBusinessRoute:
     ApiPublicV1LoanApplicationsIdBusinessRoute,
+  ApiPublicV1LoanApplicationsIdCancelRoute:
+    ApiPublicV1LoanApplicationsIdCancelRoute,
   ApiPublicV1LoanApplicationsIdCollateralRoute:
     ApiPublicV1LoanApplicationsIdCollateralRoute,
+  ApiPublicV1LoanApplicationsIdDecideRoute:
+    ApiPublicV1LoanApplicationsIdDecideRoute,
+  ApiPublicV1LoanApplicationsIdDisburseRoute:
+    ApiPublicV1LoanApplicationsIdDisburseRoute,
   ApiPublicV1LoanApplicationsIdEmploymentRoute:
     ApiPublicV1LoanApplicationsIdEmploymentRoute,
   ApiPublicV1LoanApplicationsIdExistingFacilitiesRoute:
@@ -2608,6 +2698,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1LoanApplicationsIdGuarantorsRoute,
   ApiPublicV1LoanApplicationsIdNotesRoute:
     ApiPublicV1LoanApplicationsIdNotesRoute,
+  ApiPublicV1LoanApplicationsIdReturnRoute:
+    ApiPublicV1LoanApplicationsIdReturnRoute,
   ApiPublicV1LoanApplicationsIdSubmitRoute:
     ApiPublicV1LoanApplicationsIdSubmitRoute,
 }
