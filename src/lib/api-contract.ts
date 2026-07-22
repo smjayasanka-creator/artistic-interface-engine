@@ -53,6 +53,7 @@ export type ApiScope =
   | "loans.read"
   | "loans.repayments.write"
   | "loan_applications.write"
+  | "loan_applications.read"
   | "savings.read"
   | "fixed_deposits.read";
 
@@ -503,6 +504,48 @@ export const API_CONTRACTS: ApiContract[] = [
       { path: "value_date", label: "Value date", type: "date" },
       { path: "maturity_date", label: "Maturity date", type: "date" },
       { path: "status", label: "FD status", type: "string" },
+    ],
+  }),
+  ...makeReadPair({
+    resource: "loan_applications",
+    scope: "loan_applications.read",
+    id: "loan_applications",
+    label: "loan application",
+    listPath: "/api/public/v1/loan-applications",
+    getPath: "/api/public/v1/loan-applications/{id}",
+    example: {
+      id: "9f0e…",
+      application_no: "AP000123",
+      branch_id: "…",
+      client_id: "…",
+      product_id: "…",
+      requested_principal: 500000,
+      requested_tenor_months: 24,
+      requested_rate_pct: 18.5,
+      frequency: "monthly",
+      currency: "KES",
+      status: "draft",
+      submitted_at: null,
+      decided_at: null,
+      disbursed_at: null,
+      loan_id: null,
+      created_at: "2026-07-22T09:30:00.000Z",
+    },
+    outboundFields: [
+      { path: "application_no", label: "Application no.", type: "string" },
+      { path: "branch_id", label: "Branch", type: "uuid" },
+      { path: "client_id", label: "Client", type: "uuid" },
+      { path: "product_id", label: "Product", type: "uuid" },
+      { path: "requested_principal", label: "Requested principal", type: "number" },
+      { path: "requested_tenor_months", label: "Requested tenor (months)", type: "int" },
+      { path: "requested_rate_pct", label: "Requested rate (%)", type: "number" },
+      { path: "frequency", label: "Repayment frequency", type: "enum" },
+      { path: "currency", label: "Currency", type: "string" },
+      { path: "status", label: "Application status", type: "string" },
+      { path: "submitted_at", label: "Submitted at", type: "datetime" },
+      { path: "decided_at", label: "Decided at", type: "datetime" },
+      { path: "disbursed_at", label: "Disbursed at", type: "datetime" },
+      { path: "loan_id", label: "Booked loan", type: "uuid" },
     ],
   }),
   {
