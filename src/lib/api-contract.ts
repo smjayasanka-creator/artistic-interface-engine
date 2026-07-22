@@ -1585,6 +1585,58 @@ export const API_CONTRACTS: ApiContract[] = [
       { code: 404, error: "not_found", meaning: "Attachment (or its parent client) not found in caller's company." },
     ],
   },
+  {
+    id: "savings.transactions.list",
+    method: "GET",
+    path: "/api/public/v1/savings/{id}/transactions",
+    resource: "savings",
+    title: "List savings transactions",
+    summary:
+      "Cursor-paginated ledger for a savings account, ordered by created_at DESC. Filter by txn_type or by since (ISO datetime). Use next_cursor to page.",
+    scope: "savings.read",
+    direction: "outbound",
+    status: "live",
+    requiresIdempotency: false,
+    response: SavingsTransactionListResponse,
+    responseExample: { data: [], next_cursor: null },
+    fields: [
+      { path: "id", label: "Savings account id", type: "uuid", required: true, inbound: true, notes: "Path parameter." },
+      { path: "limit", label: "Page size", type: "int", inbound: true, notes: "Query param. Default 50, max 200." },
+      { path: "cursor", label: "Pagination cursor", type: "datetime", inbound: true, notes: "Pass next_cursor from prior response." },
+      { path: "txn_type", label: "Filter by txn type", type: "string", inbound: true },
+      { path: "since", label: "Only after this timestamp", type: "datetime", inbound: true },
+      { path: "data", label: "Transactions", type: "array", outbound: true },
+      { path: "next_cursor", label: "Next page cursor", type: "datetime", outbound: true },
+    ],
+    errors: [
+      ...COMMON_ERRORS,
+      { code: 404, error: "not_found", meaning: "Savings account not found in caller's company." },
+    ],
+  },
+  {
+    id: "savings.holds.list",
+    method: "GET",
+    path: "/api/public/v1/savings/{id}/holds",
+    resource: "savings",
+    title: "List savings holds",
+    summary:
+      "List holds placed on a savings account. Pass active=true to narrow to just currently active holds.",
+    scope: "savings.read",
+    direction: "outbound",
+    status: "live",
+    requiresIdempotency: false,
+    response: SavingsHoldListResponse,
+    responseExample: { data: [] },
+    fields: [
+      { path: "id", label: "Savings account id", type: "uuid", required: true, inbound: true, notes: "Path parameter." },
+      { path: "active", label: "Filter by active flag", type: "boolean", inbound: true, notes: "Query param. true|false." },
+      { path: "data", label: "Holds", type: "array", outbound: true },
+    ],
+    errors: [
+      ...COMMON_ERRORS,
+      { code: 404, error: "not_found", meaning: "Savings account not found in caller's company." },
+    ],
+  },
 ];
 
 function makeApplicationChild(args: {
