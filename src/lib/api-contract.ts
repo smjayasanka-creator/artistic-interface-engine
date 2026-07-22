@@ -34,7 +34,8 @@ export type ApiScope =
   | "atm"
   | "internet_banking"
   | "crib"
-  | "clients.create";
+  | "clients.create"
+  | "clients.read";
 
 export type ApiDirection = "inbound" | "outbound" | "bi";
 export type ApiStatus = "live" | "planned";
@@ -314,6 +315,74 @@ export const API_CONTRACTS: ApiContract[] = [
       { path: "report_url", label: "Report URL", type: "url", outbound: true, sensitive: true },
     ],
     errors: COMMON_ERRORS,
+  },
+  {
+    id: "clients.list",
+    method: "GET",
+    path: "/api/public/v1/clients",
+    resource: "clients",
+    title: "List clients",
+    summary:
+      "Cursor-paginated list of clients belonging to the API key's company. Ordered by newest first.",
+    scope: "clients.read",
+    direction: "outbound",
+    status: "live",
+    requiresIdempotency: false,
+    responseExample: {
+      data: [
+        {
+          id: "0d7f…",
+          full_name: "Nimal Perera",
+          phone: "+94771234567",
+          national_id: "199012345V",
+          branch_id: "…",
+          status: "active",
+          created_at: "2026-07-21T12:00:00.000Z",
+        },
+      ],
+      next_cursor: "2026-07-21T12:00:00.000Z",
+    },
+    fields: [
+      { path: "cursor", label: "Cursor", type: "string", inbound: true, notes: "Pass next_cursor from a previous page." },
+      { path: "limit", label: "Limit", type: "int", inbound: true, notes: "Default 50, max 200." },
+      { path: "data", label: "Clients", type: "array", outbound: true },
+      { path: "next_cursor", label: "Next cursor", type: "string", outbound: true },
+    ],
+    errors: COMMON_ERRORS,
+  },
+  {
+    id: "clients.get",
+    method: "GET",
+    path: "/api/public/v1/clients/{id}",
+    resource: "clients",
+    title: "Get client",
+    summary:
+      "Fetch a single client by id. Returns 404 for ids belonging to another company (no cross-tenant enumeration).",
+    scope: "clients.read",
+    direction: "outbound",
+    status: "live",
+    requiresIdempotency: false,
+    responseExample: {
+      id: "0d7f…",
+      full_name: "Nimal Perera",
+      phone: "+94771234567",
+      national_id: "199012345V",
+      branch_id: "…",
+      status: "active",
+      created_at: "2026-07-21T12:00:00.000Z",
+    },
+    fields: [
+      { path: "id", label: "Client ID", type: "uuid", required: true, inbound: true },
+      { path: "full_name", label: "Full name", type: "string", outbound: true },
+      { path: "phone", label: "Mobile number", type: "string", sensitive: true, outbound: true },
+      { path: "national_id", label: "National ID", type: "string", sensitive: true, outbound: true },
+      { path: "branch_id", label: "Branch", type: "uuid", outbound: true },
+      { path: "status", label: "Client status", type: "string", outbound: true },
+    ],
+    errors: [
+      ...COMMON_ERRORS,
+      { code: 404, error: "not_found", meaning: "No client with this id in the caller's company." },
+    ],
   },
 ];
 

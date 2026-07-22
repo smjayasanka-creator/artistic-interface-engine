@@ -97,11 +97,13 @@ import { Route as AuthenticatedClientsIdEditRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminSavingsWhtRouteImport } from './routes/_authenticated/admin.savings.wht'
 import { Route as AuthenticatedAccountsPaymentsNewRouteImport } from './routes/_authenticated/accounts.payments.new'
 import { Route as AuthenticatedAccountsJournalNewRouteImport } from './routes/_authenticated/accounts.journal.new'
+import { Route as ApiPublicV1ClientsIndexRouteImport } from './routes/api/public/v1/clients.index'
 import { Route as ApiPublicV1TransactionsOutboundRouteImport } from './routes/api/public/v1/transactions.outbound'
 import { Route as ApiPublicV1TransactionsInboundRouteImport } from './routes/api/public/v1/transactions.inbound'
 import { Route as ApiPublicV1IbTransactionRouteImport } from './routes/api/public/v1/ib.transaction'
 import { Route as ApiPublicV1CribReportRouteImport } from './routes/api/public/v1/crib.report'
 import { Route as ApiPublicV1ClientsCreateRouteImport } from './routes/api/public/v1/clients.create'
+import { Route as ApiPublicV1ClientsIdRouteImport } from './routes/api/public/v1/clients.$id'
 import { Route as ApiPublicV1CeftTransferRouteImport } from './routes/api/public/v1/ceft.transfer'
 import { Route as ApiPublicV1AtmAuthorizeRouteImport } from './routes/api/public/v1/atm.authorize'
 
@@ -601,6 +603,11 @@ const AuthenticatedAccountsJournalNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedAccountsJournalRoute,
   } as any)
+const ApiPublicV1ClientsIndexRoute = ApiPublicV1ClientsIndexRouteImport.update({
+  id: '/api/public/v1/clients/',
+  path: '/api/public/v1/clients/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1TransactionsOutboundRoute =
   ApiPublicV1TransactionsOutboundRouteImport.update({
     id: '/api/public/v1/transactions/outbound',
@@ -630,6 +637,11 @@ const ApiPublicV1ClientsCreateRoute =
     path: '/api/public/v1/clients/create',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ClientsIdRoute = ApiPublicV1ClientsIdRouteImport.update({
+  id: '/api/public/v1/clients/$id',
+  path: '/api/public/v1/clients/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1CeftTransferRoute = ApiPublicV1CeftTransferRouteImport.update({
   id: '/api/public/v1/ceft/transfer',
   path: '/api/public/v1/ceft/transfer',
@@ -731,11 +743,13 @@ export interface FileRoutesByFullPath {
   '/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
   '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
   '/api/public/v1/ceft/transfer': typeof ApiPublicV1CeftTransferRoute
+  '/api/public/v1/clients/$id': typeof ApiPublicV1ClientsIdRoute
   '/api/public/v1/clients/create': typeof ApiPublicV1ClientsCreateRoute
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
+  '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -823,11 +837,13 @@ export interface FileRoutesByTo {
   '/accounts/payments': typeof AuthenticatedAccountsPaymentsIndexRoute
   '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
   '/api/public/v1/ceft/transfer': typeof ApiPublicV1CeftTransferRoute
+  '/api/public/v1/clients/$id': typeof ApiPublicV1ClientsIdRoute
   '/api/public/v1/clients/create': typeof ApiPublicV1ClientsCreateRoute
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
+  '/api/public/v1/clients': typeof ApiPublicV1ClientsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -921,11 +937,13 @@ export interface FileRoutesById {
   '/_authenticated/accounts/payments/': typeof AuthenticatedAccountsPaymentsIndexRoute
   '/api/public/v1/atm/authorize': typeof ApiPublicV1AtmAuthorizeRoute
   '/api/public/v1/ceft/transfer': typeof ApiPublicV1CeftTransferRoute
+  '/api/public/v1/clients/$id': typeof ApiPublicV1ClientsIdRoute
   '/api/public/v1/clients/create': typeof ApiPublicV1ClientsCreateRoute
   '/api/public/v1/crib/report': typeof ApiPublicV1CribReportRoute
   '/api/public/v1/ib/transaction': typeof ApiPublicV1IbTransactionRoute
   '/api/public/v1/transactions/inbound': typeof ApiPublicV1TransactionsInboundRoute
   '/api/public/v1/transactions/outbound': typeof ApiPublicV1TransactionsOutboundRoute
+  '/api/public/v1/clients/': typeof ApiPublicV1ClientsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1019,11 +1037,13 @@ export interface FileRouteTypes {
     | '/accounts/payments/'
     | '/api/public/v1/atm/authorize'
     | '/api/public/v1/ceft/transfer'
+    | '/api/public/v1/clients/$id'
     | '/api/public/v1/clients/create'
     | '/api/public/v1/crib/report'
     | '/api/public/v1/ib/transaction'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
+    | '/api/public/v1/clients/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1111,11 +1131,13 @@ export interface FileRouteTypes {
     | '/accounts/payments'
     | '/api/public/v1/atm/authorize'
     | '/api/public/v1/ceft/transfer'
+    | '/api/public/v1/clients/$id'
     | '/api/public/v1/clients/create'
     | '/api/public/v1/crib/report'
     | '/api/public/v1/ib/transaction'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
+    | '/api/public/v1/clients'
   id:
     | '__root__'
     | '/'
@@ -1208,11 +1230,13 @@ export interface FileRouteTypes {
     | '/_authenticated/accounts/payments/'
     | '/api/public/v1/atm/authorize'
     | '/api/public/v1/ceft/transfer'
+    | '/api/public/v1/clients/$id'
     | '/api/public/v1/clients/create'
     | '/api/public/v1/crib/report'
     | '/api/public/v1/ib/transaction'
     | '/api/public/v1/transactions/inbound'
     | '/api/public/v1/transactions/outbound'
+    | '/api/public/v1/clients/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1235,11 +1259,13 @@ export interface RootRouteChildren {
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiPublicV1AtmAuthorizeRoute: typeof ApiPublicV1AtmAuthorizeRoute
   ApiPublicV1CeftTransferRoute: typeof ApiPublicV1CeftTransferRoute
+  ApiPublicV1ClientsIdRoute: typeof ApiPublicV1ClientsIdRoute
   ApiPublicV1ClientsCreateRoute: typeof ApiPublicV1ClientsCreateRoute
   ApiPublicV1CribReportRoute: typeof ApiPublicV1CribReportRoute
   ApiPublicV1IbTransactionRoute: typeof ApiPublicV1IbTransactionRoute
   ApiPublicV1TransactionsInboundRoute: typeof ApiPublicV1TransactionsInboundRoute
   ApiPublicV1TransactionsOutboundRoute: typeof ApiPublicV1TransactionsOutboundRoute
+  ApiPublicV1ClientsIndexRoute: typeof ApiPublicV1ClientsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1860,6 +1886,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsJournalNewRouteImport
       parentRoute: typeof AuthenticatedAccountsJournalRoute
     }
+    '/api/public/v1/clients/': {
+      id: '/api/public/v1/clients/'
+      path: '/api/public/v1/clients'
+      fullPath: '/api/public/v1/clients/'
+      preLoaderRoute: typeof ApiPublicV1ClientsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/transactions/outbound': {
       id: '/api/public/v1/transactions/outbound'
       path: '/api/public/v1/transactions/outbound'
@@ -1893,6 +1926,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/clients/create'
       fullPath: '/api/public/v1/clients/create'
       preLoaderRoute: typeof ApiPublicV1ClientsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/clients/$id': {
+      id: '/api/public/v1/clients/$id'
+      path: '/api/public/v1/clients/$id'
+      fullPath: '/api/public/v1/clients/$id'
+      preLoaderRoute: typeof ApiPublicV1ClientsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/ceft/transfer': {
@@ -2176,11 +2216,13 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiPublicV1AtmAuthorizeRoute: ApiPublicV1AtmAuthorizeRoute,
   ApiPublicV1CeftTransferRoute: ApiPublicV1CeftTransferRoute,
+  ApiPublicV1ClientsIdRoute: ApiPublicV1ClientsIdRoute,
   ApiPublicV1ClientsCreateRoute: ApiPublicV1ClientsCreateRoute,
   ApiPublicV1CribReportRoute: ApiPublicV1CribReportRoute,
   ApiPublicV1IbTransactionRoute: ApiPublicV1IbTransactionRoute,
   ApiPublicV1TransactionsInboundRoute: ApiPublicV1TransactionsInboundRoute,
   ApiPublicV1TransactionsOutboundRoute: ApiPublicV1TransactionsOutboundRoute,
+  ApiPublicV1ClientsIndexRoute: ApiPublicV1ClientsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
