@@ -120,6 +120,7 @@ import { Route as ApiPublicV1AtmAuthorizeRouteImport } from './routes/api/public
 import { Route as ApiPublicV1WebhookDeliveriesIdReplayRouteImport } from './routes/api/public/v1/webhook-deliveries.$id.replay'
 import { Route as ApiPublicV1SavingsIdTransactionsRouteImport } from './routes/api/public/v1/savings.$id.transactions'
 import { Route as ApiPublicV1SavingsIdHoldsRouteImport } from './routes/api/public/v1/savings.$id.holds'
+import { Route as ApiPublicV1LoansIdScheduleRouteImport } from './routes/api/public/v1/loans.$id.schedule'
 import { Route as ApiPublicV1LoansIdRepaymentsRouteImport } from './routes/api/public/v1/loans.$id.repayments'
 import { Route as ApiPublicV1LoanApplicationsIdSubmitRouteImport } from './routes/api/public/v1/loan-applications.$id.submit'
 import { Route as ApiPublicV1LoanApplicationsIdReturnRouteImport } from './routes/api/public/v1/loan-applications.$id.return'
@@ -767,6 +768,12 @@ const ApiPublicV1SavingsIdHoldsRoute =
     path: '/holds',
     getParentRoute: () => ApiPublicV1SavingsIdRoute,
   } as any)
+const ApiPublicV1LoansIdScheduleRoute =
+  ApiPublicV1LoansIdScheduleRouteImport.update({
+    id: '/schedule',
+    path: '/schedule',
+    getParentRoute: () => ApiPublicV1LoansIdRoute,
+  } as any)
 const ApiPublicV1LoansIdRepaymentsRoute =
   ApiPublicV1LoansIdRepaymentsRouteImport.update({
     id: '/repayments',
@@ -1034,6 +1041,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/loan-applications/$id/return': typeof ApiPublicV1LoanApplicationsIdReturnRoute
   '/api/public/v1/loan-applications/$id/submit': typeof ApiPublicV1LoanApplicationsIdSubmitRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
+  '/api/public/v1/loans/$id/schedule': typeof ApiPublicV1LoansIdScheduleRoute
   '/api/public/v1/savings/$id/holds': typeof ApiPublicV1SavingsIdHoldsRoute
   '/api/public/v1/savings/$id/transactions': typeof ApiPublicV1SavingsIdTransactionsRoute
   '/api/public/v1/webhook-deliveries/$id/replay': typeof ApiPublicV1WebhookDeliveriesIdReplayRoute
@@ -1165,6 +1173,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/loan-applications/$id/return': typeof ApiPublicV1LoanApplicationsIdReturnRoute
   '/api/public/v1/loan-applications/$id/submit': typeof ApiPublicV1LoanApplicationsIdSubmitRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
+  '/api/public/v1/loans/$id/schedule': typeof ApiPublicV1LoansIdScheduleRoute
   '/api/public/v1/savings/$id/holds': typeof ApiPublicV1SavingsIdHoldsRoute
   '/api/public/v1/savings/$id/transactions': typeof ApiPublicV1SavingsIdTransactionsRoute
   '/api/public/v1/webhook-deliveries/$id/replay': typeof ApiPublicV1WebhookDeliveriesIdReplayRoute
@@ -1302,6 +1311,7 @@ export interface FileRoutesById {
   '/api/public/v1/loan-applications/$id/return': typeof ApiPublicV1LoanApplicationsIdReturnRoute
   '/api/public/v1/loan-applications/$id/submit': typeof ApiPublicV1LoanApplicationsIdSubmitRoute
   '/api/public/v1/loans/$id/repayments': typeof ApiPublicV1LoansIdRepaymentsRoute
+  '/api/public/v1/loans/$id/schedule': typeof ApiPublicV1LoansIdScheduleRoute
   '/api/public/v1/savings/$id/holds': typeof ApiPublicV1SavingsIdHoldsRoute
   '/api/public/v1/savings/$id/transactions': typeof ApiPublicV1SavingsIdTransactionsRoute
   '/api/public/v1/webhook-deliveries/$id/replay': typeof ApiPublicV1WebhookDeliveriesIdReplayRoute
@@ -1439,6 +1449,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/loan-applications/$id/return'
     | '/api/public/v1/loan-applications/$id/submit'
     | '/api/public/v1/loans/$id/repayments'
+    | '/api/public/v1/loans/$id/schedule'
     | '/api/public/v1/savings/$id/holds'
     | '/api/public/v1/savings/$id/transactions'
     | '/api/public/v1/webhook-deliveries/$id/replay'
@@ -1570,6 +1581,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/loan-applications/$id/return'
     | '/api/public/v1/loan-applications/$id/submit'
     | '/api/public/v1/loans/$id/repayments'
+    | '/api/public/v1/loans/$id/schedule'
     | '/api/public/v1/savings/$id/holds'
     | '/api/public/v1/savings/$id/transactions'
     | '/api/public/v1/webhook-deliveries/$id/replay'
@@ -1706,6 +1718,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/loan-applications/$id/return'
     | '/api/public/v1/loan-applications/$id/submit'
     | '/api/public/v1/loans/$id/repayments'
+    | '/api/public/v1/loans/$id/schedule'
     | '/api/public/v1/savings/$id/holds'
     | '/api/public/v1/savings/$id/transactions'
     | '/api/public/v1/webhook-deliveries/$id/replay'
@@ -2547,6 +2560,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1SavingsIdHoldsRouteImport
       parentRoute: typeof ApiPublicV1SavingsIdRoute
     }
+    '/api/public/v1/loans/$id/schedule': {
+      id: '/api/public/v1/loans/$id/schedule'
+      path: '/schedule'
+      fullPath: '/api/public/v1/loans/$id/schedule'
+      preLoaderRoute: typeof ApiPublicV1LoansIdScheduleRouteImport
+      parentRoute: typeof ApiPublicV1LoansIdRoute
+    }
     '/api/public/v1/loans/$id/repayments': {
       id: '/api/public/v1/loans/$id/repayments'
       path: '/repayments'
@@ -3019,10 +3039,12 @@ const ApiPublicV1FixedDepositsIdRouteWithChildren =
 
 interface ApiPublicV1LoansIdRouteChildren {
   ApiPublicV1LoansIdRepaymentsRoute: typeof ApiPublicV1LoansIdRepaymentsRoute
+  ApiPublicV1LoansIdScheduleRoute: typeof ApiPublicV1LoansIdScheduleRoute
 }
 
 const ApiPublicV1LoansIdRouteChildren: ApiPublicV1LoansIdRouteChildren = {
   ApiPublicV1LoansIdRepaymentsRoute: ApiPublicV1LoansIdRepaymentsRoute,
+  ApiPublicV1LoansIdScheduleRoute: ApiPublicV1LoansIdScheduleRoute,
 }
 
 const ApiPublicV1LoansIdRouteWithChildren =
