@@ -567,6 +567,8 @@ export const API_CONTRACTS: ApiContract[] = [
     direction: "inbound",
     status: "live",
     requiresIdempotency: true,
+    request: LoanApplicationCreateRequest,
+    response: LoanApplicationCreateResponse,
     requestExample: {
       branch_id: "0d7f…",
       client_id: "a1b2…",
